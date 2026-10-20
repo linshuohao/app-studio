@@ -12,13 +12,14 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
 - SRC-ENGINEERING
 navigation:
   group: 01 · 架构全貌
   order: 30
 last_reviewed: '2026-10-21'
-status_note: E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行
+status_note: E1–E4 工程底座已初始化并完成本地联验；Protocol 三领域类型 / Schema 首批实现已通过本地检查；Compiler / Runtime 与远端 CI 未完成
 ---
 
 # 工程工具链与初始化方案
@@ -351,3 +352,25 @@ Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。`pn
 ## 协议包进入开发的基线 {#protocol-development-ready}
 
 2026-10-21 用户确认先按[完整协议基线](l1/08-decisions-release.md#protocol-development-baseline)实施，遇真实消费者问题再演进，不逐字段反复讨论。保持现有工程工具链、三领域与 JSDoc / Schema 派生路线；生成器适配、命名、容器、错误码及构建接入由实现者整理并验证，实际冲突才重开设计。首批是完整类型及对应 Schema / 正反例，不代表 Compiler / Runtime / Flutter 已实现或正式版本已发布。
+
+## Protocol 首批实现与本地交付证据 {#protocol-implementation}
+
+2026-10-21 先将完整设计基线提交为 8eeb321，再在 codex/protocol-contracts 实现。packages/protocol 现有 definition / capability / prepared 公共类型入口、JSDoc 与 10 个自动生成 JSON Schema 根资源，继续 private / 0.0.0；engineering 子入口保留原工程验证用途。Compiler / Runtime 算法、具体物料与纯函数实现不在本轮。
+
+生成器通过 pnpm latest 安装并锁定 ts-json-schema-generator 2.9.0、Ajv 8.20.0；测试 Node 类型为 26.6.5。生成器输出 draft-07，本地 scripts/schema-dialect.mjs 仅转换它实际使用的 definitions / 本地引用 / tuple 为 2020-12，按 Schema 位置递归，不扫描 const / default / examples 普通数据。比较过的 json-schema-migrate 2.0.0 实测未将该输出的 definitions 与方言完整迁移，已移除；这属于实施适配，不新增结构源或通用生成平台。转换有递归 / tuple 等价与 Literal 保留测试，所有根输出经 Ajv2020 严格编译，嵌入 JsonSchema 引用标准 2020-12 meta-schema。
+
+```bash
+pnpm --filter @form-engine/protocol schema:generate
+pnpm --filter @form-engine/protocol schema:check
+pnpm --filter @form-engine/protocol typecheck
+pnpm --filter @form-engine/protocol test
+pnpm --filter @form-engine/protocol build
+```
+
+生成文件集中在包内 schemas，不手改，不让 Prettier 另行重排；schema:check 比较确定性输出。根 pnpm check 在 build 前先执行 protocol:schema:check，避免构建自动刷新文件掩盖未同步的提交。Turbo build 缓存包含 schemas，打包 files / exports 包含三领域类型 / 空运行入口与 Schema 资源；消费类型不加载 Ajv / 生成器，二者只是开发依赖。生产源保持无 Node / UI 依赖，Node 测试使用独立 tsconfig.tests.json。
+
+pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / 测试、跨包与 HTTP 集成、六包隔离 tarball 消费、文档同步。隔离消费者验证三领域的 JS / .d.ts、Schema 子路径、生产与 development 条件，并通过负类型样例拒绝 Event 作为命令写入目标。包内正反例覆盖递归 ValueSpec、Literal、严格 Union、数组位置、Authoring 隔离、嵌入 Schema、物料 / Host 和 Prepared。未改应用交互，本轮未运行浏览器 E2E；未修改 docs/validation 候选源或将其报告升级为正式契约证据。
+
+完整字段的交叉引用、Scope 绑定、签名兼容、规则前置、计划 ID / 资源闭包、锁与格式装载检查属于 Compiler / Runtime 后续消费验证；结构测试通过不证明这些算法已实现。Prepared 测试对象是手写夹具，不是 Compiler 生成结果。本次首次实施及范围见 [SRC-PROTOCOLIMPLEMENTATION](source-map.md#src-protocolimplementation)。
+
+提交前审查复现并修复两项问题：Authoring bind 改为复用 JsonPointer 约束，拒绝 name / 非法 ~ 转义，注释明确规范化尚未实现；完整检查在构建前拦截失步 Schema。实际临时改动生成文件后验证 pnpm check 提前失败且不重写文件，再恢复原文。Protocol 的 28 个用例通过，最终全仓检查随提交前复验。

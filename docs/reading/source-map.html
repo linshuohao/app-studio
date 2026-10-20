@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
+  <script src="assets/knowledge-index.js?v=abd35af6baae" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -166,6 +166,8 @@
 <p>2026-10-21 本次对话用户明确字段 / 规则引用是已有讨论方向，确认前置按 Scope ID 唯一实例绑定、本期不增加集合 or / any、仅等待同步校验，多步异步封装在同一 Host 能力。见<a href="design-history.html#prerequisite-scope-confirmed" rel="noopener noreferrer">演进</a>、<a href="l3-validation.html#prerequisite-scope-contract" rel="noopener noreferrer">L3 契约</a>与 ADR-FE-010。未保存或伪造逐字会话快照；字段资格集合、正式语法和生产实现未随本次确认完成。</p>
 <h3 id="src-protocolbaseline">SRC-PROTOCOLBASELINE：协议包完整草案确认与开发准备</h3>
 <p>2026-10-21 本次对话用户明确接受完整剩余草案，要求先实施、实际使用发现问题后迭代，不再继续细节访谈。确认范围见<a href="design-history.html#protocol-baseline-confirmed" rel="noopener noreferrer">演进</a>及<a href="l1/08-decisions-release.html#protocol-development-baseline" rel="noopener noreferrer">首批开发基线</a>，详细机制归现有 L1 / L2 / L3 及对应 ADR。未保存或伪造逐字会话快照；本轮无正式协议代码或生产验收证据，不将规范确认扩大成全引擎 API 冻结。</p>
+<h3 id="src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION：Protocol 首批代码与本地验收</h3>
+<p>2026-10-21 用户授权先提交设计再开始编码；设计提交 8eeb321，Protocol 代码位于 packages/protocol，公共消费检查位于 tools/engineering/check-packages.mjs 与 tests/integration/protocol.test.ts。现行<a href="engineering.html#protocol-implementation" rel="noopener noreferrer">工程实施</a>、<a href="l1/08-decisions-release.html#protocol-initial-implementation" rel="noopener noreferrer">L1 实施状态</a>与<a href="design-history.html#protocol-contracts-implemented" rel="noopener noreferrer">演进</a>记录真实范围。版本来自 pnpm 实际安装与锁，测试来源是实际 pnpm check 输出；不伪造浏览器、Compiler / Runtime 或 Dart 验收证据。</p>
 <h3 id="src-workflows">SRC-WORKFLOWS：项目工作流确认与调研依据</h3>
 <p>2026-10-20 本次对话中用户要求兼顾效率、可靠性和持续演进，以真实任务理解流程后，明确要求按五类建设说明文档与工作流；第三方 skill / 工具先说明，由用户决定是否安装。现行说明见 <a href="workflows.html" rel="noopener noreferrer">项目工作流</a>，执行入口位于仓库 <code>.agents/skills/</code>，演进见 <a href="design-history.html#workflow-established" rel="noopener noreferrer">工作流建设记录</a>。未保存或伪造逐字对话快照。</p>
 <p>调研用于选型参考，不将厂商案例或研究直接提升为项目共识：<a href="https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html" rel="noopener noreferrer">SDD 层次分析</a>、<a href="https://arxiv.org/abs/2608.25202v4" rel="noopener noreferrer">SDD 实践研究（2026-10-15 修订）</a>、<a href="https://www.anthropic.com/engineering/harness-design-long-running-apps" rel="noopener noreferrer">长任务 harness</a>、<a href="https://dora.dev/research/2025/dora-report/" rel="noopener noreferrer">DORA</a>、<a href="https://metr.org/blog/2026-02-24-uplift-update/" rel="noopener noreferrer">METR 更新</a>。仓库 skill 发现机制依据 <a href="https://learn.chatgpt.com/docs/build-skills" rel="noopener noreferrer">官方文档</a>。查阅日期为 2026-10-20；这些资料不证明本项目已提效，候选第三方工具未安装。</p>

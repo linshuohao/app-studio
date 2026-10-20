@@ -1,0 +1,1051 @@
+{
+  "$defs": {
+    "AfterPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "after",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
+    "ArrayInsertCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "array.insert",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "position",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ArrayMoveCommand": {
+      "additionalProperties": false,
+      "description": "The member identity is retained; an invalid destination must not leave a partial removal.",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "op": {
+          "const": "array.move",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item",
+        "position"
+      ],
+      "type": "object"
+    },
+    "ArrayPosition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IndexPosition"
+        },
+        {
+          "$ref": "#/$defs/BeforePosition"
+        },
+        {
+          "$ref": "#/$defs/AfterPosition"
+        }
+      ]
+    },
+    "ArrayRemoveCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "op": {
+          "const": "array.remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item"
+      ],
+      "type": "object"
+    },
+    "AuthoringFormDefinition": {
+      "additionalProperties": false,
+      "description": "Conflicting shorthand/canonical fields require a Compiler diagnostic, not silent precedence.",
+      "properties": {
+        "constraints": {
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          },
+          "type": "array"
+        },
+        "data": {
+          "additionalProperties": false,
+          "properties": {
+            "schema": {
+              "$ref": "#/$defs/JsonSchema"
+            }
+          },
+          "required": [
+            "schema"
+          ],
+          "type": "object"
+        },
+        "expressions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Expression"
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        "protocolVersion": {
+          "type": "string"
+        },
+        "reactions": {
+          "items": {
+            "$ref": "#/$defs/Reaction"
+          },
+          "type": "array"
+        },
+        "validationMessages": {
+          "items": {
+            "$ref": "#/$defs/SchemaMessageOverride"
+          },
+          "type": "array"
+        },
+        "version": {
+          "type": "string"
+        },
+        "viewTemplates": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AuthoringViewTemplate"
+          },
+          "type": "object"
+        },
+        "views": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AuthoringViewNode"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "data",
+        "id",
+        "protocolVersion",
+        "version",
+        "views"
+      ],
+      "type": "object"
+    },
+    "AuthoringMaterialNode": {
+      "additionalProperties": false,
+      "description": "Intended Compiler input for shorthand normalization; this package does not implement normalization.",
+      "properties": {
+        "bind": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "bindings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DataReference"
+          },
+          "description": "Names and expected data types are declared by the material. No read/write permissions.",
+          "type": "object"
+        },
+        "children": {
+          "items": {
+            "$ref": "#/$defs/AuthoringViewNode"
+          },
+          "type": "array"
+        },
+        "material": {
+          "type": "string"
+        },
+        "on": {
+          "additionalProperties": {
+            "$ref": "#/$defs/InteractionIntent"
+          },
+          "type": "object"
+        },
+        "props": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "object"
+        },
+        "slots": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/AuthoringViewNode"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "material"
+      ],
+      "type": "object"
+    },
+    "AuthoringScopeNode": {
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/AuthoringViewNode"
+        },
+        "scope": {
+          "$ref": "#/$defs/ScopeBinder"
+        }
+      },
+      "required": [
+        "node",
+        "scope"
+      ],
+      "type": "object"
+    },
+    "AuthoringViewNode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthoringMaterialNode"
+        },
+        {
+          "$ref": "#/$defs/AuthoringScopeNode"
+        },
+        {
+          "$ref": "#/$defs/TemplateUse"
+        }
+      ]
+    },
+    "AuthoringViewTemplate": {
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/AuthoringViewNode"
+        },
+        "params": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplateDataParam"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "node"
+      ],
+      "type": "object"
+    },
+    "BatchCommand": {
+      "additionalProperties": false,
+      "description": "Ordered and non-atomic: a later failure does not roll back earlier successful commands.",
+      "properties": {
+        "commands": {
+          "items": {
+            "$ref": "#/$defs/Command"
+          },
+          "type": "array"
+        },
+        "op": {
+          "const": "batch",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "commands"
+      ],
+      "type": "object"
+    },
+    "BeforePosition": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "before",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
+    "CallExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "items": {
+            "$ref": "#/$defs/Expression"
+          },
+          "type": "array"
+        },
+        "op": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "args"
+      ],
+      "type": "object"
+    },
+    "Command": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SetCommand"
+        },
+        {
+          "$ref": "#/$defs/PatchCommand"
+        },
+        {
+          "$ref": "#/$defs/RemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayInsertCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayRemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayMoveCommand"
+        },
+        {
+          "$ref": "#/$defs/BatchCommand"
+        }
+      ]
+    },
+    "CommandIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/Command"
+        },
+        "type": {
+          "const": "form.command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "command"
+      ],
+      "type": "object"
+    },
+    "Constraint": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InternalConstraint"
+        },
+        {
+          "$ref": "#/$defs/ExternalConstraint"
+        }
+      ]
+    },
+    "ConstraintPrerequisite": {
+      "additionalProperties": false,
+      "description": "Compiler rejects External targets, cycles, self-inclusion and ambiguous Scope binding.",
+      "properties": {
+        "constraintId": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "constraint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "constraintId"
+      ],
+      "type": "object"
+    },
+    "ContextReference": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "context",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "DataReference": {
+      "additionalProperties": false,
+      "description": "A lexical data location, not a snapshot value or runtime member identity.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "const": "data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "EventReference": {
+      "additionalProperties": false,
+      "description": "Only valid while processing the material event that supplied this payload.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "event",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "Expression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ReferenceExpression"
+        },
+        {
+          "$ref": "#/$defs/NamedExpression"
+        },
+        {
+          "$ref": "#/$defs/CallExpression"
+        },
+        {
+          "$ref": "#/$defs/LiteralExpression"
+        }
+      ]
+    },
+    "ExpressionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "$expr": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "$expr"
+      ],
+      "type": "object"
+    },
+    "ExternalConstraint": {
+      "additionalProperties": false,
+      "description": "Host reads this invocation's snapshot/Scope; watch covers opaque data dependencies.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "external",
+          "type": "string"
+        },
+        "requires": {
+          "items": {
+            "$ref": "#/$defs/ValidationPrerequisite"
+          },
+          "type": "array"
+        },
+        "scope": {
+          "$ref": "#/$defs/ScopeDeclaration"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "validator": {
+          "description": "Independent capability name; never inferred from this rule's id.",
+          "type": "string"
+        },
+        "watch": {
+          "items": {
+            "$ref": "#/$defs/DataReference"
+          },
+          "type": "array"
+        },
+        "when": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "validator",
+        "watch",
+        "target"
+      ],
+      "type": "object"
+    },
+    "FieldPrerequisite": {
+      "additionalProperties": false,
+      "description": "Synchronous eligibility only; this is not complete field validity.",
+      "properties": {
+        "kind": {
+          "const": "field",
+          "type": "string"
+        },
+        "phase": {
+          "const": "sync",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "kind",
+        "target",
+        "phase"
+      ],
+      "type": "object"
+    },
+    "HostEventIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ValueSpec"
+        },
+        "type": {
+          "const": "host.emit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "event"
+      ],
+      "type": "object"
+    },
+    "IndexPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "description": "Final index for move; 0..length for insert. Bounds use execution-time data.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "index",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "index"
+      ],
+      "type": "object"
+    },
+    "InteractionIntent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CommandIntent"
+        },
+        {
+          "$ref": "#/$defs/HostEventIntent"
+        }
+      ]
+    },
+    "InternalConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "assert": {
+          "$ref": "#/$defs/Expression"
+        },
+        "id": {
+          "type": "string"
+        },
+        "issue": {
+          "$ref": "#/$defs/IssueDefinition"
+        },
+        "kind": {
+          "const": "internal",
+          "type": "string"
+        },
+        "requires": {
+          "items": {
+            "$ref": "#/$defs/ValidationPrerequisite"
+          },
+          "type": "array"
+        },
+        "scope": {
+          "$ref": "#/$defs/ScopeDeclaration"
+        },
+        "when": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "assert",
+        "issue"
+      ],
+      "type": "object"
+    },
+    "IssueDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/MessageSpec"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "target",
+        "code"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPointer": {
+      "description": "JSON Pointer: empty string is the root; '/' addresses an empty property name.",
+      "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
+      "type": "string"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonSchema": {
+      "$ref": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "LiteralExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "literal"
+      ],
+      "type": "object"
+    },
+    "LiteralValue": {
+      "additionalProperties": false,
+      "description": "The enclosed JSON is not recursively interpreted as ValueSpec.",
+      "properties": {
+        "$literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "$literal"
+      ],
+      "type": "object"
+    },
+    "MessageSpec": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "A message is presentation only; it never changes validation eligibility."
+    },
+    "NamedExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "use": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "use"
+      ],
+      "type": "object"
+    },
+    "PatchCommand": {
+      "additionalProperties": false,
+      "description": "Shallow patch, not a recursive merge.",
+      "properties": {
+        "op": {
+          "const": "patch",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Reaction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "runOnActivate": {
+          "description": "Default false. Only applies when a new rule instance is first established.",
+          "type": "boolean"
+        },
+        "scope": {
+          "$ref": "#/$defs/ScopeDeclaration"
+        },
+        "then": {
+          "items": {
+            "$ref": "#/$defs/Command"
+          },
+          "type": "array"
+        },
+        "watch": {
+          "description": "Explicit triggers; when/command reads are not silently added.",
+          "items": {
+            "$ref": "#/$defs/DataReference"
+          },
+          "type": "array"
+        },
+        "when": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "id",
+        "watch",
+        "then"
+      ],
+      "type": "object"
+    },
+    "Reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataReference"
+        },
+        {
+          "$ref": "#/$defs/ContextReference"
+        },
+        {
+          "$ref": "#/$defs/EventReference"
+        }
+      ]
+    },
+    "ReferenceExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/Reference"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "type": "object"
+    },
+    "RemoveCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target"
+      ],
+      "type": "object"
+    },
+    "SchemaMessageOverride": {
+      "additionalProperties": false,
+      "description": "schemaRef points into the root data schema, not a mutable array member path.",
+      "properties": {
+        "keyword": {
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/MessageSpec"
+        },
+        "schemaRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaRef",
+        "keyword",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ScopeBinder": {
+      "additionalProperties": false,
+      "properties": {
+        "as": {
+          "type": "string"
+        },
+        "from": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "mode": {
+          "enum": [
+            "one",
+            "each"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "as"
+      ],
+      "type": "object"
+    },
+    "ScopeDeclaration": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScopeBinder"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/ScopeBinder"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      ],
+      "description": "Ordered lexical bindings. Scope visibility/order is checked by the Compiler."
+    },
+    "ScopeHandleReference": {
+      "additionalProperties": false,
+      "description": "Stable member identity resolved through a visible lexical scope.",
+      "properties": {
+        "$scope": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "$scope"
+      ],
+      "type": "object"
+    },
+    "SetCommand": {
+      "additionalProperties": false,
+      "description": "Replace the value at a writable location; business validity is checked separately.",
+      "properties": {
+        "op": {
+          "const": "set",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TemplateDataParam": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaRef"
+      ],
+      "type": "object"
+    },
+    "TemplateUse": {
+      "additionalProperties": false,
+      "properties": {
+        "$use": {
+          "type": "string"
+        },
+        "with": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DataReference"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "$use"
+      ],
+      "type": "object"
+    },
+    "ValidationPrerequisite": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FieldPrerequisite"
+        },
+        {
+          "$ref": "#/$defs/ConstraintPrerequisite"
+        }
+      ]
+    },
+    "ValueObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ValueSpec"
+      },
+      "description": "Ordinary object keys exclude the two protocol wrappers.",
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "$expr",
+            "$literal"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ValueSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ExpressionValue"
+        },
+        {
+          "$ref": "#/$defs/LiteralValue"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/ValueObject"
+        }
+      ]
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/authoring-form-definition.schema.json",
+  "$ref": "#/$defs/AuthoringFormDefinition",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -8,7 +8,7 @@
   <title>整体架构设计 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
+  <script src="assets/knowledge-index.js?v=abd35af6baae" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -492,7 +492,7 @@
 <div class="code-box"><div class="code-head"><span>TEXT</span><button class="copy" type="button">复制</button></div><pre><code>项目根目录/
 ├── apps/                         # 已有轻量 Next.js playground
 ├── packages/
-│   ├── protocol/                 # 脚手架与工程验证入口
+│   ├── protocol/                 # 三领域类型、Schema 生成与结构验收
 │   ├── compiler/                 # 脚手架与工程验证入口
 │   ├── runtime/                  # 脚手架与工程验证入口
 │   ├── renderer-react/           # 脚手架与工程验证入口
@@ -504,7 +504,7 @@
 ├── tests/                        # 已有跨包 / 浏览器工程验收
 └── docs/                         # 保留现有设计、阅读视图、历史与验证证据
 </code></pre></div>
-<p>最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。只有工程接入样例，没有生产协议 Schema 或完整核心实现，详见<a href="engineering.html#engineering-implementation" rel="noopener noreferrer">实际初始化记录</a>。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。</p>
+<p>最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。工程初始化时只有接入样例；后续已完成 Protocol 首批三领域类型与 Schema 结构验收，仍无完整核心执行实现，详见<a href="engineering.html#engineering-implementation" rel="noopener noreferrer">实际初始化记录</a>。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。</p>
 <p>单元测试随模块维护，tests 承载跨模块验收与可复用行为用例；具体 fixture / support / conformance / integration / e2e 组织在工具选型后细化。CLI 初期可放 tools，只有需要独立分发时再提升为包。普通子目录与文件名可合理演进，无须逐项重新决策。</p>
 <h4 id="多语言与一致性的最小准备">多语言与一致性的最小准备</h4>
 <p>当前只实现 TS。统一协议源可位于 packages/protocol，未来 Dart 绑定由它派生，不能在 packages-flutter 重新维护一份协议。生成适合覆盖类型、枚举、编解码及结构检查的可支持部分，不承诺由协议结构生成完整 Runtime 或跨框架 UI。2026-10-21 已确认以原生 TS 类型声明及 JSDoc 为权威结构源，自动生成 JSON Schema，Compiler 使用 Ajv 做结构校验；见 <a href="l1/08-decisions-release.html#protocol-structure-source" rel="noopener noreferrer">L1 结构源与校验链路</a>及 <a href="decisions/ADR-FE-015-protocol-source.html" rel="noopener noreferrer">ADR-FE-015</a>。具体 TS → Schema 生成器、约束注解及支持子集仍待实施固化，优先复用现成工具，不首期自建通用生成平台。协议生成产物不得把允许业务不合法的 Working Data 强制收窄为始终合法的业务模型。</p>

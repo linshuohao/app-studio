@@ -1,0 +1,90 @@
+{
+  "$defs": {
+    "FunctionParameter": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "schema": {
+          "$ref": "#/$defs/JsonSchema"
+        }
+      },
+      "required": [
+        "name",
+        "schema"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonSchema": {
+      "$ref": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "PureFunctionManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/$defs/FunctionParameter"
+          },
+          "type": "array"
+        },
+        "restParameter": {
+          "$ref": "#/$defs/FunctionParameter"
+        },
+        "returns": {
+          "$ref": "#/$defs/JsonSchema"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "parameters",
+        "returns"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/pure-function-manifest.schema.json",
+  "$ref": "#/$defs/PureFunctionManifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

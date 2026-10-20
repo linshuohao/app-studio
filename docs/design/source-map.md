@@ -118,6 +118,10 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 2026-10-21 本次对话用户明确接受完整剩余草案，要求先实施、实际使用发现问题后迭代，不再继续细节访谈。确认范围见[演进](design-history.md#protocol-baseline-confirmed)及[首批开发基线](l1/08-decisions-release.md#protocol-development-baseline)，详细机制归现有 L1 / L2 / L3 及对应 ADR。未保存或伪造逐字会话快照；本轮无正式协议代码或生产验收证据，不将规范确认扩大成全引擎 API 冻结。
 
+### SRC-PROTOCOLIMPLEMENTATION：Protocol 首批代码与本地验收 {#src-protocolimplementation}
+
+2026-10-21 用户授权先提交设计再开始编码；设计提交 8eeb321，Protocol 代码位于 packages/protocol，公共消费检查位于 tools/engineering/check-packages.mjs 与 tests/integration/protocol.test.ts。现行[工程实施](engineering.md#protocol-implementation)、[L1 实施状态](l1/08-decisions-release.md#protocol-initial-implementation)与[演进](design-history.md#protocol-contracts-implemented)记录真实范围。版本来自 pnpm 实际安装与锁，测试来源是实际 pnpm check 输出；不伪造浏览器、Compiler / Runtime 或 Dart 验收证据。
+
 ### SRC-WORKFLOWS：项目工作流确认与调研依据 {#src-workflows}
 
 2026-10-20 本次对话中用户要求兼顾效率、可靠性和持续演进，以真实任务理解流程后，明确要求按五类建设说明文档与工作流；第三方 skill / 工具先说明，由用户决定是否安装。现行说明见 [项目工作流](workflows.md)，执行入口位于仓库 `.agents/skills/`，演进见 [工作流建设记录](design-history.md#workflow-established)。未保存或伪造逐字对话快照。

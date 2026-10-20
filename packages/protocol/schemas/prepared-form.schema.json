@@ -1,0 +1,1388 @@
+{
+  "$defs": {
+    "ArtifactIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/ContentDigest"
+        },
+        "id": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "platform",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "CapabilityLock": {
+      "additionalProperties": false,
+      "description": "Includes core.* entries or their immutable function-set artifact.",
+      "properties": {
+        "materials": {
+          "additionalProperties": {
+            "$ref": "#/$defs/LockedCapability"
+          },
+          "type": "object"
+        },
+        "pureFunctions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/LockedCapability"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "materials",
+        "pureFunctions"
+      ],
+      "type": "object"
+    },
+    "ContentDigest": {
+      "description": "Digest of immutable content, including the algorithm identifier.",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "DefinitionSourceLocation": {
+      "additionalProperties": false,
+      "properties": {
+        "documentId": {
+          "type": "string"
+        },
+        "pointer": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "documentId",
+        "pointer"
+      ],
+      "type": "object"
+    },
+    "HostEventRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "optional"
+      ],
+      "type": "object"
+    },
+    "HostRequirements": {
+      "additionalProperties": false,
+      "properties": {
+        "events": {
+          "items": {
+            "$ref": "#/$defs/HostEventRequirement"
+          },
+          "type": "array"
+        },
+        "services": {
+          "items": {
+            "$ref": "#/$defs/HostServiceRequirement"
+          },
+          "type": "array"
+        },
+        "validators": {
+          "items": {
+            "$ref": "#/$defs/HostValidatorRequirement"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "validators",
+        "events",
+        "services"
+      ],
+      "type": "object"
+    },
+    "HostServiceRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "contractVersion",
+        "optional"
+      ],
+      "type": "object"
+    },
+    "HostValidatorRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "constraintIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "contractVersion": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "constraintIds"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonSchema": {
+      "$ref": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "LockedCapability": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ArtifactIdentity"
+        },
+        "id": {
+          "type": "string"
+        },
+        "manifestDigest": {
+          "$ref": "#/$defs/ContentDigest"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "manifestDigest",
+        "artifact"
+      ],
+      "type": "object"
+    },
+    "MessageSpec": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "A message is presentation only; it never changes validation eligibility."
+    },
+    "PreparedArrayPosition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreparedIndexPosition"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "item": {
+              "$ref": "#/$defs/PreparedScopeHandle"
+            },
+            "kind": {
+              "const": "before",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "item"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "item": {
+              "$ref": "#/$defs/PreparedScopeHandle"
+            },
+            "kind": {
+              "const": "after",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "item"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedCommand": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set",
+              "type": "string"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "value": {
+              "$ref": "#/$defs/PreparedValueSpec"
+            }
+          },
+          "required": [
+            "op",
+            "target",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "patch",
+              "type": "string"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "value": {
+              "additionalProperties": {
+                "$ref": "#/$defs/PreparedValueSpec"
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "op",
+            "target",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "remove",
+              "type": "string"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            }
+          },
+          "required": [
+            "op",
+            "target"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "array.insert",
+              "type": "string"
+            },
+            "position": {
+              "$ref": "#/$defs/PreparedArrayPosition"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "value": {
+              "$ref": "#/$defs/PreparedValueSpec"
+            }
+          },
+          "required": [
+            "op",
+            "target",
+            "position",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "item": {
+              "$ref": "#/$defs/PreparedScopeHandle"
+            },
+            "op": {
+              "const": "array.remove",
+              "type": "string"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            }
+          },
+          "required": [
+            "op",
+            "target",
+            "item"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "item": {
+              "$ref": "#/$defs/PreparedScopeHandle"
+            },
+            "op": {
+              "const": "array.move",
+              "type": "string"
+            },
+            "position": {
+              "$ref": "#/$defs/PreparedArrayPosition"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            }
+          },
+          "required": [
+            "op",
+            "target",
+            "item",
+            "position"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "commands": {
+              "items": {
+                "$ref": "#/$defs/PreparedCommand"
+              },
+              "type": "array"
+            },
+            "op": {
+              "const": "batch",
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "commands"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "executor": {
+          "$ref": "#/$defs/PreparedConstraintExecutor"
+        },
+        "id": {
+          "type": "string"
+        },
+        "observationId": {
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "$ref": "#/$defs/PreparedPrerequisite"
+          },
+          "type": "array"
+        },
+        "scopePatternId": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/PreparedDataReference"
+        },
+        "when": {
+          "$ref": "#/$defs/PreparedExpression"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "executor",
+        "prerequisites",
+        "observationId"
+      ],
+      "type": "object"
+    },
+    "PreparedConstraintExecutor": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "assert": {
+              "$ref": "#/$defs/PreparedExpression"
+            },
+            "code": {
+              "type": "string"
+            },
+            "kind": {
+              "const": "internal",
+              "type": "string"
+            },
+            "message": {
+              "$ref": "#/$defs/MessageSpec"
+            }
+          },
+          "required": [
+            "kind",
+            "assert",
+            "code"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "external",
+              "type": "string"
+            },
+            "validator": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "validator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedDataReference": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "base": {
+              "const": "root",
+              "type": "string"
+            },
+            "path": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "source": {
+              "const": "data",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "base",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "base": {
+              "const": "scope",
+              "type": "string"
+            },
+            "path": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "scopePatternId": {
+              "$ref": "#/$defs/ScopePatternId"
+            },
+            "source": {
+              "const": "data",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "base",
+            "scopePatternId",
+            "path"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedDependency": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "aspect": {
+              "enum": [
+                "value",
+                "structure"
+              ],
+              "type": "string"
+            },
+            "reference": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "source": {
+              "const": "data",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "reference",
+            "aspect"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "reference": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "source": {
+              "const": "validation",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "reference"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "reference": {
+              "$ref": "#/$defs/PreparedDataReference"
+            },
+            "source": {
+              "const": "field-meta",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "reference"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedDependencyPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "observations": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedObservation"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "observations"
+      ],
+      "type": "object"
+    },
+    "PreparedExpression": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "constant",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/JsonPrimitive"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "reference",
+              "type": "string"
+            },
+            "reference": {
+              "$ref": "#/$defs/PreparedReference"
+            }
+          },
+          "required": [
+            "kind",
+            "reference"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "expressionId": {
+              "type": "string"
+            },
+            "kind": {
+              "const": "expression",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "expressionId"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/$defs/PreparedExpression"
+              },
+              "type": "array"
+            },
+            "functionId": {
+              "type": "string"
+            },
+            "kind": {
+              "const": "call",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "functionId",
+            "args"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Resolved typed tree. No original lexical names or Runtime dependency analysis."
+    },
+    "PreparedForm": {
+      "additionalProperties": false,
+      "description": "Immutable reusable JSON artifact. Runtime consumes only its exact supported format.",
+      "properties": {
+        "capabilityLock": {
+          "$ref": "#/$defs/CapabilityLock"
+        },
+        "dependencyPlan": {
+          "$ref": "#/$defs/PreparedDependencyPlan"
+        },
+        "formPlan": {
+          "$ref": "#/$defs/PreparedFormPlan"
+        },
+        "hostRequirements": {
+          "$ref": "#/$defs/HostRequirements"
+        },
+        "identity": {
+          "$ref": "#/$defs/PreparedIdentity"
+        },
+        "preparedFormatVersion": {
+          "type": "string"
+        },
+        "sources": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/DefinitionSourceLocation"
+            },
+            "type": "array"
+          },
+          "description": "Prepared entity id to original definition location; not the full Compiler analysis graph.",
+          "type": "object"
+        },
+        "viewPlan": {
+          "$ref": "#/$defs/PreparedViewPlan"
+        }
+      },
+      "required": [
+        "preparedFormatVersion",
+        "identity",
+        "formPlan",
+        "viewPlan",
+        "dependencyPlan",
+        "capabilityLock",
+        "hostRequirements"
+      ],
+      "type": "object"
+    },
+    "PreparedFormPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "expressions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedExpression"
+          },
+          "type": "object"
+        },
+        "reactions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedReaction"
+          },
+          "type": "object"
+        },
+        "scopes": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedScopePattern"
+          },
+          "type": "object"
+        },
+        "validation": {
+          "$ref": "#/$defs/PreparedValidationPlan"
+        }
+      },
+      "required": [
+        "scopes",
+        "expressions",
+        "reactions",
+        "validation"
+      ],
+      "type": "object"
+    },
+    "PreparedIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "catalogSnapshotId": {
+          "type": "string"
+        },
+        "compilerVersion": {
+          "type": "string"
+        },
+        "definitionId": {
+          "type": "string"
+        },
+        "definitionVersion": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "protocolVersion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "definitionId",
+        "definitionVersion",
+        "protocolVersion",
+        "compilerVersion",
+        "catalogSnapshotId",
+        "profile",
+        "platform"
+      ],
+      "type": "object"
+    },
+    "PreparedIndexPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "index",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "index"
+      ],
+      "type": "object"
+    },
+    "PreparedInteractionIntent": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "$ref": "#/$defs/PreparedCommand"
+            },
+            "type": {
+              "const": "form.command",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "command"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "event": {
+              "type": "string"
+            },
+            "payload": {
+              "$ref": "#/$defs/PreparedValueSpec"
+            },
+            "type": {
+              "const": "host.emit",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "event"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedMaterialNode": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedDataReference"
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "material",
+          "type": "string"
+        },
+        "materialId": {
+          "type": "string"
+        },
+        "observationId": {
+          "type": "string"
+        },
+        "on": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedInteractionIntent"
+          },
+          "type": "object"
+        },
+        "props": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedValueSpec"
+          },
+          "type": "object"
+        },
+        "slots": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/PreparedViewNode"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "materialId",
+        "props",
+        "bindings",
+        "slots",
+        "on"
+      ],
+      "type": "object"
+    },
+    "PreparedObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "activationOwner": {
+          "enum": [
+            "runtime",
+            "view-mounted"
+          ],
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/PreparedDependency"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "reaction",
+                "constraint",
+                "view"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ],
+          "type": "object"
+        },
+        "scopePatternId": {
+          "$ref": "#/$defs/ScopePatternId"
+        }
+      },
+      "required": [
+        "id",
+        "owner",
+        "dependencies",
+        "activationOwner"
+      ],
+      "type": "object"
+    },
+    "PreparedPrerequisite": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "constraintId": {
+              "type": "string"
+            },
+            "kind": {
+              "const": "constraint",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "constraintId"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "constraintIds": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "const": "field",
+              "type": "string"
+            },
+            "phase": {
+              "const": "sync",
+              "type": "string"
+            },
+            "target": {
+              "$ref": "#/$defs/PreparedDataReference"
+            }
+          },
+          "required": [
+            "kind",
+            "target",
+            "phase",
+            "constraintIds"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedReaction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "observationId": {
+          "type": "string"
+        },
+        "runOnActivate": {
+          "type": "boolean"
+        },
+        "scopePatternId": {
+          "type": "string"
+        },
+        "then": {
+          "items": {
+            "$ref": "#/$defs/PreparedCommand"
+          },
+          "type": "array"
+        },
+        "when": {
+          "$ref": "#/$defs/PreparedExpression"
+        }
+      },
+      "required": [
+        "id",
+        "observationId",
+        "runOnActivate",
+        "then"
+      ],
+      "type": "object"
+    },
+    "PreparedReference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreparedDataReference"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "source": {
+              "const": "context",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "source": {
+              "const": "event",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "path"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "PreparedSchemaMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "keyword": {
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/MessageSpec"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "schemaPath": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "resourceId",
+        "schemaPath",
+        "keyword",
+        "message"
+      ],
+      "type": "object"
+    },
+    "PreparedSchemaResource": {
+      "additionalProperties": false,
+      "description": "Local, immutable closure. No Runtime remote $ref fetching or JS functions.",
+      "properties": {
+        "schema": {
+          "$ref": "#/$defs/JsonSchema"
+        }
+      },
+      "required": [
+        "schema"
+      ],
+      "type": "object"
+    },
+    "PreparedScopeHandle": {
+      "additionalProperties": false,
+      "properties": {
+        "scopePatternId": {
+          "$ref": "#/$defs/ScopePatternId"
+        }
+      },
+      "required": [
+        "scopePatternId"
+      ],
+      "type": "object"
+    },
+    "PreparedScopeNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "scope",
+          "type": "string"
+        },
+        "node": {
+          "$ref": "#/$defs/PreparedViewNode"
+        },
+        "scopePatternId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "scopePatternId",
+        "node"
+      ],
+      "type": "object"
+    },
+    "PreparedScopePattern": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/PreparedDataReference"
+        },
+        "id": {
+          "$ref": "#/$defs/ScopePatternId"
+        },
+        "mode": {
+          "enum": [
+            "one",
+            "each"
+          ],
+          "type": "string"
+        },
+        "parentId": {
+          "$ref": "#/$defs/ScopePatternId"
+        }
+      },
+      "required": [
+        "id",
+        "from",
+        "mode"
+      ],
+      "type": "object"
+    },
+    "PreparedValidationPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "constraints": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedConstraint"
+          },
+          "type": "object"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/PreparedSchemaMessage"
+          },
+          "type": "array"
+        },
+        "rootSchemaResourceId": {
+          "type": "string"
+        },
+        "schemaResources": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedSchemaResource"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "rootSchemaResourceId",
+        "schemaResources",
+        "constraints",
+        "messages"
+      ],
+      "type": "object"
+    },
+    "PreparedValueObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/PreparedValueSpec"
+      },
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "$expr",
+            "$literal"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "PreparedValueSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "$expr": {
+              "$ref": "#/$defs/PreparedExpression"
+            }
+          },
+          "required": [
+            "$expr"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "$literal": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "required": [
+            "$literal"
+          ],
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/PreparedValueSpec"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/PreparedValueObject"
+        }
+      ]
+    },
+    "PreparedViewNode": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreparedMaterialNode"
+        },
+        {
+          "$ref": "#/$defs/PreparedScopeNode"
+        }
+      ],
+      "description": "Templates are expanded at compile time; no TemplateUse branch remains."
+    },
+    "PreparedViewPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/PreparedViewNode"
+        }
+      },
+      "required": [
+        "root"
+      ],
+      "type": "object"
+    },
+    "ScopePatternId": {
+      "description": "Static pattern id. Runtime member Scope IDs are never serialized here.",
+      "type": "string"
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/prepared-form.schema.json",
+  "$ref": "#/$defs/PreparedForm",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

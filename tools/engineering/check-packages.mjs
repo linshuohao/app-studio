@@ -59,6 +59,11 @@ try {
     assert.match(markup, /fe-engineering-input/);
     const css = readFileSync(new URL(import.meta.resolve('@form-engine/materials-react/styles.css')), 'utf8');
     assert.match(css, /fe-engineering-input/);
+    const protocolSchema = JSON.parse(readFileSync(new URL(import.meta.resolve('@form-engine/protocol/schemas/form-definition.schema.json')), 'utf8'));
+    assert.equal(protocolSchema.$schema, 'https://json-schema.org/draft/2020-12/schema');
+    for (const domain of ['definition', 'capability', 'prepared']) {
+      assert.deepEqual(Object.keys(await import('@form-engine/protocol/' + domain)), []);
+    }
     console.log('Isolated packed consumer: JS, exports, React and CSS passed');
   `,
   );
@@ -70,7 +75,7 @@ try {
   });
   writeFileSync(
     join(scratch, 'verify.ts'),
-    `import { inspectEngineeringMarker } from '@form-engine/compiler/engineering';\nimport { EngineeringInput } from '@form-engine/materials-react/engineering';\nimport { EngineeringPanel } from '@form-engine/renderer-react/engineering';\nimport type { ComponentProps } from 'react';\nconst marker: string = inspectEngineeringMarker();\nconst input: ComponentProps<typeof EngineeringInput> = { value: marker };\nconst panel: ComponentProps<typeof EngineeringPanel> = { children: marker };\nexport { marker, input, panel };\n`,
+    `import { inspectEngineeringMarker } from '@form-engine/compiler/engineering';\nimport { EngineeringInput } from '@form-engine/materials-react/engineering';\nimport { EngineeringPanel } from '@form-engine/renderer-react/engineering';\nimport type { ComponentProps } from 'react';\nimport type { FormDefinition, SetCommand, DataReference } from '@form-engine/protocol/definition';\nimport type { MaterialManifest } from '@form-engine/protocol/capability';\nimport type { PreparedForm } from '@form-engine/protocol/prepared';\nconst marker: string = inspectEngineeringMarker();\nconst input: ComponentProps<typeof EngineeringInput> = { value: marker };\nconst panel: ComponentProps<typeof EngineeringPanel> = { children: marker };\nconst reference: DataReference = { source: 'data', path: '/name' };\nconst command: SetCommand = { op: 'set', target: reference, value: 'Ada' };\nconst definition: FormDefinition = { protocolVersion: 'consumer-test', id: 'consumer', version: 'draft', data: { schema: { type: 'object' } }, views: { desktop: { material: 'input', bindings: { value: reference } } } };\nconst manifest: MaterialManifest = { id: 'input', version: 'consumer-test', bindings: { value: { schema: { type: 'string' } } }, slots: ['default'], events: { select: { payloadSchema: { type: 'string' } } } };\ntype PreparedInput = PreparedForm['formPlan'];\n// @ts-expect-error event references are read-only and cannot be command targets\nconst invalid: SetCommand = { op: 'set', target: { source: 'event', path: '/value' }, value: 1 };\nexport type { PreparedInput };\nexport { command, definition, manifest, invalid };\nexport { marker, input, panel };\n`,
   );
   execFileSync(
     process.execPath,

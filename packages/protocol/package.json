@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
-  "description": "Engineering scaffold; production contract pending",
+  "description": "Canonical definitions, capability contracts and prepared JSON artifacts",
   "exports": {
     ".": {
       "development": "./src/index.ts",
@@ -15,19 +15,42 @@
       "development": "./src/engineering.ts",
       "types": "./dist/engineering.d.ts",
       "import": "./dist/engineering.js"
-    }
+    },
+    "./definition": {
+      "development": "./src/definition/index.ts",
+      "types": "./dist/definition/index.d.ts",
+      "import": "./dist/definition/index.js"
+    },
+    "./capability": {
+      "development": "./src/capability/index.ts",
+      "types": "./dist/capability/index.d.ts",
+      "import": "./dist/capability/index.js"
+    },
+    "./prepared": {
+      "development": "./src/prepared/index.ts",
+      "types": "./dist/prepared/index.d.ts",
+      "import": "./dist/prepared/index.js"
+    },
+    "./schemas/*.json": "./schemas/*.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "schemas",
+    "README.md"
   ],
   "scripts": {
-    "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "build": "pnpm schema:generate && tsdown",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest"
+    "test": "pnpm schema:check && vitest run",
+    "test:watch": "vitest",
+    "schema:generate": "node scripts/generate-schemas.mjs",
+    "schema:check": "node scripts/generate-schemas.mjs --check"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
+    "ajv": "^8.20.0",
+    "ts-json-schema-generator": "^2.9.0",
     "tsdown": "^0.23.1",
     "typescript": "6.0.3",
     "vitest": "^5.0.5"
@@ -42,7 +65,20 @@
       "./engineering": {
         "types": "./dist/engineering.d.ts",
         "import": "./dist/engineering.js"
-      }
+      },
+      "./definition": {
+        "types": "./dist/definition/index.d.ts",
+        "import": "./dist/definition/index.js"
+      },
+      "./capability": {
+        "types": "./dist/capability/index.d.ts",
+        "import": "./dist/capability/index.js"
+      },
+      "./prepared": {
+        "types": "./dist/prepared/index.d.ts",
+        "import": "./dist/prepared/index.js"
+      },
+      "./schemas/*.json": "./schemas/*.json"
     }
   }
 }

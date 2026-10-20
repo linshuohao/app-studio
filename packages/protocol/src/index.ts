@@ -1,2 +1,2 @@
-// Public production contract is intentionally not defined by this engineering scaffold.
-export {};
+/** Import domain contracts through /definition, /capability or /prepared. */
+export type * from './common.js';

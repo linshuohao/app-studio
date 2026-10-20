@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
 - SRC-EARLY
 - SRC-L1
@@ -1128,3 +1129,14 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 收敛之前的真实未决项，未另建并行规范；对应现行主题与 ADR-FE-002 / 004 / 010 / 011 / 015 补充。运行时 SDK 仍归各包，具体字段及生成工具按实现整理，发生真实冲突才回到设计。旧概念稿 / 候选示例保留身份、按正式类型实施迁移，不误称已有生产实现。本轮仅归档，未编码、安装或修改协议验证样本。
 
 依据见 [SRC-PROTOCOLBASELINE](source-map.md#src-protocolbaseline)，现行入口见 [开发基线](l1/08-decisions-release.md#protocol-development-baseline)。
+
+
+## 2026-10-21：Protocol 三领域类型与 Schema 首批实施 {#protocol-contracts-implemented}
+
+用户要求先提交再编码。设计基线已提交为 8eeb321，随后在 codex/protocol-contracts 实现三领域完整类型源、10 个派生根 Schema、结构正反例、生成检查与公共包消费。保持现有脚手架、开发源码 / 生产 dist 条件和核心依赖方向，不实现 Compiler / Runtime 或将回调写入 Prepared。
+
+安装 latest 后实际锁定生成器 2.9.0 与 Ajv 8.20.0。原建议迁移工具的已安装 2.0.0 对实际生成输出未完成方言 / definitions 迁移，移除后使用针对生成子集的有限转换，检查引用 / tuple 的跨方言等价并保留 Literal 数据。没有改为手写 Schema 或新增生成平台。
+
+提交前 review 发现 Authoring bind 未复用 Pointer 约束与构建先行掩盖 Schema 失步两项实现问题，补齐结构反例与构建前门禁；未改变设计语义或新增抽象。
+
+全仓 pnpm check 及隔离消费者通过；实际范围与未执行检查见[工程记录](engineering.md#protocol-implementation)。包仍 private，手写 Prepared 夹具不是 Compiler 产物，未发布版本或证明执行 / 跨端完成。来源见 [SRC-PROTOCOLIMPLEMENTATION](source-map.md#src-protocolimplementation)。

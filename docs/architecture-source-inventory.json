@@ -266,8 +266,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 45109,
-      "sha256": "0b530a64010aafe474b97a8e2fa8e8a156fba621d1161ad531e251f70a10dcb9",
+      "bytes": 45192,
+      "sha256": "f93b477dc71c8d75d8437be7dd5d08846e40eda0a075519cd71bf4dd2493ed0b",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -1201,8 +1201,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 133113,
-      "sha256": "6a7f7bb3c96c19ff5a83dbbccabf2d2c2364f662c3fdb1a574d72eac3679fcf0",
+      "bytes": 134458,
+      "sha256": "47ad5e3e8807b758fea0a375dc550e3725de472adaa96bce6b4ae4bbf604280a",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1624,6 +1624,11 @@
           "level": 2,
           "title": "2026-10-21：协议包完整基线收敛并转入开发准备",
           "anchor": "protocol-baseline-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：Protocol 三领域类型与 Schema 首批实施",
+          "anchor": "protocol-contracts-implemented"
         }
       ]
     },
@@ -1716,8 +1721,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35081,
-      "sha256": "82ccb493e8f2c0d53d8d7f8c93431cc68e10cd41cc6f195e49c23ce8a17e359a",
+      "bytes": 38406,
+      "sha256": "b363d1fe0a85f9d67f907c51dbbcecd0f78beeee5b6b2827a04218fcb0df6d0f",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1829,6 +1834,11 @@
           "level": 2,
           "title": "协议包进入开发的基线",
           "anchor": "protocol-development-ready"
+        },
+        {
+          "level": 2,
+          "title": "Protocol 首批实现与本地交付证据",
+          "anchor": "protocol-implementation"
         }
       ]
     },
@@ -1891,8 +1901,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 33559,
-      "sha256": "b0f3fbd022228f3606e3ef3c1c932ce28a3a0d7b05c907b800acdc5bda254e70",
+      "bytes": 33811,
+      "sha256": "0bcbc4cfc7c99c452ab1d2d477cc1f20d25fb5f135c7afe5e47976d93ae68913",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2266,8 +2276,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 16523,
-      "sha256": "f9e93ada45585ad4b34dac426069218e4122e9b378657fcb3c7f777933b8cb5e",
+      "bytes": 17393,
+      "sha256": "414c2acb4849c67de3f1f0b413def35fe7ab297de03f265d8daa7a0db1d001d4",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2294,6 +2304,11 @@
           "level": 2,
           "title": "首期 Schema 类型连接子集",
           "anchor": "schema-connection-subset"
+        },
+        {
+          "level": 2,
+          "title": "首批机器契约已落地",
+          "anchor": "protocol-initial-implementation"
         },
         {
           "level": 2,

@@ -351,7 +351,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 项目根目录/
 ├── apps/                         # 已有轻量 Next.js playground
 ├── packages/
-│   ├── protocol/                 # 脚手架与工程验证入口
+│   ├── protocol/                 # 三领域类型、Schema 生成与结构验收
 │   ├── compiler/                 # 脚手架与工程验证入口
 │   ├── runtime/                  # 脚手架与工程验证入口
 │   ├── renderer-react/           # 脚手架与工程验证入口
@@ -364,7 +364,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 └── docs/                         # 保留现有设计、阅读视图、历史与验证证据
 ```
 
-最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。只有工程接入样例，没有生产协议 Schema 或完整核心实现，详见[实际初始化记录](engineering.md#engineering-implementation)。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
+最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。工程初始化时只有接入样例；后续已完成 Protocol 首批三领域类型与 Schema 结构验收，仍无完整核心执行实现，详见[实际初始化记录](engineering.md#engineering-implementation)。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
 
 单元测试随模块维护，tests 承载跨模块验收与可复用行为用例；具体 fixture / support / conformance / integration / e2e 组织在工具选型后细化。CLI 初期可放 tools，只有需要独立分发时再提升为包。普通子目录与文件名可合理演进，无须逐项重新决策。
 

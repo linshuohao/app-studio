@@ -1,0 +1,509 @@
+{
+  "$defs": {
+    "AfterPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "after",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
+    "ArrayInsertCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "array.insert",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "position",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ArrayMoveCommand": {
+      "additionalProperties": false,
+      "description": "The member identity is retained; an invalid destination must not leave a partial removal.",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "op": {
+          "const": "array.move",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item",
+        "position"
+      ],
+      "type": "object"
+    },
+    "ArrayPosition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IndexPosition"
+        },
+        {
+          "$ref": "#/$defs/BeforePosition"
+        },
+        {
+          "$ref": "#/$defs/AfterPosition"
+        }
+      ]
+    },
+    "ArrayRemoveCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "op": {
+          "const": "array.remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item"
+      ],
+      "type": "object"
+    },
+    "BatchCommand": {
+      "additionalProperties": false,
+      "description": "Ordered and non-atomic: a later failure does not roll back earlier successful commands.",
+      "properties": {
+        "commands": {
+          "items": {
+            "$ref": "#/$defs/Command"
+          },
+          "type": "array"
+        },
+        "op": {
+          "const": "batch",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "commands"
+      ],
+      "type": "object"
+    },
+    "BeforePosition": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "before",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
+    "CallExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "items": {
+            "$ref": "#/$defs/Expression"
+          },
+          "type": "array"
+        },
+        "op": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "args"
+      ],
+      "type": "object"
+    },
+    "Command": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SetCommand"
+        },
+        {
+          "$ref": "#/$defs/PatchCommand"
+        },
+        {
+          "$ref": "#/$defs/RemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayInsertCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayRemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayMoveCommand"
+        },
+        {
+          "$ref": "#/$defs/BatchCommand"
+        }
+      ]
+    },
+    "ContextReference": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "context",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "DataReference": {
+      "additionalProperties": false,
+      "description": "A lexical data location, not a snapshot value or runtime member identity.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "const": "data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "EventReference": {
+      "additionalProperties": false,
+      "description": "Only valid while processing the material event that supplied this payload.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "event",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "Expression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ReferenceExpression"
+        },
+        {
+          "$ref": "#/$defs/NamedExpression"
+        },
+        {
+          "$ref": "#/$defs/CallExpression"
+        },
+        {
+          "$ref": "#/$defs/LiteralExpression"
+        }
+      ]
+    },
+    "ExpressionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "$expr": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "$expr"
+      ],
+      "type": "object"
+    },
+    "IndexPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "description": "Final index for move; 0..length for insert. Bounds use execution-time data.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "index",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "index"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPointer": {
+      "description": "JSON Pointer: empty string is the root; '/' addresses an empty property name.",
+      "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
+      "type": "string"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "LiteralExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "literal"
+      ],
+      "type": "object"
+    },
+    "LiteralValue": {
+      "additionalProperties": false,
+      "description": "The enclosed JSON is not recursively interpreted as ValueSpec.",
+      "properties": {
+        "$literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "$literal"
+      ],
+      "type": "object"
+    },
+    "NamedExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "use": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "use"
+      ],
+      "type": "object"
+    },
+    "PatchCommand": {
+      "additionalProperties": false,
+      "description": "Shallow patch, not a recursive merge.",
+      "properties": {
+        "op": {
+          "const": "patch",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataReference"
+        },
+        {
+          "$ref": "#/$defs/ContextReference"
+        },
+        {
+          "$ref": "#/$defs/EventReference"
+        }
+      ]
+    },
+    "ReferenceExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/Reference"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "type": "object"
+    },
+    "RemoveCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target"
+      ],
+      "type": "object"
+    },
+    "ScopeHandleReference": {
+      "additionalProperties": false,
+      "description": "Stable member identity resolved through a visible lexical scope.",
+      "properties": {
+        "$scope": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "$scope"
+      ],
+      "type": "object"
+    },
+    "SetCommand": {
+      "additionalProperties": false,
+      "description": "Replace the value at a writable location; business validity is checked separately.",
+      "properties": {
+        "op": {
+          "const": "set",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ValueObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ValueSpec"
+      },
+      "description": "Ordinary object keys exclude the two protocol wrappers.",
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "$expr",
+            "$literal"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ValueSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ExpressionValue"
+        },
+        {
+          "$ref": "#/$defs/LiteralValue"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/ValueObject"
+        }
+      ]
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/command.schema.json",
+  "$ref": "#/$defs/Command",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

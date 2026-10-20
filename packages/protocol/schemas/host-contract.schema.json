@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "HostContract": {
+      "additionalProperties": false,
+      "properties": {
+        "events": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HostEventContract"
+          },
+          "type": "object"
+        },
+        "services": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HostServiceContract"
+          },
+          "type": "object"
+        },
+        "validators": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HostValidatorContract"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "HostEventContract": {
+      "additionalProperties": false,
+      "properties": {
+        "optional": {
+          "type": "boolean"
+        },
+        "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema"
+        }
+      },
+      "type": "object"
+    },
+    "HostServiceContract": {
+      "additionalProperties": false,
+      "description": "Method signatures live in the actual service's own SDK.",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "contractVersion"
+      ],
+      "type": "object"
+    },
+    "HostValidatorContract": {
+      "additionalProperties": false,
+      "description": "Snapshot/Scope invocation contract version, not a named argument mapping.",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "contractVersion"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonSchema": {
+      "$ref": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/host-contract.schema.json",
+  "$ref": "#/$defs/HostContract",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -21,7 +21,8 @@
     "docs:check": "node tools/engineering/docs.mjs --check",
     "check": "node tools/engineering/check.mjs",
     "prepare": "husky",
-    "toolchain:update": "node tools/engineering/install-toolchain.mjs"
+    "toolchain:update": "node tools/engineering/install-toolchain.mjs",
+    "protocol:schema:check": "pnpm --filter @form-engine/protocol schema:check"
   },
   "keywords": [],
   "author": "",

@@ -7,10 +7,10 @@
   },
   "counts": {
     "html_files": 46,
-    "local_links_and_resources": 5630,
+    "local_links_and_resources": 5652,
     "markdown_documents": 44,
     "source_entries": 397,
-    "typed_records": 88
+    "typed_records": 89
   },
   "generated_by": "tools/docs/build_docs.py",
   "id": "READER-BUILD-001",

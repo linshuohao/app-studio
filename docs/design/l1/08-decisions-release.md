@@ -12,6 +12,7 @@ related:
   decisions:
   - ADR-FE-015
 sources:
+- SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
 - SRC-CONTRACTS
@@ -106,6 +107,12 @@ Runtime 不在每次表达式求值、命令执行或联动时重复整份协议
 支持明确资源身份下的同一 Schema 引用；基础类型（integer 可接入 number）、显式 null、const / enum 集合包含、对象必需属性及属性类型 / 额外属性、同构数组元素、可明确判定的简单联合。源联合的每个可能分支须被目标接受。复杂条件、任意 not、无法解析引用等超出证明能力时返回无法证明，已知冲突返回不兼容，两者都拒绝连接，禁止断言 / 运行时兜底绕过。
 
 详细投影、可判定递归处理、诊断码由实现和正反例固化，不逐个关键词要求用户选择；真实无法覆盖的消费场景再演进。
+
+## 首批机器契约已落地 {#protocol-initial-implementation}
+
+2026-10-21 已在 packages/protocol/src/definition、capability、prepared 实现三领域命名类型与公共入口，并提供 schemas 下 10 个自动生成的 2020-12 根 Schema。生成约束来源是 TS / JSDoc，正式结构以实际类型、派生物和契约测试共同验收；下方旧汇编仍为概念稿，不再作为复制发布的类型源。用法与命令见[工程实施](../engineering.md#protocol-implementation)。
+
+已验证结构正反例和包消费，未发布稳定协议版本；Compiler 语义、Runtime / Dart 及全链路尚未实现。旧 docs/validation 样本保留候选来源身份，不视为符合新 Canonical 的生产样本；正式包测试夹具独立核对当前契约，后续迁移旧样本须改生成源并另跑验证。
 
 ## 附录：完整的核心类型关系（概念稿） {#types}
 

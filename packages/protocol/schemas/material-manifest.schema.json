@@ -1,0 +1,124 @@
+{
+  "$defs": {
+    "BindingContract": {
+      "additionalProperties": false,
+      "description": "A static model compatibility contract, never a Runtime write permission/gate.",
+      "properties": {
+        "schema": {
+          "$ref": "#/$defs/JsonSchema"
+        }
+      },
+      "required": [
+        "schema"
+      ],
+      "type": "object"
+    },
+    "EventContract": {
+      "additionalProperties": false,
+      "description": "Omitted schema means a notification with no configuration-readable payload.",
+      "properties": {
+        "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema"
+        }
+      },
+      "type": "object"
+    },
+    "HostServiceRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contractVersion"
+      ],
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonSchema": {
+      "$ref": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "MaterialManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/BindingContract"
+          },
+          "type": "object"
+        },
+        "events": {
+          "additionalProperties": {
+            "$ref": "#/$defs/EventContract"
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "propsSchema": {
+          "$ref": "#/$defs/JsonSchema"
+        },
+        "services": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HostServiceRequirement"
+          },
+          "type": "object"
+        },
+        "slots": {
+          "description": "Accepted slot names; no cardinality policy. Default slot is named 'default'.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/material-manifest.schema.json",
+  "$ref": "#/$defs/MaterialManifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

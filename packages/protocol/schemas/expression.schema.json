@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "CallExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "items": {
+            "$ref": "#/$defs/Expression"
+          },
+          "type": "array"
+        },
+        "op": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "args"
+      ],
+      "type": "object"
+    },
+    "ContextReference": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "context",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "DataReference": {
+      "additionalProperties": false,
+      "description": "A lexical data location, not a snapshot value or runtime member identity.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "const": "data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "EventReference": {
+      "additionalProperties": false,
+      "description": "Only valid while processing the material event that supplied this payload.",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer"
+        },
+        "source": {
+          "const": "event",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "Expression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ReferenceExpression"
+        },
+        {
+          "$ref": "#/$defs/NamedExpression"
+        },
+        {
+          "$ref": "#/$defs/CallExpression"
+        },
+        {
+          "$ref": "#/$defs/LiteralExpression"
+        }
+      ]
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonPointer": {
+      "description": "JSON Pointer: empty string is the root; '/' addresses an empty property name.",
+      "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
+      "type": "string"
+    },
+    "JsonPrimitive": {
+      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/JsonObject"
+        }
+      ]
+    },
+    "LiteralExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "literal"
+      ],
+      "type": "object"
+    },
+    "NamedExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "use": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "use"
+      ],
+      "type": "object"
+    },
+    "Reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataReference"
+        },
+        {
+          "$ref": "#/$defs/ContextReference"
+        },
+        {
+          "$ref": "#/$defs/EventReference"
+        }
+      ]
+    },
+    "ReferenceExpression": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/Reference"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://form-engine.invalid/schemas/expression.schema.json",
+  "$ref": "#/$defs/Expression",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

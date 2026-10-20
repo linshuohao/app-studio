@@ -13,3 +13,6 @@ AGENTS.md
 README.md
 tools/docs
 **/next-env.d.ts
+
+# Deterministic JSON Schema generated from protocol types.
+packages/protocol/schemas

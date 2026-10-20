@@ -8,7 +8,7 @@
   <title>物料扩展与 Host 集成 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -131,15 +132,15 @@
 </tr>
 <tr>
 <td>Binding Ports</td>
-<td>值类型、单/多端口、只读/编辑能力、复合修改及错误传播</td>
+<td>已确认名称与数据 Schema、单 / 多字段映射；不声明读写权限，不依据端口 Schema 拦截非法工作值；受控修改与错误传播仍由接入契约固化</td>
 </tr>
 <tr>
 <td>Slots</td>
-<td>槽位名称、基数、节点组合、默认插槽简写及平台兼容</td>
+<td>已确认首期只声明可接受名称，不加通用数量限制；节点组合、默认插槽简写及平台兼容</td>
 </tr>
 <tr>
 <td>Event Ports</td>
-<td>Payload Schema、有效 Event Reference、捕获上下文与受限 Intent</td>
+<td>名称；有数据事件声明 Payload Schema，无数据通知只需名称；检查 Event Reference 与类型连接，不新增返回值 / 异步编排</td>
 </tr>
 <tr>
 <td>Field State 消费</td>
@@ -305,6 +306,9 @@
 <p>版本与结果有效性是必要正确性契约；取消是尽力而为的资源优化，Host 可以不提供，也不保证网络请求终止。Host 负责实际请求及取消实现，引擎不理解 HTTP / 重试。取消回调要求幂等，任务完成或退出后释放句柄；取消异常只记诊断，不中断其他任务清理或恢复旧任务资格。被主动取消的旧任务不得再发布业务错误或成功，相关诊断与正常网络故障区分。</p>
 <p>该能力属于运行时 Host Validator 接口，不将回调写入 L1 或可序列化 Prepared，也不引入异步 Reaction。本次不新增跨端取消信号抽象。完整调用的取消 / 过期返回类型、具体代次编码与 SDK 仍需固化，但不再重新选择取消接入方向。</p>
 <p>业务查询等独立 Host 任务仍由 Host 自主管理，不共用 Reaction Pending。</p>
+<h3 id="host-input-contract">Host 调用输入的已确认边界</h3>
+<p>2026-10-21 用户确认：Host Validator 采用本次调用的数据读取快照 + 当前 Scope + 显式 watch，不新增命名参数映射或 External Payload DSL。影响校验结论的表单数据须从本次调用输入读取，并由 watch 及已有可推导依赖覆盖；不能在异步过程中改读不断变化的 Runtime 当前值，再把结果作为旧输入的结论。具体快照持有 / 读取签名归 Runtime SDK，实例、输入资格、任务代次及可选取消仍沿用现行规则。</p>
+<p>这属于 Host 实现契约，不是权限隔离：同进程宿主可以通过闭包持有 Runtime，显式参数也不能阻止越界读取。引擎不能从 Host 任意代码自动发现所有遗漏依赖，也不能为违反调用输入 / watch 约定的实现保证结果新鲜度。业务复用确实需要字段映射时再讨论参数能力，不预先建设。</p>
 <h3 id="host-接入与业务输出的已确认契约">Host 接入与业务输出的已确认契约</h3>
 <p>校验规则 ID 标识声明与运行实例，Host Validator 使用独立、语义明确的能力名称，规则显式引用能力名称，不按规则 ID 猜测实现。不同校验语义使用不同能力名称；多条规则需要同一校验语义时可以引用同一能力，各自实例、代次与错误来源仍独立。具体引用字段、参数与签名在正式类型 / Prepared 契约中固化，本轮不伪造候选 Schema 已支持新字段。</p>
 <p>Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端不暴露未注册能力名、堆栈等技术错误，不因局部能力缺失默认阻止表单填写。可选埋点等可跳过，业务操作的降级由 Host 决定；适用校验器缺失必须记为未完成，不能静默当作通过。用户交互由 Host 以业务语言承接，用户无感知不等于伪造完整通过或放行未校验数据。</p>
@@ -320,7 +324,7 @@
         <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#materials" data-to="materials" title="Material：物料体系与 UI 扩展"><span class="nav-num">01</span><span>Material：物料体系与 UI 扩展</span></a>
 <a href="#capabilities" data-to="capabilities" title="Host / View Adapter：外部能力与业务集成"><span class="nav-num">02</span><span>Host / View Adapter：外部能力与业务集成</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details><summary>相关正文与历史 · 6</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details><summary>相关正文与历史 · 8</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

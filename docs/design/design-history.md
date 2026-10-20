@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-EARLY
 - SRC-L1
 - SRC-L2
@@ -17,7 +18,7 @@ sources:
 - SRC-HOST
 - SRC-V07
 related: {}
-last_reviewed: '2026-10-20'
+last_reviewed: '2026-10-21'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -1093,3 +1094,37 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 用户随后确认开发模式直接消费工作区源码：六包通过条件 exports 保持包名导入，Next / Nest / 工作区测试启用 development，默认生产入口仍是 dist。替代上述首次初始化的库预构建与产物 watch 链路；验证覆盖无 dist 启动消费、源码及 CSS 更新、Nest 装饰器注入与间接依赖重启，核心契约与模块完成状态不变。
 
 用户进一步明确 Playground 也统一使用 shadcn/ui；页面输入改为已有的 shadcn Input，与 Button / Label 使用同一基础，移除应用对工程物料输入控件及其全局样式的依赖。物料 CSS 的交付验证仍保留在包测试与隔离消费者，不改变物料层职责或引擎状态。
+
+
+## 2026-10-21：协议结构源与校验路线确认 {#protocol-source-confirmed}
+
+用户在工程初始化完成后讨论协议包的开发、模块划分和公共出口。进一步比较手写 JSON Schema、原生 TS 类型派生 Schema，以及 Zod 声明推导类型并导出 Schema：用户认为原生类型更便于编写、维护注释并供其他包消费，最终明确确认本专题结论。
+
+确认原生 TS 类型 + JSDoc 为权威结构源，自动生成 JSON Schema，Compiler 使用 Ajv 做结构校验，语义分析仍归 Compiler。生成 Schema 不手改；严格字段 / Union / 保留标记沿用既有协议策略。Runtime 不在每次交互执行时重做静态检查，但保留必要装载检查、动态结构保护和业务数据校验。未来 Schema 可用于派生 Dart 模型，不代表生成 Flutter UI 或完整执行引擎。
+
+现行说明见 [L1](l1/08-decisions-release.md#protocol-structure-source)，决策见 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)，依据见 [SRC-PROTOCOL](source-map.md#src-protocol-source)。JSON Schema 优先与 Zod 单源为本轮比较过而未采用的建议，不是被替代的已确认 ADR。具体生成工具、公共子入口、批次及完整字段仍待固化；未安装依赖、生成生产协议或执行 Dart 实现，不提升模块完成状态。
+
+
+## 2026-10-21：物料最小契约与 Host 输入确认 {#material-host-contracts-confirmed}
+
+用户确认协议包按 definition / capability / prepared 三领域及公共入口组织。随后聚焦尚未形成机器结构的 Host 与物料声明：明确 Host Validator 采用本次调用快照 + Scope + watch，不新增参数映射；Binding 不声明读写权限，保留数据 Schema 以供静态兼容检查；Slot 只声明名称，不增加通用数量限制；无数据事件只需名称，有数据事件声明 Payload Schema，检查 Event Reference 与后续连接。事件不增加返回值或异步编排，物料内部数组指令等复用现有接口。
+
+助手此前的 Binding access 与 Slot 基数草案没有获准采用；原正文关于 Slot 单 / 多节点限制的候选本轮收敛为名称检查，不改变 Canonical 的 ViewNode 数组组合。Host 选择不做参数映射的代价是遵守调用快照和完整依赖声明；不能把它误称为权限隔离或自动依赖发现。
+
+现行 [物料最小契约](l1/05-view-material-host.md#material-minimum-contract)、[Host 输入](extension-integration.md#host-input-contract)、L2 / 治理与 ADR-FE-003 / 012 同步。是既有契约的收敛与细化，不新建 ADR、不提升实现状态。本次未更改协议样例或候选验证器；正式名称容器、包装及 SDK 随完整类型继续固化。校验前置、消息、纯函数签名、能力锁及 Prepared 仍为待讨论，不能将助手整份草案视为确认。来源见 [SRC-CONTRACTS](source-map.md#src-contracts)。
+
+
+## 2026-10-21：前置唯一实例与同步等待范围确认 {#prerequisite-scope-confirmed}
+
+用户指出字段 / 规则两种引用最初已经讨论过，本轮按既有原则落实，不重复要求决策。明确数组前置跟 Scope ID 的唯一实例绑定，语义清楚且便于实现；首期不引入跨实例 or / any，后续有实际场景再评估。用户同时确认本期只等待同步前置，多步异步校验封装在一起。
+
+现行 [L3 前置范围](l3-validation.md#prerequisite-scope-contract)、L1、L2、治理及 ADR-FE-010 同步。不改变完整校验等待全部适用异步任务、共同入队或代次有效性原则；字段资格涉及异步来源的解析范围、正式引用语法与 Prepared 仍待固化，不能把助手未确认的处理策略归档为共识。无协议样例、生产类型或验证器实现变化，不提升模块完成状态。来源见 [SRC-PREREQUISITES](source-map.md#src-prerequisites)。
+
+
+## 2026-10-21：协议包完整基线收敛并转入开发准备 {#protocol-baseline-confirmed}
+
+用户认可整合草案，明确先按建议实施，等其他模块实际使用发现问题后再迭代，不再细枝末节讨论。确认同步字段资格与完整有效性分开、首期常用结构兼容证明、Schema 函数签名及有限内置短路、声明位置消息覆盖与 Host 国际化、服务身份、Manifest / 实现双摘要、Prepared 结构树 / 模板编译展开 / 集中依赖 / 资源闭包，以及外部一次结构检查。公共正式及组成类型按三领域导出，首批整理全量类型与派生 Schema / 正反例。
+
+收敛之前的真实未决项，未另建并行规范；对应现行主题与 ADR-FE-002 / 004 / 010 / 011 / 015 补充。运行时 SDK 仍归各包，具体字段及生成工具按实现整理，发生真实冲突才回到设计。旧概念稿 / 候选示例保留身份、按正式类型实施迁移，不误称已有生产实现。本轮仅归档，未编码、安装或修改协议验证样本。
+
+依据见 [SRC-PROTOCOLBASELINE](source-map.md#src-protocolbaseline)，现行入口见 [开发基线](l1/08-decisions-release.md#protocol-development-baseline)。

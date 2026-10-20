@@ -12,13 +12,18 @@ related:
   decisions:
   - ADR-FE-004
   - ADR-FE-011
+  - ADR-FE-015
 sources:
+- SRC-PROTOCOLBASELINE
+- SRC-PREREQUISITES
+- SRC-CONTRACTS
 - SRC-L2
 - SRC-V05
+- SRC-PROTOCOL
 navigation:
   group: 03 · L2 预处理
   order: 40
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 reading_next: DESIGN-L3-RUNTIME
 relocated_sections:
 - source: docs/design/architecture.md
@@ -255,9 +260,15 @@ MaterialManifest 沿用 `propsSchema / bindings / slots / events`。同一语义
 
 Manifest 可检查签名与目标端可用性，不能自动证明实现没有副作用，也不能证明物料遵守事件语义；仍需代码审查、契约测试、执行环境限制与必要的运行时防护。不可信第三方扩展另需可信来源、完整性校验、签名 / 审核及隔离 / 权限策略。
 
+### 首期签名结构与 Host 服务声明
+
+2026-10-21 完整草案确认：PureFunctionManifest 的参数 / 返回结构复用 JSON Schema，原 TypeSignature 是概念占位；固定参数有 name / schema / optional，末尾可选与独立 restParameter，业务函数不接管 AST，有限内置短路见 [L1](l1/03-expression-validation.md#function-evaluation-contract)。
+
+物料所需 Host 服务只声明名称、契约版本与是否可缺失。方法 / 参数 / 返回值归具体服务接入契约，不在 Protocol 展开为通用 RPC 描述；必要服务缺失提供诊断与局部降级，不默认停止整表。此可选性不能让 Validator 绕过完整校验。Host 静态契约可选的边界保持。
+
 ## Host 运行时注册与依赖要求 {#l2-host}
 
-宿主在应用运行时提供实现；L2 提取静态需求，获得 HostContract 时再检查名称与签名。缺少静态声明不能被当成实现必然不存在。
+宿主在应用运行时提供实现；L2 提取静态需求，获得 HostContract 时再检查名称与签名。缺少静态声明不能被当成实现必然不存在。2026-10-21 已确认 Host Validator 接收本次调用的数据读取快照及 Scope，以显式 watch 声明 Host 内部不透明依赖；首期不增加命名参数映射 / External Payload。Compiler 仍只补全已有静态可见依赖，不执行 Host 代码推测读取。快照与依赖正确性边界见 [Host 调用输入](extension-integration.md#host-input-contract)。
 
 ```typescript
 interface FormHost {
@@ -340,9 +351,15 @@ L1 可以声明不带版本的逻辑能力 ID，不要求每个 ViewNode 手写�
 }
 ```
 
-以上字段、版本及摘要均为示意。真实发布还需明确摘要标识 Manifest、执行制品还是完整 Bundle；内置函数集也需关联可核对的不可变 SDK / 制品身份。
+以上字段、版本及摘要均为示意。后续已确认分别锁定 Manifest 与实际实现制品，具体见[双摘要契约](#capability-digest-contract)；内置函数集也需关联可核对的不可变 SDK / 制品身份。
 
 能力升级不能自动改变已发布表单；回滚读取旧 Release Artifact，不能根据当前最新 Catalog 重新组装。静态可发现的 Port 移除、参数类型变化触发重新检查 / 编译；运行时代码语义兼容性还依赖版本策略、契约测试和灰度验证。`latest` 或 `^1.2.0` 单独不足以复现旧发布。
+
+### 首期双摘要锁定 {#capability-digest-contract}
+
+2026-10-21 用户确认能力同时锁 Manifest 与实现制品：id / version / manifestDigest，以及 artifact 的 id / platform / digest。多个能力可引用同一包制品；内置函数集同样绑定确定实现身份。Manifest 对确定性序列化内容计算摘要，交付制品对实际字节计算；资源地址是获取位置而非身份。应用内置实现绑定不可变构建身份，不假定运行时现场读取自身代码计算摘要。
+
+L2 只消费确定 Catalog Snapshot，不在线查询 latest。分别锁定增加一个身份关联，换取编译依据与实际实现都可追溯；不会仅凭版本或地址自动替换旧发布。摘要算法 / 规范化与装配核对的具体代码在实现中统一选择并验收，不继续逐字段讨论。
 
 ## 制品身份与兼容性约束 {#l2-versions}
 
@@ -413,9 +430,21 @@ PreparedForm 的实际执行观察计划必须在编译时确定；可同时携�
 
 选择完整 JSON Schema 根级校验域，不在 L2 自动拆分 Keyword / 局部 Schema。Prepared 交付可序列化 Schema 资源、引用与 Adapter 约定；Web 可缓存 Ajv 编译函数，Dart 由对应 Adapter 执行，不跨端传输生成的 JS 函数。业务 Constraint 仍复用 Pure Function / Host，不转换为 Ajv 自定义 Keyword ABI。
 
-PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。requires / validationMessages 语法尚未冻结，不能直接宣称当前候选 Schema 已支持。
+PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。requires / validationMessages 正式语法尚未冻结，不能直接宣称当前候选 Schema 已支持。
 
 前置引用与静态非法配置应尽可能在 L2 诊断。L2 自动推导 Validation 可分析读取，并沿前置关系补全后置有效触发依赖；不可见的 Host 业务依赖由作者显式提供，不要求重复声明可推导依赖。L3 从命中任务递归补齐已解析的前置实例、去重并重排序，按本轮结果放行，不复用历史通过结论。这不修改 Reaction 显式 Watch，也不建立前置结果 PubSub；计划需保留补全依据，补全不意味着立即发起外部请求。字段有效性的范围、跨 Scope 解析、Issue 规范化与 Web / Dart 兼容矩阵见 [校验专题](l3-validation.md#validation-layers)。
+
+### 首期 Prepared 机器结构基线 {#prepared-machine-baseline}
+
+2026-10-21 用户确认以准备后的有类型结构树执行，不首期建设字节码或自定义 VM。L2 已解析名称、函数身份和引用，L3 对准备树执行，不重解析原始声明或重分析依赖。Template 在编译时解析并展开，保留来源关系；递归引用及过度展开用编译检查和预算防护，运行时不再维护 L1 模板参数解释器。
+
+PreparedForm 组织为身份 / preparedFormatVersion、formPlan、viewPlan、dependencyPlan、capabilityLock、hostRequirements。formPlan 包含完整业务 Schema 资源、静态 Scope 模式、准备后的表达式 / 命令 / Reaction 与 Validation；viewPlan 携带当前 Profile 视图闭包；dependencyPlan 集中组织静态观察，消费者引用计划 ID。表达式来源与编译诊断的源位置保留，详细内部分析图留在 Compiler，不全部交付。
+
+引用保存已解析的根 / 静态 Scope Pattern 及路径；L3 才绑定实际 Scope ID。依赖计划不保存数组成员、实例数据、回调、组件、请求状态或 Issue。数组结构是 Data 的观察方面，不另建事实源；观察激活归属与 runOnActivate 不混用。
+
+不新增节点 / 属性更新分级，沿用已确认共用 Adapter 接入；此前内嵌依赖与节点 / 属性粒度仅为比较过的草案，不作为新增协议。内部去重 / 求值优化由实现处理。
+
+完整根业务 Schema 及必要引用资源闭包随制品携带，编译时固定资源，不在执行时联网补 $ref；不拆 Keyword 局部引擎，不携带 Ajv 生成 JS 校验函数。正式 TS 全量字段与正反例按本节一次整合，方向确认不等于 ABI 已生产验收。
 
 ## 有类型的依赖关系与环检测 {#l2-dependencies}
 
@@ -468,7 +497,7 @@ PreparedForm 携带可复用静态观察描述，信息包括 owner（Reaction /
 
 确认 L2 编译绝对 / Scope 相对引用与结构观察的规范化路径模板，由 L3 结合实际 Scope / 挂载订阅建立运行索引。Trie + Scope Slot 是推荐实现，不冻结为 Prepared ABI，更不能让编译器预先写死所有真实成员的实例 Trie。来源的通配路径、`./age`、`length` 索引节点均为示意，不新增 L1 Pointer 语法。候选定位与前后观察值比较分工见 [依赖索引](l3-data-scope.md#l3-dependency-index)。
 
-首次执行策略显式可配置是已确认的 L1 / L2 契约：L2 校验策略并编译，L3 在实例激活时按计划入队。来源用 `runOnActivate` / `activation: run-on-activate` 示意，正式字段与默认值尚未冻结；它与本篇 `activation: runtime / view-mounted` 表示的“谁管理观察生命周期”分别解释，不能混用一个候选字段偷换含义。编译时不执行初始 Reaction，不创建 Baseline，不自动重写 watch。
+首次执行策略显式可配置是已确认的 L1 / L2 契约：L2 校验策略并编译，L3 在实例激活时按计划入队。来源曾用 `runOnActivate` / `activation: run-on-activate` 示意；首批基线已采用 runOnActivate 可选布尔、默认 false；它与本篇 `activation: runtime / view-mounted` 表示的“谁管理观察生命周期”分别解释，不能混用一个候选字段偷换含义。编译时不执行初始 Reaction，不创建 Baseline，不自动重写 watch。
 
 当前约束：runOnActivate 仅新 Reaction 实例首次建立，不编译成已有规则的 Reset / 修复 / 重算入口。业务 Baseline / Dirty / Reset 策略归 Host，不是 L2 或 L3 自动维护的核心状态。编译器可以提示缺失 Watch，建议仍须作者确认；已有规则没有有效 Watch 变化时不因“结果可能不正确”新增执行计划。Context 继续只读，L1 Command / Reaction.watch 不在本次扩展到 Context。
 
@@ -524,12 +553,12 @@ L2 知道 `insured(each).age → 该项 Constraint` 的模式；L3 将其绑定�
 | Expression `op` vs `call` | 本次保留 `op + args` | 若迁移，作为独立 L1 版本变更统一处理 |
 | 内置别名与 Canonical ID | 短名只作明确别名，完整 `core.*` 为规范化方向 | 白名单、映射、内置签名及现有样本迁移 |
 | Host 缺失处理 | 必需 Validator 不得绕过；可选遥测按声明跳过；一般事件必须可诊断 | 可选性、阻断时机、重试和错误等级 |
-| PureFunctionManifest 最小签名 | ID、版本、输入输出、目标端可用性 | JSON Schema / TypeSignature 的可判定交集 |
-| Capability Release Lock | 版本 + 不可变摘要；按平台 / Profile 解析 | 摘要覆盖对象及 Runtime 核对方式 |
+| PureFunctionManifest 最小签名 | Schema 参数 / 结果、固定 / 变长及内置有限短路已确认 | 输出正式类型、签名表及边界反例，不另建 TypeSignature 语言 |
+| Capability Release Lock | 分别锁 Manifest 内容摘要和实现制品字节摘要；按平台 / Profile 解析 | 固化实现及构建身份核对，不重开摘要对象选择 |
 | PreparedValidation | 完整 Schema 资源、规则引用 / 依赖 / 前置 / 消息计划 | 落实依赖推导 / 传递与前置共同入队，冻结引用语法及 Adapter 行为；不携带实例结果或跨端 JS 校验函数 |
 | Prepared ABI | JSON、独立格式版本、首阶段精确匹配已确认 | 完整字段、摘要、格式迁移与 SDK |
 | Dependency Plan | owner、watch、Scope Pattern 与激活归属；与 Form / View Plan 关联 | 序列化、状态引用、结构观察编码、节点粒度及格式迁移 |
-| 首次执行策略 | L1 显式配置，L2 编译，L3 实例激活时安排 | 与观察生命周期归属分开；字段默认值、版本与候选样例覆盖 |
+| 首次执行策略 | runOnActivate 可选且默认 false，L2 编译，L3 仅新实例首次安排 | 与观察生命周期归属分开；正式类型 / Schema 与候选样例迁移 |
 | Material 的 Host Service | Manifest 声明可观察依赖 | 未声明依赖的发布限制或运行时报告 |
 
 这些是规范落地时的接口决策，不重新开放已经收敛的职责分工。
@@ -560,6 +589,10 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 该拒绝策略针对协议形状与静态类型连接，不将 Reaction 潜在环 Warning 改成必然无限循环错误，也不撤销 HostContract 可选：没有 Host 静态声明仍可提取 Requirements，运行时按已确认缺失策略检查；不得把这一不同接缝混成已证明兼容的 Template / Port 连接。
 
 ## Prepared 交付与编译错误边界 {#prepared-delivery}
+
+协议结构校验链路已确认采用原生 TS 类型 → 自动生成 JSON Schema → Ajv；Compiler 在输入边界执行结构校验，再做引用、Scope、能力连接等语义分析。具体生成器和诊断映射随实施固化，见 [L1 结构源](l1/08-decisions-release.md#protocol-structure-source)。Runtime 不在交互高频路径重复静态检查；本节规定的制品装载兼容与有效性检查继续保留。
+
+2026-10-21 用户确认：同进程 Compiler 刚成功生成的结果不重复整份结构校验；外部文件 / 接口 / 缓存载入的 Prepared JSON 在接收边界做一次结构检查，再核对格式、目标与能力。检查结果可随受控不可变产物复用，不在交互或成员实例化时重验整份协议；可信验证与缓存须有明确边界，不能仅凭格式版本断言结构有效。
 
 首阶段 Prepared Artifact 采用 JSON 交付，Form / View / Dependency Plan 保持逻辑分工，不要求拆为多个文件。传输压缩不构成另一套协议；不同时建设二进制格式，只有性能证据出现后才另行评估。具体字段、确定性序列化及摘要覆盖对象继续固化，JSON 方向确认不等于完整 ABI 已冻结。
 

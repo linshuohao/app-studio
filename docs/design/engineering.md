@@ -12,11 +12,12 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-ENGINEERING
 navigation:
   group: 01 · 架构全貌
   order: 30
-last_reviewed: '2026-10-20'
+last_reviewed: '2026-10-21'
 status_note: E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行
 ---
 
@@ -282,7 +283,7 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 
 工程底座完成须同时满足：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。先用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。
 
-协议结构源 / 生成器、正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
+协议结构源后续已确认原生 TS 类型 + JSDoc → 自动生成 JSON Schema，Compiler 使用 Ajv，见 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。具体生成器、严格生成配置与正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
 
 当前状态：E1–E4 工程配置与本地验证已完成，远端 CI / 受保护分支尚未运行或配置；不对外发布。核心业务按[既有 T01–T07](governance.md#design-roadmap)准备契约与纵切，不因工程文档存在提升模块完成度。
 
@@ -345,3 +346,8 @@ Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。`pn
 主动升级使用 `pnpm toolchain:update`，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。
 
 本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。
+
+
+## 协议包进入开发的基线 {#protocol-development-ready}
+
+2026-10-21 用户确认先按[完整协议基线](l1/08-decisions-release.md#protocol-development-baseline)实施，遇真实消费者问题再演进，不逐字段反复讨论。保持现有工程工具链、三领域与 JSDoc / Schema 派生路线；生成器适配、命名、容器、错误码及构建接入由实现者整理并验证，实际冲突才重开设计。首批是完整类型及对应 Schema / 正反例，不代表 Compiler / Runtime / Flutter 已实现或正式版本已发布。

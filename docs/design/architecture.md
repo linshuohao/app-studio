@@ -23,12 +23,13 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-EARLY
 - SRC-L1
 navigation:
   group: 01 · 架构全貌
   order: 10
-last_reviewed: '2026-10-20'
+last_reviewed: '2026-10-21'
 status_note: 分层与主体语义已确认，公开接口与生产实现未完成
 relocated_sections:
 - source: docs/design/platform-studio.md
@@ -327,7 +328,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 
 | 包目录 | 职责与消费者 | 内部边界与限制 |
 | --- | --- | --- |
-| packages/protocol | 统一可交换协议结构源及 TS 绑定，供作者、Compiler、Runtime、创作工具消费；包含 Definition、Prepared、Material / Pure Function Manifest 通用结构 | definition / prepared / capability 分域组织，具体子入口待固化；Prepared 与 L1 格式版本独立，不把所有内部类型、Runtime API、平台 DTO、数据库模型、Agent 协议或组件实现集中进来 |
+| packages/protocol | 统一可交换协议结构源及 TS 绑定，供作者、Compiler、Runtime、创作工具消费；包含 Definition、Prepared、Material / Pure Function Manifest 通用结构 | definition / capability / prepared 三领域与公共入口已于 2026-10-21 确认，正式命名类型及组成类型按领域公开，具体 exports 随完整类型实施；Prepared 与 L1 格式版本独立，不把所有内部类型、Runtime API、平台 DTO、数据库模型、Agent 协议或组件实现集中进来 |
 | packages/compiler | L2 分析、静态检查、诊断、规范化与依赖准备，向 CLI、编辑预览和平台构建提供确定 Prepared | 不依赖 Runtime 执行实例，不导入 UI 物料实现；解析、检查和依赖准备先作为内部模块，不逐步骤拆包 |
 | packages/runtime | TS 数据 / Snapshot、Scope、表达式、Command / Reaction / Flush、校验、诊断与实例生命周期；提供公开读写、订阅、校验和 Host 注册接口 | 不依赖 React、网络或平台数据库；上述执行机制先内部模块化。内部实现可以采用正常 TS，不为未来 Dart 建跨语言执行框架 |
 | packages/renderer-react | React 呈现、共用 Adapter、物料装配、Binding / Props / Event 接入、Scope 关联、订阅清理与局部错误隔离 | 消费 Runtime 公开接口，不保存第二份权威业务状态；各物料共用 React Adapter，不要求未来 Vue / Flutter 复用源码，暂不建通用 renderer-core |
@@ -369,7 +370,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 
 #### 多语言与一致性的最小准备
 
-当前只实现 TS。统一协议源可位于 packages/protocol，未来 Dart 绑定由它派生，不能在 packages-flutter 重新维护一份协议。生成适合覆盖类型、枚举、编解码及结构检查的可支持部分，不承诺由协议结构生成完整 Runtime 或跨框架 UI。权威机器结构源的具体格式、生成器及支持子集尚未选定；优先复用现成工具，不首期自建通用生成平台。协议生成产物不得把允许业务不合法的 Working Data 强制收窄为始终合法的业务模型。
+当前只实现 TS。统一协议源可位于 packages/protocol，未来 Dart 绑定由它派生，不能在 packages-flutter 重新维护一份协议。生成适合覆盖类型、枚举、编解码及结构检查的可支持部分，不承诺由协议结构生成完整 Runtime 或跨框架 UI。2026-10-21 已确认以原生 TS 类型声明及 JSDoc 为权威结构源，自动生成 JSON Schema，Compiler 使用 Ajv 做结构校验；见 [L1 结构源与校验链路](l1/08-decisions-release.md#protocol-structure-source)及 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。具体 TS → Schema 生成器、约束注解及支持子集仍待实施固化，优先复用现成工具，不首期自建通用生成平台。协议生成产物不得把允许业务不合法的 Working Data 强制收窄为始终合法的业务模型。
 
 TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同一执行语义，Flutter Renderer / 物料按框架实现，React 与 Vue 可共享 TS Runtime。Compiler 可面向 Flutter 目标生成可消费的 Prepared，不要求随 Flutter 重写一份 Dart Compiler。共享规则语义应一致，目标视图、能力实现和锁定信息可以不同。正式输入仍遵循 JSON、未知字段、Missing / null、数值和已有快照 / Scope / Flush 等契约，不以语言默认行为代替公共规范。
 

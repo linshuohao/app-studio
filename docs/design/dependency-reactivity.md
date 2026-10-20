@@ -14,13 +14,14 @@ related:
   - ADR-FE-004
   - ADR-FE-005
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-DEP
 - SRC-V05
 - SRC-V06
 navigation:
   group: 06 · 横向能力
   order: 70
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 reading_next: DESIGN-INTEGRATION
 ---
 
@@ -246,7 +247,7 @@ interface PreparedDependency {
 
 概念上，guardian-required 的计划关联年龄和姓名、owner 为 constraint、activation 为 runtime；guardian 输入框的 disabled 计划关联年龄、owner 为 view、activation 为 view-mounted。`activation` 只说明由谁激活，不表示通知优先级，也不规定订阅后首次执行。
 
-首次执行策略在 已确认可配置，需要 L1 表达、L2 编译；它与本段 activation 表示的“生命周期归属”分别设计。来源 `runOnActivate` 与 Prepared `run-on-activate` 的具体字段 / 默认值未冻结，不能把两种 activation 含义混写为同一正式 ABI。
+首次执行策略在 已确认可配置，需要 L1 表达、L2 编译；它与本段 activation 表示的“生命周期归属”分别设计。首批基线采用 runOnActivate 可选布尔且默认 false；Prepared 中观察激活归属保持独立，不把两种含义混写。正式公共声明仍随实现验收。
 
 | 静态产物保存 | 留给运行时 |
 | --- | --- |
@@ -254,7 +255,7 @@ interface PreparedDependency {
 | 行为身份、Prepared 求值引用、激活归属 | 回调、组件、DOM、宿主对象 |
 | View 与计划的关联 | 挂载状态、通知队列、框架优先级 |
 
-Prepared View 可引用计划 ID，也可内嵌紧凑依赖集合；节点合并或按属性拆分是可比较的粒度方案，不建立两套语义。该信息归入既有 Form / View Plan 交付，具体打包位置和 `formatVersion` 兼容校验需随正式 Prepared 格式确定。
+2026-10-21 首批基线选择集中 Dependency Plan、消费者引用计划 ID。内嵌集合与节点 / 属性拆分是旧候选比较，不建立新更新分级；仍沿用共用 Adapter 的已确认边界。正式字段及兼容验收按 [Prepared 基线](l2-preparation.md#prepared-machine-baseline)整合，不将方向确认等同于完成 ABI 发布。
 
 ## Scope：静态模式、真实实例与视图实例 {#dependency-scope}
 

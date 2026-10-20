@@ -14,6 +14,7 @@ related:
   - ADR-FE-003
   - ADR-FE-005
 sources:
+- SRC-CONTRACTS
 - SRC-L1
 navigation:
   group: 02 · L1 协议
@@ -107,7 +108,7 @@ Binding 与动态 Props 的依赖由 L2 静态编译；L4 以 Prepared View 计�
 }
 ```
 
-所有 Slot 在 Canonical 都使用数组；`children` 可作为 `slots.default` 的 Authoring 简写。Manifest 声明哪些 Slot 合法、各自允许一个或多个 ViewNode，以及 Material 对这些 Slot 的具体交互含义。
+所有 Slot 在 Canonical 都使用数组；`children` 可作为 `slots.default` 的 Authoring 简写。Manifest 声明物料接受哪些 Slot 名称及其交互含义；首期不设置通用 minItems / maxItems 或单 / 多节点数量限制。默认插槽使用 default，具名插槽使用声明名称；数组是统一组合表示，不意味着协议要求新增数量管理。
 
 Slot 是视图节点组合位置，不能与普通 Props JSON 混淆，也不是一个“把组件插入任意 DOM 节点”的操作指令。
 
@@ -203,6 +204,27 @@ interface MaterialManifest {
 **视觉/输入限制不等于业务数据校验。**例如 `maxLength` 是 TextInput 的输入体验；真正的“姓名不能超过 20 字符”仍必须由 Data Schema 或 Constraint 保证。
 
 Web 与 Flutter 可以实现不同交互形态，但同一物料契约下的 Binding Port、Event Payload、Slot 和 Props 语义必须兼容。Form Definition 需要通过可确定的版本解析规则绑定 Material Manifest；不能依赖不受控的“latest”。
+
+### Binding / Slot / Event 的已确认最小契约 {#material-minimum-contract}
+
+2026-10-21 用户确认：Manifest 的 Binding 声明名称及预期数据 Schema，不声明 read / write / read-write 权限。Binding 表达物料使用哪些数据位置；实际读取、受控写入或只读展示由物料行为决定，单字段与多字段沿用同一具名映射和共用 Adapter，不增加独立字段端口层。
+
+Binding 的 Schema 用于 Compiler 检查数据模型与物料的静态类型兼容性，不在每次修改时拦截业务不合法 Working Data，也不替代业务 data.schema / Constraint。概念子类型可写为下例；包装和正式命名随完整类型固化，不把语义确认解释为已发布类型。
+
+```typescript
+interface BindingContract {
+  schema: JsonSchema;
+}
+interface EventContract {
+  payloadSchema?: JsonSchema;
+}
+```
+
+Slot 首期仅声明接受的名称，不引入通用数量限制；原“Manifest 约定单个 / 多个节点”的候选收敛为名称检查。MaterialNode 的 slots 继续是具名 ViewNode 数组，Manifest 的名称容器及 SlotContract 占位随正式类型整理，不继续增加基数字段。
+
+Event 声明事件名称；无业务数据的通知事件只需名称，有业务数据供配置读取的事件声明 Payload Schema。Event Reference 相对该次事件的 Payload 根解析，Compiler 检查引用路径和后续可证明的类型连接；缺少 Payload 契约不能静默当作任意可读事件数据。事件只在事件发生时求值，不隐式建立数据观察或触发规则。
+
+物料内部通过现有受控接口执行数组 Command 或取得已有能力，无须重复登记为一份“数组 / 纯函数能力事件目录”；组件内部实现与对配置暴露事件分开。普通 Binding 修改不要求额外发事件重复写入。首期不新增事件处理返回值、等待返回或异步业务编排协议；Payload 是物料发出的数据，也是配置处理逻辑收到的输入。
 
 ## Interaction：只保留数据命令和宿主事件 {#interaction}
 

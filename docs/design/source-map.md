@@ -13,7 +13,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-20'
+last_reviewed: '2026-10-21'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -101,6 +101,22 @@ status_note: 本地资料范围的来源索引与覆盖记录
 ### SRC-ENGINEERING：工程工具链确认与官方命令依据 {#src-engineering}
 
 2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见[演进记录](design-history.md#engineering-toolchain-confirmed)，有效方案见[工程主题](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。首次归档时命令未实跑；后续实际初始化、兼容处理及本地验收见[实施记录](engineering.md#engineering-implementation)与[演进](design-history.md#engineering-initialized)，不作为生产引擎语义完成证据。用户随后明确要求开发模式直接消费工作区源码，并授权实施；又明确 Playground 的应用控件统一使用 shadcn/ui；条件 exports、源码监听与生产打包入口隔离的实际配置和验收同步在工程主题，未改变模块职责或提升核心实现状态。
+
+### SRC-PROTOCOL：协议结构源与校验路线确认 {#src-protocol-source}
+
+2026-10-21 本次对话中，用户比较 Schema 优先、原生 TS 优先与 Zod 单源，最终明确确认原生 TS 类型及注释主导、自动生成 JSON Schema、Compiler 使用 Ajv 的路线。现行 [L1 说明](l1/08-decisions-release.md#protocol-structure-source)、[ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)及[演进](design-history.md#protocol-source-confirmed)记录确认范围；未保存或伪造逐字会话快照。工具定位调研参考 [Ajv Schema 管理](https://ajv.js.org/guide/managing-schemas.html)、[独立校验代码](https://ajv.js.org/standalone.html)与 [Zod JSON Schema](https://zod.dev/json-schema)，查阅日期 2026-10-21；官方能力介绍不等于本项目生成器、性能或跨语言验收已通过。
+
+### SRC-CONTRACTS：物料声明与 Host 输入确认 {#src-contracts}
+
+2026-10-21 本次对话中，用户认可三领域与公共入口，逐项修正 Binding 的读写能力、Slot 数量约束，确认 Host 调用快照 + Scope + watch、Binding 数据 Schema、事件 Payload Schema，并授权已确认内容先归档、继续讨论其他缺口。结论与范围见[演进](design-history.md#material-host-contracts-confirmed)、[物料契约](l1/05-view-material-host.md#material-minimum-contract)与[Host 输入](extension-integration.md#host-input-contract)。未保存或伪造逐字会话快照；类型草案尚未实现，其他待决议题不随本轮自动确认。
+
+### SRC-PREREQUISITES：前置引用、实例绑定与同步等待确认 {#src-prerequisites}
+
+2026-10-21 本次对话用户明确字段 / 规则引用是已有讨论方向，确认前置按 Scope ID 唯一实例绑定、本期不增加集合 or / any、仅等待同步校验，多步异步封装在同一 Host 能力。见[演进](design-history.md#prerequisite-scope-confirmed)、[L3 契约](l3-validation.md#prerequisite-scope-contract)与 ADR-FE-010。未保存或伪造逐字会话快照；字段资格集合、正式语法和生产实现未随本次确认完成。
+
+### SRC-PROTOCOLBASELINE：协议包完整草案确认与开发准备 {#src-protocolbaseline}
+
+2026-10-21 本次对话用户明确接受完整剩余草案，要求先实施、实际使用发现问题后迭代，不再继续细节访谈。确认范围见[演进](design-history.md#protocol-baseline-confirmed)及[首批开发基线](l1/08-decisions-release.md#protocol-development-baseline)，详细机制归现有 L1 / L2 / L3 及对应 ADR。未保存或伪造逐字会话快照；本轮无正式协议代码或生产验收证据，不将规范确认扩大成全引擎 API 冻结。
 
 ### SRC-WORKFLOWS：项目工作流确认与调研依据 {#src-workflows}
 

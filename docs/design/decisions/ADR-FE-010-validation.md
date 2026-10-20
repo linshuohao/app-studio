@@ -13,12 +13,14 @@ tags: []
 related:
   decisions: []
 sources:
+- SRC-PROTOCOLBASELINE
+- SRC-PREREQUISITES
 - SRC-L1
 - SRC-V07
 navigation:
   group: 09 · 决策与追溯
   order: 120
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 status_note: 已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐
 ---
 
@@ -37,6 +39,14 @@ Schema 组合语义难以安全拆成每字段 Keyword 单元；固定“Schema�
 L2 自动补全可推导的 Validation 数据依赖，未知业务依赖由作者显式提供；前置输入依赖传递纳入后置有效依赖，不要求重复配置。本轮从命中任务递归补齐前置 Constraint，按具体实例去重并必要重排，不把发起顺序当成通过，不建立结果反向 PubSub 或通用跨异步 DAG；多步异步优先封装为同一 Host External。按字段聚合错误供 L4 / Host 消费，规则不随 View 挂载失效，校验不写 Data 或自动触发 Data-only Reaction。
 
 来源比较过局部 Schema 引擎、固定同步 / 异步阶段、结果反向索引、向 UI 暴露每源复杂状态机；这些未作为当前采用方案。自动补齐前置曾是未采用候选，2026-10-19 用户讨论已明确采用本轮递归补齐，替代严格缺失跳过倾向。代价是根 Schema 仍需完整校验，共同入队可能重复执行前置，需用基准衡量。
+
+### 2026-10-21：前置实例绑定与同步等待范围
+
+字段 / 规则两种前置引用沿用既有讨论，不重开选择；按 Scope ID 对应的具体唯一实例绑定，规则实例结合规则身份定位，数组移动后不按下标串项。本期不增加跨成员 or / any 集合前置，后续按真实需求评估。
+
+首期只等待同步前置；后置 External 可以在同步资格满足后发起，但不等待另一条异步 Constraint。多步异步封装在同一个 Host Validator 内，取消与代次由现有任务契约承接。完整校验等待全部适用异步任务不受此限制影响。字段资格涉及异步来源时的解析范围还须设计，不能将“只等待同步”偷换成“忽略异步也算字段全部有效”。
+
+仅收敛前置范围，正式 requires Union、字段资格集合及 Prepared 表示尚未发布。见 [现行契约](../l3-validation.md#prerequisite-scope-contract)及[用户确认](../design-history.md#prerequisite-scope-confirmed)。
 
 ## 推荐实现与未决边界 {#adr-010-open}
 
@@ -83,3 +93,10 @@ External Constraint 接入选定“Host 返回结果任务及可选 cancel 句�
 ### 2026-10-20：Host 接入与输出职责修订
 
 校验能力使用独立名称被规则引用；缺失按用途降级但不能伪造校验通过。引擎 Readiness 不再包含 Host 业务输出转换 / 验证阶段，表单校验与 Host 业务交付分开。该局部职责修订由 [ADR-FE-012](ADR-FE-012-host-output.md)明确，本文其余 Schema / Constraint / 异步有效性决策继续有效，不整份废弃。
+
+
+### 2026-10-21：同步字段资格与消息覆盖收敛
+
+用户确认字段前置明确表示 Schema + 相关适用 Internal 完成且无相关错误的同步资格，不包括 External、不冒充完整通过；规则前置指向 External 时拒绝，多前置全部满足，自包含诊断不静默排除自身。此处明确收窄此前“字段有效”的宽泛表述，完整校验仍等待全部适用同步 / 异步规则。
+
+消息采用 Constraint 局部覆盖及 Schema 声明位置 + keyword 覆盖，text / key 两类，资源解析归 Host；专属覆盖 → Host 默认模板 → 通用回退，缺失资源不能吞掉错误，不新增数据路径通配符。实现按[同步资格](../l3-validation.md#prerequisite-scope-contract)与[消息契约](../l3-validation.md#validation-message-contract)整合，不将旧候选字段当正式类型。

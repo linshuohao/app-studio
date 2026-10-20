@@ -8,7 +8,7 @@
   <title>L2 预处理与编译 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -519,10 +520,13 @@
 </table></div>
 <p>源码由 Git 管理，CI 构建和测试，制品仓库存构建产物，平台数据库记录元数据、Manifest、制品地址、摘要、发布状态与权限。不默认在数据库中保存任意 JavaScript 字符串并在客户端 eval。</p>
 <p>Manifest 可检查签名与目标端可用性，不能自动证明实现没有副作用，也不能证明物料遵守事件语义；仍需代码审查、契约测试、执行环境限制与必要的运行时防护。不可信第三方扩展另需可信来源、完整性校验、签名 / 审核及隔离 / 权限策略。</p>
+<h3 id="首期签名结构与-host-服务声明">首期签名结构与 Host 服务声明</h3>
+<p>2026-10-21 完整草案确认：PureFunctionManifest 的参数 / 返回结构复用 JSON Schema，原 TypeSignature 是概念占位；固定参数有 name / schema / optional，末尾可选与独立 restParameter，业务函数不接管 AST，有限内置短路见 <a href="l1/03-expression-validation.html#function-evaluation-contract" rel="noopener noreferrer">L1</a>。</p>
+<p>物料所需 Host 服务只声明名称、契约版本与是否可缺失。方法 / 参数 / 返回值归具体服务接入契约，不在 Protocol 展开为通用 RPC 描述；必要服务缺失提供诊断与局部降级，不默认停止整表。此可选性不能让 Validator 绕过完整校验。Host 静态契约可选的边界保持。</p>
 </section>
 <section class="section" id="l2-host"><div class="section-head"><div class="kicker">09 · FORM ENGINE</div><div class="section-title"><h2>Host 运行时注册与依赖要求</h2></div></div>
 
-<p>宿主在应用运行时提供实现；L2 提取静态需求，获得 HostContract 时再检查名称与签名。缺少静态声明不能被当成实现必然不存在。</p>
+<p>宿主在应用运行时提供实现；L2 提取静态需求，获得 HostContract 时再检查名称与签名。缺少静态声明不能被当成实现必然不存在。2026-10-21 已确认 Host Validator 接收本次调用的数据读取快照及 Scope，以显式 watch 声明 Host 内部不透明依赖；首期不增加命名参数映射 / External Payload。Compiler 仍只补全已有静态可见依赖，不执行 Host 代码推测读取。快照与依赖正确性边界见 <a href="extension-integration.html#host-input-contract" rel="noopener noreferrer">Host 调用输入</a>。</p>
 <div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">FormHost</span><span class="syn-w"> </span><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-nx">validators?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Record</span><span class="syn-o">&lt;</span><span class="syn-kt">string</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">HostValidator</span><span class="syn-o">&gt;</span><span class="syn-p">;</span>
 <span class="syn-w">  </span><span class="syn-nx">events?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Record</span><span class="syn-o">&lt;</span><span class="syn-kt">string</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">HostEventHandler</span><span class="syn-o">&gt;</span><span class="syn-p">;</span>
@@ -632,8 +636,11 @@
 <span class="syn-w">  </span><span class="syn-p">}</span>
 <span class="syn-p">}</span>
 </code></pre></div>
-<p>以上字段、版本及摘要均为示意。真实发布还需明确摘要标识 Manifest、执行制品还是完整 Bundle；内置函数集也需关联可核对的不可变 SDK / 制品身份。</p>
+<p>以上字段、版本及摘要均为示意。后续已确认分别锁定 Manifest 与实际实现制品，具体见<a href="#capability-digest-contract" rel="noopener noreferrer">双摘要契约</a>；内置函数集也需关联可核对的不可变 SDK / 制品身份。</p>
 <p>能力升级不能自动改变已发布表单；回滚读取旧 Release Artifact，不能根据当前最新 Catalog 重新组装。静态可发现的 Port 移除、参数类型变化触发重新检查 / 编译；运行时代码语义兼容性还依赖版本策略、契约测试和灰度验证。<code>latest</code> 或 <code>^1.2.0</code> 单独不足以复现旧发布。</p>
+<h3 id="capability-digest-contract">首期双摘要锁定</h3>
+<p>2026-10-21 用户确认能力同时锁 Manifest 与实现制品：id / version / manifestDigest，以及 artifact 的 id / platform / digest。多个能力可引用同一包制品；内置函数集同样绑定确定实现身份。Manifest 对确定性序列化内容计算摘要，交付制品对实际字节计算；资源地址是获取位置而非身份。应用内置实现绑定不可变构建身份，不假定运行时现场读取自身代码计算摘要。</p>
+<p>L2 只消费确定 Catalog Snapshot，不在线查询 latest。分别锁定增加一个身份关联，换取编译依据与实际实现都可追溯；不会仅凭版本或地址自动替换旧发布。摘要算法 / 规范化与装配核对的具体代码在实现中统一选择并验收，不继续逐字段讨论。</p>
 </section>
 <section class="section" id="l2-versions"><div class="section-head"><div class="kicker">11 · FORM ENGINE</div><div class="section-title"><h2>制品身份与兼容性约束</h2></div></div>
 
@@ -758,8 +765,14 @@
 <p>PreparedForm 的实际执行观察计划必须在编译时确定；可同时携带分析 Reads / Writes、建议与来源信息，但这些元数据不能在 Runtime 再次补齐 watch。静态可决定的引用解析、能力索引与锁定信息前置；when / ValueSpec 的具体求值、动态数组身份、实际 Change 匹配留给 L3，视图挂载与平台渲染留给 L4。平台仍管理 Release 与不可变发布，编译产物关联锁定能力不代表 Compiler 接管发布治理。</p>
 <h3 id="校验准备与完整-schema-资源">校验准备与完整 Schema 资源</h3>
 <p>选择完整 JSON Schema 根级校验域，不在 L2 自动拆分 Keyword / 局部 Schema。Prepared 交付可序列化 Schema 资源、引用与 Adapter 约定；Web 可缓存 Ajv 编译函数，Dart 由对应 Adapter 执行，不跨端传输生成的 JS 函数。业务 Constraint 仍复用 Pure Function / Host，不转换为 Ajv 自定义 Keyword ABI。</p>
-<p>PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。requires / validationMessages 语法尚未冻结，不能直接宣称当前候选 Schema 已支持。</p>
+<p>PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。requires / validationMessages 正式语法尚未冻结，不能直接宣称当前候选 Schema 已支持。</p>
 <p>前置引用与静态非法配置应尽可能在 L2 诊断。L2 自动推导 Validation 可分析读取，并沿前置关系补全后置有效触发依赖；不可见的 Host 业务依赖由作者显式提供，不要求重复声明可推导依赖。L3 从命中任务递归补齐已解析的前置实例、去重并重排序，按本轮结果放行，不复用历史通过结论。这不修改 Reaction 显式 Watch，也不建立前置结果 PubSub；计划需保留补全依据，补全不意味着立即发起外部请求。字段有效性的范围、跨 Scope 解析、Issue 规范化与 Web / Dart 兼容矩阵见 <a href="l3-validation.html#validation-layers" rel="noopener noreferrer">校验专题</a>。</p>
+<h3 id="prepared-machine-baseline">首期 Prepared 机器结构基线</h3>
+<p>2026-10-21 用户确认以准备后的有类型结构树执行，不首期建设字节码或自定义 VM。L2 已解析名称、函数身份和引用，L3 对准备树执行，不重解析原始声明或重分析依赖。Template 在编译时解析并展开，保留来源关系；递归引用及过度展开用编译检查和预算防护，运行时不再维护 L1 模板参数解释器。</p>
+<p>PreparedForm 组织为身份 / preparedFormatVersion、formPlan、viewPlan、dependencyPlan、capabilityLock、hostRequirements。formPlan 包含完整业务 Schema 资源、静态 Scope 模式、准备后的表达式 / 命令 / Reaction 与 Validation；viewPlan 携带当前 Profile 视图闭包；dependencyPlan 集中组织静态观察，消费者引用计划 ID。表达式来源与编译诊断的源位置保留，详细内部分析图留在 Compiler，不全部交付。</p>
+<p>引用保存已解析的根 / 静态 Scope Pattern 及路径；L3 才绑定实际 Scope ID。依赖计划不保存数组成员、实例数据、回调、组件、请求状态或 Issue。数组结构是 Data 的观察方面，不另建事实源；观察激活归属与 runOnActivate 不混用。</p>
+<p>不新增节点 / 属性更新分级，沿用已确认共用 Adapter 接入；此前内嵌依赖与节点 / 属性粒度仅为比较过的草案，不作为新增协议。内部去重 / 求值优化由实现处理。</p>
+<p>完整根业务 Schema 及必要引用资源闭包随制品携带，编译时固定资源，不在执行时联网补 $ref；不拆 Keyword 局部引擎，不携带 Ajv 生成 JS 校验函数。正式 TS 全量字段与正反例按本节一次整合，方向确认不等于 ABI 已生产验收。</p>
 </section>
 <section class="section" id="l2-dependencies"><div class="section-head"><div class="kicker">13 · FORM ENGINE</div><div class="section-title"><h2>有类型的依赖关系与环检测</h2></div></div>
 
@@ -881,7 +894,7 @@
 <p>PreparedForm 携带可复用静态观察描述，信息包括 owner（Reaction / Constraint / View）、触发依赖、已解析引用与 Scope Pattern、由 Runtime 或 View 挂载负责激活。Prepared View 可引用计划 ID 或内嵌紧凑依赖集合；正式字段、条目存储和节点 / 属性粒度仍待固化，见 <a href="dependency-reactivity.html#dependency-plan" rel="noopener noreferrer">最小计划草图</a>。</p>
 <p>计划只保存静态关系与求值入口，不保存回调、组件、当前数组长度、实例 ID 或已执行纯函数结果。Validation / Field Meta 等运行时状态观察由 L3 接入契约描述，不扩展 L1 Reference.source；数组结构观察的编码方式尚未冻结。</p>
 <p>确认 L2 编译绝对 / Scope 相对引用与结构观察的规范化路径模板，由 L3 结合实际 Scope / 挂载订阅建立运行索引。Trie + Scope Slot 是推荐实现，不冻结为 Prepared ABI，更不能让编译器预先写死所有真实成员的实例 Trie。来源的通配路径、<code>./age</code>、<code>length</code> 索引节点均为示意，不新增 L1 Pointer 语法。候选定位与前后观察值比较分工见 <a href="l3-data-scope.html#l3-dependency-index" rel="noopener noreferrer">依赖索引</a>。</p>
-<p>首次执行策略显式可配置是已确认的 L1 / L2 契约：L2 校验策略并编译，L3 在实例激活时按计划入队。来源用 <code>runOnActivate</code> / <code>activation: run-on-activate</code> 示意，正式字段与默认值尚未冻结；它与本篇 <code>activation: runtime / view-mounted</code> 表示的“谁管理观察生命周期”分别解释，不能混用一个候选字段偷换含义。编译时不执行初始 Reaction，不创建 Baseline，不自动重写 watch。</p>
+<p>首次执行策略显式可配置是已确认的 L1 / L2 契约：L2 校验策略并编译，L3 在实例激活时按计划入队。来源曾用 <code>runOnActivate</code> / <code>activation: run-on-activate</code> 示意；首批基线已采用 runOnActivate 可选布尔、默认 false；它与本篇 <code>activation: runtime / view-mounted</code> 表示的“谁管理观察生命周期”分别解释，不能混用一个候选字段偷换含义。编译时不执行初始 Reaction，不创建 Baseline，不自动重写 watch。</p>
 <p>当前约束：runOnActivate 仅新 Reaction 实例首次建立，不编译成已有规则的 Reset / 修复 / 重算入口。业务 Baseline / Dirty / Reset 策略归 Host，不是 L2 或 L3 自动维护的核心状态。编译器可以提示缺失 Watch，建议仍须作者确认；已有规则没有有效 Watch 变化时不因“结果可能不正确”新增执行计划。Context 继续只读，L1 Command / Reaction.watch 不在本次扩展到 Context。</p>
 <p>L2 知道 <code>insured(each).age → 该项 Constraint</code> 的模式；L3 将其绑定为 A.age → Constraint A、B.age → Constraint B；L4 仅激活真实挂载 View 的计划。插入创建业务实例、删除释放无效关系、移动跟随稳定身份、整组替换按身份契约处理，不在编译期推断当前成员。静态统一不意味着 L3 初始化预注册全部 View。</p>
 </section>
@@ -1001,13 +1014,13 @@
 </tr>
 <tr>
 <td>PureFunctionManifest 最小签名</td>
-<td>ID、版本、输入输出、目标端可用性</td>
-<td>JSON Schema / TypeSignature 的可判定交集</td>
+<td>Schema 参数 / 结果、固定 / 变长及内置有限短路已确认</td>
+<td>输出正式类型、签名表及边界反例，不另建 TypeSignature 语言</td>
 </tr>
 <tr>
 <td>Capability Release Lock</td>
-<td>版本 + 不可变摘要；按平台 / Profile 解析</td>
-<td>摘要覆盖对象及 Runtime 核对方式</td>
+<td>分别锁 Manifest 内容摘要和实现制品字节摘要；按平台 / Profile 解析</td>
+<td>固化实现及构建身份核对，不重开摘要对象选择</td>
 </tr>
 <tr>
 <td>PreparedValidation</td>
@@ -1026,8 +1039,8 @@
 </tr>
 <tr>
 <td>首次执行策略</td>
-<td>L1 显式配置，L2 编译，L3 实例激活时安排</td>
-<td>与观察生命周期归属分开；字段默认值、版本与候选样例覆盖</td>
+<td>runOnActivate 可选且默认 false，L2 编译，L3 仅新实例首次安排</td>
+<td>与观察生命周期归属分开；正式类型 / Schema 与候选样例迁移</td>
 </tr>
 <tr>
 <td>Material 的 Host Service</td>
@@ -1058,6 +1071,8 @@
 </section>
 <section class="section" id="prepared-delivery"><div class="section-head"><div class="kicker">18 · FORM ENGINE</div><div class="section-title"><h2>Prepared 交付与编译错误边界</h2></div></div>
 
+<p>协议结构校验链路已确认采用原生 TS 类型 → 自动生成 JSON Schema → Ajv；Compiler 在输入边界执行结构校验，再做引用、Scope、能力连接等语义分析。具体生成器和诊断映射随实施固化，见 <a href="l1/08-decisions-release.html#protocol-structure-source" rel="noopener noreferrer">L1 结构源</a>。Runtime 不在交互高频路径重复静态检查；本节规定的制品装载兼容与有效性检查继续保留。</p>
+<p>2026-10-21 用户确认：同进程 Compiler 刚成功生成的结果不重复整份结构校验；外部文件 / 接口 / 缓存载入的 Prepared JSON 在接收边界做一次结构检查，再核对格式、目标与能力。检查结果可随受控不可变产物复用，不在交互或成员实例化时重验整份协议；可信验证与缓存须有明确边界，不能仅凭格式版本断言结构有效。</p>
 <p>首阶段 Prepared Artifact 采用 JSON 交付，Form / View / Dependency Plan 保持逻辑分工，不要求拆为多个文件。传输压缩不构成另一套协议；不同时建设二进制格式，只有性能证据出现后才另行评估。具体字段、确定性序列化及摘要覆盖对象继续固化，JSON 方向确认不等于完整 ABI 已冻结。</p>
 <p>首阶段 Runtime 只接收与其声明支持格式精确匹配的 preparedFormatVersion；不按 Compiler 版本号推断兼容，也不默认接受版本范围或增加 feature 组合协商。目标平台、Profile、能力锁及 Host 接入检查分别执行，格式匹配不代表所有能力必然可用。不兼容或无效制品拒绝进入执行，不回退解释 L1。</p>
 <p>编辑、协议入库校验与发布使用同一 L2 分析能力，尽早返回具体源位置、错误码、严重程度和可读原因。编辑器可取得不完整配置的诊断 / 符号等分析信息，但存在 Error 时不得生成可执行 Prepared，不将错误协议作为可用入库 / 发布制品，也不跳过错误节点拼成部分可执行表单。Warning 可伴随成功制品，不能把已规定拒绝的静态错误降为 Warning。错误草稿能否临时保存属于后续 Studio / Platform 范围，不在本轮另定策略。</p>
@@ -1089,7 +1104,7 @@
 <a href="#l2-decisions" data-to="l2-decisions" title="待固化接口与验收标准"><span class="nav-num">16</span><span>待固化接口与验收标准</span></a>
 <a href="#l2-delivery" data-to="l2-delivery" title="后续交付与来源"><span class="nav-num">17</span><span>后续交付与来源</span></a>
 <a href="#prepared-delivery" data-to="prepared-delivery" title="Prepared 交付与编译错误边界"><span class="nav-num">18</span><span>Prepared 交付与编译错误边界</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li></ul></details><details><summary>相关正文与历史 · 18</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 19</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 6</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-protocol-source">SRC-PROTOCOL · 协议结构源与校验路线确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

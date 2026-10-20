@@ -11,12 +11,13 @@ tags: []
 related:
   decisions: []
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-L1
 - SRC-L2
 navigation:
   group: 09 · 决策与追溯
   order: 112
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 status_note: 已确认，类型与签名待固化
 ---
 
@@ -55,3 +56,10 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 跨 Template 参数、Binding Port、函数参数等类型连接，仅接受明确可判定且能证明兼容的结构；已知不兼容与无法证明兼容均拒绝编译，但诊断码 / 原因应区分。不用运行时兜底、作者强制断言或静默降级绕过连接检查。受限的是静态连接兼容检查能力，不将业务数据根 Schema 改成局部 Schema，也不声称任意 JSON Schema 包含关系均可判定。可判定子集、Union 完整形状、签名与正反例仍需正式固化。
 
 用户以业务稳定和正确性为依据，确认严格拒绝未知字段、保留标记须转义、不证明兼容则拒绝连接。细化既有受限语言原则，不改变字段 op + args，不新增通用类型断言或运行时转换机制。记录见 [L1 严格固化](../design-history.md#l1-strict-update)。
+
+
+### 2026-10-21：首期表达式与连接基线
+
+用户确认原生 TS / Schema 路线继续实施：递归 ValueSpec 普通对象禁止保留键、Literal 不递归解释。函数签名复用 JSON Schema，普通注册函数只接收值，有限内置 and / or / if 支持短路，静态读取覆盖全部分支；Missing 不隐式转 null，不进行字符串 / 数字强制转换或 eq 通用深比较。
+
+静态连接首期证明常用结构类型（资源身份、基础类型、null、const / enum、对象、同构数组及可判定联合），无法证明与明确不兼容均拒绝；业务约束不作为 Working Data 写入门禁。具体函数参数及算法按[表达式契约](../l1/03-expression-validation.md#function-evaluation-contract)和[连接子集](../l1/08-decisions-release.md#schema-connection-subset)实施，不继续逐细节访谈。

@@ -15,13 +15,16 @@ related:
   - ADR-FE-005
   - ADR-FE-010
 sources:
+- SRC-PROTOCOLBASELINE
+- SRC-PREREQUISITES
+- SRC-CONTRACTS
 - SRC-L1
 - SRC-DEP
 - SRC-V07
 navigation:
   group: 02 · L1 协议
   order: 33
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 reading_next: L1-COMMAND
 ---
 
@@ -111,6 +114,16 @@ L2 保守覆盖短路计算的全部可能输入，Literal 内部不做表达式
 > 
 > 解析失败或类型不匹配不等于 Expression 返回 `false`，也不等于自动使用最近一次合法值。同步业务 Constraint 不通过、外部校验 Pending 也不应自动阻断全部 Reaction。
 
+### 首期函数签名与求值契约 {#function-evaluation-contract}
+
+2026-10-21 用户确认签名复用 JSON Schema，不另建 TypeSignature 语言。parameters 为有序固定参数，带说明名称 / schema / 可选标记；可选项只在末尾，restParameter 单独描述变长参数，returns 为结果 Schema。op + args 不变，参数名称不引入命名实参。实际类型见 [L2 能力](../l2-preparation.md#l2-manifests)。
+
+Missing 是内部缺失语义，不自动转为 null / 0 / 空字符串，也不写入 JSON 数据或制品。普通函数收到不符合签名的输入报告求值错误；exists 等明确内置可处理 Missing。不隐式转换字符串 / 数字，数值结果必须可表示为合法 JSON 数值，除零等报错；eq 不隐含通用对象 / 数组深比较。
+
+固定内置 and / or / if 支持短路（if 只求值选中分支），其他注册函数严格求值并只接收参数值，不接受 AST / 求值器，不开放插件自定义惰性解释。L2 的读取分析仍覆盖全部可能分支。完整 core.* ID 是 Canonical，短名仅为明确 Authoring 别名。
+
+首期范围为 eq / ne / gt / gte / lt / lte，add / sub / mul / div，and / or / not / if，exists / length。精确参数数量、类型与边界正反例随正式函数表一次固化，不把具体算法当成已实现。
+
 ## Constraint：内部断言与外部校验义务 {#constraint}
 
 > 状态：已收敛
@@ -164,13 +177,13 @@ L2 保守覆盖短路计算的全部可能输入，Literal 内部不做表达式
 
 Internal Constraint 的触发依赖来自 `when + assert` 的读取并集，无需再填 watch。例如 `when` 读取年龄、`assert` 读取监护人姓名，两者任一变化都可能改变结果；条件不再适用时移除该规则实例的旧 Issue。`issue.target` 只管错误归属，不代表唯一输入。
 
-External Constraint 的 `watch: DataReference[]` 显式声明 Host 内部不透明的 Data 输入，与可选 `when` 的静态可见读取合并为失效依赖。当前协议没有 External Payload 字段，不据来源稿中的候选描述新增字段。依赖变化立即使旧结论失效并可登记本轮校验任务；是否立即请求 Host 由 blur、显式 validate、submit 或待固化的自动策略决定。给出自动增量路径，不等于冻结所有外部校验每次输入都请求；watch 不描述 URL、请求策略或回调时机。
+External Constraint 的 `watch: DataReference[]` 显式声明 Host 内部不透明的 Data 输入，与可选 `when` 的静态可见读取合并为失效依赖。当前协议没有 External Payload 字段，不据来源稿中的候选描述新增字段。2026-10-21 已确认采用本次调用的数据读取快照及 Scope，不新增命名参数映射；Host 必须从本次输入读取影响结果的表单数据并完整声明不透明依赖，不能绕过输入视图读取其他时刻数据后仍要求引擎证明结果有效，见 [Host 调用输入](../extension-integration.md#host-input-contract)。依赖变化立即使旧结论失效并可登记本轮校验任务；是否立即请求 Host 由 blur、显式 validate、submit 或待固化的自动策略决定。给出自动增量路径，不等于冻结所有外部校验每次输入都请求；watch 不描述 URL、请求策略或回调时机。
 
 **字段迁移：**现行草案将原 `dependsOn` 改为 `watch`，引用值保持不变；旧字段仅保留在历史来源中。现行 Canonical 不接收旧字段或双字段混用。正式协议版本号、旧版识别与迁移工具尚待发布规范固化，本次不虚构版本号或宣称兼容已发布数据。Reaction.watch 的语义保持不变。
 
 **有限前置与消息覆盖 · 设计方向**
 
-校验前置在本轮 Constraint 链中检查、必要重排序，不增加校验结果反向 PubSub 或通用异步 DAG。来源的 `requires` 只是语法占位：字段有效性已确认按前置完成后该字段无错误判断；规则 / 字段引用、跨 Scope 绑定和 Prepared 表示尚未冻结。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
+校验前置在本轮 Constraint 链中检查、必要重排序，不增加校验结果反向 PubSub 或通用异步 DAG。来源的 `requires` 只是语法占位：字段有效性已确认按前置完成后该字段无错误判断；字段 / 规则两种引用能力已明确；2026-10-21 确认按具体 Scope ID 唯一实例绑定，本期不增加 or / any 等集合能力，仅允许等待同步前置，多步异步封装在同一个 Host Validator。后续完整草案确认字段前置是 Schema + 相关适用 Internal 的同步资格，明确不包括 External，不代表完整有效性；正式语法与 Prepared 字段按已确认原则实施整合，见 [首期前置范围](../l3-validation.md#prerequisite-scope-contract)。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
 
 ## 校验状态与提交 Readiness 的协议边界 {#validation}
 
@@ -215,3 +228,8 @@ Constraint 随 FormRuntime / Scope 激活，不随 View 挂载或隐藏建立、
 ### 标记消歧与严格分支检查
 
 ValueSpec 中 $expr / $literal 是保留键，包装非法必须报配置错误，不回退普通对象；原样标记数据必须用 $literal 转义，Literal 内不递归解析。协议对象的 Union 分支与未知字段严格校验，规则见 [严格协议契约](08-decisions-release.md#strict-contract)。不在 Working Data / Schema 中识别表达式标记。
+
+
+### 递归 ValueSpec 的机器消歧
+
+首批基线确认使用标准 JSON Schema 递归引用，并在普通对象分支以 propertyNames 等标准约束禁止 $expr / $literal 保留键；包装分支严格拒绝额外字段，Literal 内递归 JsonValue 而非 ValueSpec。由类型附近约束或固定生成规则派生，不手改输出，也不建设自定义 Ajv 关键字。Schema 处理结构消歧，Compiler 按已知 Expression / ValueSpec 位置遍历，不扫描业务数据或 Schema。

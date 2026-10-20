@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 43,
+    "current-markdown": 44,
     "documentation-tooling": 12,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 396,
-  "unique_byte_contents": 357,
+  "total_entries": 397,
+  "unique_byte_contents": 358,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -266,8 +266,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 44696,
-      "sha256": "cf46b156c899f29ae23c774673c1618f2ed9b11bd308b9e84011d3b0fde142eb",
+      "bytes": 45109,
+      "sha256": "0b530a64010aafe474b97a8e2fa8e8a156fba621d1161ad531e251f70a10dcb9",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -476,8 +476,8 @@
       "path": "docs/design/decisions/ADR-FE-002-static-language.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4554,
-      "sha256": "48c966e8762573bc870937c85771571a07ac9499e9a1581d83dbcabb784773b3",
+      "bytes": 5443,
+      "sha256": "4571f4bcb4d568ff6ee40dad9d9d5cfba449d8414a7e4a895e4c5205096eb505",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -509,6 +509,11 @@
           "level": 3,
           "title": "2026-10-20：严格结构、保留标记与可证明兼容",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：首期表达式与连接基线",
+          "anchor": null
         }
       ]
     },
@@ -516,8 +521,8 @@
       "path": "docs/design/decisions/ADR-FE-003-view-material.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 6443,
-      "sha256": "84fd242008fa1b91d87393db92081caaa508847100eb6d22723b8a98552152f9",
+      "bytes": 7269,
+      "sha256": "573065e842c27bbee514d28d58f7c967ec9e044362fb06c28c34ee55681b22c1",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -534,6 +539,11 @@
           "level": 2,
           "title": "已确认选择与取舍",
           "anchor": "adr-003-decision"
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：最小物料声明契约",
+          "anchor": null
         },
         {
           "level": 2,
@@ -561,8 +571,8 @@
       "path": "docs/design/decisions/ADR-FE-004-prepared-entry.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4467,
-      "sha256": "59a507c7b957fc9735fec7d161a63ba21b27cec041f410a46d4b8c9978f2976a",
+      "bytes": 5256,
+      "sha256": "7df717d4474f149becf3839566331d277ffdb79af9d269d2c3852ca162fee830",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -593,6 +603,11 @@
         {
           "level": 3,
           "title": "2026-10-20：交付格式、装载匹配与错误准入",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：Prepared 首批结构与装载",
           "anchor": null
         }
       ]
@@ -811,8 +826,8 @@
       "path": "docs/design/decisions/ADR-FE-010-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 9244,
-      "sha256": "103b08364abe261ef68021f8302db9632f2f4b06e4dc8dac82a41d464e7350f4",
+      "bytes": 11166,
+      "sha256": "022af4726552675d0d6a5623f03658733ba5d5a0f510889e7a1ffd09be10d09b",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -829,6 +844,11 @@
           "level": 2,
           "title": "已收敛选择",
           "anchor": "adr-010-decision"
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：前置实例绑定与同步等待范围",
+          "anchor": null
         },
         {
           "level": 2,
@@ -859,6 +879,11 @@
           "level": 3,
           "title": "2026-10-20：Host 接入与输出职责修订",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：同步字段资格与消息覆盖收敛",
+          "anchor": null
         }
       ]
     },
@@ -866,8 +891,8 @@
       "path": "docs/design/decisions/ADR-FE-011-release-lock.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3573,
-      "sha256": "fca108c255674d237541b794fd15af78c86ec90dbaace2488be3daa340cff5e9",
+      "bytes": 4225,
+      "sha256": "9e1b90eacddeb59e19a233ce3f105926ef6805208458c07d31d1904bdc040396",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -899,6 +924,11 @@
           "level": 3,
           "title": "入库与制品准入补充",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：能力签名与摘要对象确认",
+          "anchor": null
         }
       ]
     },
@@ -906,8 +936,8 @@
       "path": "docs/design/decisions/ADR-FE-012-host-output.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3582,
-      "sha256": "af25729036d20b86081cdc96fd879db6ad6e830d82f2d7d1be3893c391bc9580",
+      "bytes": 4303,
+      "sha256": "84cd81aa7f525f28d1867205e7ba50d398ed51d4a7ac14dffb43715383ea0818",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -923,6 +953,11 @@
         {
           "level": 2,
           "title": "已确认决策",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：Host Validator 调用输入",
           "anchor": null
         },
         {
@@ -976,8 +1011,8 @@
       "path": "docs/design/decisions/ADR-FE-014-engineering-toolchain.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3108,
-      "sha256": "f1f986f10f29ebfae82f2b59ed589a45e82c292fe8810baff04318bae350418d",
+      "bytes": 3245,
+      "sha256": "2d5b11abbda00378db4f11a2a3f6fad1ee0116de5bfcfba63bf94d7ebb1f4a2a",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1008,11 +1043,51 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-015-protocol-source.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 3468,
+      "sha256": "418c25b59e9cb2ceb4d19e7a0df537cb3ba1e937bcf10000650dfe9477e8b853",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与实际比较",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决策",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "影响与限定范围",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "来源与关联",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "后续确认：完整类型优先与实现迭代",
+          "anchor": null
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 42206,
-      "sha256": "77325a8ae3ba3a0096159130b6c32e876b6be50e1f99b32dd23cb4f22b4331df",
+      "bytes": 42321,
+      "sha256": "2a31ef133c2b524c8a2299a9fbe4662b00c51ea01ca9aa167e31c7b10e316de4",
       "mapping": "SRC-DEP / SRC-V05 / K10–K13",
       "sections": [
         {
@@ -1126,8 +1201,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 127976,
-      "sha256": "158fb8670d8aeb4531578c8001df415fa1ad4270f8f7cdf7bd6ba763b6c47fe0",
+      "bytes": 133113,
+      "sha256": "6a7f7bb3c96c19ff5a83dbbccabf2d2c2364f662c3fdb1a574d72eac3679fcf0",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1529,6 +1604,26 @@
           "level": 2,
           "title": "2026-10-20：工程初始化与兼容联验",
           "anchor": "engineering-initialized"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：协议结构源与校验路线确认",
+          "anchor": "protocol-source-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：物料最小契约与 Host 输入确认",
+          "anchor": "material-host-contracts-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：前置唯一实例与同步等待范围确认",
+          "anchor": "prerequisite-scope-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：协议包完整基线收敛并转入开发准备",
+          "anchor": "protocol-baseline-confirmed"
         }
       ]
     },
@@ -1621,8 +1716,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 34383,
-      "sha256": "bf44d897eb7874b8afec0a7c0f9f97db76a12eaccd51f3cff93fd4d5af1024b7",
+      "bytes": 35081,
+      "sha256": "82ccb493e8f2c0d53d8d7f8c93431cc68e10cd41cc6f195e49c23ce8a17e359a",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1729,6 +1824,11 @@
           "level": 3,
           "title": "日常命令",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "协议包进入开发的基线",
+          "anchor": "protocol-development-ready"
         }
       ]
     },
@@ -1736,8 +1836,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 11098,
-      "sha256": "a82f2d6645bd7095bd922870496bd1d1b6850a0b586e06ef93f927a266b8e1cd",
+      "bytes": 12287,
+      "sha256": "3249e69b0675021885505e0d86c8818ff4975a68115120a0aada52afd817f372",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -1777,6 +1877,11 @@
         },
         {
           "level": 3,
+          "title": "Host 调用输入的已确认边界",
+          "anchor": "host-input-contract"
+        },
+        {
+          "level": 3,
           "title": "Host 接入与业务输出的已确认契约",
           "anchor": null
         }
@@ -1786,8 +1891,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 31823,
-      "sha256": "b6764f054c8a5b865afd1780a14dc95e3c1501818406ac66e4c107347e42bfd5",
+      "bytes": 33559,
+      "sha256": "b0f3fbd022228f3606e3ef3c1c932ce28a3a0d7b05c907b800acdc5bda254e70",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -1828,6 +1933,11 @@
         {
           "level": 3,
           "title": "当前进度：工程底座完成本地联验，核心契约继续固化",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "协议包讨论收敛，转入完整类型实施",
           "anchor": null
         },
         {
@@ -1951,8 +2061,8 @@
       "path": "docs/design/l1/03-expression-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13706,
-      "sha256": "13bead1eec50e0f684b075129dca6e0ccbff04f72e5aa6e82fba8cafa28ce325",
+      "bytes": 16410,
+      "sha256": "6dab38efb0790ea8fae14d2115d93b7b066cf90cb0b227fca537566c46aabe7b",
       "mapping": "SRC-L1 / K05–K06 / K12 / K25–K28",
       "sections": [
         {
@@ -1964,6 +2074,11 @@
           "level": 2,
           "title": "Expression AST 与 ValueSpec",
           "anchor": "expression"
+        },
+        {
+          "level": 3,
+          "title": "首期函数签名与求值契约",
+          "anchor": "function-evaluation-contract"
         },
         {
           "level": 2,
@@ -1988,6 +2103,11 @@
         {
           "level": 3,
           "title": "标记消歧与严格分支检查",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "递归 ValueSpec 的机器消歧",
           "anchor": null
         }
       ]
@@ -2026,8 +2146,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10024,
-      "sha256": "e12da30573b9117e3bca40fbae103142aa9619499344ba6ebb75375edc29ff85",
+      "bytes": 12194,
+      "sha256": "4f1242123391bdbfa3c884eb446011680c60c01f0fa64642b2863e77eb2e6806",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2059,6 +2179,11 @@
           "level": 2,
           "title": "Material Manifest：协议机制与物料限制分层",
           "anchor": "materials"
+        },
+        {
+          "level": 3,
+          "title": "Binding / Slot / Event 的已确认最小契约",
+          "anchor": "material-minimum-contract"
         },
         {
           "level": 2,
@@ -2141,8 +2266,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 9424,
-      "sha256": "a869e76a41fadec8538408dba811b5cd365e2b9d5c128204c36dbd0f0d1adeeb",
+      "bytes": 16523,
+      "sha256": "f9e93ada45585ad4b34dac426069218e4122e9b378657fcb3c7f777933b8cb5e",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2154,6 +2279,21 @@
           "level": 2,
           "title": "仍需规范固化的事项：不等于重开架构",
           "anchor": "boundaries"
+        },
+        {
+          "level": 2,
+          "title": "协议结构源与校验链路",
+          "anchor": "protocol-structure-source"
+        },
+        {
+          "level": 2,
+          "title": "协议包首批开发基线",
+          "anchor": "protocol-development-baseline"
+        },
+        {
+          "level": 2,
+          "title": "首期 Schema 类型连接子集",
+          "anchor": "schema-connection-subset"
         },
         {
           "level": 2,
@@ -2226,8 +2366,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 47262,
-      "sha256": "a2c9de029bd1df2bedd254ada236f32e47fa195f895e2c29aff57a0ea59b05cd",
+      "bytes": 52428,
+      "sha256": "0045c015d24613c61cf5eac24fe7e15dbb91d5dfd3c6e514312b09b7a6d3494d",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -2291,6 +2431,11 @@
           "anchor": "l2-manifests"
         },
         {
+          "level": 3,
+          "title": "首期签名结构与 Host 服务声明",
+          "anchor": null
+        },
+        {
           "level": 2,
           "title": "Host 运行时注册与依赖要求",
           "anchor": "l2-host"
@@ -2299,6 +2444,11 @@
           "level": 2,
           "title": "两条构建链与发布锁定",
           "anchor": "l2-release"
+        },
+        {
+          "level": 3,
+          "title": "首期双摘要锁定",
+          "anchor": "capability-digest-contract"
         },
         {
           "level": 2,
@@ -2314,6 +2464,11 @@
           "level": 3,
           "title": "校验准备与完整 Schema 资源",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "首期 Prepared 机器结构基线",
+          "anchor": "prepared-machine-baseline"
         },
         {
           "level": 2,
@@ -2591,8 +2746,8 @@
       "path": "docs/design/l3-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 34544,
-      "sha256": "026e34ce9e2fa49ad2a292cbe80811387d2194105bfcfc02afc84d4cc08f017b",
+      "bytes": 37774,
+      "sha256": "dc16b8ad9924d3c856e31fdd1bce591984863dcbfa42de4ffd91bd45727f30e6",
       "mapping": "SRC-V07 / K25–K28",
       "sections": [
         {
@@ -2627,6 +2782,11 @@
         },
         {
           "level": 3,
+          "title": "前置引用与首期等待范围",
+          "anchor": "prerequisite-scope-contract"
+        },
+        {
+          "level": 3,
           "title": "原严格缺失算法及其替代关系",
           "anchor": null
         },
@@ -2644,6 +2804,11 @@
           "level": 2,
           "title": "消息生成、字段订阅与展示",
           "anchor": "validation-messages-subscription"
+        },
+        {
+          "level": 3,
+          "title": "消息的首期交付契约",
+          "anchor": "validation-message-contract"
         },
         {
           "level": 2,

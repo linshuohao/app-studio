@@ -8,7 +8,7 @@
   <title>视图、物料与宿主契约 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="../assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="../decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="../decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="../decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="../decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -146,7 +147,7 @@
 <span class="syn-w">  </span><span class="syn-p">}</span>
 <span class="syn-p">}</span>
 </code></pre></div>
-<p>所有 Slot 在 Canonical 都使用数组；<code>children</code> 可作为 <code>slots.default</code> 的 Authoring 简写。Manifest 声明哪些 Slot 合法、各自允许一个或多个 ViewNode，以及 Material 对这些 Slot 的具体交互含义。</p>
+<p>所有 Slot 在 Canonical 都使用数组；<code>children</code> 可作为 <code>slots.default</code> 的 Authoring 简写。Manifest 声明物料接受哪些 Slot 名称及其交互含义；首期不设置通用 minItems / maxItems 或单 / 多节点数量限制。默认插槽使用 default，具名插槽使用声明名称；数组是统一组合表示，不意味着协议要求新增数量管理。</p>
 <p>Slot 是视图节点组合位置，不能与普通 Props JSON 混淆，也不是一个“把组件插入任意 DOM 节点”的操作指令。</p>
 </section>
 <section class="section" id="templates"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>Typed View Template Params：可直接落地的方案</h2></div></div>
@@ -249,6 +250,19 @@
 </table></div>
 <p><strong>视觉/输入限制不等于业务数据校验。</strong>例如 <code>maxLength</code> 是 TextInput 的输入体验；真正的“姓名不能超过 20 字符”仍必须由 Data Schema 或 Constraint 保证。</p>
 <p>Web 与 Flutter 可以实现不同交互形态，但同一物料契约下的 Binding Port、Event Payload、Slot 和 Props 语义必须兼容。Form Definition 需要通过可确定的版本解析规则绑定 Material Manifest；不能依赖不受控的“latest”。</p>
+<h3 id="material-minimum-contract">Binding / Slot / Event 的已确认最小契约</h3>
+<p>2026-10-21 用户确认：Manifest 的 Binding 声明名称及预期数据 Schema，不声明 read / write / read-write 权限。Binding 表达物料使用哪些数据位置；实际读取、受控写入或只读展示由物料行为决定，单字段与多字段沿用同一具名映射和共用 Adapter，不增加独立字段端口层。</p>
+<p>Binding 的 Schema 用于 Compiler 检查数据模型与物料的静态类型兼容性，不在每次修改时拦截业务不合法 Working Data，也不替代业务 data.schema / Constraint。概念子类型可写为下例；包装和正式命名随完整类型固化，不把语义确认解释为已发布类型。</p>
+<div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">BindingContract</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">schema</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">JsonSchema</span><span class="syn-p">;</span>
+<span class="syn-p">}</span>
+<span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">EventContract</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">payloadSchema?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">JsonSchema</span><span class="syn-p">;</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>Slot 首期仅声明接受的名称，不引入通用数量限制；原“Manifest 约定单个 / 多个节点”的候选收敛为名称检查。MaterialNode 的 slots 继续是具名 ViewNode 数组，Manifest 的名称容器及 SlotContract 占位随正式类型整理，不继续增加基数字段。</p>
+<p>Event 声明事件名称；无业务数据的通知事件只需名称，有业务数据供配置读取的事件声明 Payload Schema。Event Reference 相对该次事件的 Payload 根解析，Compiler 检查引用路径和后续可证明的类型连接；缺少 Payload 契约不能静默当作任意可读事件数据。事件只在事件发生时求值，不隐式建立数据观察或触发规则。</p>
+<p>物料内部通过现有受控接口执行数组 Command 或取得已有能力，无须重复登记为一份“数组 / 纯函数能力事件目录”；组件内部实现与对配置暴露事件分开。普通 Binding 修改不要求额外发事件重复写入。首期不新增事件处理返回值、等待返回或异步业务编排协议；Payload 是物料发出的数据，也是配置处理逻辑收到的输入。</p>
 </section>
 <section class="section" id="interaction"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>Interaction：只保留数据命令和宿主事件</h2></div></div>
 
@@ -330,7 +344,7 @@
 <a href="#materials" data-to="materials" title="Material Manifest：协议机制与物料限制分层"><span class="nav-num">05</span><span>Material Manifest：协议机制与物料限制分层</span></a>
 <a href="#interaction" data-to="interaction" title="Interaction：只保留数据命令和宿主事件"><span class="nav-num">06</span><span>Interaction：只保留数据命令和宿主事件</span></a>
 <a href="#host" data-to="host" title="Host Integration：明确三条路径"><span class="nav-num">07</span><span>Host Integration：明确三条路径</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-VIEW</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="../decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 8</summary><ul><li><a href="../decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-VIEW</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="../decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="../decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

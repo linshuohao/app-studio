@@ -31,7 +31,7 @@ status_note: 工具组合与流程已确认；工程底座已初始化与本地�
 
 项目初始化使用官方脚手架，依赖通过 pnpm create / dlx / add 的 latest 标签安装，不预填版本号。模板生成后通过 pnpm 更新并联验，实际版本和锁由工具生成；日常和 CI 使用 frozen install。脚手架默认配置需按已确认组合整合，latest 不保证兼容。首次实施发现 TS / ESLint peer 冲突后，用户明确允许由脚本读取支持范围、自动选择最新兼容稳定版，不手填版本号或关闭严格检查。
 
-Playground 保持轻量，本轮不讨论应用状态管理和产品架构；Platform / Studio 后续专题展开。底层组件基础最初未定，实际初始化按当前 CLI 默认采用 Base UI 并通过接入验收；协议结构源和正式目标兼容范围继续待定。实施细化、安装顺序与验收统一在[工程方案](../engineering.md)。
+Playground 保持轻量，本轮不讨论应用状态管理和产品架构；Platform / Studio 后续专题展开。底层组件基础最初未定，实际初始化按当前 CLI 默认采用 Base UI 并通过接入验收；协议结构源在本次工程决策时待定，后续由 [ADR-FE-015](ADR-FE-015-protocol-source.md)确定 TS 优先及 Ajv 路线；具体生成器和正式目标兼容范围继续待固化。实施细化、安装顺序与验收统一在[工程方案](../engineering.md)。
 
 开发消费经用户确认调整为包名 + exports development 源码入口：Next 编译与热更新，Nest 开发加载链保留装饰器元数据；不再预构建六包或监听库产物。生产构建与打包消费默认使用 dist，包边界不变。
 

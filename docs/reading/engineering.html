@@ -8,7 +8,7 @@
   <title>工程工具链与初始化方案 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -463,7 +464,7 @@ chore(tooling): 初始化工作区
 </tbody>
 </table></div>
 <p>工程底座完成须同时满足：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。先用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。</p>
-<p>协议结构源 / 生成器、正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。</p>
+<p>协议结构源后续已确认原生 TS 类型 + JSDoc → 自动生成 JSON Schema，Compiler 使用 Ajv，见 <a href="decisions/ADR-FE-015-protocol-source.html" rel="noopener noreferrer">ADR-FE-015</a>。具体生成器、严格生成配置与正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。</p>
 <p>当前状态：E1–E4 工程配置与本地验证已完成，远端 CI / 受保护分支尚未运行或配置；不对外发布。核心业务按<a href="governance.html#design-roadmap" rel="noopener noreferrer">既有 T01–T07</a>准备契约与纵切，不因工程文档存在提升模块完成度。</p>
 </section>
 <section class="section" id="engineering-implementation"><div class="section-head"><div class="kicker">10 · FORM ENGINE</div><div class="section-title"><h2>10. 初始化实施记录与日常使用</h2></div></div>
@@ -536,7 +537,11 @@ pnpm<span class="syn-w"> </span>test:e2e
 </code></pre></div>
 <p>Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。<code>pnpm check</code> 只检查文档同步，不暗中改写生成物；正文变更后先 <code>pnpm docs:build</code>。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。</p>
 <p>主动升级使用 <code>pnpm toolchain:update</code>，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。</p>
-<p>本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。</p></section>
+<p>本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。</p>
+</section>
+<section class="section" id="protocol-development-ready"><div class="section-head"><div class="kicker">11 · FORM ENGINE</div><div class="section-title"><h2>协议包进入开发的基线</h2></div></div>
+
+<p>2026-10-21 用户确认先按<a href="l1/08-decisions-release.html#protocol-development-baseline" rel="noopener noreferrer">完整协议基线</a>实施，遇真实消费者问题再演进，不逐字段反复讨论。保持现有工程工具链、三领域与 JSDoc / Schema 派生路线；生成器适配、命名、容器、错误码及构建接入由实现者整理并验证，实际冲突才重开设计。首批是完整类型及对应 Schema / 正反例，不代表 Compiler / Runtime / Flutter 已实现或正式版本已发布。</p></section>
         
         
         
@@ -554,8 +559,9 @@ pnpm<span class="syn-w"> </span>test:e2e
 <a href="#engineering-git" data-to="engineering-git" title="7. Git、提交与版本管理"><span class="nav-num">07</span><span>7. Git、提交与版本管理</span></a>
 <a href="#engineering-gates" data-to="engineering-gates" title="8. 质量门禁、测试与环境治理"><span class="nav-num">08</span><span>8. 质量门禁、测试与环境治理</span></a>
 <a href="#engineering-acceptance" data-to="engineering-acceptance" title="9. 实施批次、验收与未决项"><span class="nav-num">09</span><span>9. 实施批次、验收与未决项</span></a>
-<a href="#engineering-implementation" data-to="engineering-implementation" title="10. 初始化实施记录与日常使用"><span class="nav-num">10</span><span>10. 初始化实施记录与日常使用</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 5</summary><ul><li><a href="architecture.html">整体架构设计</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
+<a href="#engineering-implementation" data-to="engineering-implementation" title="10. 初始化实施记录与日常使用"><span class="nav-num">10</span><span>10. 初始化实施记录与日常使用</span></a>
+<a href="#protocol-development-ready" data-to="protocol-development-ready" title="协议包进入开发的基线"><span class="nav-num">11</span><span>协议包进入开发的基线</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
       </aside>
       </div>
     </div>

@@ -10,12 +10,13 @@ tags: []
 related:
   decisions: []
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-L2
 - SRC-V05
 navigation:
   group: 09 · 决策与追溯
   order: 121
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 status_note: 已确认，Manifest / Lock / 兼容字段待固化
 ---
 
@@ -50,3 +51,10 @@ Manifest 最小字段、TypeSignature、内置别名与 core.* 映射、摘要�
 ### 入库与制品准入补充
 
 2026-10-20 已确认编辑 / 入库 / 发布前必须给出具体编译诊断，Error 不产出可执行 Prepared，也不允许作为可用发布制品下发 C 端。首阶段 JSON、精确匹配 Prepared 格式，不要求 Compiler 版本等于 Runtime 版本；格式、能力锁与 Host 接入分别检查。完整契约见 [ADR-FE-004](ADR-FE-004-prepared-entry.md)与 [L2 交付](../l2-preparation.md#prepared-delivery)。草稿保存策略不在此预设。
+
+
+### 2026-10-21：能力签名与摘要对象确认
+
+用户确认 Pure Function 参数 / 返回复用 JSON Schema；物料 Host 服务仅声明名称 / 契约版本 / 可选性，不展开通用 RPC 方法系统。能力分别锁 Manifest 确定性内容摘要与实际实现制品字节摘要，多个能力可共用包制品；内置实现也绑定不可变构建身份，地址不替代身份。
+
+这收敛此前摘要对象的未决范围，仍需正式字段、实现核对及跨端验收。详见 [双摘要](../l2-preparation.md#capability-digest-contract)及[首期签名与服务](../l2-preparation.md#l2-manifests)。

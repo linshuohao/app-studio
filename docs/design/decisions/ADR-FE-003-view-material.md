@@ -11,6 +11,7 @@ tags: []
 related:
   decisions: []
 sources:
+- SRC-CONTRACTS
 - SRC-L1
 navigation:
   group: 09 · 决策与追溯
@@ -34,6 +35,12 @@ ViewNode 统一为 MaterialNode / ScopeNode / TemplateUse；具名 Profile 直�
 撤回 `view.present / view.dismiss` 及核心 Presenter，采用 Modal / Drawer / BottomSheet 容器物料和 Slots 自管开闭、焦点与动画。字段 / 校验状态由 Runtime 经已有 Binding 接入，不新增 validationBind / errorBind。Protocol 管统一机制，Manifest 管具体端口 / Props / Slots / Events，业务合法性仍由 Schema / Constraint 管。
 
 这减少重复的展示控制器和参数类型系统，代价是容器物料承担平台交互与组合契约，模板不支持任意配置参数、动态模板 ID 或泛型证明。交互限制如 maxLength 不替代业务约束。
+
+### 2026-10-21：最小物料声明契约
+
+Binding 声明名称和预期数据 Schema，不增加读写权限；实际行为由物料经共用接入能力执行，支持单 / 多字段。静态类型检查不拦截业务不合法 Working Data。Slot 首期只声明名称，不加入通用数量限制，收敛正文原单 / 多节点限制候选。Event 无数据只声明名称，有数据供配置读取时声明 Payload Schema，以检查 Event Reference 和后续类型连接；不增加返回值或异步调用编排。数组 Command 等内部能力调用不重复登记成事件能力目录。
+
+完整类型与运行验收仍待落地，见 [现行最小契约](../l1/05-view-material-host.md#material-minimum-contract)及[用户确认记录](../design-history.md#material-host-contracts-confirmed)。
 
 ## 影响与状态 {#adr-003-consequences}
 

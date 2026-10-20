@@ -8,7 +8,7 @@
   <title>跨层依赖与订阅 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -479,7 +480,7 @@
 </code></pre></div>
 <p><code>source</code> 是运行时可观察状态类别的候选表示，<strong>不扩展 L1 Reference.source</strong>。数组结构是 Data 的观察方面；来源稿把 structure 列为独立来源的表示仍是候选，正式 ABI 再决定编码，不能同时把它当成第二个权威状态源。Validation / Field Meta 引用也需要 L3 契约，不能直接写进 L1 Binding。</p>
 <p>概念上，guardian-required 的计划关联年龄和姓名、owner 为 constraint、activation 为 runtime；guardian 输入框的 disabled 计划关联年龄、owner 为 view、activation 为 view-mounted。<code>activation</code> 只说明由谁激活，不表示通知优先级，也不规定订阅后首次执行。</p>
-<p>首次执行策略在 已确认可配置，需要 L1 表达、L2 编译；它与本段 activation 表示的“生命周期归属”分别设计。来源 <code>runOnActivate</code> 与 Prepared <code>run-on-activate</code> 的具体字段 / 默认值未冻结，不能把两种 activation 含义混写为同一正式 ABI。</p>
+<p>首次执行策略在 已确认可配置，需要 L1 表达、L2 编译；它与本段 activation 表示的“生命周期归属”分别设计。首批基线采用 runOnActivate 可选布尔且默认 false；Prepared 中观察激活归属保持独立，不把两种含义混写。正式公共声明仍随实现验收。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -502,7 +503,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>Prepared View 可引用计划 ID，也可内嵌紧凑依赖集合；节点合并或按属性拆分是可比较的粒度方案，不建立两套语义。该信息归入既有 Form / View Plan 交付，具体打包位置和 <code>formatVersion</code> 兼容校验需随正式 Prepared 格式确定。</p>
+<p>2026-10-21 首批基线选择集中 Dependency Plan、消费者引用计划 ID。内嵌集合与节点 / 属性拆分是旧候选比较，不建立新更新分级；仍沿用共用 Adapter 的已确认边界。正式字段及兼容验收按 <a href="l2-preparation.html#prepared-machine-baseline" rel="noopener noreferrer">Prepared 基线</a>整合，不将方向确认等同于完成 ABI 发布。</p>
 </section>
 <section class="section" id="dependency-scope"><div class="section-head"><div class="kicker">08 · FORM ENGINE</div><div class="section-title"><h2>Scope：静态模式、真实实例与视图实例</h2></div></div>
 
@@ -1014,7 +1015,7 @@
 <a href="#dependency-scheduling" data-to="dependency-scheduling" title="执行时机：已确认基线与未决边界"><span class="nav-num">12</span><span>执行时机：已确认基线与未决边界</span></a>
 <a href="#dependency-acceptance" data-to="dependency-acceptance" title="贯穿四层的交互与验收"><span class="nav-num">13</span><span>贯穿四层的交互与验收</span></a>
 <a href="#dependency-v05-acceptance" data-to="dependency-v05-acceptance" title="跨层业务验收与后续衔接"><span class="nav-num">14</span><span>跨层业务验收与后续衔接</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-DEPENDENCY</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-DEPENDENCY</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
       </aside>
       </div>
     </div>

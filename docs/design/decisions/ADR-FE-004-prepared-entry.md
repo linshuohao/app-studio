@@ -10,11 +10,12 @@ tags: []
 related:
   decisions: []
 sources:
+- SRC-PROTOCOLBASELINE
 - SRC-V05
 navigation:
   group: 09 · 决策与追溯
   order: 114
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-21'
 status_note: JSON、格式精确匹配与 Error 不产执行制品已确认；具体 ABI 字段待固化
 ---
 
@@ -53,3 +54,10 @@ Prepared 的 Form / View / Dependency Plan 是结构方向，首阶段 JSON、�
 C 端只消费检查通过且兼容的 Prepared，错误分析结果不能传给 Runtime 继续执行。运行时仍核对格式、目标与能力，保留输入校验、任务有效性和熔断等保护；静态编译不保证网络、Host 实现或业务输入永不出错，Host 能力缺失仍按 ADR-FE-012 的用途降级，不能伪造校验通过。
 
 比较 JSON / 二进制 / 双格式、精确版本 / 版本范围 / feature 协商、只诊断 / 部分可执行 / 分析与执行分离，用户全部采纳 JSON、精确格式、分析可返回但 Error 无执行制品的组合。记录见 [L2 交付](../design-history.md#l2-delivery-update)。
+
+
+### 2026-10-21：Prepared 首批结构与装载
+
+用户选择准备后的有类型结构树，Template 编译展开，依赖集中计划并以 ID 关联，业务 Schema 资源闭包随 JSON 制品携带；不新增字节码 VM、节点 / 属性更新分级或运行时联网补 Schema。静态模式不保存实际 Scope ID；真实实例仍归 Runtime。
+
+外部 JSON 在接收边界结构检查一次；同进程 Compiler 成功结果不重复全量校验，受控不可变产物可以复用检查结论，格式 / 目标 / 能力检查继续保留。具体 [Prepared 机器基线](../l2-preparation.md#prepared-machine-baseline)和[开发基线](../l1/08-decisions-release.md#protocol-development-baseline)指导正式类型整合，尚无生产验收证据。

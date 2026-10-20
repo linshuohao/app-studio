@@ -9,6 +9,7 @@ modules:
 - M15
 tags: []
 sources:
+- SRC-CONTRACTS
 - SRC-EARLY
 - SRC-L1
 related: {}
@@ -64,9 +65,9 @@ interface MaterialManifest {
 | 契约 | 需要设计与验证的内容 |
 | --- | --- |
 | Props | Props Schema、递归 ValueSpec、输入限制与业务校验的区别 |
-| Binding Ports | 值类型、单/多端口、只读/编辑能力、复合修改及错误传播 |
-| Slots | 槽位名称、基数、节点组合、默认插槽简写及平台兼容 |
-| Event Ports | Payload Schema、有效 Event Reference、捕获上下文与受限 Intent |
+| Binding Ports | 已确认名称与数据 Schema、单 / 多字段映射；不声明读写权限，不依据端口 Schema 拦截非法工作值；受控修改与错误传播仍由接入契约固化 |
+| Slots | 已确认首期只声明可接受名称，不加通用数量限制；节点组合、默认插槽简写及平台兼容 |
+| Event Ports | 名称；有数据事件声明 Payload Schema，无数据通知只需名称；检查 Event Reference 与类型连接，不新增返回值 / 异步编排 |
 | Field State 消费 | 沿既有 Binding 展示字段、对象摘要、数组项 Issues，不建立独立校验 DSL |
 | Version / Platform | 确定性版本锁定、平台实现匹配、缺失能力诊断与升级规则 |
 
@@ -138,6 +139,12 @@ External Constraint 接入选定“Host 返回结果任务及可选 cancel 句�
 该能力属于运行时 Host Validator 接口，不将回调写入 L1 或可序列化 Prepared，也不引入异步 Reaction。本次不新增跨端取消信号抽象。完整调用的取消 / 过期返回类型、具体代次编码与 SDK 仍需固化，但不再重新选择取消接入方向。
 
 业务查询等独立 Host 任务仍由 Host 自主管理，不共用 Reaction Pending。
+
+### Host 调用输入的已确认边界 {#host-input-contract}
+
+2026-10-21 用户确认：Host Validator 采用本次调用的数据读取快照 + 当前 Scope + 显式 watch，不新增命名参数映射或 External Payload DSL。影响校验结论的表单数据须从本次调用输入读取，并由 watch 及已有可推导依赖覆盖；不能在异步过程中改读不断变化的 Runtime 当前值，再把结果作为旧输入的结论。具体快照持有 / 读取签名归 Runtime SDK，实例、输入资格、任务代次及可选取消仍沿用现行规则。
+
+这属于 Host 实现契约，不是权限隔离：同进程宿主可以通过闭包持有 Runtime，显式参数也不能阻止越界读取。引擎不能从 Host 任意代码自动发现所有遗漏依赖，也不能为违反调用输入 / watch 约定的实现保证结果新鲜度。业务复用确实需要字段映射时再讨论参数能力，不预先建设。
 
 ### Host 接入与业务输出的已确认契约
 

@@ -8,7 +8,7 @@
   <title>ADR-FE-002：纯表达式、结构化引用与局部词法 Scope · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
+  <script src="../assets/knowledge-index.js?v=cbfc6b2848d9" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -57,6 +57,7 @@
 <a href="ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
+<a href="ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -99,7 +100,10 @@
 <p>协议结构采用严格检查：未知字段、混用多个 Union 分支及不符合当前分支的字段在配置 / 编译阶段拒绝，不静默忽略或仅警告后继续产出可执行制品。严格范围是协议节点；Working Data、metadata、Schema 和物料 Props 等各按所属数据 / Manifest 契约检查，不能把业务字典的任意键一律当未知协议字段。</p>
 <p>ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须按对应包装校验，包装结构不合法直接诊断，不退回普通对象；需要原样保留含这些键的数据时用 $literal 显式转义，其内部不再递归解释。只在类型规定的 AST / ValueSpec 位置解析，不扫描 Working Data、业务 Schema 或 Literal 原文。Expression 的 literal 与 ValueSpec 的 $literal 属于各自语法位置，不混用。</p>
 <p>跨 Template 参数、Binding Port、函数参数等类型连接，仅接受明确可判定且能证明兼容的结构；已知不兼容与无法证明兼容均拒绝编译，但诊断码 / 原因应区分。不用运行时兜底、作者强制断言或静默降级绕过连接检查。受限的是静态连接兼容检查能力，不将业务数据根 Schema 改成局部 Schema，也不声称任意 JSON Schema 包含关系均可判定。可判定子集、Union 完整形状、签名与正反例仍需正式固化。</p>
-<p>用户以业务稳定和正确性为依据，确认严格拒绝未知字段、保留标记须转义、不证明兼容则拒绝连接。细化既有受限语言原则，不改变字段 op + args，不新增通用类型断言或运行时转换机制。记录见 <a href="../design-history.html#l1-strict-update" rel="noopener noreferrer">L1 严格固化</a>。</p></section>
+<p>用户以业务稳定和正确性为依据，确认严格拒绝未知字段、保留标记须转义、不证明兼容则拒绝连接。细化既有受限语言原则，不改变字段 op + args，不新增通用类型断言或运行时转换机制。记录见 <a href="../design-history.html#l1-strict-update" rel="noopener noreferrer">L1 严格固化</a>。</p>
+<h3 id="2026-10-21首期表达式与连接基线">2026-10-21：首期表达式与连接基线</h3>
+<p>用户确认原生 TS / Schema 路线继续实施：递归 ValueSpec 普通对象禁止保留键、Literal 不递归解释。函数签名复用 JSON Schema，普通注册函数只接收值，有限内置 and / or / if 支持短路，静态读取覆盖全部分支；Missing 不隐式转 null，不进行字符串 / 数字强制转换或 eq 通用深比较。</p>
+<p>静态连接首期证明常用结构类型（资源身份、基础类型、null、const / enum、对象、同构数组及可判定联合），无法证明与明确不兼容均拒绝；业务约束不作为 Working Data 写入门禁。具体函数参数及算法按<a href="../l1/03-expression-validation.html#function-evaluation-contract" rel="noopener noreferrer">表达式契约</a>和<a href="../l1/08-decisions-release.html#schema-connection-subset" rel="noopener noreferrer">连接子集</a>实施，不继续逐细节访谈。</p></section>
         <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，类型与签名待固化</p><nav class="decision-path"><a href="#adr-002-context">背景与约束</a><span>→</span><a href="#adr-002-decision">已确认选择与备选</a><span>→</span><a href="#adr-002-consequences">影响与未决边界</a><span>→</span><a href="#adr-002-sources">来源与关联</a></nav></section>
         
         
@@ -112,7 +116,7 @@
 <a href="#adr-002-decision" data-to="adr-002-decision" title="已确认选择与备选"><span class="nav-num">02</span><span>已确认选择与备选</span></a>
 <a href="#adr-002-consequences" data-to="adr-002-consequences" title="影响与未决边界"><span class="nav-num">03</span><span>影响与未决边界</span></a>
 <a href="#adr-002-sources" data-to="adr-002-sources" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-002</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，类型与签名待固化</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li></ul></details><details><summary>相关正文与历史 · 11</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-002</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，类型与签名待固化</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li></ul></details><details><summary>相关正文与历史 · 12</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li></ul></details></section>
       </aside>
       </div>
     </div>

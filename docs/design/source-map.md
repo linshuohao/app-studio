@@ -100,7 +100,7 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 ### SRC-ENGINEERING：工程工具链确认与官方命令依据 {#src-engineering}
 
-2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见[演进记录](design-history.md#engineering-toolchain-confirmed)，有效方案见[工程主题](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。命令未实跑，不作为兼容性或工程完成证据。
+2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见[演进记录](design-history.md#engineering-toolchain-confirmed)，有效方案见[工程主题](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。首次归档时命令未实跑；后续实际初始化、兼容处理及本地验收见[实施记录](engineering.md#engineering-implementation)与[演进](design-history.md#engineering-initialized)，不作为生产引擎语义完成证据。用户随后明确要求开发模式直接消费工作区源码，并授权实施；又明确 Playground 的应用控件统一使用 shadcn/ui；条件 exports、源码监听与生产打包入口隔离的实际配置和验收同步在工程主题，未改变模块职责或提升核心实现状态。
 
 ### SRC-WORKFLOWS：项目工作流确认与调研依据 {#src-workflows}
 
@@ -305,3 +305,8 @@ flowchart LR
 ### 2026-10-20：工程方案统一归档
 
 [工程主题](engineering.md)承接已确认包边界，统一安装、脚手架、任务、Git 与质量要求；[架构](architecture.md#application-engineering)、[治理](governance.md#implementation-readiness)、[演进](design-history.md#engineering-toolchain-confirmed)同步当前状态。新增 ADR-FE-014，不替代旧 ADR，不变更协议语义，不提升核心模块完成度；实际仍只有目录占位。
+
+
+### 2026-10-20：工程初始化实施证据
+
+用户授权按已归档方案执行，并明确允许 peer 冲突项由脚本选择最新兼容稳定版。实际生成清单、根锁、配置、测试和公开产物由本轮命令验证；[工程主题](engineering.md#engineering-implementation)维护版本、命令和结果，[演进](design-history.md#engineering-initialized)记录授权与问题处理。源码 / 锁是工程复现依据，不建立另一套规范或报告页；生产协议与 Runtime 不从工程 smoke 结果推导完成。

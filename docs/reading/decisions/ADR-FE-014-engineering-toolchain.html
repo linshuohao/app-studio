@@ -8,7 +8,7 @@
   <title>ADR-FE-014：首期工程工具链与脚手架初始化 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=48140044da27" defer></script>
+  <script src="../assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -81,12 +81,13 @@
 <section class="section" id="已确认决策"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>已确认决策</h2></div></div>
 
 <p>采用 pnpm Workspace + Turborepo、tsdown、ESLint Flat Config / typescript-eslint + Prettier、Vitest + Playwright、Husky / lint-staged / commitlint、Changesets。UI 采用 A 定制优先：shadcn/ui + Tailwind + CSS Variables，CSS Modules 补充局部复杂样式。Git 采用短分支 / PR / Squash 的主干开发与 Conventional Commits，质量任务由 CI 执行；CI 优先方案为 GitHub Actions，实际托管平台仍待确定。</p>
-<p>项目初始化使用官方脚手架，依赖通过 pnpm create / dlx / add 的 latest 标签安装，不预填版本号。模板生成后通过 pnpm 更新并联验，实际版本和锁由工具生成；日常和 CI 使用 frozen install。脚手架默认配置需按已确认组合整合，latest 不保证兼容。</p>
-<p>Playground 保持轻量，本轮不讨论应用状态管理和产品架构；Platform / Studio 后续专题展开。底层组件基础、协议结构源和目标兼容范围未因本决策自动确定。实施细化、安装顺序与验收统一在<a href="../engineering.html" rel="noopener noreferrer">工程方案</a>。</p>
+<p>项目初始化使用官方脚手架，依赖通过 pnpm create / dlx / add 的 latest 标签安装，不预填版本号。模板生成后通过 pnpm 更新并联验，实际版本和锁由工具生成；日常和 CI 使用 frozen install。脚手架默认配置需按已确认组合整合，latest 不保证兼容。首次实施发现 TS / ESLint peer 冲突后，用户明确允许由脚本读取支持范围、自动选择最新兼容稳定版，不手填版本号或关闭严格检查。</p>
+<p>Playground 保持轻量，本轮不讨论应用状态管理和产品架构；Platform / Studio 后续专题展开。底层组件基础最初未定，实际初始化按当前 CLI 默认采用 Base UI 并通过接入验收；协议结构源和正式目标兼容范围继续待定。实施细化、安装顺序与验收统一在<a href="../engineering.html" rel="noopener noreferrer">工程方案</a>。</p>
+<p>开发消费经用户确认调整为包名 + exports development 源码入口：Next 编译与热更新，Nest 开发加载链保留装饰器元数据；不再预构建六包或监听库产物。生产构建与打包消费默认使用 dist，包边界不变。</p>
 </section>
 <section class="section" id="影响与限制"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>影响与限制</h2></div></div>
 
-<p>补充 ADR-FE-013，不替代既有包边界或 L1–L4 / Host 契约。工具安装不表示生产 SDK 或协议发布；本轮只写文档，没有安装、脚手架执行、CI 或工程运行验收证据。保留单一物料数据源、Manifest 独立消费、核心框架隔离及默认样式可选交付。</p>
+<p>补充 ADR-FE-013，不替代既有包边界或 L1–L4 / Host 契约。工具安装不表示生产 SDK 或协议发布；方案确认时只写文档；后续已按用户授权通过官方脚手架完成工程初始化、依赖安装与本地构建 / 测试，记录见工程主题；远端 CI 和分支保护未运行。保留单一物料数据源、Manifest 独立消费、核心框架隔离及默认样式可选交付。</p>
 </section>
 <section class="section" id="来源与关联"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>来源与关联</h2></div></div>
 
@@ -96,7 +97,7 @@
 <li><a href="../source-map.html#src-engineering" rel="noopener noreferrer">来源登记</a></li>
 <li><a href="../governance.html#implementation-readiness" rel="noopener noreferrer">下一步与状态</a></li>
 </ul></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">工具组合与流程已确认；尚未执行工程初始化和兼容验收</p><nav class="decision-path"><a href="#背景与实际比较">背景与实际比较</a><span>→</span><a href="#已确认决策">已确认决策</a><span>→</span><a href="#影响与限制">影响与限制</a><span>→</span><a href="#来源与关联">来源与关联</a></nav></section>
+        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">工具组合与流程已确认；工程底座已初始化与本地联验；生产核心及远端 CI 未完成</p><nav class="decision-path"><a href="#背景与实际比较">背景与实际比较</a><span>→</span><a href="#已确认决策">已确认决策</a><span>→</span><a href="#影响与限制">影响与限制</a><span>→</span><a href="#来源与关联">来源与关联</a></nav></section>
         
         
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
@@ -108,7 +109,7 @@
 <a href="#已确认决策" data-to="已确认决策" title="已确认决策"><span class="nav-num">02</span><span>已确认决策</span></a>
 <a href="#影响与限制" data-to="影响与限制" title="影响与限制"><span class="nav-num">03</span><span>影响与限制</span></a>
 <a href="#来源与关联" data-to="来源与关联" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-014</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>工具组合与流程已确认；尚未执行工程初始化和兼容验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M01">M01 全局分层</a></li><li><a href="../governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-014</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>工具组合与流程已确认；工程底座已初始化与本地联验；生产核心及远端 CI 未完成</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M01">M01 全局分层</a></li><li><a href="../governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
       </aside>
       </div>
     </div>

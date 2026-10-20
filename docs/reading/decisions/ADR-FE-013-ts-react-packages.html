@@ -8,7 +8,7 @@
   <title>ADR-FE-013：TS / React 首期包边界与 Flutter 预留 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=48140044da27" defer></script>
+  <script src="../assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -89,7 +89,7 @@
 <section class="section" id="影响与限定范围"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>影响与限定范围</h2></div></div>
 
 <p>延续 ADR-FE-001 的四层和唯一数据 / Host 分责、ADR-FE-003 的 Adapter 与物料边界、ADR-FE-004 的 Prepared 唯一执行入口；没有替代旧 accepted ADR。原七项只是未确认草案，比较理由在演进中保留。</p>
-<p>目前仅有 10 个 .gitkeep 占位。没有生产协议 Schema、package.json、依赖锁、React / TS 安装、Runtime / Renderer 或正式测试实现。本决策形成时版本与工程工具待选；后续工具组合已由 <a href="ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>确认，实际安装和兼容验收仍未执行。公开契约缺口和模块状态不因此关闭。Platform / Studio 的详细产品方案、发布入口、后端部署与 Agent 方案未被本决策确认。</p>
+<p>本决策初始只创建 10 个 .gitkeep 占位，当时没有清单、依赖或运行实现。后续已完成工作区和框架工程初始化；仍无生产协议 Schema 或正式 Runtime / Renderer。本决策形成时版本与工程工具待选；后续工具组合已由 <a href="ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>确认，后续工程初始化与本地兼容联验见<a href="../engineering.html#engineering-implementation" rel="noopener noreferrer">工程实施记录</a>。公开契约缺口和模块状态不因此关闭。Platform / Studio 的详细产品方案、发布入口、后端部署与 Agent 方案未被本决策确认。</p>
 </section>
 <section class="section" id="来源与关联"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>来源与关联</h2></div></div>
 
@@ -111,7 +111,7 @@
 <a href="#已确认决策" data-to="已确认决策" title="已确认决策"><span class="nav-num">02</span><span>已确认决策</span></a>
 <a href="#影响与限定范围" data-to="影响与限定范围" title="影响与限定范围"><span class="nav-num">03</span><span>影响与限定范围</span></a>
 <a href="#来源与关联" data-to="来源与关联" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-013</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>首期语言 / 框架、六包职责与目录已确认；仅建立占位，正式契约和工具链未落地</p></details><details><summary>关联模块 · 5</summary><ul><li><a href="../governance.html#M01">M01 全局分层</a></li><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li></ul></details><details><summary>相关正文与历史 · 5</summary><ul><li><a href="ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="../architecture.html">整体架构设计</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-013</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>首期语言 / 框架、六包职责与目录已确认；仅建立占位，正式契约和工具链未落地</p></details><details><summary>关联模块 · 5</summary><ul><li><a href="../governance.html#M01">M01 全局分层</a></li><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li></ul></details><details><summary>相关正文与历史 · 6</summary><ul><li><a href="ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="../architecture.html">整体架构设计</a></li><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
       </aside>
       </div>
     </div>

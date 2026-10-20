@@ -3,3 +3,24 @@ __pycache__/
 .venv/
 .DS_Store
 .venv-docs/
+
+# JavaScript workspace
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

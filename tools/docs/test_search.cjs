@@ -1,7 +1,13 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const {searchKnowledge, filterKnowledgeRecords} = require('../../docs/reading/assets/documentation.js');
+const vm = require('node:vm');
+// The reader is a classic browser script. Load its CommonJS test seam without
+// letting the workspace's ESM package type reinterpret the .js file.
+const readerPath = path.join(__dirname, '../../docs/reading/assets/documentation.js');
+const readerModule = {exports: {}};
+vm.runInThisContext(`(function(module) {\n${fs.readFileSync(readerPath, 'utf8')}\n})`, {filename: readerPath})(readerModule);
+const {searchKnowledge, filterKnowledgeRecords} = readerModule.exports;
 const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../../docs/reading/assets/knowledge-index.json'), 'utf8'));
 
 const wide = searchKnowledge(catalog, 'Scope');

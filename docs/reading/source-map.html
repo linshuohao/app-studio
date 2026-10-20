@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48140044da27" defer></script>
+  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -156,7 +156,7 @@
 <h3 id="src-reading-path">SRC-READINGPATH：设计者阅读路径调整前的完整 Markdown</h3>
 <p><a href="../history/2026-10-19-designer-reading-sources.zip" rel="noopener noreferrer">调整前来源包</a>保存 <code>before-designer-reading/</code> 下的正文、ADR、维护说明与术语，SHA-256 为 <code>c328063d9c070e94c57f4033a7e4db8cd618d036dd443099ca4ac7ca819b5737</code>。本次依据用户明确要求，按整体→能力图谱→各层详细设计组织阅读，设计推导与台账单独迁移，未改变既有执行语义。</p>
 <h3 id="src-engineering">SRC-ENGINEERING：工程工具链确认与官方命令依据</h3>
-<p>2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见<a href="design-history.html#engineering-toolchain-confirmed" rel="noopener noreferrer">演进记录</a>，有效方案见<a href="engineering.html" rel="noopener noreferrer">工程主题</a>及 <a href="decisions/ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。命令未实跑，不作为兼容性或工程完成证据。</p>
+<p>2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见<a href="design-history.html#engineering-toolchain-confirmed" rel="noopener noreferrer">演进记录</a>，有效方案见<a href="engineering.html" rel="noopener noreferrer">工程主题</a>及 <a href="decisions/ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。首次归档时命令未实跑；后续实际初始化、兼容处理及本地验收见<a href="engineering.html#engineering-implementation" rel="noopener noreferrer">实施记录</a>与<a href="design-history.html#engineering-initialized" rel="noopener noreferrer">演进</a>，不作为生产引擎语义完成证据。用户随后明确要求开发模式直接消费工作区源码，并授权实施；又明确 Playground 的应用控件统一使用 shadcn/ui；条件 exports、源码监听与生产打包入口隔离的实际配置和验收同步在工程主题，未改变模块职责或提升核心实现状态。</p>
 <h3 id="src-workflows">SRC-WORKFLOWS：项目工作流确认与调研依据</h3>
 <p>2026-10-20 本次对话中用户要求兼顾效率、可靠性和持续演进，以真实任务理解流程后，明确要求按五类建设说明文档与工作流；第三方 skill / 工具先说明，由用户决定是否安装。现行说明见 <a href="workflows.html" rel="noopener noreferrer">项目工作流</a>，执行入口位于仓库 <code>.agents/skills/</code>，演进见 <a href="design-history.html#workflow-established" rel="noopener noreferrer">工作流建设记录</a>。未保存或伪造逐字对话快照。</p>
 <p>调研用于选型参考，不将厂商案例或研究直接提升为项目共识：<a href="https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html" rel="noopener noreferrer">SDD 层次分析</a>、<a href="https://arxiv.org/abs/2608.25202v4" rel="noopener noreferrer">SDD 实践研究（2026-10-15 修订）</a>、<a href="https://www.anthropic.com/engineering/harness-design-long-running-apps" rel="noopener noreferrer">长任务 harness</a>、<a href="https://dora.dev/research/2025/dora-report/" rel="noopener noreferrer">DORA</a>、<a href="https://metr.org/blog/2026-02-24-uplift-update/" rel="noopener noreferrer">METR 更新</a>。仓库 skill 发现机制依据 <a href="https://learn.chatgpt.com/docs/build-skills" rel="noopener noreferrer">官方文档</a>。查阅日期为 2026-10-20；这些资料不证明本项目已提效，候选第三方工具未安装。</p>
@@ -541,7 +541,9 @@
 <h3 id="2026-10-20webts-react-首期与目录统一归档">2026-10-20：Web/TS + React 首期与目录统一归档</h3>
 <p>用户明确首期 TS / React、packages 直接放 TS 包、packages-flutter 顶层预留，并授权先建立 .gitkeep 后同步文档及检查清理。现行<a href="architecture.html#application-engineering" rel="noopener noreferrer">应用架构</a>、<a href="decisions/ADR-FE-013-ts-react-packages.html" rel="noopener noreferrer">ADR-FE-013</a>、<a href="design-history.html#ts-react-package-layout" rel="noopener noreferrer">演进及原候选</a>、L4 与治理同步。仅目录占位已完成；正式协议、Runtime / Renderer、生成器、跨语言测试及后端均无新增实现证据。归档节奏调整为完整专题确认后统一维护，不再逐段写入候选。</p>
 <h3 id="2026-10-20工程方案统一归档">2026-10-20：工程方案统一归档</h3>
-<p><a href="engineering.html" rel="noopener noreferrer">工程主题</a>承接已确认包边界，统一安装、脚手架、任务、Git 与质量要求；<a href="architecture.html#application-engineering" rel="noopener noreferrer">架构</a>、<a href="governance.html#implementation-readiness" rel="noopener noreferrer">治理</a>、<a href="design-history.html#engineering-toolchain-confirmed" rel="noopener noreferrer">演进</a>同步当前状态。新增 ADR-FE-014，不替代旧 ADR，不变更协议语义，不提升核心模块完成度；实际仍只有目录占位。</p></section>
+<p><a href="engineering.html" rel="noopener noreferrer">工程主题</a>承接已确认包边界，统一安装、脚手架、任务、Git 与质量要求；<a href="architecture.html#application-engineering" rel="noopener noreferrer">架构</a>、<a href="governance.html#implementation-readiness" rel="noopener noreferrer">治理</a>、<a href="design-history.html#engineering-toolchain-confirmed" rel="noopener noreferrer">演进</a>同步当前状态。新增 ADR-FE-014，不替代旧 ADR，不变更协议语义，不提升核心模块完成度；实际仍只有目录占位。</p>
+<h3 id="2026-10-20工程初始化实施证据">2026-10-20：工程初始化实施证据</h3>
+<p>用户授权按已归档方案执行，并明确允许 peer 冲突项由脚本选择最新兼容稳定版。实际生成清单、根锁、配置、测试和公开产物由本轮命令验证；<a href="engineering.html#engineering-implementation" rel="noopener noreferrer">工程主题</a>维护版本、命令和结果，<a href="design-history.html#engineering-initialized" rel="noopener noreferrer">演进</a>记录授权与问题处理。源码 / 锁是工程复现依据，不建立另一套规范或报告页；生产协议与 Runtime 不从工程 smoke 结果推导完成。</p></section>
         
         
         

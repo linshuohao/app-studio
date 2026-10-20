@@ -176,8 +176,8 @@
       "path": "README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 1635,
-      "sha256": "97be1667f2f7f74b3d6c345a7b9203fa4d4fcc66956c3ea3d71f8bf00914afeb",
+      "bytes": 2145,
+      "sha256": "0de6c85ee29635e56b543d7e23d1cd30f178b63995719591928dfc50f36a1e87",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18359,
-      "sha256": "cff6cd4623bc3291de3beb71f3ee0915600215951d96ce8872391c6b4b2a82cd",
+      "bytes": 18414,
+      "sha256": "469e7ce3253777a6fe93eed25c0d75c3654d08ef7a4350555bb3ad1eea2ab1b0",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -266,8 +266,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 44300,
-      "sha256": "f9df87de0569165c183d51809ba20622642a6800251d4b1c7fe16af2d8c892e6",
+      "bytes": 44696,
+      "sha256": "cf46b156c899f29ae23c774673c1618f2ed9b11bd308b9e84011d3b0fde142eb",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -941,8 +941,8 @@
       "path": "docs/design/decisions/ADR-FE-013-ts-react-packages.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3506,
-      "sha256": "56740bf4c9de2b87c803fe793043bd545a20fbddbd36393496600ca69ffa27d5",
+      "bytes": 3625,
+      "sha256": "08ba2e988b24da1dddc3aac00f426520d82ed8de79b94c3cf257cbe10812cdb9",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -976,8 +976,8 @@
       "path": "docs/design/decisions/ADR-FE-014-engineering-toolchain.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 2449,
-      "sha256": "d07d77af0028e4b124806f05048d733190d747451b920e72e871f41aa056ed4c",
+      "bytes": 3108,
+      "sha256": "f1f986f10f29ebfae82f2b59ed589a45e82c292fe8810baff04318bae350418d",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1126,8 +1126,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 125819,
-      "sha256": "e152ba44bff955d01fd2e20666024fbe622887f3327d2bd6a2a8afdf57ee8ed6",
+      "bytes": 127976,
+      "sha256": "158fb8670d8aeb4531578c8001df415fa1ad4270f8f7cdf7bd6ba763b6c47fe0",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1524,6 +1524,11 @@
           "level": 2,
           "title": "2026-10-20：五类项目工作流与仓库 skill 建设",
           "anchor": "workflow-established"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-20：工程初始化与兼容联验",
+          "anchor": "engineering-initialized"
         }
       ]
     },
@@ -1616,8 +1621,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 25925,
-      "sha256": "57efecf278c445a978a5bf3c1cfe2a7be474f4444b304516ba509755df9774b4",
+      "bytes": 34383,
+      "sha256": "bf44d897eb7874b8afec0a7c0f9f97db76a12eaccd51f3cff93fd4d5af1024b7",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1704,6 +1709,26 @@
           "level": 2,
           "title": "9. 实施批次、验收与未决项",
           "anchor": "engineering-acceptance"
+        },
+        {
+          "level": 2,
+          "title": "10. 初始化实施记录与日常使用",
+          "anchor": "engineering-implementation"
+        },
+        {
+          "level": 3,
+          "title": "已落地范围",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "实际兼容问题与处理",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "日常命令",
+          "anchor": null
         }
       ]
     },
@@ -1761,8 +1786,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 31508,
-      "sha256": "6b88b2fbefa569046791c1815a322bf2460a9a5c5bcac06f00e46fc1beddd7af",
+      "bytes": 31823,
+      "sha256": "b6764f054c8a5b865afd1780a14dc95e3c1501818406ac66e4c107347e42bfd5",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -1802,7 +1827,7 @@
         },
         {
           "level": 3,
-          "title": "当前进度：目录占位完成，工具链方案确认待实施",
+          "title": "当前进度：工程底座完成本地联验，核心契约继续固化",
           "anchor": null
         },
         {
@@ -3036,8 +3061,8 @@
       "path": "docs/design/workflows.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 15847,
-      "sha256": "d200f8b74d7ba909ab01c04538b66ba6094b9d93fabcaad09a4b4102ec79e7c6",
+      "bytes": 15928,
+      "sha256": "985a1edc1c3a7723c0d92d17b19fdd0294360cbfcc3788a8ec081f92e917efcc",
       "mapping": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
       "sections": [
         {
@@ -23162,8 +23187,8 @@
       "path": "tools/docs/test_search.cjs",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 2500,
-      "sha256": "beff7ef43e27ac9b3ca7f015c742f6b253b87993375fc9a930e44c2d44216220",
+      "bytes": 2896,
+      "sha256": "1359deb380d741c1c914cf60ed46c991b02b29b67da6d642657055cf09cdc39f",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

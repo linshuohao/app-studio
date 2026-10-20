@@ -1,0 +1,42 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": [
+    "tools/config/**",
+    "eslint.config.mjs",
+    "prettier.config.mjs",
+    "pnpm-workspace.yaml",
+    "tools/engineering/**",
+    ".node-version"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": ["API_PORT", "HOST", "NEXT_PUBLIC_API_URL"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["PORT", "API_PORT", "HOST"]
+    },
+    "lint": {
+      "dependsOn": ["source"],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["source"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["source"],
+      "outputs": []
+    },
+    "test:integration": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "source": {
+      "dependsOn": ["^source"]
+    }
+  }
+}

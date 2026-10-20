@@ -1,6 +1,10 @@
 # 复杂动态表单与数据录入引擎
 
-当前处于架构设计讨论与开发准备阶段。首期采用 Web/TypeScript + React；已建立六个 TS 包和应用 / 服务 / 测试 / Flutter 预留目录，目前仅有 `.gitkeep`，尚无生产引擎代码或工具链配置。目录及包边界统一见[应用与工程架构](docs/reading/architecture.html#application-engineering)。
+当前处于核心契约细化与工程落地阶段。首期采用 Web/TypeScript + React；pnpm / Turborepo 工作区、六包、Next.js 轻量 Playground、NestJS 服务及测试 / 质量配置已初始化。工程示例不代表生产表单 Runtime 已实现。目录及包边界见[应用与工程架构](docs/reading/architecture.html#application-engineering)，安装、命令、实际版本与验收见[工程方案](docs/reading/engineering.html#engineering-implementation)。
+
+开发模式通过包名直接消费工作区源码，无需预构建库；生产构建和打包验证继续消费 dist。
+
+日常使用：`pnpm install --frozen-lockfile`、`pnpm dev`、`pnpm dev:api`、`pnpm check`。浏览器测试先运行 `pnpm build`，再运行 `pnpm test:e2e`；新环境先安装 Playwright 浏览器。文档环境按下方维护入口准备。
 
 设计者按以下顺序阅读：
 

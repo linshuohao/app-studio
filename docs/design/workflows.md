@@ -147,7 +147,7 @@ flowchart LR
 | AGENTS.md / docs/README | 增加路由入口，保留既有维护约定 | 新会话先读入口，再选所需章节 |
 | 文档构建 / 同步检查 | 复用现有工具 | `.venv-docs/bin/python tools/docs/build_docs.py` 及 `--check` |
 | 协议候选验证 | 复用现有工具，未改协议样例则无需重跑 | `.venv-docs/bin/python docs/validation/run_validation.py` |
-| 工程构建 / 类型 / 测试 / CI | 工具链方案已确认，尚待 E1–E4 初始化联验 | 按 [工程方案](engineering.md)实施后使用实际脚本 |
+| 工程构建 / 类型 / 测试 / CI | E1–E4 已完成工程配置与本地联验；远端 CI / 分支保护仍待启用 | 按 [工程方案](engineering.md)实施后使用实际脚本 |
 | 可控异步 Host / 跨层示例 / 生产契约测试 | 后续随真实实现建设 | 作为 W3 / W4 的反馈环境，不在此生成空实现 |
 
 `.agents/skills/` 是仓库级 skill 目录，随仓库维护，无需全局安装。五个 skill 的说明分别在各自 `SKILL.md`，它们引用本篇和现行主题，不内嵌另一份架构规范。Codex 的仓库发现与显式 / 隐式调用机制见 [官方 skill 文档](https://learn.chatgpt.com/docs/build-skills)。新增 skill 未出现在选择器时，可重新打开项目会话；仍未刷新再重启 Codex。本轮只能验证文件与入口，不能假称宿主已完成发现或实际调用。
@@ -167,6 +167,6 @@ flowchart LR
 
 ## 维护与试运行 {#workflow-evolution}
 
-本轮建立的是可使用的流程入口；尚未跑完真实的设计、开发、修复任务，不能宣布效率提升。后续优先选一个已授权、范围明确的真实任务试运行，结果进入 W5。必要修改回到本篇、对应 skill 或现有工具；重要协作原则变化集中确认后统一归档，不按轮次复制新说明。
+本轮建立的是可使用的流程入口；现已按 W3 跑通一次真实工程初始化与本地验收；这不等于五类流程都已试用，也不足以宣布效率提升。后续优先选一个已授权、范围明确的真实任务试运行，结果进入 W5。必要修改回到本篇、对应 skill 或现有工具；重要协作原则变化集中确认后统一归档，不按轮次复制新说明。
 
 来源和决策理由见 [工作流来源](source-map.md#src-workflows)及 [本轮演进](design-history.md#workflow-established)。这是工程协作程序，未改变引擎架构，不新增架构 ADR。模块状态和 E1–E4、T01–T07 等任务仍以 [设计进展](governance.md)为准。

@@ -240,7 +240,7 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 | 运行保障深化（可后置） | 监控告警、问题处理闭环及 Agent 辅助，按场景集成或建设 | 问题可定位、处置可追踪、恢复可验证；不作为核心纵切前置 |
 | Agent 场景落地 | 选择有价值场景，决定集成 / 自建及配套治理 | 一个辅助工作流产生可检查结果，再逐步扩展 |
 
-这是价值与依赖顺序，不要求上一阶段全部结束才允许下一阶段探索。预览和诊断从首个纵切就需要，完整 Studio 可后续深化；Agent 现在规划，当前不转为核心建设前置。不等所有库全部完成才接 Host。首期已选 Web/TS + React 及六包目录；具体业务场景、公共 API、存储与部署后续确定；工具组合与初始化流程已在[工程方案](engineering.md)确认，尚未执行。
+这是价值与依赖顺序，不要求上一阶段全部结束才允许下一阶段探索。预览和诊断从首个纵切就需要，完整 Studio 可后续深化；Agent 现在规划，当前不转为核心建设前置。不等所有库全部完成才接 Host。首期已选 Web/TS + React 及六包目录；具体业务场景、公共 API、存储与部署后续确定；工具组合与初始化流程已在[工程方案](engineering.md)确认并完成工程底座本地验证。
 
 ### 本轮集中审阅点
 
@@ -253,7 +253,7 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 
 ## 应用与工程架构：首期边界与目录 {#application-engineering}
 
-2026-10-20 讨论收敛：首期 Web/TypeScript 与 React，六个 TS 包直接位于 packages，后续 Flutter 使用顶层 packages-flutter。用户已授权建立目录占位并统一归档，当前只完成 .gitkeep 骨架；应用产品范围、后端部署、正式契约与运行实现仍待落地。工具链已在后续[工程方案](engineering.md)确认，但本轮只归档文档，实际工程仍为占位。本节只将确认的范围和边界固化，不将保存文档或建立目录解释为生产模块完成。
+2026-10-20 讨论收敛：首期 Web/TypeScript 与 React，六个 TS 包直接位于 packages，后续 Flutter 使用顶层 packages-flutter。用户已授权建立目录占位并统一归档，初始只完成 .gitkeep 骨架；应用产品范围、后端部署、正式契约与运行实现仍待落地。工具链已在后续[工程方案](engineering.md)确认，且后续已按授权完成工程底座初始化与本地联验；生产核心契约仍未完成。本节只将确认的范围和边界固化，不将保存文档或建立目录解释为生产模块完成。
 
 ### 1. 架构需要定到什么程度
 
@@ -348,22 +348,22 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 
 ```text
 项目根目录/
-├── apps/                         # 当前仅 .gitkeep；应用子目录待实际建设
+├── apps/                         # 已有轻量 Next.js playground
 ├── packages/
-│   ├── protocol/                 # .gitkeep
-│   ├── compiler/                 # .gitkeep
-│   ├── runtime/                  # .gitkeep
-│   ├── renderer-react/           # .gitkeep
-│   ├── materials-react/          # .gitkeep
-│   └── pure-functions/           # .gitkeep
+│   ├── protocol/                 # 脚手架与工程验证入口
+│   ├── compiler/                 # 脚手架与工程验证入口
+│   ├── runtime/                  # 脚手架与工程验证入口
+│   ├── renderer-react/           # 脚手架与工程验证入口
+│   ├── materials-react/          # 脚手架与工程验证入口
+│   └── pure-functions/           # 脚手架与工程验证入口
 ├── packages-flutter/              # 当前仅 .gitkeep；后续 Dart / Flutter 工作区
-├── services/                     # 当前仅 .gitkeep；后端与拆分方案后续建设
+├── services/                     # 已有 NestJS api 工程骨架
 ├── tools/                        # 保留现有 docs 文档工具
-├── tests/                        # 当前仅 .gitkeep；后续跨包 / 一致性 / E2E
+├── tests/                        # 已有跨包 / 浏览器工程验收
 └── docs/                         # 保留现有设计、阅读视图、历史与验证证据
 ```
 
-当前共 10 个空文件占位；packages 已由子目录文件保留，无需再放冗余 .gitkeep。没有 package.json、工作区配置、锁文件、React / TS 安装、生产源码或正式 Schema。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
+最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。只有工程接入样例，没有生产协议 Schema 或完整核心实现，详见[实际初始化记录](engineering.md#engineering-implementation)。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
 
 单元测试随模块维护，tests 承载跨模块验收与可复用行为用例；具体 fixture / support / conformance / integration / e2e 组织在工具选型后细化。CLI 初期可放 tools，只有需要独立分发时再提升为包。普通子目录与文件名可合理演进，无须逐项重新决策。
 
@@ -394,7 +394,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 
 ### 6. 已确认范围与后续工作
 
-已确认先确定应用 / 包 / 目录与工程要求，再推进技术选型和实现；Web/TS、React、六包位置与 Flutter 顶层预留已经明确。目录仅有占位；包管理 / 工作区、构建 / 测试与 UI 组合及通过脚手架、pnpm latest 初始化的流程已在[工程方案](engineering.md)确认。下一步执行工程底座 E1–E4 并验证实际版本兼容；协议结构源仍待选，同时整合正式消费契约，按首个业务纵切落地。参考 Host / Studio 产品组织和 Platform P1–P4、后端存储与部署、微服务拆分、Agent 方案继续保留各自待定状态，不重新开放既有 L1–L4 原则。
+已确认先确定应用 / 包 / 目录与工程要求，再推进技术选型和实现；Web/TS、React、六包位置与 Flutter 顶层预留已经明确。工程底座已初始化；包管理 / 工作区、构建 / 测试与 UI 组合及通过脚手架、pnpm latest 初始化的流程已在[工程方案](engineering.md)确认。E1–E4 已完成配置与本地联验，远端 CI / 分支保护未运行；下一步推进正式核心契约与实现，协议结构源仍待选，同时整合正式消费契约，按首个业务纵切落地。参考 Host / Studio 产品组织和 Platform P1–P4、后端存储与部署、微服务拆分、Agent 方案继续保留各自待定状态，不重新开放既有 L1–L4 原则。
 
 完整专题先在对话中讨论，用户确认收敛结果后统一整理当前设计、演进 / 必要 ADR、治理与来源，再构建检查；讨论中不逐段保存候选或把助手建议记为共识。
 

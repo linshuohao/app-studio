@@ -1,0 +1,15 @@
+node_modules
+**/dist
+**/.next
+.turbo
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+# Design sources and generated reading artifacts retain their established pipeline.
+docs
+.agents
+AGENTS.md
+README.md
+tools/docs
+**/next-env.d.ts

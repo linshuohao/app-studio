@@ -1,0 +1,48 @@
+{
+  "name": "@form-engine/pure-functions",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Engineering scaffold; production contract pending",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./engineering": {
+      "development": "./src/engineering.ts",
+      "types": "./dist/engineering.d.ts",
+      "import": "./dist/engineering.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "tsdown": "^0.23.1",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./package.json": "./package.json",
+      "./engineering": {
+        "types": "./dist/engineering.d.ts",
+        "import": "./dist/engineering.js"
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@
   <title>工程工具链与初始化方案 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=48140044da27" defer></script>
+  <script src="assets/knowledge-index.js?v=48a5b9b836f4" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -72,7 +72,7 @@
       </header>
       <div class="reading-layout">
       <main class="content" id="top">
-        <header class="hero"><div class="eyebrow">FORM ENGINE · ENGINEERING</div><h1>工程工具链与初始化方案</h1><div class="desc">本篇是已确认首期工程选型的实施依据，承接<a href="architecture.html#application-engineering" rel="noopener noreferrer">六包边界与目录</a>。覆盖选型比较、依赖安装、脚手架初始化、任务编排、代码约束、Git、质量门禁和验收。用户已确认采用定制优先的 UI 路线，并要求通过 pnpm 获取最新依赖、通过脚手架初始化项目。本轮只交付文档，未执行安装或生成生产工程；下面的命令不是已存在的仓库脚本。</p>
+        <header class="hero"><div class="eyebrow">FORM ENGINE · ENGINEERING</div><h1>工程工具链与初始化方案</h1><div class="desc">本篇是已确认首期工程选型的实施依据，承接<a href="architecture.html#application-engineering" rel="noopener noreferrer">六包边界与目录</a>。覆盖选型比较、依赖安装、脚手架初始化、任务编排、代码约束、Git、质量门禁和验收。用户已确认采用定制优先的 UI 路线，并要求通过 pnpm 获取最新依赖、通过脚手架初始化项目。方案归档时只交付文档；随后用户授权执行 E1–E4。当前工作区、六包、Next / Nest、统一任务及本地联验已落地，实际记录与日常命令见第 10 节。以下 create / init 步骤用于追溯首次创建，不应对已初始化仓库重复执行。</p>
 <p>Playground 保持轻量并使用 Next.js，不在本轮展开页面、状态管理或产品架构。后端采用 NestJS，Platform / Studio 的整体设计及状态管理另行讨论。核心 Runtime 等保持纯 TS，与应用框架无关。已确认组合见 <a href="decisions/ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>；补充规则属于该范围内的实施细化，尚待工程验证，不新增核心协议语义。</div></header>
         <hr class="hero-line">
         <section class="section" id="engineering-selection"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>1. 已选技术组合与比较</h2></div></div>
@@ -165,7 +165,7 @@
 <ol>
 <li>初始化和主动升级使用 <code>pnpm create …@latest</code>、<code>pnpm dlx …@latest</code>、<code>pnpm add …@latest</code>，不手写依赖版本号或复制旧 package.json。</li>
 <li><code>latest</code> 指注册源的发布标签，通常代表稳定通道，不等于按发布时间排序的最后一个制品；不默认选择 canary / next / beta，也不保证彼此兼容或模板依赖已最新。</li>
-<li>脚手架生成后，先保留其结构、理解配置，再通过 pnpm 更新生成的依赖。遇到 peer 冲突，检查支持矩阵和官方迁移说明，不用 <code>--force</code>、忽略 peer 或任意 override 把错误压下去；无法兼容时记录冲突与必要调整，不宣称全部最新版已验证。</li>
+<li>脚手架生成后，先保留其结构、理解配置，再通过 pnpm 更新生成的依赖。遇到 peer 冲突，检查支持矩阵和官方迁移说明，不用 <code>--force</code>、忽略 peer 或任意 override 把错误压下去；无法兼容时记录冲突与必要调整，不宣称全部最新版已验证。实施时用户明确允许冲突项按实际 peer 范围自动选择最新兼容稳定版，解析脚本不手写版本号，详见第 10 节。</li>
 <li>清单与锁由包管理器实际生成，提交根 <code>pnpm-lock.yaml</code>。新检出和 CI 使用 <code>pnpm install --frozen-lockfile</code>，不重新执行初始化或 latest 更新。</li>
 <li>Node / pnpm 的实际版本在执行时记录并固定；CI 使用相同环境。工具版本固定不等于本文预先指定版本，也不代表引擎 / 协议已发布。</li>
 <li><code>workspace:*</code> 表示内部依赖关系，不是预填第三方版本。React peer 范围等兼容声明根据实际联验设置，不能把 <code>latest</code> 当作可发布的兼容承诺。</li>
@@ -175,7 +175,7 @@
 </section>
 <section class="section" id="engineering-layout"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>3. 工程组织与约束</h2></div></div>
 
-<p>现有六包与 Flutter 顶层预留不变。实际执行时按需要创建以下有内容的子目录，不在本轮生成空框架：</p>
+<p>现有六包与 Flutter 顶层预留不变。已按下列职责建立实际工程；fixtures 等无实际内容的位置不强制占位：</p>
 <div class="code-box"><div class="code-head"><span>TEXT</span><button class="copy" type="button">复制</button></div><pre><code>apps/playground/          Next.js，轻量接入与验证
 services/api/             NestJS，工程骨架及启动 / 请求验证
 packages/protocol/        可交换协议结构与绑定
@@ -197,7 +197,7 @@ packages-flutter/        继续预留
 </section>
 <section class="section" id="engineering-bootstrap"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>4. 初始化顺序与命令</h2></div></div>
 
-<p>以下从项目根执行；命令按小节有前置关系，不是可直接整段无交互执行的一键脚本。执行者先检查工作区和 Git Diff，再调用当前 CLI 的 <code>--help</code>；涉及生成器提示的选择按表落实。不要覆盖已有业务文件、重建 Git 或重新生成已有项目。</p>
+<p>以下为首次初始化流程，从项目根执行；当前仓库已完成这些步骤，不重复执行。命令按小节有前置关系，不是可直接整段无交互执行的一键脚本。执行者先检查工作区和 Git Diff，再调用当前 CLI 的 <code>--help</code>；涉及生成器提示的选择按表落实。不要覆盖已有业务文件、重建 Git 或重新生成已有项目。</p>
 <h3 id="41-环境与根清单">4.1 环境与根清单</h3>
 <p>Node 使用环境管理器选择最新 LTS（例如已安装 nvm 时执行 <code>nvm install --lts</code>）；pnpm 按<a href="https://pnpm.io/installation" rel="noopener noreferrer">官方安装说明</a>准备。不为首次安装 pnpm 自身制造“必须已有 pnpm”的循环前提，也不在文档中绑定具体 Node / pnpm 版本。已有 pnpm 可按当前官方命令更新，随后记录版本。</p>
 <div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>node<span class="syn-w"> </span>--version
@@ -279,8 +279,8 @@ pnpm<span class="syn-w"> </span>--filter<span class="syn-w"> </span><span class=
 <div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>pnpm<span class="syn-w"> </span>dlx<span class="syn-w"> </span>shadcn@latest<span class="syn-w"> </span>init<span class="syn-w"> </span>--cwd<span class="syn-w"> </span>apps/playground
 pnpm<span class="syn-w"> </span>dlx<span class="syn-w"> </span>shadcn@latest<span class="syn-w"> </span>add<span class="syn-w"> </span>button<span class="syn-w"> </span>input<span class="syn-w"> </span>label<span class="syn-w"> </span>--cwd<span class="syn-w"> </span>apps/playground
 </code></pre></div>
-<p>使用已存在的 Next 项目，不让 shadcn 再生成一套 Monorepo 或额外 UI 包；选择 CSS Variables。底层基础（Base / Radix 等）尚未单独确认，初始化时按可用组件和输入验收给出单一推荐，记录选择后保持一致，不静默当作已选定。引入图标、类名合并与变体工具时沿用脚手架实际生成的依赖，通过 pnpm 更新，不预先重复安装另一套。</p>
-<p>当前只初始化轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。<a href="https://ui.shadcn.com/docs/cli" rel="noopener noreferrer">shadcn CLI</a></p>
+<p>使用已存在的 Next 项目，不让 shadcn 再生成一套 Monorepo 或额外 UI 包；选择 CSS Variables。实施细化采用当前 CLI 默认的 Base UI / base-nova，已通过按钮、Label、受控输入及三浏览器联验；这只是当前默认组件实现，不扩展为新协议语义。引入图标、类名合并与变体工具时沿用脚手架实际生成的依赖，通过 pnpm 更新，不预先重复安装另一套。</p>
+<p>Playground 的页面控件统一使用本地 shadcn/ui 组件（包括 Input、Button、Label），不以物料包的工程样例输入控件充当应用组件库；物料包及独立 CSS 的交付能力继续通过包测试和隔离消费者验证。当前只初始化轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。<a href="https://ui.shadcn.com/docs/cli" rel="noopener noreferrer">shadcn CLI</a></p>
 <h3 id="46-测试hook-与版本工具初始化">4.6 测试、Hook 与版本工具初始化</h3>
 <div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>pnpm<span class="syn-w"> </span>create<span class="syn-w"> </span>playwright@latest
 pnpm<span class="syn-w"> </span><span class="syn-nb">exec</span><span class="syn-w"> </span>playwright<span class="syn-w"> </span>install
@@ -290,7 +290,7 @@ pnpm<span class="syn-w"> </span><span class="syn-nb">exec</span><span class="syn
 </code></pre></div>
 <p>Playwright 选择 TS、测试目录 <code>tests/e2e</code>，已有 CI 时不覆盖；检查其依赖落在工作区根。Husky 的默认 Hook 改为暂存文件检查，commit-msg 使用 commitlint；不要把全仓 build / E2E 放进提交 Hook。Changesets 只建立管理配置，不运行 version / publish，不将脚手架默认包版本解释为正式发布版本。dependency-cruiser 的初始规则须补充本项目边界。<a href="https://playwright.dev/docs/intro" rel="noopener noreferrer">Playwright</a>、<a href="https://typicode.github.io/husky/get-started.html" rel="noopener noreferrer">Husky</a>、<a href="https://github.com/changesets/changesets/blob/main/docs/intro-to-using-changesets.md" rel="noopener noreferrer">Changesets</a>、<a href="https://github.com/sverweij/dependency-cruiser" rel="noopener noreferrer">dependency-cruiser</a></p>
 <h3 id="47-模板依赖更新与首次安装收口">4.7 模板依赖更新与首次安装收口</h3>
-<p>所有清单生成并统一以后执行；这是主动升级步骤，不放进常规 install / postinstall：</p>
+<p>所有清单生成并统一以后执行；这是主动升级步骤，不放进常规 install / postinstall。以下是原始全 latest 流程；当前已发现 TS / ESLint 兼容冲突，应使用第 10 节的 <code>pnpm toolchain:update</code>，不要直接把冲突项升到不兼容 latest：</p>
 <div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>pnpm<span class="syn-w"> </span>-w<span class="syn-w"> </span>update<span class="syn-w"> </span>--latest
 pnpm<span class="syn-w"> </span>-r<span class="syn-w"> </span>update<span class="syn-w"> </span>--latest
 pnpm<span class="syn-w"> </span>install
@@ -302,7 +302,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 </section>
 <section class="section" id="engineering-tasks"><div class="section-head"><div class="kicker">05 · FORM ENGINE</div><div class="section-title"><h2>5. pnpm 脚本与任务编排</h2></div></div>
 
-<p>下表是实施时要写入的脚本契约，目前仓库没有这些脚本。初始化依赖使用 create / dlx / add；日常任务使用已安装工具的 exec 或 scripts，不在 CI 临时 dlx latest。</p>
+<p>下表脚本现已落地，实际定义以根 package.json 和对应包为准。初始化依赖使用 create / dlx / add；日常任务使用已安装工具的 exec 或 scripts，不在 CI 临时 dlx latest。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -313,7 +313,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 <tbody>
 <tr>
 <td>pnpm dev</td>
-<td>先构建必要库，再启动库 watch 与轻量 Playground；不默认要求后端</td>
+<td>直接启动轻量 Playground，通过包名解析工作区源码；不要求预构建库或后端</td>
 </tr>
 <tr>
 <td>pnpm dev:api / dev:all</td>
@@ -361,7 +361,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 </tr>
 </tbody>
 </table></div>
-<p>Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各库 build 输出 dist，Next 申明 .next 产物且排除可变缓存目录，Nest 申明服务产物。检查配置、锁、环境变量和生成源纳入任务输入；dev 设 persistent 且不缓存，E2E、外部服务和不确定测试首期不缓存。缓存正确性先于远程缓存；冷缓存构建必须通过。dev 先完成首次库构建再启动消费者，后续验证 watch 更新链路，不能只靠 <code>^build</code> 认为自动获得跨包监听。</p>
+<p>Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各库 build 输出 dist，Next 申明 .next 产物且排除可变缓存目录，Nest 申明服务产物。检查配置、锁、环境变量和生成源纳入任务输入；dev 设 persistent 且不缓存，E2E、外部服务和不确定测试首期不缓存。缓存正确性先于远程缓存；冷缓存构建必须通过。dev 不执行库预构建或 tsdown watch；通过 exports 的 development 条件读取源码，由 Next 与 Node 开发加载链监听。单元测试与开发类型检查也不依赖 build；Turbo 的 source 传递节点将上游源码变化纳入缓存键。生产 build 仍按 ^build 构建依赖，不能把开发源码验证代替产物验收。</p>
 <p>所有安装 / 初始化入口均由 pnpm 调用；如果后续希望合并为 bootstrap 脚本，包装以上命令并检测已有工程状态，不能每次运行都重建项目或拉取 latest。</p>
 </section>
 <section class="section" id="engineering-contracts"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>6. 构建、类型与样式契约</h2></div></div>
@@ -369,7 +369,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 <ul>
 <li>ESM 优先，公开 JS、d.ts 和 Source Map；CJS 仅在出现真实消费者时补充及验证。Next / Nest 各自构建，不能用统一 tsconfig 覆盖框架所需模块解析或装饰器选项。</li>
 <li>TS 开启 strict、noUncheckedIndexedAccess，逐包处理框架必要差异；核心限制 Node / DOM 专有全局，服务与 React 使用各自环境配置。异常 any / ts-ignore 必须有理由和覆盖场景。</li>
-<li>普通包不跨源码路径 alias 导入，用 exports 和实际产物消费；依赖顺序包括类型产物。Compiler 在 Node 侧不加载 React；已发布表单运行不带 Compiler / Studio / 平台在线依赖。</li>
+<li>普通包不跨源码路径 alias 导入，始终经包名及 exports 消费：开发 / 单元与工作区集成测试使用 development 源码入口，生产构建和隔离打包消费者使用默认 dist 入口；生产依赖顺序包括类型产物。Compiler 在 Node 侧不加载 React；已发布表单运行不带 Compiler / Studio / 平台在线依赖。</li>
 <li>React 为 peer，应用负责装配；Manifest 可独立消费。Next 客户端边界只包住需要交互的组件，Runtime 生命周期不放进共享服务端可变单例；不在本轮增加应用状态库。</li>
 <li>样式以语义 CSS Variables 表达主题和错误状态，Tailwind 用于常规布局 / 变体，CSS Modules 补复杂局部样式；默认物料提供独立 CSS 入口，Host 无需扫描包源码才能正常呈现。</li>
 <li>物料不默认向 Host 注入全局 Reset；处理 Token 命名、样式范围、Portal 主题继承、层级与 CSS sideEffects。Renderer 不强制默认 CSS；样式依赖属于物料交付。</li>
@@ -463,8 +463,80 @@ chore(tooling): 初始化工作区
 </tbody>
 </table></div>
 <p>工程底座完成须同时满足：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。先用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。</p>
-<p>协议结构源 / 生成器、shadcn 底层基础、最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；后两者分别在组件初始化和目标兼容验证时整理实际建议。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。</p>
-<p>本轮状态：工程组合及流程已归档；依赖安装、脚手架命令实跑、版本兼容、工程 CI 和浏览器运行验收均未执行。后续先 E1，再 E2–E4；核心业务按<a href="governance.html#design-roadmap" rel="noopener noreferrer">既有 T01–T07</a>准备契约与纵切，不因工程文档存在提升模块完成度。</p></section>
+<p>协议结构源 / 生成器、正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。</p>
+<p>当前状态：E1–E4 工程配置与本地验证已完成，远端 CI / 受保护分支尚未运行或配置；不对外发布。核心业务按<a href="governance.html#design-roadmap" rel="noopener noreferrer">既有 T01–T07</a>准备契约与纵切，不因工程文档存在提升模块完成度。</p>
+</section>
+<section class="section" id="engineering-implementation"><div class="section-head"><div class="kicker">10 · FORM ENGINE</div><div class="section-title"><h2>10. 初始化实施记录与日常使用</h2></div></div>
+
+<h3 id="已落地范围">已落地范围</h3>
+<p>根清单使用 pnpm init；Next 使用 create-next-app；Nest 使用 Nest CLI；六个库使用 create-tsdown（四个 minimal、两个 React 模板）；ESLint / Playwright / Husky / Changesets 使用官方初始化器。dependency-cruiser 初始化器识别已有配置后保留本项目规则；没有为它生成第二套配置。移除模板重复 Playground、占位发布身份和不采用的检查工具，保留生成配置并按框架要求整合。</p>
+<p>所有包当前 private，根生产入口保持空导出。跨包验证示例在 <code>./engineering</code> 子入口；它们只验证工程接入，不定义 Definition / Prepared 或假设生产 Runtime 已实现。materials-react 独立导出 styles.css，使用 tsdown 原生 copy，开发脚本显式监听 src；源样式无需 Host 的 Tailwind 扫描。React 库构建保留 use client，React 本身外置。</p>
+<p>脚手架调用的版本 / 选项由执行日志核对：create-next-app 16.4.2、Nest CLI 通过 latest 调用（首次缓存输出 12.0.8，项目 CLI 后续已更新）、create-tsdown 0.23.1、ESLint create-config 3.0.0、create-playwright 1.17.139、shadcn CLI 4.22.1。以下表格是安装后的<strong>事实记录</strong>，不是人工预填的依赖声明；清单与锁由 pnpm 生成。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>本地实际版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node / pnpm</td>
+<td>24.22.0 / 12.14.0</td>
+</tr>
+<tr>
+<td>Next / React</td>
+<td>16.4.2 / 19.3.1</td>
+</tr>
+<tr>
+<td>Nest Core</td>
+<td>12.2.0</td>
+</tr>
+<tr>
+<td>TS / ESLint</td>
+<td>6.0.3 / 9.39.5</td>
+</tr>
+<tr>
+<td>Turborepo / tsdown</td>
+<td>2.11.9 / 0.23.1</td>
+</tr>
+<tr>
+<td>Vitest / Playwright Test</td>
+<td>5.0.5 / 1.64.1</td>
+</tr>
+<tr>
+<td>Tailwind / Base UI</td>
+<td>4.3.3 / 1.9.0</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="实际兼容问题与处理">实际兼容问题与处理</h3>
+<ul>
+<li>全 latest 首次安装失败：typescript latest 为 7.0.2，而 typescript-eslint 声明支持范围小于 6.1；jsx-a11y 尚不支持 ESLint latest 10。用户明确确认允许按工具 peer 范围自动解析最新兼容稳定版。<code>tools/engineering/install-toolchain.mjs</code> 从注册源读取范围与版本，选择 TS / ESLint / 同主版本 @eslint/js，其余请求 latest；不关闭 strictPeerDependencies，不使用强制覆盖。</li>
+<li>Nest 模板的旧 Vitest 与其他包新版本冲突，已统一 latest Vitest / coverage，测试转换显式保留装饰器元数据；单元和实际 HTTP 测试均通过。</li>
+<li>tsdown 的实际输出为 ESM .js / .d.ts，exports 已按产物校正。隔离临时消费者打包安装全部六包，验证 JS、React / 核心类型及独立 CSS；未发布包通过临时 tarball overrides 映射，不能访问工作区源码。</li>
+<li>dependency-cruiser 当前路径插件对无 baseUrl 的 Next alias 解析不同，使用仅供分析的 tools/config/tsconfig.boundaries.json 适配，应用 TS 配置保留脚手架方式。边界正例、核心反向导入和应用绕过 exports 的反例均验证。</li>
+<li>删除无使用需求的 shadcn CLI 常驻依赖及其额外通用样式导入，保留 CLI 生成的组件、Token 和 Tailwind；后续仍通过 pnpm dlx shadcn@latest 添加组件，并审查生成差异。构建不依赖远程 Google Fonts。</li>
+<li><code>pnpm audit --prod --audit-level high</code> 未发现已知漏洞；全量开发依赖审计仍报告 eslint-config-next → fast-glob / micromatch → braces 的 <a href="https://github.com/advisories/GHSA-vfj7-8cjw-p6xm" rel="noopener noreferrer">GHSA-vfj7-8cjw-p6xm</a>，当次审计无补丁版本。未 override 或隐瞒该结果；CI 的阻断审计针对生产依赖，开发工具问题保留跟踪，升级时复查。</li>
+</ul>
+<h3 id="日常命令">日常命令</h3>
+<div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>pnpm<span class="syn-w"> </span>install<span class="syn-w"> </span>--frozen-lockfile
+pnpm<span class="syn-w"> </span>dev
+pnpm<span class="syn-w"> </span>dev:api
+pnpm<span class="syn-w"> </span>check
+pnpm<span class="syn-w"> </span>test:e2e
+</code></pre></div>
+<p><code>pnpm dev</code> 直接启动 Next，默认应用端口 3000；不预构建六包、不启动库 watch。六包 exports 的 development 条件先于 types / import，指向 src 的公开入口；CSS 也按条件解析到源样式。Next 通过 transpilePackages 编译工作区源码，TypeScript 的 customConditions 与 Vitest 的 resolve.conditions 使用 development。生产应用构建不启用此条件，继续读取 dist。pnpm pack 通过 publishConfig.exports 覆盖为纯产物入口，避免下游应用开发时误找未发布的 src；隔离 tarball 消费同时验证默认与 development 两种条件。此机制依据 <a href="https://github.com/pnpm/pnpm/blob/main/pnpm/docs/package_json.md#publishconfig" rel="noopener noreferrer">pnpm publishConfig</a>。若本机其他项目占用端口，可执行 <code>PORT=3210 pnpm dev</code>；Turbo 显式传递 PORT / API_PORT / HOST。API 默认回环 3001，可用 <code>API_PORT=3211 pnpm dev:api</code> 修改。<code>dev:all</code> 显式联调；不会隐式连接 Platform 或外部服务。退出使用 Ctrl+C，子任务随 Turbo 清理。</p>
+<p>Nest 的 dev / start:dev / start:debug 使用 Node --watch、--conditions=development 和 services/api/dev-loader.mjs。加载器用已安装的 @swc/core 转换 TS / TSX，保留旧式装饰器和元数据，并将源码内部的相对 .js import 解析到对应 .ts；这只用于开发，不接入生产启动。生产仍由 nest build 生成 dist/main.js，再用 Node 执行。Nest 的开发类型检查使用独立 tsconfig.dev.json，生产 tsconfig.build.json 保持产物解析。后端新增工作区依赖仍须在 package.json 正式声明，不能因根工作区能够解析就省略。</p>
+<p>E2E 必须先有生产构建，测试启动独立的 Next 3100 / API 3101，拒绝复用已有服务；端口占用时先选择其他测试端口，不终止用户服务。测试已覆盖 Chromium、Firefox、WebKit，shadcn 输入 → 回显 → 清空、组件样式和生产 API 响应。单元与集成另覆盖 React 输入、Renderer 接入、核心包公开源码入口、依赖负例及 Nest 注入 / HTTP；未实现核心机制不计入通过范围。</p>
+<p>新环境首次跑浏览器测试前执行：</p>
+<div class="code-box"><div class="code-head"><span>BASH</span><button class="copy" type="button">复制</button></div><pre><code>pnpm<span class="syn-w"> </span><span class="syn-nb">exec</span><span class="syn-w"> </span>playwright<span class="syn-w"> </span>install<span class="syn-w"> </span>chromium<span class="syn-w"> </span>firefox<span class="syn-w"> </span>webkit
+pnpm<span class="syn-w"> </span>build
+pnpm<span class="syn-w"> </span>test:e2e
+</code></pre></div>
+<p>Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。<code>pnpm check</code> 只检查文档同步，不暗中改写生成物；正文变更后先 <code>pnpm docs:build</code>。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。</p>
+<p>主动升级使用 <code>pnpm toolchain:update</code>，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。</p>
+<p>本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。</p></section>
         
         
         
@@ -481,8 +553,9 @@ chore(tooling): 初始化工作区
 <a href="#engineering-contracts" data-to="engineering-contracts" title="6. 构建、类型与样式契约"><span class="nav-num">06</span><span>6. 构建、类型与样式契约</span></a>
 <a href="#engineering-git" data-to="engineering-git" title="7. Git、提交与版本管理"><span class="nav-num">07</span><span>7. Git、提交与版本管理</span></a>
 <a href="#engineering-gates" data-to="engineering-gates" title="8. 质量门禁、测试与环境治理"><span class="nav-num">08</span><span>8. 质量门禁、测试与环境治理</span></a>
-<a href="#engineering-acceptance" data-to="engineering-acceptance" title="9. 实施批次、验收与未决项"><span class="nav-num">09</span><span>9. 实施批次、验收与未决项</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>工具组合与初始化方式已确认；命令为实施步骤，尚未执行安装、脚手架或工程验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 5</summary><ul><li><a href="architecture.html">整体架构设计</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
+<a href="#engineering-acceptance" data-to="engineering-acceptance" title="9. 实施批次、验收与未决项"><span class="nav-num">09</span><span>9. 实施批次、验收与未决项</span></a>
+<a href="#engineering-implementation" data-to="engineering-implementation" title="10. 初始化实施记录与日常使用"><span class="nav-num">10</span><span>10. 初始化实施记录与日常使用</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 5</summary><ul><li><a href="architecture.html">整体架构设计</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
       </aside>
       </div>
     </div>

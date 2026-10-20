@@ -1,0 +1,13 @@
+import type { Metadata } from 'next';
+import './globals.css';
+export const metadata: Metadata = {
+  title: '动态表单引擎 · 工程验证',
+  description: 'Lightweight engineering playground',
+};
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="zh-CN">
+      <body className="font-sans">{children}</body>
+    </html>
+  );
+}

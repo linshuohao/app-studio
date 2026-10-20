@@ -1080,3 +1080,16 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 现行 [工作流说明](workflows.md)维护方案讨论、确认归档、开发交付、问题修复、流程改进五类入口、结束条件与衔接；仓库 `.agents/skills/` 提供五个对应 skill，AGENTS 与维护入口负责路由。开发采用持续规格维护与按范围验收，沿用已确认工程工具链，不复制另一套长期规范。小修改裁剪步骤，关键公共行为集中确认；有证据再增减流程，不以规则数或代码量衡量收益。
 
 第三方 Superpowers 为可选试用项，OpenSpec / Spec Kit 暂不引入；未安装、未执行工程初始化。流程入口的结构检查与真实任务效果分开，后者待后续使用验证。未改变协议、分层、包边界或模块完成状态，不为协作程序新建架构 ADR。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。
+
+
+## 2026-10-20：工程初始化与兼容联验 {#engineering-initialized}
+
+用户要求按工程文档初始化整个项目。已使用 pnpm init、create-next-app、Nest CLI、create-tsdown、ESLint / Playwright / Husky / Changesets 官方入口生成并整合工程；六包根入口不定义生产协议，独立 engineering 子入口只验证安装、构建与消费。保留既有分层、唯一业务状态与 Host 职责。
+
+首次全 latest 真实遇到 TypeScript / typescript-eslint、ESLint / jsx-a11y peer 冲突，用户明确确认允许脚本依据支持范围自动选择最新兼容稳定版，其余 latest，继续 strictPeerDependencies。实际 TS 6.0.3、ESLint 9.39.5；完整版本与处理记录在[工程主题](engineering.md#engineering-implementation)，ADR-FE-014 增补此兼容策略而不新增架构决策。
+
+本地完成冷构建、类型 / Lint、单元 / HTTP / 跨包、隔离 tarball 与 CSS / 类型消费、依赖边界正反例、锁文件安装和 Chromium / Firefox / WebKit E2E。开发模式验证源 CSS 与库代码修改后到达 dist / Next，再恢复；只读审查发现 CSS watch、缓存输入和应用越界规则的缺口后修复复验。生产依赖审计无已知漏洞，全开发依赖仍有上游未修复 braces 问题，保留来源及影响边界。CI 文件已配置，远端运行、分支保护、正式核心协议和 Platform / Studio 未因此完成。
+
+用户随后确认开发模式直接消费工作区源码：六包通过条件 exports 保持包名导入，Next / Nest / 工作区测试启用 development，默认生产入口仍是 dist。替代上述首次初始化的库预构建与产物 watch 链路；验证覆盖无 dist 启动消费、源码及 CSS 更新、Nest 装饰器注入与间接依赖重启，核心契约与模块完成状态不变。
+
+用户进一步明确 Playground 也统一使用 shadcn/ui；页面输入改为已有的 shadcn Input，与 Button / Label 使用同一基础，移除应用对工程物料输入控件及其全局样式的依赖。物料 CSS 的交付验证仍保留在包测试与隔离消费者，不改变物料层职责或引擎状态。

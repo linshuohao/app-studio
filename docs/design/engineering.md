@@ -17,12 +17,12 @@ navigation:
   group: 01 · 架构全貌
   order: 30
 last_reviewed: '2026-10-20'
-status_note: 工具组合与初始化方式已确认；命令为实施步骤，尚未执行安装、脚手架或工程验收
+status_note: E1–E4 工程底座已初始化并完成本地联验；生产协议 / Runtime 未实现，远端 CI 与分支保护未执行
 ---
 
 # 工程工具链与初始化方案
 
-本篇是已确认首期工程选型的实施依据，承接[六包边界与目录](architecture.md#application-engineering)。覆盖选型比较、依赖安装、脚手架初始化、任务编排、代码约束、Git、质量门禁和验收。用户已确认采用定制优先的 UI 路线，并要求通过 pnpm 获取最新依赖、通过脚手架初始化项目。本轮只交付文档，未执行安装或生成生产工程；下面的命令不是已存在的仓库脚本。
+本篇是已确认首期工程选型的实施依据，承接[六包边界与目录](architecture.md#application-engineering)。覆盖选型比较、依赖安装、脚手架初始化、任务编排、代码约束、Git、质量门禁和验收。用户已确认采用定制优先的 UI 路线，并要求通过 pnpm 获取最新依赖、通过脚手架初始化项目。方案归档时只交付文档；随后用户授权执行 E1–E4。当前工作区、六包、Next / Nest、统一任务及本地联验已落地，实际记录与日常命令见第 10 节。以下 create / init 步骤用于追溯首次创建，不应对已初始化仓库重复执行。
 
 Playground 保持轻量并使用 Next.js，不在本轮展开页面、状态管理或产品架构。后端采用 NestJS，Platform / Studio 的整体设计及状态管理另行讨论。核心 Runtime 等保持纯 TS，与应用框架无关。已确认组合见 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)；补充规则属于该范围内的实施细化，尚待工程验证，不新增核心协议语义。
 
@@ -51,7 +51,7 @@ pnpm 管工作区和依赖，Turborepo 管任务，两者不替代。TS / 库构
 
 1. 初始化和主动升级使用 `pnpm create …@latest`、`pnpm dlx …@latest`、`pnpm add …@latest`，不手写依赖版本号或复制旧 package.json。
 2. `latest` 指注册源的发布标签，通常代表稳定通道，不等于按发布时间排序的最后一个制品；不默认选择 canary / next / beta，也不保证彼此兼容或模板依赖已最新。
-3. 脚手架生成后，先保留其结构、理解配置，再通过 pnpm 更新生成的依赖。遇到 peer 冲突，检查支持矩阵和官方迁移说明，不用 `--force`、忽略 peer 或任意 override 把错误压下去；无法兼容时记录冲突与必要调整，不宣称全部最新版已验证。
+3. 脚手架生成后，先保留其结构、理解配置，再通过 pnpm 更新生成的依赖。遇到 peer 冲突，检查支持矩阵和官方迁移说明，不用 `--force`、忽略 peer 或任意 override 把错误压下去；无法兼容时记录冲突与必要调整，不宣称全部最新版已验证。实施时用户明确允许冲突项按实际 peer 范围自动选择最新兼容稳定版，解析脚本不手写版本号，详见第 10 节。
 4. 清单与锁由包管理器实际生成，提交根 `pnpm-lock.yaml`。新检出和 CI 使用 `pnpm install --frozen-lockfile`，不重新执行初始化或 latest 更新。
 5. Node / pnpm 的实际版本在执行时记录并固定；CI 使用相同环境。工具版本固定不等于本文预先指定版本，也不代表引擎 / 协议已发布。
 6. `workspace:*` 表示内部依赖关系，不是预填第三方版本。React peer 范围等兼容声明根据实际联验设置，不能把 `latest` 当作可发布的兼容承诺。
@@ -61,7 +61,7 @@ pnpm 管工作区和依赖，Turborepo 管任务，两者不替代。TS / 库构
 
 ## 3. 工程组织与约束 {#engineering-layout}
 
-现有六包与 Flutter 顶层预留不变。实际执行时按需要创建以下有内容的子目录，不在本轮生成空框架：
+现有六包与 Flutter 顶层预留不变。已按下列职责建立实际工程；fixtures 等无实际内容的位置不强制占位：
 
 ```text
 apps/playground/          Next.js，轻量接入与验证
@@ -87,7 +87,7 @@ packages-flutter/        继续预留
 
 ## 4. 初始化顺序与命令 {#engineering-bootstrap}
 
-以下从项目根执行；命令按小节有前置关系，不是可直接整段无交互执行的一键脚本。执行者先检查工作区和 Git Diff，再调用当前 CLI 的 `--help`；涉及生成器提示的选择按表落实。不要覆盖已有业务文件、重建 Git 或重新生成已有项目。
+以下为首次初始化流程，从项目根执行；当前仓库已完成这些步骤，不重复执行。命令按小节有前置关系，不是可直接整段无交互执行的一键脚本。执行者先检查工作区和 Git Diff，再调用当前 CLI 的 `--help`；涉及生成器提示的选择按表落实。不要覆盖已有业务文件、重建 Git 或重新生成已有项目。
 
 ### 4.1 环境与根清单
 
@@ -170,9 +170,9 @@ pnpm dlx shadcn@latest init --cwd apps/playground
 pnpm dlx shadcn@latest add button input label --cwd apps/playground
 ```
 
-使用已存在的 Next 项目，不让 shadcn 再生成一套 Monorepo 或额外 UI 包；选择 CSS Variables。底层基础（Base / Radix 等）尚未单独确认，初始化时按可用组件和输入验收给出单一推荐，记录选择后保持一致，不静默当作已选定。引入图标、类名合并与变体工具时沿用脚手架实际生成的依赖，通过 pnpm 更新，不预先重复安装另一套。
+使用已存在的 Next 项目，不让 shadcn 再生成一套 Monorepo 或额外 UI 包；选择 CSS Variables。实施细化采用当前 CLI 默认的 Base UI / base-nova，已通过按钮、Label、受控输入及三浏览器联验；这只是当前默认组件实现，不扩展为新协议语义。引入图标、类名合并与变体工具时沿用脚手架实际生成的依赖，通过 pnpm 更新，不预先重复安装另一套。
 
-当前只初始化轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。[shadcn CLI](https://ui.shadcn.com/docs/cli)
+Playground 的页面控件统一使用本地 shadcn/ui 组件（包括 Input、Button、Label），不以物料包的工程样例输入控件充当应用组件库；物料包及独立 CSS 的交付能力继续通过包测试和隔离消费者验证。当前只初始化轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。[shadcn CLI](https://ui.shadcn.com/docs/cli)
 
 ### 4.6 测试、Hook 与版本工具初始化
 
@@ -188,7 +188,7 @@ Playwright 选择 TS、测试目录 `tests/e2e`，已有 CI 时不覆盖；检�
 
 ### 4.7 模板依赖更新与首次安装收口
 
-所有清单生成并统一以后执行；这是主动升级步骤，不放进常规 install / postinstall：
+所有清单生成并统一以后执行；这是主动升级步骤，不放进常规 install / postinstall。以下是原始全 latest 流程；当前已发现 TS / ESLint 兼容冲突，应使用第 10 节的 `pnpm toolchain:update`，不要直接把冲突项升到不兼容 latest：
 
 ```bash
 pnpm -w update --latest
@@ -204,11 +204,11 @@ pnpm outdated -r
 
 ## 5. pnpm 脚本与任务编排 {#engineering-tasks}
 
-下表是实施时要写入的脚本契约，目前仓库没有这些脚本。初始化依赖使用 create / dlx / add；日常任务使用已安装工具的 exec 或 scripts，不在 CI 临时 dlx latest。
+下表脚本现已落地，实际定义以根 package.json 和对应包为准。初始化依赖使用 create / dlx / add；日常任务使用已安装工具的 exec 或 scripts，不在 CI 临时 dlx latest。
 
 | 根入口 | 行为与前置 |
 | --- | --- |
-| pnpm dev | 先构建必要库，再启动库 watch 与轻量 Playground；不默认要求后端 |
+| pnpm dev | 直接启动轻量 Playground，通过包名解析工作区源码；不要求预构建库或后端 |
 | pnpm dev:api / dev:all | 启动 API / 显式联调，服务端口与环境有独立配置 |
 | pnpm build | turbo run build，消费者依赖上游 build |
 | pnpm typecheck | turbo run typecheck；依赖公开声明时先完成上游 build；Next 先生成当前框架所需类型 |
@@ -221,7 +221,7 @@ pnpm outdated -r
 | pnpm docs:check | 现有 Python 构建 --check；文档环境按 docs/README 准备 |
 | pnpm check | format:check、lint、boundaries、typecheck、test、integration、build、packages:check、docs:check；E2E 在 CI 另设必需任务 |
 
-Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各库 build 输出 dist，Next 申明 .next 产物且排除可变缓存目录，Nest 申明服务产物。检查配置、锁、环境变量和生成源纳入任务输入；dev 设 persistent 且不缓存，E2E、外部服务和不确定测试首期不缓存。缓存正确性先于远程缓存；冷缓存构建必须通过。dev 先完成首次库构建再启动消费者，后续验证 watch 更新链路，不能只靠 `^build` 认为自动获得跨包监听。
+Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各库 build 输出 dist，Next 申明 .next 产物且排除可变缓存目录，Nest 申明服务产物。检查配置、锁、环境变量和生成源纳入任务输入；dev 设 persistent 且不缓存，E2E、外部服务和不确定测试首期不缓存。缓存正确性先于远程缓存；冷缓存构建必须通过。dev 不执行库预构建或 tsdown watch；通过 exports 的 development 条件读取源码，由 Next 与 Node 开发加载链监听。单元测试与开发类型检查也不依赖 build；Turbo 的 source 传递节点将上游源码变化纳入缓存键。生产 build 仍按 ^build 构建依赖，不能把开发源码验证代替产物验收。
 
 所有安装 / 初始化入口均由 pnpm 调用；如果后续希望合并为 bootstrap 脚本，包装以上命令并检测已有工程状态，不能每次运行都重建项目或拉取 latest。
 
@@ -229,7 +229,7 @@ Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各�
 
 - ESM 优先，公开 JS、d.ts 和 Source Map；CJS 仅在出现真实消费者时补充及验证。Next / Nest 各自构建，不能用统一 tsconfig 覆盖框架所需模块解析或装饰器选项。
 - TS 开启 strict、noUncheckedIndexedAccess，逐包处理框架必要差异；核心限制 Node / DOM 专有全局，服务与 React 使用各自环境配置。异常 any / ts-ignore 必须有理由和覆盖场景。
-- 普通包不跨源码路径 alias 导入，用 exports 和实际产物消费；依赖顺序包括类型产物。Compiler 在 Node 侧不加载 React；已发布表单运行不带 Compiler / Studio / 平台在线依赖。
+- 普通包不跨源码路径 alias 导入，始终经包名及 exports 消费：开发 / 单元与工作区集成测试使用 development 源码入口，生产构建和隔离打包消费者使用默认 dist 入口；生产依赖顺序包括类型产物。Compiler 在 Node 侧不加载 React；已发布表单运行不带 Compiler / Studio / 平台在线依赖。
 - React 为 peer，应用负责装配；Manifest 可独立消费。Next 客户端边界只包住需要交互的组件，Runtime 生命周期不放进共享服务端可变单例；不在本轮增加应用状态库。
 - 样式以语义 CSS Variables 表达主题和错误状态，Tailwind 用于常规布局 / 变体，CSS Modules 补复杂局部样式；默认物料提供独立 CSS 入口，Host 无需扫描包源码才能正常呈现。
 - 物料不默认向 Host 注入全局 Reset；处理 Token 命名、样式范围、Portal 主题继承、层级与 CSS sideEffects。Renderer 不强制默认 CSS；样式依赖属于物料交付。
@@ -282,6 +282,66 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 
 工程底座完成须同时满足：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。先用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。
 
-协议结构源 / 生成器、shadcn 底层基础、最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；后两者分别在组件初始化和目标兼容验证时整理实际建议。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
+协议结构源 / 生成器、正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合。前者不阻塞基础工作区，但阻塞正式协议结构落地；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
 
-本轮状态：工程组合及流程已归档；依赖安装、脚手架命令实跑、版本兼容、工程 CI 和浏览器运行验收均未执行。后续先 E1，再 E2–E4；核心业务按[既有 T01–T07](governance.md#design-roadmap)准备契约与纵切，不因工程文档存在提升模块完成度。
+当前状态：E1–E4 工程配置与本地验证已完成，远端 CI / 受保护分支尚未运行或配置；不对外发布。核心业务按[既有 T01–T07](governance.md#design-roadmap)准备契约与纵切，不因工程文档存在提升模块完成度。
+
+
+## 10. 初始化实施记录与日常使用 {#engineering-implementation}
+
+### 已落地范围
+
+根清单使用 pnpm init；Next 使用 create-next-app；Nest 使用 Nest CLI；六个库使用 create-tsdown（四个 minimal、两个 React 模板）；ESLint / Playwright / Husky / Changesets 使用官方初始化器。dependency-cruiser 初始化器识别已有配置后保留本项目规则；没有为它生成第二套配置。移除模板重复 Playground、占位发布身份和不采用的检查工具，保留生成配置并按框架要求整合。
+
+所有包当前 private，根生产入口保持空导出。跨包验证示例在 `./engineering` 子入口；它们只验证工程接入，不定义 Definition / Prepared 或假设生产 Runtime 已实现。materials-react 独立导出 styles.css，使用 tsdown 原生 copy，开发脚本显式监听 src；源样式无需 Host 的 Tailwind 扫描。React 库构建保留 use client，React 本身外置。
+
+脚手架调用的版本 / 选项由执行日志核对：create-next-app 16.4.2、Nest CLI 通过 latest 调用（首次缓存输出 12.0.8，项目 CLI 后续已更新）、create-tsdown 0.23.1、ESLint create-config 3.0.0、create-playwright 1.17.139、shadcn CLI 4.22.1。以下表格是安装后的**事实记录**，不是人工预填的依赖声明；清单与锁由 pnpm 生成。
+
+| 工具 | 本地实际版本 |
+| --- | --- |
+| Node / pnpm | 24.22.0 / 12.14.0 |
+| Next / React | 16.4.2 / 19.3.1 |
+| Nest Core | 12.2.0 |
+| TS / ESLint | 6.0.3 / 9.39.5 |
+| Turborepo / tsdown | 2.11.9 / 0.23.1 |
+| Vitest / Playwright Test | 5.0.5 / 1.64.1 |
+| Tailwind / Base UI | 4.3.3 / 1.9.0 |
+
+### 实际兼容问题与处理
+
+- 全 latest 首次安装失败：typescript latest 为 7.0.2，而 typescript-eslint 声明支持范围小于 6.1；jsx-a11y 尚不支持 ESLint latest 10。用户明确确认允许按工具 peer 范围自动解析最新兼容稳定版。`tools/engineering/install-toolchain.mjs` 从注册源读取范围与版本，选择 TS / ESLint / 同主版本 @eslint/js，其余请求 latest；不关闭 strictPeerDependencies，不使用强制覆盖。
+- Nest 模板的旧 Vitest 与其他包新版本冲突，已统一 latest Vitest / coverage，测试转换显式保留装饰器元数据；单元和实际 HTTP 测试均通过。
+- tsdown 的实际输出为 ESM .js / .d.ts，exports 已按产物校正。隔离临时消费者打包安装全部六包，验证 JS、React / 核心类型及独立 CSS；未发布包通过临时 tarball overrides 映射，不能访问工作区源码。
+- dependency-cruiser 当前路径插件对无 baseUrl 的 Next alias 解析不同，使用仅供分析的 tools/config/tsconfig.boundaries.json 适配，应用 TS 配置保留脚手架方式。边界正例、核心反向导入和应用绕过 exports 的反例均验证。
+- 删除无使用需求的 shadcn CLI 常驻依赖及其额外通用样式导入，保留 CLI 生成的组件、Token 和 Tailwind；后续仍通过 pnpm dlx shadcn@latest 添加组件，并审查生成差异。构建不依赖远程 Google Fonts。
+- `pnpm audit --prod --audit-level high` 未发现已知漏洞；全量开发依赖审计仍报告 eslint-config-next → fast-glob / micromatch → braces 的 [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)，当次审计无补丁版本。未 override 或隐瞒该结果；CI 的阻断审计针对生产依赖，开发工具问题保留跟踪，升级时复查。
+
+### 日常命令
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm dev:api
+pnpm check
+pnpm test:e2e
+```
+
+`pnpm dev` 直接启动 Next，默认应用端口 3000；不预构建六包、不启动库 watch。六包 exports 的 development 条件先于 types / import，指向 src 的公开入口；CSS 也按条件解析到源样式。Next 通过 transpilePackages 编译工作区源码，TypeScript 的 customConditions 与 Vitest 的 resolve.conditions 使用 development。生产应用构建不启用此条件，继续读取 dist。pnpm pack 通过 publishConfig.exports 覆盖为纯产物入口，避免下游应用开发时误找未发布的 src；隔离 tarball 消费同时验证默认与 development 两种条件。此机制依据 [pnpm publishConfig](https://github.com/pnpm/pnpm/blob/main/pnpm/docs/package_json.md#publishconfig)。若本机其他项目占用端口，可执行 `PORT=3210 pnpm dev`；Turbo 显式传递 PORT / API_PORT / HOST。API 默认回环 3001，可用 `API_PORT=3211 pnpm dev:api` 修改。`dev:all` 显式联调；不会隐式连接 Platform 或外部服务。退出使用 Ctrl+C，子任务随 Turbo 清理。
+
+Nest 的 dev / start:dev / start:debug 使用 Node --watch、--conditions=development 和 services/api/dev-loader.mjs。加载器用已安装的 @swc/core 转换 TS / TSX，保留旧式装饰器和元数据，并将源码内部的相对 .js import 解析到对应 .ts；这只用于开发，不接入生产启动。生产仍由 nest build 生成 dist/main.js，再用 Node 执行。Nest 的开发类型检查使用独立 tsconfig.dev.json，生产 tsconfig.build.json 保持产物解析。后端新增工作区依赖仍须在 package.json 正式声明，不能因根工作区能够解析就省略。
+
+E2E 必须先有生产构建，测试启动独立的 Next 3100 / API 3101，拒绝复用已有服务；端口占用时先选择其他测试端口，不终止用户服务。测试已覆盖 Chromium、Firefox、WebKit，shadcn 输入 → 回显 → 清空、组件样式和生产 API 响应。单元与集成另覆盖 React 输入、Renderer 接入、核心包公开源码入口、依赖负例及 Nest 注入 / HTTP；未实现核心机制不计入通过范围。
+
+新环境首次跑浏览器测试前执行：
+
+```bash
+pnpm exec playwright install chromium firefox webkit
+pnpm build
+pnpm test:e2e
+```
+
+Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。`pnpm check` 只检查文档同步，不暗中改写生成物；正文变更后先 `pnpm docs:build`。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。
+
+主动升级使用 `pnpm toolchain:update`，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。
+
+本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。

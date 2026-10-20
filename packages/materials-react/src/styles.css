@@ -1,0 +1,17 @@
+.fe-engineering-input {
+  --fe-field-border: #cbd5e1;
+  --fe-field-focus: #2563eb;
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--fe-field-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+.fe-engineering-input:focus-visible {
+  outline: 2px solid var(--fe-field-focus);
+  outline-offset: 2px;
+}

@@ -7,7 +7,7 @@
 **整体架构 → 纵向与横向能力图谱 → 每层 / 每项能力的独立设计。**
 
 - [整体架构](design/architecture.md)：产品蓝图（待审阅）、系统边界、完整逻辑架构图、双工作流、建设路径、责任与贯穿案例，以及已确认的 TS / React 首期包与目录。
-- [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁；尚未执行工程初始化。
+- [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁，以及初始化后的实际命令 / 版本 / 本地验收；远端 CI 尚未运行。
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
 - [L1 协议](design/l1/README.md)：模型 → 数据 / 引用 / Scope → 表达式 / 校验 → 命令 / 联动 → 视图 → 生命周期 → 示例与类型。八份主题分别生成 HTML，不再合成长页。
 - [L2 预处理](design/l2-preparation.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。

@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 40,
+    "current-markdown": 43,
     "documentation-tooling": 12,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 393,
-  "unique_byte_contents": 354,
+  "total_entries": 396,
+  "unique_byte_contents": 357,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17675,
-      "sha256": "f61666d8c2872e391e8b56d05d2dbd84c0affdabec268c5a9f6ee2e4fae9abc7",
+      "bytes": 18359,
+      "sha256": "cff6cd4623bc3291de3beb71f3ee0915600215951d96ce8872391c6b4b2a82cd",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -203,6 +203,11 @@
         {
           "level": 2,
           "title": "设计者的主阅读路径",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "项目研发工作流",
           "anchor": null
         },
         {
@@ -261,8 +266,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 43602,
-      "sha256": "ce54185eeb616fec182d02d29e35f60ccd54b9b61b82dced2b0d4c18bb0f7984",
+      "bytes": 44300,
+      "sha256": "f9df87de0569165c183d51809ba20622642a6800251d4b1c7fe16af2d8c892e6",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -936,8 +941,8 @@
       "path": "docs/design/decisions/ADR-FE-013-ts-react-packages.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3363,
-      "sha256": "fc18e3edb7c02b04e4eb9824db7995f773cc58570ace1d6521042f5b0c34eee5",
+      "bytes": 3506,
+      "sha256": "56740bf4c9de2b87c803fe793043bd545a20fbddbd36393496600ca69ffa27d5",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -958,6 +963,41 @@
         {
           "level": 2,
           "title": "影响与限定范围",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "来源与关联",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-014-engineering-toolchain.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2449,
+      "sha256": "d07d77af0028e4b124806f05048d733190d747451b920e72e871f41aa056ed4c",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-014：首期工程工具链与脚手架初始化",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与实际比较",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决策",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "影响与限制",
           "anchor": null
         },
         {
@@ -1086,8 +1126,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 123155,
-      "sha256": "aa44cf098a644e6f79a792d664fe30376021e077c26f101f731fb4b7be7b96fb",
+      "bytes": 125819,
+      "sha256": "e152ba44bff955d01fd2e20666024fbe622887f3327d2bd6a2a8afdf57ee8ed6",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1474,6 +1514,16 @@
           "level": 3,
           "title": "当前落地与剩余工作",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-20：工程选型确认与脚手架初始化要求",
+          "anchor": "engineering-toolchain-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-20：五类项目工作流与仓库 skill 建设",
+          "anchor": "workflow-established"
         }
       ]
     },
@@ -1563,6 +1613,101 @@
       ]
     },
     {
+      "path": "docs/design/engineering.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 25925,
+      "sha256": "57efecf278c445a978a5bf3c1cfe2a7be474f4444b304516ba509755df9774b4",
+      "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
+      "sections": [
+        {
+          "level": 1,
+          "title": "工程工具链与初始化方案",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "1. 已选技术组合与比较",
+          "anchor": "engineering-selection"
+        },
+        {
+          "level": 2,
+          "title": "2. 最新依赖与可复现安装",
+          "anchor": "engineering-latest"
+        },
+        {
+          "level": 2,
+          "title": "3. 工程组织与约束",
+          "anchor": "engineering-layout"
+        },
+        {
+          "level": 2,
+          "title": "4. 初始化顺序与命令",
+          "anchor": "engineering-bootstrap"
+        },
+        {
+          "level": 3,
+          "title": "4.1 环境与根清单",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.2 Next.js 与 NestJS 使用官方脚手架",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.3 六个库使用 tsdown 脚手架",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.4 工具初始化与依赖安装",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.5 组件与样式初始化",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.6 测试、Hook 与版本工具初始化",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "4.7 模板依赖更新与首次安装收口",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "5. pnpm 脚本与任务编排",
+          "anchor": "engineering-tasks"
+        },
+        {
+          "level": 2,
+          "title": "6. 构建、类型与样式契约",
+          "anchor": "engineering-contracts"
+        },
+        {
+          "level": 2,
+          "title": "7. Git、提交与版本管理",
+          "anchor": "engineering-git"
+        },
+        {
+          "level": 2,
+          "title": "8. 质量门禁、测试与环境治理",
+          "anchor": "engineering-gates"
+        },
+        {
+          "level": 2,
+          "title": "9. 实施批次、验收与未决项",
+          "anchor": "engineering-acceptance"
+        }
+      ]
+    },
+    {
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
@@ -1616,8 +1761,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 30344,
-      "sha256": "f7722e46278ba5224bdeb3d3708bd3467f6e64179d9b7f20cee0e9993e5ad3e6",
+      "bytes": 31508,
+      "sha256": "6b88b2fbefa569046791c1815a322bf2460a9a5c5bcac06f00e46fc1beddd7af",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -1657,7 +1802,12 @@
         },
         {
           "level": 3,
-          "title": "当前进度：目录占位完成，进入工具链与契约准备",
+          "title": "当前进度：目录占位完成，工具链方案确认待实施",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "项目工作流入口已建立，工程验收仍待实施",
           "anchor": null
         },
         {
@@ -2879,6 +3029,71 @@
           "level": 2,
           "title": "参与开发：从一个业务链路进入对应契约",
           "anchor": "usage-contributing"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/workflows.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 15847,
+      "sha256": "d200f8b74d7ba909ab01c04538b66ba6094b9d93fabcaad09a4b4102ec79e7c6",
+      "mapping": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
+      "sections": [
+        {
+          "level": 1,
+          "title": "项目工作流与使用说明",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "先选你要做的任务",
+          "anchor": "workflow-selection"
+        },
+        {
+          "level": 2,
+          "title": "W1 · 方案讨论：把问题讨论清楚",
+          "anchor": "workflow-design"
+        },
+        {
+          "level": 2,
+          "title": "W2 · 确认归档：把结论放回项目",
+          "anchor": "workflow-maintenance"
+        },
+        {
+          "level": 2,
+          "title": "W3 · 开发交付：把明确的能力做出来",
+          "anchor": "workflow-delivery"
+        },
+        {
+          "level": 2,
+          "title": "W4 · 问题修复：从异常找到原因",
+          "anchor": "workflow-debug"
+        },
+        {
+          "level": 2,
+          "title": "W5 · 流程改进：改善做事的方法",
+          "anchor": "workflow-improve"
+        },
+        {
+          "level": 2,
+          "title": "一次任务怎样串起来",
+          "anchor": "workflow-routing"
+        },
+        {
+          "level": 2,
+          "title": "已建设的入口与共用环境",
+          "anchor": "workflow-harness"
+        },
+        {
+          "level": 2,
+          "title": "Skill 和工具选择：哪些需要安装",
+          "anchor": "workflow-tools"
+        },
+        {
+          "level": 2,
+          "title": "维护与试运行",
+          "anchor": "workflow-evolution"
         }
       ]
     },
@@ -22884,8 +23099,8 @@
       "path": "tools/docs/audit_architecture.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 19446,
-      "sha256": "f570e1009c1cc4275b9279a4b3ce353968b64eba7bcb3f1fdb629829e53fcc0e",
+      "bytes": 19653,
+      "sha256": "f602a9fc2070b9d97771ad6631ddf9ee46c47d9cb2c575166c21bb0efe3345d7",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -22893,8 +23108,8 @@
       "path": "tools/docs/build_docs.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 12705,
-      "sha256": "50c518c53dd8cefbf27affe9cd3aef9be932df9db2bb71cbfb453bd492b59b99",
+      "bytes": 12819,
+      "sha256": "2d3cad0e5ec9795e79a8ff4d2acf41852783ed3cb39a5849d352e11ceabab253",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

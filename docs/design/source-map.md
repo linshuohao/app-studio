@@ -98,6 +98,16 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 [调整前来源包](../history/2026-10-19-designer-reading-sources.zip)保存 `before-designer-reading/` 下的正文、ADR、维护说明与术语，SHA-256 为 `c328063d9c070e94c57f4033a7e4db8cd618d036dd443099ca4ac7ca819b5737`。本次依据用户明确要求，按整体→能力图谱→各层详细设计组织阅读，设计推导与台账单独迁移，未改变既有执行语义。
 
+### SRC-ENGINEERING：工程工具链确认与官方命令依据 {#src-engineering}
+
+2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见[演进记录](design-history.md#engineering-toolchain-confirmed)，有效方案见[工程主题](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。命令未实跑，不作为兼容性或工程完成证据。
+
+### SRC-WORKFLOWS：项目工作流确认与调研依据 {#src-workflows}
+
+2026-10-20 本次对话中用户要求兼顾效率、可靠性和持续演进，以真实任务理解流程后，明确要求按五类建设说明文档与工作流；第三方 skill / 工具先说明，由用户决定是否安装。现行说明见 [项目工作流](workflows.md)，执行入口位于仓库 `.agents/skills/`，演进见 [工作流建设记录](design-history.md#workflow-established)。未保存或伪造逐字对话快照。
+
+调研用于选型参考，不将厂商案例或研究直接提升为项目共识：[SDD 层次分析](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html)、[SDD 实践研究（2026-10-15 修订）](https://arxiv.org/abs/2608.25202v4)、[长任务 harness](https://www.anthropic.com/engineering/harness-design-long-running-apps)、[DORA](https://dora.dev/research/2025/dora-report/)、[METR 更新](https://metr.org/blog/2026-02-24-uplift-update/)。仓库 skill 发现机制依据 [官方文档](https://learn.chatgpt.com/docs/build-skills)。查阅日期为 2026-10-20；这些资料不证明本项目已提效，候选第三方工具未安装。
+
 ## 设计者阅读结构的内容迁移 {#reading-migrations}
 
 | 调整前的位置 | 当前权威位置 | 处理方式 |
@@ -290,3 +300,8 @@ flowchart LR
 ### 2026-10-20：Web/TS + React 首期与目录统一归档
 
 用户明确首期 TS / React、packages 直接放 TS 包、packages-flutter 顶层预留，并授权先建立 .gitkeep 后同步文档及检查清理。现行[应用架构](architecture.md#application-engineering)、[ADR-FE-013](decisions/ADR-FE-013-ts-react-packages.md)、[演进及原候选](design-history.md#ts-react-package-layout)、L4 与治理同步。仅目录占位已完成；正式协议、Runtime / Renderer、生成器、跨语言测试及后端均无新增实现证据。归档节奏调整为完整专题确认后统一维护，不再逐段写入候选。
+
+
+### 2026-10-20：工程方案统一归档
+
+[工程主题](engineering.md)承接已确认包边界，统一安装、脚手架、任务、Git 与质量要求；[架构](architecture.md#application-engineering)、[治理](governance.md#implementation-readiness)、[演进](design-history.md#engineering-toolchain-confirmed)同步当前状态。新增 ADR-FE-014，不替代旧 ADR，不变更协议语义，不提升核心模块完成度；实际仍只有目录占位。

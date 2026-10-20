@@ -33,6 +33,7 @@ SOURCES = sorted(L1.glob("[0-9][0-9]-*.md"))
 PAGES = [
     (DOCS / "design/usage-guide.md", READING / "usage-guide.html", "FORM ENGINE · USAGE & DEVELOPMENT GUIDE"),
     (DOCS / "design/architecture.md", READING / "architecture.html", "FORM ENGINE · ARCHITECTURE"),
+    (DOCS / "design/engineering.md", READING / "engineering.html", "FORM ENGINE · ENGINEERING"),
     (DOCS / "design/l2-preparation.md", READING / "l2-preparation.html", "FORM ENGINE · LAYER 02 · DESIGN BASELINE"),
     (DOCS / "design/dependency-reactivity.md", READING / "dependency-reactivity.html", "FORM ENGINE · CROSS-LAYER · DESIGN BASELINE"),
     (DOCS / "design/l3-reactive-engine.md", READING / "l3-reactive-engine.html", "FORM ENGINE · LAYER 03 · DESIGN BASELINE"),
@@ -46,7 +47,7 @@ PAGES += [
     for source in sorted((DOCS / "design/decisions").glob("ADR-FE-*.md"))
 ]
 PAGES += [(DOCS / "design" / name, READING / (Path(name).stem + ".html"), "FORM ENGINE · DESIGN") for name in (
-    "capability-map.md", "l4-renderer.md", "extension-integration.md", "platform-studio.md", "design-history.md", "design-review.md", "l3-data-scope.md", "l3-observability.md")]
+    "capability-map.md", "l4-renderer.md", "extension-integration.md", "platform-studio.md", "design-history.md", "design-review.md", "l3-data-scope.md", "l3-observability.md", "workflows.md")]
 PAGES += [(READING_PLAN, PROTOCOL, "FORM ENGINE · L1 DEFINITION")]
 PAGES += [(source, READING / "l1" / (source.stem + ".html"), "FORM ENGINE · L1 DEFINITION") for source in SOURCES]
 OUTPUTS = {source: output for source, output, _ in PAGES} | {

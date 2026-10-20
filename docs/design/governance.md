@@ -243,17 +243,21 @@ T01 / T02 阻塞相关公共行为冻结，不阻止 T03 的独立规范工作�
 | L4 模块整合 | [完整流程](l4-renderer.md#implementation-contract)：组件装配、共用 Adapter、输入、生命周期、错误、验收 | 行为已整合，具体平台 API 待落地验证，不标记生产验收完成 |
 | 核心首个实现闭环（路线已确认） | 确定协议 → L2 检查 → Runtime 数据 / Scope / Flush / 校验 → L4 常用物料 → Host 提交 | 方向二为建设主线；先讨论清楚整体蓝图，具体范围与契约待固化 |
 
-首个纵切建议包含文本 / 数字 / 确认型日期组件、动态数组、条件显示、同步与异步校验、取消 / 乱序、局部物料错误和 Host 提交。首期已确认 Web/TS + React、六个 TS 包及 packages-flutter 顶层预留，当前仅 .gitkeep 占位；版本、构建 / 测试 / 依赖管理和正式公共契约仍待确定。
+首个纵切建议包含文本 / 数字 / 确认型日期组件、动态数组、条件显示、同步与异步校验、取消 / 乱序、局部物料错误和 Host 提交。首期已确认 Web/TS + React、六个 TS 包及 packages-flutter 顶层预留，当前仅 .gitkeep 占位；工具组合与初始化流程见[工程方案](engineering.md)；实际安装兼容和正式公共契约仍待完成。
 
 完整 Platform / Studio、跨端性能和全部发布治理继续按既有范围推进，不作为核心模型与纵切开始编码的统一前提。反之，核心可探索实现也不表示整个引擎对外契约已冻结。
 
-### 当前进度：目录占位完成，进入工具链与契约准备
+### 当前进度：目录占位完成，工具链方案确认待实施
 
 首期确认 Web/TypeScript + React；packages 下六包为 protocol / compiler / runtime / renderer-react / materials-react / pure-functions，packages-flutter 在根目录保留后续 Dart / Flutter。apps / services / tests 与六包均仅有 .gitkeep；tools / docs 为已有可执行文档与候选验证体系。见[现行边界与目录](architecture.md#application-engineering)、[ADR-FE-013](decisions/ADR-FE-013-ts-react-packages.md)。原七包草案退为历史比较，不另建 host-sdk、公开 testkit 或通用 renderer-core。
 
-下一步集中确定 TS / React 版本、依赖 / 工作区 / 构建 / 测试工具、协议源与生成方案，并按既有 T01–T07 整合公共契约和纵切验收。跨语言保留协议和用例扩展边界，Dart 绑定 / Runtime、Flutter Renderer、跨语言驱动与后端微服务均不作为当前前置。目录建好不关闭 OD、不提升 M02–M16 的完成状态，M18 / M19 仍待设计。Platform P1–P4 与蓝图中的具体产品 / 阶段安排继续保留未确认身份。
+工具链已确认 pnpm Workspace + Turborepo、Next.js 轻量 Playground、NestJS 后端、tsdown、ESLint / Prettier、Vitest / Playwright、Husky / lint-staged / commitlint、Changesets 与 shadcn/ui + Tailwind + CSS Variables；见[完整工程方案](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。通过官方脚手架与 pnpm latest 获取执行时依赖，再生成清单 / 锁固定实际环境，日常 / CI 使用 frozen install；本轮只交付文档，未安装或初始化。下一步 E1–E4 实施与联验，并按既有 T01–T07 整合公共契约和纵切验收；协议源 / 生成器、组件基础与目标兼容范围仍待闭合。跨语言保留协议和用例扩展边界，Dart 绑定 / Runtime、Flutter Renderer、跨语言驱动与后端微服务均不作为当前前置。目录建好不关闭 OD、不提升 M02–M16 的完成状态，M18 / M19 仍待设计。Platform P1–P4 与蓝图中的具体产品 / 阶段安排继续保留未确认身份。
 
 讨论方式按用户要求：完整专题先在对话中收敛，明确确认后一次归档与构建；不在每次局部讨论后保存候选。当前已获统一归档授权，不新增独立维护报告页。
+
+### 项目工作流入口已建立，工程验收仍待实施
+
+2026-10-20 用户确认建设五类研发工作流及场景说明，见 [项目工作流](workflows.md)：方案讨论、确认归档、开发交付、问题修复、流程改进。仓库 skill 作为执行入口，复用已有维护程序与工程选型；不新增引擎架构决策或关闭既有 OD。真实任务效果仍需试运行，第三方工具待用户选择后安装；生产检查脚本、可控 Host 和纵切验收仍随 E1–E4 / T01–T07 实施，不以流程文档或 skill 文件存在提升 M02–M16 完成度。
 
 ### Agent 后续规划可讨论，不进入当前首期
 

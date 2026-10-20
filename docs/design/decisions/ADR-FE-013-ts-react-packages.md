@@ -47,7 +47,7 @@ Host 注册与实例接口归 Runtime，呈现装配归 Renderer，网络和业�
 
 延续 ADR-FE-001 的四层和唯一数据 / Host 分责、ADR-FE-003 的 Adapter 与物料边界、ADR-FE-004 的 Prepared 唯一执行入口；没有替代旧 accepted ADR。原七项只是未确认草案，比较理由在演进中保留。
 
-目前仅有 10 个 .gitkeep 占位。没有生产协议 Schema、package.json、依赖锁、React / TS 安装、Runtime / Renderer 或正式测试实现。版本与工程工具待选，公开契约缺口和模块状态不因此关闭。Platform / Studio 的详细产品方案、发布入口、后端部署与 Agent 方案未被本决策确认。
+目前仅有 10 个 .gitkeep 占位。没有生产协议 Schema、package.json、依赖锁、React / TS 安装、Runtime / Renderer 或正式测试实现。本决策形成时版本与工程工具待选；后续工具组合已由 [ADR-FE-014](ADR-FE-014-engineering-toolchain.md)确认，实际安装和兼容验收仍未执行。公开契约缺口和模块状态不因此关闭。Platform / Studio 的详细产品方案、发布入口、后端部署与 Agent 方案未被本决策确认。
 
 ## 来源与关联
 

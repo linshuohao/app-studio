@@ -33,6 +33,8 @@ ARCHIVE_TOPICS = {
 }
 CURRENT_TOPICS = {
     "architecture.md": "SRC-EARLY / K01 / K29–K30",
+    "engineering.md": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
+    "workflows.md": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
     "usage-guide.md": "SRC-L1 / SRC-V05 / SRC-HOST / SRC-V07",
     "l2-preparation.md": "SRC-L2 / K06 / K10–K13 / K29–K30",
     "dependency-reactivity.md": "SRC-DEP / SRC-V05 / K10–K13",

@@ -8,7 +8,7 @@
   <title>设计决策与讨论演进 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=bc23a4fd3aac" defer></script>
+  <script src="assets/knowledge-index.js?v=48140044da27" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -19,7 +19,8 @@
     <aside class="sidebar" id="sidebar" aria-label="文档导航">
       <a class="sidebar-header" href="architecture.html"><span class="brand-mark">F</span><span><span class="brand-title">动态表单引擎</span><span class="brand-desc">架构设计 · 持续讨论中</span></span></a>
       <nav class="page-nav" aria-label="文档"><details class="nav-group" open><summary>01 · 架构全貌</summary><div><a href="architecture.html">整体架构设计</a>
-<a href="capability-map.html">纵向与横向能力图谱</a></div></details>
+<a href="capability-map.html">纵向与横向能力图谱</a>
+<a href="engineering.html">工程工具链与初始化方案</a></div></details>
 <details class="nav-group"><summary>02 · L1 协议</summary><div><a href="l1-definition-protocol.html">L1 协议设计</a>
 <a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a>
 <a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a>
@@ -55,9 +56,11 @@
 <a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a>
 <a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a>
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
+<a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
+<a href="workflows.html">项目工作流与使用说明</a>
 <a href="../validation/index.html">协议样例与验证</a></div></details></nav>
       <div class="sidebar-bottom">按层阅读当前设计<br>未决事项在「继续设计」维护<br><a href="../history/index.html">原始资料归档</a></div>
     </aside>
@@ -2106,7 +2109,19 @@ Host        → 核对当前输出、完整校验与业务条件（不以 Reacti
 </code></pre></div>
 <p>单元测试随模块维护，tests 放跨模块验收。现有 docs/validation 是候选验证证据，不能直接作为生产 testkit 发布；未来复用需逐项核对正式契约。CLI 初期可作为 tools 入口，只有独立分发必要时再提升为包。CI 平台、包管理器、锁文件和部署目录随技术选型确定，不在此预设工具。</p>
 <h3 id="当前落地与剩余工作">当前落地与剩余工作</h3>
-<p>六个 TS 包及 apps / packages-flutter / services / tests 的空目录已放置 .gitkeep，既有 tools / docs 保留；无生产实现，模块完成状态不提升。后续集中确定 React / TS 版本、工作区 / 构建 / 测试工具与首批公共契约，再按真实纵切创建配置与代码。此时不重新要求选择 React 或提前拆微服务。</p></section>
+<p>六个 TS 包及 apps / packages-flutter / services / tests 的空目录已放置 .gitkeep，既有 tools / docs 保留；无生产实现，模块完成状态不提升。后续集中确定 React / TS 版本、工作区 / 构建 / 测试工具与首批公共契约，再按真实纵切创建配置与代码。此时不重新要求选择 React 或提前拆微服务。</p>
+</section>
+<section class="section" id="engineering-toolchain-confirmed"><div class="section-head"><div class="kicker">49 · FORM ENGINE</div><div class="section-title"><h2>2026-10-20：工程选型确认与脚手架初始化要求</h2></div></div>
+
+<p>用户指定 Next.js Playground、NestJS 后端及纯 TS 核心，要求比较工程工具、组件与样式候选，随后选择 A 定制优先（shadcn/ui + Tailwind + CSS Variables），并确认沿用上一版工具组合：pnpm / Turborepo、tsdown、ESLint / Prettier、Vitest / Playwright、Husky / lint-staged / commitlint 和 Changesets。比较过 Ant Design 的业务交付方向、其他组件 / 样式和编排工具，未将备选同时纳入首期。</p>
+<p>用户进一步限定 Playground 轻量，本轮不展开状态管理与产品功能，Platform 后续独立设计。最后授权完整方案文档归档，要求依赖由 pnpm 安装 latest，项目初始化采用脚手架而非手写旧清单。现行<a href="engineering.html" rel="noopener noreferrer">工程方案</a>说明官方脚手架、模板更新、实际环境 / 锁固定、Git / 质量门禁与 E1–E4 验收；重要选择记入 <a href="decisions/ADR-FE-014-engineering-toolchain.html" rel="noopener noreferrer">ADR-FE-014</a>，补充 ADR-FE-013 而不替代包边界。latest 不保证兼容或永远最新，文档与初始化均不等于生产验收。</p>
+<p>本轮未执行安装、生成工程或修改协议示例；组件底层基础、协议结构源、最低目标范围仍待相应实施前闭合，CI 平台以实际托管为准。原有核心 OD、Platform / Studio 设计状态和 Flutter 预留保持不变。</p>
+</section>
+<section class="section" id="workflow-established"><div class="section-head"><div class="kicker">50 · FORM ENGINE</div><div class="section-title"><h2>2026-10-20：五类项目工作流与仓库 skill 建设</h2></div></div>
+
+<p>用户要求从方案设计到落地梳理工作流，补充网上调研，明确同时兼顾效率、可靠性及持续演进；在五类真实任务、步骤和使用例子的说明后，确认先建设工作流说明与实际流程，第三方 skill 或其他安装项先说明、由用户选择。</p>
+<p>现行 <a href="workflows.html" rel="noopener noreferrer">工作流说明</a>维护方案讨论、确认归档、开发交付、问题修复、流程改进五类入口、结束条件与衔接；仓库 <code>.agents/skills/</code> 提供五个对应 skill，AGENTS 与维护入口负责路由。开发采用持续规格维护与按范围验收，沿用已确认工程工具链，不复制另一套长期规范。小修改裁剪步骤，关键公共行为集中确认；有证据再增减流程，不以规则数或代码量衡量收益。</p>
+<p>第三方 Superpowers 为可选试用项，OpenSpec / Spec Kit 暂不引入；未安装、未执行工程初始化。流程入口的结构检查与真实任务效果分开，后者待后续使用验证。未改变协议、分层、包边界或模块完成状态，不为协作程序新建架构 ADR。依据见 <a href="source-map.html#src-workflows" rel="noopener noreferrer">SRC-WORKFLOWS</a>。</p></section>
         
         
         
@@ -2162,8 +2177,10 @@ Host        → 核对当前输出、完整校验与业务条件（不以 Reacti
 <a href="#application-engineering-first" data-to="application-engineering-first" title="2026-10-20：应用与工程架构先行"><span class="nav-num">45</span><span>2026-10-20：应用与工程架构先行</span></a>
 <a href="#blueprint-operations-confirmed" data-to="blueprint-operations-confirmed" title="2026-10-20：运行保障纳入蓝图，实现可后置"><span class="nav-num">46</span><span>2026-10-20：运行保障纳入蓝图，实现可后置</span></a>
 <a href="#outer-directories-confirmed" data-to="outer-directories-confirmed" title="2026-10-20：最外层目录认可，包边界继续讨论"><span class="nav-num">47</span><span>2026-10-20：最外层目录认可，包边界继续讨论</span></a>
-<a href="#ts-react-package-layout" data-to="ts-react-package-layout" title="2026-10-20：TS / React 包边界与目录落地"><span class="nav-num">48</span><span>2026-10-20：TS / React 包边界与目录落地</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>HISTORY-DESIGN</dd><dt>所属层级</dt><dd>追溯</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>相关正文与历史 · 29</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 9</summary><ul><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
+<a href="#ts-react-package-layout" data-to="ts-react-package-layout" title="2026-10-20：TS / React 包边界与目录落地"><span class="nav-num">48</span><span>2026-10-20：TS / React 包边界与目录落地</span></a>
+<a href="#engineering-toolchain-confirmed" data-to="engineering-toolchain-confirmed" title="2026-10-20：工程选型确认与脚手架初始化要求"><span class="nav-num">49</span><span>2026-10-20：工程选型确认与脚手架初始化要求</span></a>
+<a href="#workflow-established" data-to="workflow-established" title="2026-10-20：五类项目工作流与仓库 skill 建设"><span class="nav-num">50</span><span>2026-10-20：五类项目工作流与仓库 skill 建设</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>HISTORY-DESIGN</dd><dt>所属层级</dt><dd>追溯</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>相关正文与历史 · 32</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 9</summary><ul><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
       </aside>
       </div>
     </div>

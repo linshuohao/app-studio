@@ -1063,3 +1063,20 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 ### 当前落地与剩余工作
 
 六个 TS 包及 apps / packages-flutter / services / tests 的空目录已放置 .gitkeep，既有 tools / docs 保留；无生产实现，模块完成状态不提升。后续集中确定 React / TS 版本、工作区 / 构建 / 测试工具与首批公共契约，再按真实纵切创建配置与代码。此时不重新要求选择 React 或提前拆微服务。
+
+
+## 2026-10-20：工程选型确认与脚手架初始化要求 {#engineering-toolchain-confirmed}
+
+用户指定 Next.js Playground、NestJS 后端及纯 TS 核心，要求比较工程工具、组件与样式候选，随后选择 A 定制优先（shadcn/ui + Tailwind + CSS Variables），并确认沿用上一版工具组合：pnpm / Turborepo、tsdown、ESLint / Prettier、Vitest / Playwright、Husky / lint-staged / commitlint 和 Changesets。比较过 Ant Design 的业务交付方向、其他组件 / 样式和编排工具，未将备选同时纳入首期。
+
+用户进一步限定 Playground 轻量，本轮不展开状态管理与产品功能，Platform 后续独立设计。最后授权完整方案文档归档，要求依赖由 pnpm 安装 latest，项目初始化采用脚手架而非手写旧清单。现行[工程方案](engineering.md)说明官方脚手架、模板更新、实际环境 / 锁固定、Git / 质量门禁与 E1–E4 验收；重要选择记入 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)，补充 ADR-FE-013 而不替代包边界。latest 不保证兼容或永远最新，文档与初始化均不等于生产验收。
+
+本轮未执行安装、生成工程或修改协议示例；组件底层基础、协议结构源、最低目标范围仍待相应实施前闭合，CI 平台以实际托管为准。原有核心 OD、Platform / Studio 设计状态和 Flutter 预留保持不变。
+
+## 2026-10-20：五类项目工作流与仓库 skill 建设 {#workflow-established}
+
+用户要求从方案设计到落地梳理工作流，补充网上调研，明确同时兼顾效率、可靠性及持续演进；在五类真实任务、步骤和使用例子的说明后，确认先建设工作流说明与实际流程，第三方 skill 或其他安装项先说明、由用户选择。
+
+现行 [工作流说明](workflows.md)维护方案讨论、确认归档、开发交付、问题修复、流程改进五类入口、结束条件与衔接；仓库 `.agents/skills/` 提供五个对应 skill，AGENTS 与维护入口负责路由。开发采用持续规格维护与按范围验收，沿用已确认工程工具链，不复制另一套长期规范。小修改裁剪步骤，关键公共行为集中确认；有证据再增减流程，不以规则数或代码量衡量收益。
+
+第三方 Superpowers 为可选试用项，OpenSpec / Spec Kit 暂不引入；未安装、未执行工程初始化。流程入口的结构检查与真实任务效果分开，后者待后续使用验证。未改变协议、分层、包边界或模块完成状态，不为协作程序新建架构 ADR。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。

@@ -7,6 +7,7 @@
 **整体架构 → 纵向与横向能力图谱 → 每层 / 每项能力的独立设计。**
 
 - [整体架构](design/architecture.md)：产品蓝图（待审阅）、系统边界、完整逻辑架构图、双工作流、建设路径、责任与贯穿案例，以及已确认的 TS / React 首期包与目录。
+- [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁；尚未执行工程初始化。
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
 - [L1 协议](design/l1/README.md)：模型 → 数据 / 引用 / Scope → 表达式 / 校验 → 命令 / 联动 → 视图 → 生命周期 → 示例与类型。八份主题分别生成 HTML，不再合成长页。
 - [L2 预处理](design/l2-preparation.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。
@@ -16,6 +17,10 @@
 继续讨论统一进入[设计进展与待讨论事项](design/governance.md)，按层看缺口、选具体问题、按前置推进。取舍背景、旧方案与决策总账在[独立设计演进](design/design-history.md)及 `design/decisions/`；[约束与审查证据](design/design-review.md)、[来源映射](design/source-map.md)按需查阅，不与主阅读顺序混排。
 
 `docs/design/` 是唯一设计正文。结构调整把原整体架构内的分层机制、模型 / 依赖 / 修改 / Host 图示完整迁入对应主题，整体架构保留全局职责与贯穿关系；不因拆分而删减说明。使用场景另见[使用与开发指南](design/usage-guide.md)，词汇见 `CONTEXT.md`，协议样例与现有证据见 `validation/`。
+
+## 项目研发工作流
+
+[项目工作流与使用说明](design/workflows.md)按真实场景说明方案讨论、确认归档、开发交付、问题修复、流程改进五类任务，包含步骤、例子、结束条件与安装候选。可直接用自然语言交代任务；仓库 `.agents/skills/` 提供对应执行入口。工作流复用下方维护程序及已确认工程工具链，不新增第二套设计规范。第三方工具由用户选择后安装，当前五类流程无必装插件。
 
 ## 讨论标记不代表发布版本
 

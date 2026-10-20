@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="复杂动态表单与数据录入引擎 V1：架构分层、服务对象、核心能力、取舍、边界与逐层设计路线。">
+<title>复杂动态表单与数据录入引擎 · 整体架构设计 V1</title>
+<style>
+:root {--bg:#ffffff;--surface:#ffffff;--soft:#f7f7f8;--soft2:#f1f1f2;--text:#171717;--muted:#646464;--quiet:#888;--line:#e8e8e8;--strong:#d4d4d4;--inverse:#171717;--inverse-text:#fff;--code:#f7f7f8;--shadow:0 8px 28px rgba(0,0,0,.035);--sidebar:#fafafa}
+html[data-theme="dark"] {--bg:#181818;--surface:#181818;--soft:#242424;--soft2:#303030;--text:#f4f4f4;--muted:#b3b3b3;--quiet:#8e8e8e;--line:#363636;--strong:#585858;--inverse:#f4f4f4;--inverse-text:#171717;--code:#222222;--shadow:none;--sidebar:#1d1d1d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.86 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit}button{font:inherit}::selection{background:#a5a5a552}h1,h2,h3,h4{line-height:1.42;letter-spacing:-.025em}p{margin:12px 0}strong{font-weight:650}code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.87em;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:2px 4px}pre code{padding:0;border:0;background:transparent;font-size:inherit}ul,ol{padding-left:1.45rem}li{padding:2px 0}li::marker{color:var(--muted)}
+.layout{display:grid;grid-template-columns:256px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--sidebar);border-right:1px solid var(--line);padding:25px 15px 28px 18px;scrollbar-width:thin}.brand{display:flex;gap:10px;align-items:center;padding:0 10px 22px;text-decoration:none}.brandmark{width:28px;height:28px;border:1.5px solid var(--text);display:grid;place-items:center;border-radius:9px;font-size:14px;font-weight:800;line-height:1}.brandname{font-weight:690;letter-spacing:-.03em;font-size:14px}.brandsub{font-size:11px;color:var(--quiet);margin-top:-3px}.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--quiet);margin:16px 10px 6px;font-weight:700}.toc a{display:flex;align-items:center;gap:8px;border-radius:8px;text-decoration:none;color:var(--muted);font-size:12px;line-height:1.55;padding:8px 10px;margin:1px 0}.toc a .num{color:var(--quiet);font-size:10px;min-width:20px;font-variant-numeric:tabular-nums}.toc a:hover,.toc a.active{background:var(--soft2);color:var(--text)}.toc a.active{font-weight:640}.sidebarfoot{border-top:1px solid var(--line);margin-top:20px;padding:15px 10px;color:var(--quiet);font-size:11px;line-height:1.65}
+.main{min-width:0}.topbar{height:57px;padding:0 38px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);position:sticky;top:0;z-index:40}.breadcrumb{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.breadcrumb b{color:var(--text);font-weight:620}.topactions{display:flex;gap:6px;align-items:center}.btn{appearance:none;background:transparent;border:1px solid var(--line);color:var(--muted);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}.btn:hover{background:var(--soft);color:var(--text)}.progress{position:fixed;height:2px;top:0;left:256px;background:var(--inverse);width:0;z-index:60;transition:width .08s linear}.content{max-width:1060px;padding:54px 55px 120px;margin:0 auto}.kicker{font-size:11px;color:var(--muted);letter-spacing:.13em;text-transform:uppercase;font-weight:700}.hero h1{font-size:clamp(30px,3.4vw,45px);letter-spacing:-.055em;line-height:1.22;font-weight:740;margin:18px 0}.lede{font-size:17px;line-height:1.92;color:var(--muted);max-width:790px}.meta{display:flex;flex-wrap:wrap;gap:10px;margin:25px 0 0}.meta span{font-size:11px;border:1px solid var(--line);border-radius:100px;padding:4px 10px;color:var(--muted)}.leadhr{border:0;border-top:1px solid var(--line);margin:40px 0 45px}.section{scroll-margin-top:85px;margin:52px 0 65px}.sectionhead{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:0 0 14px;margin-bottom:22px}.sectionindex{font-size:13px;color:var(--quiet);font-family:monospace}.section h2{font-size:25px;letter-spacing:-.045em;margin:0;font-weight:720}.section h3{font-size:18px;margin:34px 0 11px;font-weight:700}.section h4{font-size:15px;margin:23px 0 7px;font-weight:700}.section p{color:var(--text)}.subtle{color:var(--muted)!important}.sm{font-size:12px;color:var(--muted)}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}.emphasis{font-size:17px;line-height:1.8;font-weight:660;border-left:3px solid var(--text);padding:4px 0 4px 19px;margin:25px 0}.callout{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:23px 0}.callout p{margin:4px 0}.tiny{font-size:12px;color:var(--muted)}
+.tablewrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0 24px}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7;min-width:570px}th,td{text-align:left;vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line)}th{color:var(--muted);background:var(--soft);font-weight:660;white-space:nowrap}tr:last-child td{border-bottom:0}td:first-child{font-weight:580}.tablewrap.compact td,.tablewrap.compact th{padding:10px 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.panel{border:1px solid var(--line);border-radius:12px;padding:17px 18px;background:var(--surface)}.panel.soft{background:var(--soft)}.paneltitle{font-size:13px;font-weight:700;margin-bottom:5px}.panel p{font-size:12px;color:var(--muted);margin:0;line-height:1.75}.smalltitle{font-size:12px;font-weight:650;letter-spacing:-.015em}.diagram{border:1px solid var(--line);border-radius:15px;padding:22px;background:var(--surface);margin:22px 0 25px;overflow:hidden}.diagram-title{font-size:11px;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;font-weight:700;margin-bottom:19px}.arch-node{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:15px 15px;text-align:center}.arch-node.major{border:1.5px solid var(--text);background:var(--surface)}.arch-node h4{font-size:14px;margin:0 0 4px;letter-spacing:-.01em}.arch-node p{margin:0;font-size:11px;color:var(--muted);line-height:1.6}.arr{display:flex;justify-content:center;align-items:center;color:var(--quiet);font-size:18px;height:29px;line-height:1}.diagram-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.chipgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}.chip{font-size:11px;text-align:center;padding:9px;border-radius:7px;background:var(--soft);border:1px solid var(--line);font-weight:580}.subsystem{display:grid;grid-template-columns:1fr 1fr;gap:10px}.process{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:16px 0 20px}.step{padding:9px 12px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-weight:600;flex:1;min-width:105px;text-align:center}.process .right{display:grid;place-items:center;color:var(--quiet)}
+.numberlist{display:grid;gap:12px;margin:23px 0}.numberitem{display:grid;grid-template-columns:43px minmax(0,1fr);gap:13px;border-bottom:1px solid var(--line);padding:0 0 15px}.numberitem:last-child{border-bottom:0}.numbericon{width:37px;height:37px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font:600 12px monospace;color:var(--text)}.numberitem h4{margin:1px 0 3px;font-size:14px}.numberitem p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}.numberitem .output{color:var(--quiet);font-size:11px;margin-top:6px}
+.codeblock{position:relative;margin:18px 0 25px;border-radius:11px;border:1px solid var(--line);background:var(--code);overflow:hidden}.codehdr{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--quiet);padding:8px 13px;border-bottom:1px solid var(--line);letter-spacing:.02em}.copy{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;padding:3px 7px;border-radius:5px}.copy:hover{background:var(--soft2)}pre{padding:15px 18px;margin:0;overflow-x:auto;color:var(--text);font-size:12px;line-height:1.75;tab-size:2}.footnotes{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:19px;margin-top:45px}.footnotes a{color:var(--text);text-decoration-color:var(--strong);text-underline-offset:3px}.pill{display:inline-block;border:1px solid var(--line);border-radius:30px;padding:2px 8px;font-size:10px;color:var(--muted);white-space:nowrap}.status-done{border-color:var(--strong);color:var(--text)}.status-open{border-style:dashed}.footer{font-size:12px;color:var(--quiet);border-top:1px solid var(--line);padding-top:26px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.up{position:fixed;bottom:25px;right:26px;width:38px;height:38px;background:var(--surface);border:1px solid var(--line);border-radius:100%;color:var(--text);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s}.up.visible{opacity:1;pointer-events:auto}
+@media(max-width:1080px){.layout{grid-template-columns:215px minmax(0,1fr)}.progress{left:215px}.content{padding:44px 34px 100px}.topbar{padding:0 25px}}
+@media(max-width:800px){.layout{display:block}.sidebar{display:none}.progress{left:0}.content{padding:30px 21px 85px}.topbar{padding:0 18px}.breadcrumb{font-size:11px}.hero h1{font-size:32px}.lede{font-size:15px}.grid.three{grid-template-columns:1fr 1fr}.section h2{font-size:23px}.section{margin:40px 0 55px}.meta{gap:6px}}
+@media(max-width:540px){.grid,.grid.three,.diagram-grid,.subsystem{grid-template-columns:1fr}.topactions .print{display:none}.diagram{padding:15px}.content{padding:24px 17px 70px}.topbar{height:52px}.process{display:block}.process .right{margin:4px 0}.step{min-width:0}.sectionhead{gap:9px}.section h2{font-size:21px}}
+@media print{html,body{background:#fff!important;color:#111!important}.layout{display:block}.sidebar,.topbar,.progress,.up,.copy{display:none!important}.content{max-width:none;padding:0}.section{break-before:auto;break-inside:auto}.diagram,.panel,.callout,.numberitem{break-inside:avoid}.tablewrap{overflow:visible}.tablewrap table{min-width:0;font-size:10px}.arch-node{background:#f7f7f7!important}h1,h2,h3{break-after:avoid}a{text-decoration:none}}
+</style>
+</head>
+<body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:12px 20px;border-bottom:1px solid #999;background:#fff3cd;color:#171717;font-size:14px">历史快照 · 已被当前文档替代。仅供追踪，不作为现行基线。<a href="../2026-10-16-before-v1-final/l1-definition-decisions-and-roadmap.html">查看当前 L1 决策归档</a></div>
+<div class="progress" id="progress"></div>
+<div class="layout">
+<aside class="sidebar" aria-label="章节目录">
+  <a class="brand" href="#top"><span class="brandmark">F</span><span><div class="brandname">Form Architecture</div><div class="brandsub">System Design · V1</div></span></a>
+  <div class="navlabel">Documentation</div>
+  <nav class="toc" aria-label="文档导航"><a href="index.html">← 文档首页与设计路线</a><a href="l1-capabilities-and-abstraction-boundaries.html">L1 · 能力需求与抽象边界</a></nav>
+  <div class="navlabel">Contents</div>
+  <nav class="toc" id="toc">
+    <a href="#boundary"><span class="num">01</span>产品能力边界</a>
+    <a href="#architecture"><span class="num">02</span>整体架构与职责</a>
+    <a href="#overview"><span class="num">03</span>能力、取舍与服务对象</a>
+    <a href="#definition"><span class="num">04</span>L1 · Definition</a>
+    <a href="#preparation"><span class="num">05</span>L2 · Preparation</a>
+    <a href="#runtime"><span class="num">06</span>L3 · Runtime</a>
+    <a href="#renderer"><span class="num">07</span>L4 · Renderer</a>
+    <a href="#materials"><span class="num">08</span>Material · 物料</a>
+    <a href="#capabilities"><span class="num">09</span>Capability · 扩展</a>
+    <a href="#tooling"><span class="num">10</span>Tooling · 工程治理</a>
+    <a href="#flow"><span class="num">11</span>完整执行流程</a>
+    <a href="#mapping"><span class="num">12</span>六大架构方向映射</a>
+    <a href="#decisions"><span class="num">13</span>架构决策清单</a>
+    <a href="#roadmap"><span class="num">14</span>逐层设计路线</a>
+  </nav>
+  <div class="sidebarfoot">复杂动态表单与数据录入引擎<br>Greenfield Architecture / Discussion Draft<br>2026.10.14</div>
+</aside>
+<div class="main" id="top">
+  <header class="topbar"><div class="breadcrumb">Architecture <span style="color:var(--quiet)">/</span> <b>复杂动态表单引擎</b></div><div class="topactions"><button type="button" class="btn" id="themeBtn" title="切换深浅色">◐ 主题</button><button type="button" class="btn print" onclick="window.print()">打印 / PDF</button></div></header>
+  <main class="content">
+    <header class="hero">
+      <div class="kicker">Architecture Blueprint / Greenfield Design</div>
+      <h1>复杂动态表单与<br>数据录入引擎</h1>
+      <p class="lede">从产品边界出发，重新推导分层架构、核心领域模型与系统接口。逐层明确：为谁服务、提供什么能力、内部需要如何取舍，以及什么不应该做。</p>
+      <div class="meta"><span>V1 · 总体分层已确定</span><span>四层核心 + 两类扩展 + 工具体系</span><span>面向复杂业务表单</span><span>2026.10.14</span></div>
+    </header>
+    <hr class="leadhr">
+    <div class="emphasis">核心原则：以尽量少的概念，可靠覆盖大多数复杂数据录入场景。缩小产品边界，但不牺牲状态、依赖、事务、数组和异步处理的技术深度。</div>
+    <div class="grid three">
+      <div class="panel"><div class="paneltitle">配置者足够简单</div><p>常见字段、条件、校验、联动无需理解内部编程模型。</p></div>
+      <div class="panel"><div class="paneltitle">复杂业务足够可靠</div><p>支持嵌套数组、跨字段依赖、初始化、异步与一致性。</p></div>
+      <div class="panel"><div class="paneltitle">开发维护足够清晰</div><p>职责、扩展入口、版本与质量边界长期稳定。</p></div>
+    </div>
+
+    <section class="section" id="boundary">
+      <div class="sectionhead"><span class="sectionindex">01</span><h2>产品能力边界</h2></div>
+      <p>我们建设的是<strong>复杂动态表单与数据录入引擎</strong>，不是通用页面搭建器、任意逻辑编排平台或完整 BPM 系统。所有原生能力都应服务于表单式数据交互。</p>
+      <div class="tablewrap"><table><thead><tr><th>能力范围</th><th>处理方式</th><th>原因</th></tr></thead><tbody>
+      <tr><td>字段定义、数据绑定、布局分组</td><td>引擎原生</td><td>表单基础能力</td></tr>
+      <tr><td>条件显隐、必填、禁用</td><td>引擎原生</td><td>高频且容易标准化</td></tr>
+      <tr><td>跨字段计算、动态校验</td><td>引擎原生</td><td>复杂表单核心价值</td></tr>
+      <tr><td>嵌套对象、动态数组、重复区块</td><td>引擎原生</td><td>需要统一状态及身份管理</td></tr>
+      <tr><td>初始化、批量赋值、重置</td><td>引擎原生</td><td>需要统一执行语义</td></tr>
+      <tr><td>异步选项、远程查询、业务校验</td><td>核心调度 + 外部能力</td><td>通用生命周期与具体业务解耦</td></tr>
+      <tr><td>分步骤表单</td><td>轻量原生</td><td>无需完整工作流引擎</td></tr>
+      <tr><td>自定义复杂业务字段</td><td>物料扩展</td><td>隔离领域特殊性</td></tr>
+      <tr><td>报价、核保、审批</td><td>宿主业务服务</td><td>保留权威业务状态</td></tr>
+      <tr><td>任意页面搭建、营销动效、通用 BPM</td><td>明确不在范围</td><td>成本与核心目标不匹配</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>边界决策</strong><p>仅为“表单式数据交互”提供完整执行语义。被保人录入、条件联动、异步报价预览属于系统范围；审批、支付、生成保单等跨系统业务流程属于宿主系统。</p></div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="sectionhead"><span class="sectionindex">02</span><h2>整体架构：四层核心、两类扩展、一个工具体系</h2></div>
+      <p>不为了架构完整而制造大量层次。我们先划定清晰的逻辑职责，再决定代码模块和部署形态。</p>
+      <div class="diagram">
+        <div class="diagram-title">Logical Architecture · V1</div>
+        <div class="arch-node"><h4>Tooling / Form Studio</h4><p>配置编辑 · 预览 · Devtools · 测试工具 · 发布治理</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node"><h4>L1 · Definition / 表单定义</h4><p>Data Schema · Form Structure · Expressions · Constraints · Resource References</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node"><h4>L2 · Preparation / 定义预处理</h4><p>Normalize · Validate · Resolve · Analyze · Index</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node major"><h4>L3 · Form Runtime / 表单运行时</h4><p>唯一的表单业务交互状态所有者</p>
+          <div class="chipgrid"><div class="chip">Data & State Store</div><div class="chip">Scope & Identity</div><div class="chip">Dependency & Rules</div><div class="chip">Transaction & Commands</div><div class="chip">Validation</div><div class="chip">Resources & Lifecycle</div></div>
+        </div>
+        <div class="arr">↕</div>
+        <div class="arch-node"><h4>L4 · Renderer / UI Adapter</h4><p>Vue · React · Flutter · Component Bindings</p></div>
+        <div class="arr">↕</div>
+        <div class="diagram-grid"><div class="arch-node"><h4>Material Registry</h4><p>组件 / 容器 / 领域物料</p></div><div class="arch-node"><h4>Capability Adapters</h4><p>API / 上传 / 业务服务</p></div></div>
+        <div class="arr">↕</div>
+        <div class="arch-node"><h4>Host Application / Backend</h4><p>业务数据 · 权限 · 权威校验 · 存储 · 外部流程</p></div>
+        <p class="tiny" style="margin:14px 2px 0">说明：图中各层表示职责关系，并非逐跳调用顺序。Material 同时服务工具、准备层和 Renderer；Capability 由 Runtime 经受控接口调用宿主能力。</p>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>层</th><th>核心问题</th><th>主要服务对象</th></tr></thead><tbody>
+      <tr><td>L1 · Definition</td><td>表单是什么？业务规则是什么？</td><td>业务配置者、设计器、Preparation</td></tr>
+      <tr><td>L2 · Preparation</td><td>定义是否合法、如何高效执行？</td><td>Runtime、开发工具、发布流程</td></tr>
+      <tr><td>L3 · Runtime</td><td>数据如何变化、何时稳定、如何协调规则？</td><td>Renderer、宿主应用、业务能力</td></tr>
+      <tr><td>L4 · Renderer</td><td>如何展示状态、适配用户输入？</td><td>最终用户、UI 开发者</td></tr>
+      <tr><td>Material</td><td>如何复用并扩展表单组件？</td><td>设计器、物料开发者、Renderer</td></tr>
+      <tr><td>Capability</td><td>如何连接业务与外部世界？</td><td>Runtime、宿主应用、业务服务</td></tr>
+      <tr><td>Tooling</td><td>如何配置、调试、测试和发布？</td><td>配置者、开发者、运维</td></tr>
+      </tbody></table></div>
+      <div class="grid"><div class="panel soft"><div class="paneltitle">状态归属只有一个权威源</div><p>每个 Form Runtime 实例拥有表单业务交互状态。Renderer 不能维护第二份权威数据，也不独立求值业务规则。</p></div><div class="panel soft"><div class="paneltitle">不交付多个独立系统</div><p>不预先建设独立 View Engine、Workflow Engine 和复杂桥接平台。外部流程通过受控宿主接口集成。</p></div></div>
+    </section>
+
+    <section class="section" id="overview">
+      <div class="sectionhead"><span class="sectionindex">03</span><h2>各层总览：能力、取舍与责任边界</h2></div>
+      <div class="tablewrap"><table><thead><tr><th>层次</th><th>核心能力</th><th>最重要的取舍</th><th>不应该负责</th></tr></thead><tbody>
+      <tr><td>Definition</td><td>字段、结构、规则、资源引用</td><td>灵活性与协议复杂度</td><td>执行调度细节</td></tr>
+      <tr><td>Preparation</td><td>静态检查、标准化、索引</td><td>预处理深度与维护成本</td><td>用户运行状态</td></tr>
+      <tr><td>Runtime</td><td>状态、联动、事务、校验、异步</td><td>确定性、性能与简单性</td><td>DOM 和具体 UI 框架</td></tr>
+      <tr><td>Renderer</td><td>组件渲染、事件适配、局部交互</td><td>跨端一致性与平台体验</td><td>业务规则求值</td></tr>
+      <tr><td>Material</td><td>组件契约、注册、扩展</td><td>灵活度与规范约束</td><td>篡改 Runtime 内部</td></tr>
+      <tr><td>Capability</td><td>远程数据、上传、业务命令</td><td>通用接口与业务差异</td><td>替代业务系统</td></tr>
+      <tr><td>Tooling</td><td>配置、测试、诊断、发布</td><td>易用性与建设成本</td><td>成为线上执行必需依赖</td></tr>
+      </tbody></table></div>
+      <p>总体分层与产品边界已确定，作为后续设计基线。各层内部模型、机制与协议示例仍为候选方案，需逐项比较与验证；不能从总体架构的接受推导出内部方案也已接受。</p>
+    </section>
+
+    <section class="section" id="definition">
+      <div class="sectionhead"><span class="sectionindex">04</span><h2>L1 · Definition：领域模型与协议层</h2></div>
+      <p>这是需要最谨慎设计的一层。它决定配置者需要理解多少概念，以及增加新业务能力时是否会不断破坏协议。</p>
+      <h3>4.1 服务对象与核心目标</h3>
+      <div class="tablewrap"><table><thead><tr><th>服务对象</th><th>真正需要的能力</th></tr></thead><tbody>
+      <tr><td>业务配置者</td><td>简单地定义字段、条件、联动和校验</td></tr>
+      <tr><td>可视化设计器</td><td>编辑、定位、组合和验证配置节点</td></tr>
+      <tr><td>Preparation</td><td>将声明转成可执行的规范化形式</td></tr>
+      </tbody></table></div>
+      <p>优先追求<strong>语义清晰、易于配置、可静态检查</strong>，不以“最少字段”或者“任意编程能力”为首要目标。</p>
+      <div class="callout"><strong>L1 设计顺序已调整</strong><p>先能力建模，再概念建模，最后协议建模。下文的五个概念域与推荐方案是历史候选思路，不限定最终元模型或顶层结构；MVL / Data-View-Logic 仍可参与比较。详见 <a href="l1-capabilities-and-abstraction-boundaries.html">《L1 能力需求与抽象边界》</a>。</p></div>
+      <h3>4.2 五个候选概念域（待比较）</h3>
+      <div class="diagram"><div class="diagram-title">Form Definition Domain Model</div><div class="arch-node major"><h4>Form Definition</h4><p>一个可独立实例化的表单定义</p></div><div class="arr">↓</div><div class="diagram-grid">
+      <div class="arch-node"><h4>Data</h4><p>字段类型、数据结构、静态约束</p></div>
+      <div class="arch-node"><h4>Structure</h4><p>分组、步骤、布局、控件节点</p></div>
+      <div class="arch-node"><h4>Expression</h4><p>条件、比较与纯计算</p></div>
+      <div class="arch-node"><h4>Constraint</h4><p>业务约束与数据校验</p></div>
+      </div><div class="arch-node" style="margin-top:10px"><h4>Resource</h4><p>外部数据能力及其引用</p></div></div>
+      <p>Data 和 Structure 在语义上应该分离，但在配置界面中可以统一编辑。配置者添加一个“年龄输入框”，工具可以同时创建数据字段和组件节点；底层两者具有不同身份。</p>
+      <p>这可以覆盖一份字段被多个组件消费（输入框与摘要），以及一个组件绑定多个字段（日期范围、地址组合）的场景，避免数据结构被 UI 组件限制。</p>
+      <h3>4.3 本层的核心取舍</h3>
+      <div class="tablewrap"><table><thead><tr><th>设计问题</th><th>备选方案</th><th>当前倾向</th></tr></thead><tbody>
+      <tr><td>数据与视图</td><td>一体化 / 完全分离</td><td>语义分离，设计器可合并编辑体验</td></tr>
+      <tr><td>字段表示</td><td>组件即字段 / 独立数据字段</td><td>独立 Data Field</td></tr>
+      <tr><td>表达式</td><td>字符串 DSL / 结构化 AST</td><td>待比较字符串、AST 及纯函数扩展，不冻结表示方式</td></tr>
+      <tr><td>联动</td><td>全部事件规则 / 声明式条件</td><td>简单状态用声明式派生</td></tr>
+      <tr><td>复杂业务</td><td>持续扩张 DSL / 注册能力</td><td>受控 Capability 扩展</td></tr>
+      <tr><td>布局</td><td>任意页面树 / 表单容器</td><td>仅支持必要表单结构</td></tr>
+      <tr><td>标准</td><td>全自研 / 全部采用 JSON Schema</td><td>复用数据标准，独立建模交互</td></tr>
+      </tbody></table></div>
+      <h3>4.4 配置友好，内部语义严谨</h3>
+      <p>配置者只需表达：“当年龄小于 18 岁时显示监护人姓名，并要求填写。”底层要区分展示条件与数据合法性。</p>
+      <div class="codeblock"><div class="codehdr"><span>Semantic Example / 简化表示</span><button class="copy" type="button">复制</button></div><pre><code>guardianName.visibleWhen = age &lt; 18
+
+Constraint:
+  if age &lt; 18
+  then guardianName must not be empty</code></pre></div>
+      <p>显隐是 UI 派生，约束是可独立执行的数据合法性规则。后者不能只放在控件 `required` 属性中，否则服务端绕过 Renderer 无法进行同语义校验。</p>
+      <h3>4.5 明确不负责什么</h3>
+      <p>Definition 描述业务含义，不描述 Runtime 的内部队列、Dirty Set、事务波次、网络调度器或 UI 订阅细节。</p>
+      <div class="callout"><strong>需要尽早统一的语义</strong><p>字段不存在、<code>undefined</code>、<code>null</code>、空字符串、空数组应有清晰的初始化、比较和提交规范，不能交给不同组件或平台自行决定。</p></div>
+    </section>
+
+    <section class="section" id="preparation">
+      <div class="sectionhead"><span class="sectionindex">05</span><h2>L2 · Preparation：定义预处理层</h2></div>
+      <p>先不把它设计成完整编译器。它的核心职责是：把易编辑的 Form Definition 安全、稳定地转换成 Runtime 可直接消费的 Prepared Form。</p>
+      <h3>5.1 服务对象</h3>
+      <p>直接服务 Runtime、配置设计器、发布构建流程与测试工具。业务配置者主要消费它输出的诊断结果。</p>
+      <h3>5.2 预处理流水线</h3>
+      <div class="diagram"><div class="diagram-title">Preparation Pipeline</div>
+      <div class="process"><div class="step">Form Definition</div><span class="right">→</span><div class="step">Validate</div><span class="right">→</span><div class="step">Normalize</div></div>
+      <div class="process"><div class="step">Resolve Materials</div><span class="right">→</span><div class="step">Analyze Dependencies</div><span class="right">→</span><div class="step">Detect Issues</div></div>
+      <div class="process"><div class="step">Build Indices</div><span class="right">→</span><div class="step" style="border-color:var(--text)">Prepared Form</div></div>
+      </div>
+      <h3>5.3 复杂度取舍</h3>
+      <div class="tablewrap"><table><thead><tr><th>问题</th><th>V1 方案</th><th>暂不引入</th></tr></thead><tbody>
+      <tr><td>解释 vs 预处理</td><td>加载时准备一次</td><td>每次联动重新解析配置</td></tr>
+      <tr><td>编译深度</td><td>Normalizer + Analyzer + Indices</td><td>完整代码生成与重型优化器</td></tr>
+      <tr><td>依赖关系</td><td>预提取表达式依赖</td><td>通用动态依赖语言</td></tr>
+      <tr><td>物料检查</td><td>检查标识、版本和接口</td><td>执行物料内部代码</td></tr>
+      <tr><td>循环检查</td><td>检测纯计算环并报错</td><td>默认支持固定点求解</td></tr>
+      <tr><td>产物缓存</td><td>按版本与内容 Hash 缓存</td><td>复杂编译集群</td></tr>
+      </tbody></table></div>
+      <p>例如 500 个字段和 200 条表达式的表单，Runtime 应能根据预处理索引找到受影响节点，而不是字段每次变化都扫描整份配置。但性能收益必须实测。</p>
+      <div class="callout"><strong>边界：Preparation 不是第二套 Runtime</strong><p>Prepared Form 可以包含字段定义、表达式、依赖索引、物料和资源引用，但不能包含用户输入、焦点、错误状态、请求状态和当前会话。一个 Prepared Form 应允许多个表单实例安全复用。</p></div>
+    </section>
+
+    <section class="section" id="runtime">
+      <div class="sectionhead"><span class="sectionindex">06</span><h2>L3 · Runtime：最值得投入的核心</h2></div>
+      <p>真正的技术差异化应该集中在复杂表单的状态一致性、依赖传播、动态数组、时序和异步边界。但 Runtime 不能演变成泛化的业务逻辑平台。</p>
+      <div class="grid three">
+        <div class="panel"><div class="paneltitle">State Store</div><p>数据值与运行时状态，统一读写和订阅。</p></div>
+        <div class="panel"><div class="paneltitle">Scope & Identity</div><p>动态数组、重复区块、稳定实体身份。</p></div>
+        <div class="panel"><div class="paneltitle">Dependency & Rules</div><p>纯计算、脏依赖收集和增量传播。</p></div>
+        <div class="panel"><div class="paneltitle">Transaction & Commands</div><p>操作意图、批处理、稳定态与原子提交。</p></div>
+        <div class="panel"><div class="paneltitle">Validation</div><p>静态约束、动态条件、同步与异步校验。</p></div>
+        <div class="panel"><div class="paneltitle">Resources & Lifecycle</div><p>异步资源、并发竞态、实例生命周期。</p></div>
+      </div>
+      <h3>6.1 State Store：业务状态的权威来源</h3>
+      <div class="tablewrap"><table><thead><tr><th>状态</th><th>示例</th><th>通常属于提交数据？</th></tr></thead><tbody>
+      <tr><td>Data</td><td>年龄、姓名、目的地</td><td>是</td></tr>
+      <tr><td>Derived</td><td>isMinor、汇总人数</td><td>取决于数据契约</td></tr>
+      <tr><td>Field Meta</td><td>visible、disabled、readOnly</td><td>否</td></tr>
+      <tr><td>Validation</td><td>errors、校验中</td><td>否</td></tr>
+      <tr><td>Interaction</td><td>dirty、touched</td><td>否</td></tr>
+      <tr><td>Resource</td><td>loading、error、data</td><td>通常不直接提交</td></tr>
+      </tbody></table></div>
+      <p><strong>推荐：</strong>业务数据与运行时元状态分开保存，通过统一 Field Snapshot 向 Renderer 提供。默认由 Core 拥有数据容器，受控写入；事务内记录变更，不要求从第一版开始实现完全不可变的深层数据结构。</p>
+      <p class="subtle">待取舍：数据所有权、可变/不可变策略、快照缓存、路径寻址、订阅粒度以及字段状态生命周期。</p>
+      <h3>6.2 Scope & Identity：动态数组不是普通 splice</h3>
+      <div class="codeblock"><div class="codehdr"><span>Scope Tree / 字段实例身份</span><button class="copy" type="button">复制</button></div><pre><code>Form Session
+└─ insuredList
+   ├─ Item ID: a1
+   │  ├─ age
+   │  └─ guardianName
+   └─ Item ID: b2
+      ├─ age
+      └─ guardianName</code></pre></div>
+      <p>数组项身份必须与 index 分离：删除第一项后，第二项的当前路径发生变化，但其字段错误、交互状态和组件实例身份不能串项。</p>
+      <div class="emphasis">Field Identity = Scope Identity + Field Definition Identity</div>
+      <p>当前 Data Path 是可变的地址投影，不是永久字段身份。模块负责数组增删移动、嵌套作用域、字段注册销毁及相对路径解析；Renderer 消费稳定 ID，使用自身框架机制维护组件身份。</p>
+      <h3>6.3 Dependency & Rules：纯计算优先</h3>
+      <div class="diagram"><div class="diagram-title">Dependency Graph · Example</div>
+      <div class="arch-node"><h4>age</h4><p>用户输入数据</p></div><div class="arr">↓</div><div class="arch-node major"><h4>isMinor = age &lt; 18</h4><p>纯派生计算</p></div><div class="arr">↓</div><div class="diagram-grid"><div class="arch-node"><h4>guardian.visible</h4><p>展示状态</p></div><div class="arch-node"><h4>guardian.required</h4><p>约束 / UI 投影</p></div></div></div>
+      <p>高频、确定性的字段联动优先使用纯计算模型，而不是事件触发的命令链。表达式求值时不应发请求、埋点或任意修改其他数据。</p>
+      <div class="tablewrap compact"><table><thead><tr><th>设计点</th><th>建议</th></tr></thead><tbody>
+      <tr><td>依赖追踪</td><td>静态依赖优先，数组实例形成作用域引用</td></tr>
+      <tr><td>全量与增量</td><td>初始化建状态，后续增量计算</td></tr>
+      <tr><td>同步与异步</td><td>纯计算同步，异步交给 Resource</td></tr>
+      <tr><td>传播模型</td><td>脏节点集合与明确求值顺序</td></tr>
+      <tr><td>循环处理</td><td>静态尽早拒绝，运行时兜底熔断</td></tr>
+      </tbody></table></div>
+      <p>同一数据目标被多个纯派生规则写入应被视为潜在冲突，在 Preparation 阶段报错或要求显式归约规则，不能依赖偶然执行顺序。</p>
+      <h3>6.4 Transaction & Commands：统一状态变更边界</h3>
+      <div class="diagram"><div class="diagram-title">Synchronous Transaction</div><div class="process">
+      <div class="step">Command</div><span class="right">→</span><div class="step">Open Transaction</div><span class="right">→</span><div class="step">Apply Changes</div></div><div class="process"><div class="step">Collect Dirty</div><span class="right">→</span><div class="step">Recompute</div><span class="right">→</span><div class="step">Check Invariants</div></div><div class="process"><div class="step">Commit</div><span class="right">→</span><div class="step">Notify Subscribers</div></div></div>
+      <p>Transaction 保证一次相关同步变化的一致性；Command 保留用户操作的因果、顺序和次数。两次添加被保人不能因为目标路径相同就合并成一次。</p>
+      <ul><li>批量初始化不产生无效中间传播。</li><li>同一派生节点避免通过多条路径重复无效求值。</li><li>同步事务失败不对外暴露部分提交状态。</li><li>提交后订阅者读取到稳定的一致状态。</li><li>外部 I/O 不属于可原子回滚的本地事务范围。</li></ul>
+      <p class="subtle">暂不引入重型通用 Scheduler；先解决批量、确定性、异常回滚和准确通知。</p>
+      <h3>6.5 Validation：合法性不能只依赖 UI</h3>
+      <p>Validation 应覆盖静态类型格式、条件必填、跨字段约束和必要的异步业务校验，并复用 Definition 的数据约束语义。</p>
+      <div class="grid"><div class="panel soft"><div class="paneltitle">UI 投影</div><p>红色必填星号、错误文案、字段校验中状态，用于即时交互反馈。</p></div><div class="panel soft"><div class="paneltitle">服务端权威</div><p>动态业务约束仍必须由服务端执行或验证，不能因 UI 已校验就信任提交。</p></div></div>
+      <p>隐藏字段的保留、清空与提交排除策略必须显式定义；Renderer 不得根据“不可见”擅自删除业务数据。</p>
+      <h3>6.6 Resources & Lifecycle：受控异步与实例生命周期</h3>
+      <div class="codeblock"><div class="codehdr"><span>Async Race · 后发先至</span><button class="copy" type="button">复制</button></div><pre><code>destination = JP
+  → requestQuote(JP)   // request A
+
+destination = SG
+  → requestQuote(SG)   // request B
+
+A 的响应晚于 B：
+  → 已过期，不得覆盖当前报价</code></pre></div>
+      <p>Resource Manager 负责失效、取消、并发去重、加载、超时与错误状态；外部业务 API、认证和业务响应由 Capability 实现。</p>
+      <p>Runtime 同时管理初始化、Ready、提交和销毁等生命周期。可以内置轻量分步表单状态，但不内置完整 Workflow Engine。</p>
+      <div class="tablewrap"><table><thead><tr><th>Runtime 原生负责</th><th>明确不负责</th></tr></thead><tbody>
+      <tr><td>字段值和元状态</td><td>业务数据库持久化</td></tr>
+      <tr><td>局部同步计算</td><td>长生命周期审批流程</td></tr>
+      <tr><td>交互命令与本地事务</td><td>跨系统分布式事务</td></tr>
+      <tr><td>校验调度</td><td>最终业务权限与风控决策</td></tr>
+      <tr><td>异步资源生命周期</td><td>具体报价业务算法</td></tr>
+      <tr><td>字段与表单实例生命周期</td><td>DOM 及具体 UI 框架</td></tr>
+      </tbody></table></div>
+      <div class="emphasis">Runtime 应是技术能力最强、同时职责边界最严格的一层。</div>
+    </section>
+
+    <section class="section" id="renderer">
+      <div class="sectionhead"><span class="sectionindex">07</span><h2>L4 · Renderer：呈现与交互适配层</h2></div>
+      <p>Renderer 应当轻量，但不能薄到只有 <code>componentMap[name]</code>。真实组件还需要管理值适配、输入事件、校验呈现、订阅、焦点与框架生命周期。</p>
+      <h3>7.1 主要服务对象与模块</h3>
+      <p>服务最终填写表单的用户，以及集成 UI 组件库的开发者。对开发者提供稳定的字段接入接口，而不是暴露 Runtime 内部依赖图。</p>
+      <div class="tablewrap"><table><thead><tr><th>模块</th><th>职责</th></tr></thead><tbody>
+      <tr><td>Form Renderer</td><td>根据结构组织整体 UI</td></tr>
+      <tr><td>Field Controller</td><td>字段状态和组件事件适配</td></tr>
+      <tr><td>Component Registry</td><td>语义组件 ID 到具体实现的映射</td></tr>
+      <tr><td>Layout Renderer</td><td>分组、步骤、布局和容器</td></tr>
+      <tr><td>Scope Adapter</td><td>重复区块的当前数组项上下文</td></tr>
+      <tr><td>Platform Adapter</td><td>框架订阅、生命周期及交互差异</td></tr>
+      </tbody></table></div>
+      <h3>7.2 Field Controller 候选接口</h3>
+      <div class="codeblock"><div class="codehdr"><span>TypeScript / Interface Sketch</span><button class="copy" type="button">复制</button></div><pre><code>interface FieldController&lt;T&gt; {
+  readonly id: string
+
+  getSnapshot(): FieldSnapshot&lt;T&gt;
+
+  subscribe(listener: () =&gt; void): () =&gt; void
+
+  change(value: T): void
+  blur(): void
+}</code></pre></div>
+      <p>Field Snapshot 应由 Runtime 提供当前值、控制元状态和校验信息。组件的 <code>change</code> 与 <code>blur</code> 转换成受控交互意图，而不是直接修改内部 Store。</p>
+      <h3>7.3 关键取舍</h3>
+      <div class="tablewrap"><table><thead><tr><th>问题</th><th>建议</th><th>理由</th></tr></thead><tbody>
+      <tr><td>通用 UI 树 vs 分端定义</td><td>统一表单语义，允许端侧呈现覆盖</td><td>兼顾一致性与平台体验</td></tr>
+      <tr><td>组件直连 Runtime</td><td>优先通过 Field Controller</td><td>降低耦合</td></tr>
+      <tr><td>Renderer 保存字段值</td><td>不持有第二套业务权威状态</td><td>避免状态分裂</td></tr>
+      <tr><td>Renderer 局部状态</td><td>允许</td><td>焦点、输入法组合态、弹窗等</td></tr>
+      <tr><td>组件与字段关系</td><td>不要求一一对应</td><td>支持组合控件与摘要展示</td></tr>
+      <tr><td>首版多端支持</td><td>先支持主目标端验证契约</td><td>控制交付成本</td></tr>
+      <tr><td>更新方式</td><td>字段级订阅 / Selector</td><td>减少全表更新</td></tr>
+      </tbody></table></div>
+      <p>Renderer 可以维护输入法组合期间的临时文本、日期选择过程等局部状态，但必须规定提交和取消语义，不能变成第二份业务真相。</p>
+      <h3>7.4 跨端一致性的范围</h3>
+      <div class="tablewrap"><table><thead><tr><th>必须一致</th><th>允许不同</th></tr></thead><tbody>
+      <tr><td>值类型与序列化</td><td>控件视觉样式</td></tr><tr><td>校验规则和结果</td><td>错误展示形式</td></tr>
+      <tr><td>条件显隐语义</td><td>页面布局</td></tr><tr><td>数组身份与操作语义</td><td>原生组件实现</td></tr>
+      <tr><td>提交数据结构</td><td>动画及细节交互</td></tr><tr><td>异步资源状态语义</td><td>加载反馈形式</td></tr>
+      </tbody></table></div>
+      <p>跨端的首要标准是<strong>同一语义定义得到一致的业务结果</strong>，而不是不同端必须复用相同源码或像素级一致。Flutter/Dart 可能需要桥接或独立执行实现，用契约测试验证。</p>
+      <div class="callout"><strong>Renderer 边界</strong><p>Renderer 决定如何呈现和交互，不自行解释业务条件，不因隐藏而擅自删数据，不绕过 Runtime 修改表单权威状态。</p></div>
+    </section>
+
+    <section class="section" id="materials">
+      <div class="sectionhead"><span class="sectionindex">08</span><h2>Material：物料体系与 UI 扩展</h2></div>
+      <p>物料不是执行链中的单一层：设计器需要它的元信息，Preparation 需要检查它的契约，Renderer 需要加载它的平台实现。</p>
+      <h3>8.1 V1 的物料范围</h3>
+      <div class="tablewrap"><table><thead><tr><th>物料类别</th><th>示例</th><th>主要服务对象</th></tr></thead><tbody>
+      <tr><td>基础字段</td><td>Input、Select、DatePicker</td><td>配置者</td></tr>
+      <tr><td>结构与容器</td><td>Section、Tabs、Steps、Repeater</td><td>设计器、Renderer</td></tr>
+      <tr><td>领域业务字段</td><td>证件上传、被保人卡片、地区选择</td><td>业务团队</td></tr>
+      </tbody></table></div>
+      <p>自定义纯函数、远程资源和业务命令更适合放进 Capability Registry，不必因为它们可复用，就全部塞进 UI Material Registry。</p>
+      <h3>8.2 物料契约草案</h3>
+      <div class="codeblock"><div class="codehdr"><span>TypeScript / Material Definition</span><button class="copy" type="button">复制</button></div><pre><code>interface MaterialDefinition {
+  id: string
+  version: string
+  propsSchema: unknown
+
+  bindings: BindingContract[]
+  events: EventContract[]
+  platforms: PlatformSupport[]
+
+  capabilities?: string[]
+  editor?: EditorMetadata
+}</code></pre></div>
+      <p><code>bindings</code> 声明支持的数据绑定，例如日期范围的两个字段；<code>events</code> 声明用户事件；<code>platforms</code> 声明目标端实现；<code>editor</code> 定义属性面板元信息。</p>
+      <h3>8.3 必须做出的取舍</h3>
+      <div class="tablewrap compact"><table><thead><tr><th>问题</th><th>建议</th></tr></thead><tbody>
+      <tr><td>能否访问 Runtime 内部</td><td>不可以，必须通过受控接口</td></tr>
+      <tr><td>是否支持复杂领域物料</td><td>支持，但要求明确契约</td></tr>
+      <tr><td>是否建立通用插件生命周期</td><td>按真实需求实现最小生命周期</td></tr>
+      <tr><td>物料能否注册业务逻辑</td><td>通过 Capability 接口</td></tr>
+      <tr><td>是否默认全动态加载</td><td>根据发布模式选择，不设为默认</td></tr>
+      <tr><td>是否建设独立物料市场</td><td>第一版不需要</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>核心边界</strong><p>基础物料是具有数据绑定能力的 UI 组件；复杂领域物料可以封装局部交互，但最终业务值必须通过明确的绑定契约交付 Runtime，不能把关键状态长期藏在组件内部。</p></div>
+    </section>
+
+    <section class="section" id="capabilities">
+      <div class="sectionhead"><span class="sectionindex">09</span><h2>Capability：外部能力与业务集成</h2></div>
+      <p>Runtime 管理外部调用的生命周期，而宿主负责具体外部调用。二者不能混为一谈。</p>
+      <div class="diagram"><div class="diagram-title">Resource / Capability Boundary</div>
+      <div class="arch-node"><h4>Form Runtime</h4><p>发起报价资源请求</p></div><div class="arr">↓</div>
+      <div class="arch-node"><h4>Capability Adapter</h4><p>参数映射 · 接口鉴权 · 服务调用</p></div><div class="arr">↓</div>
+      <div class="arch-node"><h4>Business Service</h4><p>计算并返回业务结果</p></div><div class="arr">↓ Result</div>
+      <div class="arch-node major"><h4>Resource Manager → Form Runtime → Renderer</h4><p>检查响应是否过期 · 更新资源状态 · 呈现结果</p></div>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>Capability</th><th>典型场景</th></tr></thead><tbody>
+      <tr><td>Query / Resource</td><td>城市列表、报价、搜索结果</td></tr>
+      <tr><td>Upload</td><td>证件采集、图片上传</td></tr>
+      <tr><td>Business Command</td><td>保存草稿、提交录单、确认报价</td></tr>
+      <tr><td>Context Provider</td><td>用户、地区、渠道上下文</td></tr>
+      <tr><td>External Validation</td><td>身份校验、资格校验</td></tr>
+      </tbody></table></div>
+      <p>插件不应无约束地拿到完整可变 Store；应通过参数、只读快照、受控回灌和执行结果协议协作。客户端的能力注册更不是服务端权限校验的替代。</p>
+      <div class="callout"><strong>关于 Workflow</strong><p>表单局部交互、分步录入和异步查询不需要完整工作流引擎。审批、核保、支付等长流程通过 Capability 调用外部 Workflow Service；不将它放入表单 Runtime。</p></div>
+    </section>
+
+    <section class="section" id="tooling">
+      <div class="sectionhead"><span class="sectionindex">10</span><h2>Tooling：设计器、调试器、发布与治理</h2></div>
+      <p>先解决定义和运行时语义，再投入复杂拖拽设计器。第一阶段优先实现 <strong>Definition Editor + Preview + Runtime Devtools</strong>，降低验证成本。</p>
+      <div class="tablewrap"><table><thead><tr><th>阶段</th><th>工具</th><th>直接价值</th></tr></thead><tbody>
+      <tr><td>阶段一</td><td>Definition Editor、Preview、Diagnostics</td><td>快速验证协议与运行时</td></tr>
+      <tr><td>阶段二</td><td>Rule Builder、Runtime Trace</td><td>降低逻辑配置与调试成本</td></tr>
+      <tr><td>阶段三</td><td>可视化 Form Studio</td><td>降低业务配置门槛</td></tr>
+      <tr><td>阶段四</td><td>Release Console、Material Manager</td><td>规模化交付与治理</td></tr>
+      </tbody></table></div>
+      <h3>10.1 版本从第一版开始治理</h3>
+      <div class="tablewrap"><table><thead><tr><th>版本对象</th><th>意义</th></tr></thead><tbody>
+      <tr><td>Definition Revision</td><td>具体表单业务定义的修订</td></tr>
+      <tr><td>Definition Format Version</td><td>协议格式与语义版本</td></tr>
+      <tr><td>Runtime Compatibility</td><td>该表单需要的执行能力</td></tr>
+      <tr><td>Material Versions</td><td>所依赖的物料及其版本</td></tr>
+      <tr><td>Data Contract Version</td><td>草稿与已保存数据的结构版本</td></tr>
+      </tbody></table></div>
+      <p>发布表单应形成不可变 Release Artifact，默认让运行中的会话固定已发布版本，避免中途变更计算语义。配置迁移与历史草稿数据迁移应分开处理。</p>
+      <h3>10.2 工程质量保障</h3>
+      <div class="grid"><div class="panel"><div class="paneltitle">静态质量</div><p>引用检查、类型校验、物料能力验证、规则冲突与依赖环分析。</p></div><div class="panel"><div class="paneltitle">运行时质量</div><p>事务一致性、竞态防护、动态数组、资源释放、错误隔离。</p></div><div class="panel"><div class="paneltitle">跨端契约</div><p>同一输入在不同端产生相同数据与规则结果的 Golden Tests。</p></div><div class="panel"><div class="paneltitle">发布与可观测性</div><p>不可变版本、灰度回滚、因果链 Trace、性能指标和脱敏日志。</p></div></div>
+    </section>
+
+    <section class="section" id="flow">
+      <div class="sectionhead"><span class="sectionindex">11</span><h2>完整案例：保险投保表单的一次交互</h2></div>
+      <p>通过真实业务流程验证各层边界。假设表单包含目的地、投保人、被保人列表和动态报价。</p>
+      <div class="diagram"><div class="diagram-title">Interaction Timeline / End-to-End</div>
+      <div class="numberlist" style="margin-bottom:0">
+        <div class="numberitem"><div class="numbericon">01</div><div><h4>初始化定义</h4><p>Runtime 消费 Prepared Form，建立数据、字段身份和依赖索引。</p></div></div>
+        <div class="numberitem"><div class="numbericon">02</div><div><h4>建立初始稳定态</h4><p>批量回填表单数据，计算派生值和约束，再向 Renderer 发布一致快照。</p></div></div>
+        <div class="numberitem"><div class="numbericon">03</div><div><h4>用户修改被保人年龄</h4><p>Renderer 发送 SetValue 意图；Runtime 开启事务，写入数据并收集受影响依赖。</p></div></div>
+        <div class="numberitem"><div class="numbericon">04</div><div><h4>规则计算并提交</h4><p>计算监护人显隐与校验规则，提交稳定状态并通知受影响的组件。</p></div></div>
+        <div class="numberitem"><div class="numbericon">05</div><div><h4>发起异步报价</h4><p>Resource Manager 使用 Capability 调用报价服务；只接受仍属于最新有效依赖状态的结果。</p></div></div>
+        <div class="numberitem"><div class="numbericon">06</div><div><h4>报价更新至页面</h4><p>资源结果重新进入 Runtime 更新流程，Renderer 读取新的稳定快照并展示。</p></div></div>
+      </div></div>
+      <div class="codeblock"><div class="codehdr"><span>Cross-layer Call Sequence</span><button class="copy" type="button">复制</button></div><pre><code>Preparation → Prepared Form
+Runtime     → Init / Batch Derive / Commit
+Renderer    ← Stable Field Snapshots
+
+User        → Change insured.age
+Renderer    → Dispatch SetValue
+Runtime     → Transaction / Dirty Dependencies
+Runtime     → Validate / Commit
+Renderer    ← Changed Field Notifications
+
+Runtime     → Request Quote via Capability
+Capability  → Business Service
+Business    → Quote Response
+Runtime     → Freshness Check / Accept Result
+Renderer    ← Updated Quote Snapshot</code></pre></div>
+      <p>全链路没有独立 Workflow Engine，也没有通用的双向 View-Logic 桥接平台，却能满足复杂表单的状态一致性、联动、竞态防护及跨端渲染需求。</p>
+      <div class="callout"><strong>过度设计判断标准</strong><p>如果引入一个新模块、协议概念或调度机制，既不能提升这类主路径的可靠性、交付效率、性能或可维护性，也没有可靠的扩展收益，就需要重新评估其必要性。</p></div>
+    </section>
+
+    <section class="section" id="mapping">
+      <div class="sectionhead"><span class="sectionindex">12</span><h2>六大设计方向映射到各层</h2></div>
+      <p>六个方向不是六个纵向层级，而是贯穿各层的设计与评审维度。</p>
+      <div class="tablewrap"><table><thead><tr><th>设计方向</th><th>主要涉及层次</th><th>核心问题</th></tr></thead><tbody>
+      <tr><td>协议灵活度与复杂度</td><td>Definition + Preparation</td><td>简单配置简单，复杂场景可组合</td></tr>
+      <tr><td>逻辑编排与运行时</td><td>Runtime</td><td>状态如何稳定计算、提交与恢复</td></tr>
+      <tr><td>跨端一致性</td><td>Definition + Runtime + Renderer</td><td>哪些规则共享，哪些视图与行为按显式策略差异化</td></tr>
+      <tr><td>物料与扩展性</td><td>Material + Renderer + Capability</td><td>业务扩展不侵入核心</td></tr>
+      <tr><td>版本兼容与演进</td><td>Definition + Preparation + Tooling</td><td>历史配置、数据与依赖长期可用</td></tr>
+      <tr><td>工程治理与质量</td><td>所有层</td><td>每个关键语义可验证、可追踪</td></tr>
+      </tbody></table></div>
+      <h3>必须警惕的跨层破坏</h3>
+      <div class="grid"><div class="panel"><div class="paneltitle">协议任意 JS</div><p>可能破坏跨端语义和静态分析能力。</p></div><div class="panel"><div class="paneltitle">物料直接写 Store</div><p>可能绕过事务与状态一致性。</p></div><div class="panel"><div class="paneltitle">索引不带版本</div><p>可能破坏缓存、发布及回滚正确性。</p></div><div class="panel"><div class="paneltitle">Renderer 自算业务</div><p>导致各端规则漂移与权威数据分裂。</p></div></div>
+    </section>
+
+    <section class="section" id="decisions">
+      <div class="sectionhead"><span class="sectionindex">13</span><h2>架构决策清单（ADR 基线）</h2></div>
+      <p>明确哪些产品决策已经收敛，哪些仍然需要独立专题进一步比较，不把建议误认为最终方案。</p>
+      <div class="tablewrap"><table><thead><tr><th>决策</th><th>当前建议</th><th>状态</th></tr></thead><tbody>
+      <tr><td>产品范围</td><td>复杂动态表单与数据录入</td><td><span class="pill status-done">已确定</span></td></tr>
+      <tr><td>通用页面搭建</td><td>不作为核心目标</td><td><span class="pill status-done">已确定</span></td></tr>
+      <tr><td>完整 Workflow Engine</td><td>不内置，按需集成</td><td><span class="pill status-done">已确定</span></td></tr>
+      <tr><td>核心执行层次</td><td>Definition / Preparation / Runtime / Renderer</td><td><span class="pill status-done">已确定</span></td></tr>
+      <tr><td>状态所有权</td><td>统一归属 Form Runtime</td><td><span class="pill">架构基线</span></td></tr>
+      <tr><td>字段与 UI 节点</td><td>逻辑分离</td><td><span class="pill status-open">待建模</span></td></tr>
+      <tr><td>协议表达</td><td>受限声明式 DSL</td><td><span class="pill status-open">待比较</span></td></tr>
+      <tr><td>Preparation 深度</td><td>轻量标准化与静态分析</td><td><span class="pill status-open">待设计</span></td></tr>
+      <tr><td>计算模型</td><td>纯派生 + Command + Resource</td><td><span class="pill status-open">待论证</span></td></tr>
+      <tr><td>Store 实现</td><td>Core-owned、事务化写入</td><td><span class="pill status-open">待比较</span></td></tr>
+      <tr><td>动态数组身份</td><td>稳定 Scope / Item ID</td><td><span class="pill">架构基线</span></td></tr>
+      <tr><td>物料与 Capability</td><td>分离扩展契约</td><td><span class="pill status-open">待设计</span></td></tr>
+      <tr><td>跨端策略</td><td>统一语义契约、适配不同实现</td><td><span class="pill">架构基线</span></td></tr>
+      <tr><td>设计器投入</td><td>先验证运行时，后扩展可视化</td><td><span class="pill">建议基线</span></td></tr>
+      <tr><td>版本与质量保障</td><td>从第一阶段同步纳入</td><td><span class="pill status-done">必须具备</span></td></tr>
+      </tbody></table></div>
+      <p class="tiny">后续每项决策可记录 Proposed / Accepted / Rejected / Superseded 状态，并保留决策背景、替代方案、代价和触发重新评估的条件。</p>
+    </section>
+
+    <section class="section" id="roadmap">
+      <div class="sectionhead"><span class="sectionindex">14</span><h2>逐层讨论与详细设计路线</h2></div>
+      <p>不是同时推进所有层，而是从领域模型和状态语义出发，逐步推导实现机制。每一轮讨论都输出职责、接口、取舍、失败路径和验证方式。</p>
+      <div class="numberlist">
+        <div class="numberitem"><div class="numbericon">01</div><div><h4>Definition：能力 → 抽象 → 协议</h4><p>先确认 L1 能力需求，再比较核心概念与关系，最后组织协议。MVL 保留为候选表示。</p><div class="output">产物：<a href="l1-capabilities-and-abstraction-boundaries.html">能力需求与抽象边界</a> → 领域元模型与协议规范 → 典型场景验证</div></div></div>
+        <div class="numberitem"><div class="numbericon">02</div><div><h4>Runtime：数据模型与状态管理</h4><p>讨论 Store、Field State、Scope、Identity、Snapshot、初始化和生命周期，统一数据语义。</p><div class="output">产物：数据结构、状态 API、生命周期规范</div></div></div>
+        <div class="numberitem"><div class="numbericon">03</div><div><h4>Runtime：计算、命令与事务</h4><p>讨论依赖追踪、增量传播、批量事务、循环、校验及异步资源，验证复杂联动与竞态。</p><div class="output">产物：执行流程、调度算法、时序图、异常边界</div></div></div>
+        <div class="numberitem"><div class="numbericon">04</div><div><h4>Preparation：静态分析和执行准备</h4><p>理解 Runtime 实际需求后反推最小预处理层，明确依赖索引、诊断和 Prepared Form。</p><div class="output">产物：Prepared Form 结构、规则索引、诊断规范</div></div></div>
+        <div class="numberitem"><div class="numbericon">05</div><div><h4>Renderer / Material / Capability</h4><p>明确跨端 UI 绑定、组件接口、物料注册、宿主能力与业务扩展的职责边界。</p><div class="output">产物：Adapter Contract、Material Manifest、Capability API</div></div></div>
+        <div class="numberitem"><div class="numbericon">06</div><div><h4>版本、工具与工程治理</h4><p>完善迁移、测试、设计器、发布、性能和可观测性，并通过真实业务用例进行回归验证。</p><div class="output">产物：版本模型、测试矩阵、发布规范、实施路线</div></div></div>
+      </div>
+      <div class="callout"><strong>为什么 Preparation 详细设计排在 Runtime 后面？</strong><p>需要先确认运行时实际的索引和执行模型，否则容易为“完整编译器”过度设计无用的中间结构。Definition 与 Runtime 应迭代验证，而不是先冻结整份协议。</p></div>
+      <h3>每一个专题的统一讨论模板</h3>
+      <div class="grid three"><div class="panel"><div class="paneltitle">01 · 目标与对象</div><p>解决什么问题？为谁服务？有什么明确非目标？</p></div><div class="panel"><div class="paneltitle">02 · 模型与职责</div><p>有哪些实体、状态、不变量？内部如何分层？</p></div><div class="panel"><div class="paneltitle">03 · 接口与数据流</div><p>输入、输出、生命周期、版本和错误契约。</p></div><div class="panel"><div class="paneltitle">04 · 核心机制</div><p>典型业务的流程、时序、算法及伪代码。</p></div><div class="panel"><div class="paneltitle">05 · 方案取舍</div><p>为何选择某种方案？替代方案的代价是什么？</p></div><div class="panel"><div class="paneltitle">06 · 验收与演进</div><p>边界、失败路径、性能、测试和未来扩展。</p></div></div>
+      <div class="emphasis">下一步深入 L1 · Definition：先确定能力需求，再比较六个关键取舍，收敛核心抽象及关系，最后组织协议。详见《L1 能力需求与抽象边界》。</div>
+    </section>
+
+    <div class="footnotes"><strong>设计说明</strong><p>本文件的总体分层与产品边界已确定，内部设计仍为讨论基线，不等于正式接口规范。图示、类型定义和协议示例均用于验证职责与语义；最终需结合真实业务样例、基准测试和 ADR 决策收敛。</p><p>可进一步参考的公开技术材料：<a href="https://json-schema.org/" target="_blank" rel="noopener noreferrer">JSON Schema</a>、<a href="https://jsonforms.io/" target="_blank" rel="noopener noreferrer">JSON Forms</a>、<a href="https://surveyjs.io/" target="_blank" rel="noopener noreferrer">SurveyJS</a>。这些仅作为设计参考，不代表本方案选择直接依赖其中某个引擎。</p></div>
+    <footer class="footer"><span>Form Engine · Architecture V1</span><span>Focused scope. Strong semantics. Clear boundaries.</span></footer>
+  </main>
+</div>
+</div>
+<button class="up" id="up" aria-label="回到顶部" title="回到顶部">↑</button>
+<script>
+(function(){
+  const doc=document.documentElement;
+  const themeBtn=document.getElementById('themeBtn');
+  let saved=null;
+  try {saved=localStorage.getItem('form-architecture-theme')}catch(e){}
+  const preferDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  doc.dataset.theme=saved || (preferDark?'dark':'light');
+  themeBtn.addEventListener('click',()=>{
+    const newTheme=doc.dataset.theme==='dark'?'light':'dark';
+    doc.dataset.theme=newTheme;
+    try{localStorage.setItem('form-architecture-theme',newTheme)}catch(e){}
+  });
+  const p=document.getElementById('progress');
+  const up=document.getElementById('up');
+  function updateScroll(){
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    p.style.width=(max>0?window.scrollY/max*100:0)+'%';
+    up.classList.toggle('visible',window.scrollY>500);
+  }
+  window.addEventListener('scroll',updateScroll,{passive:true});
+  window.addEventListener('resize',updateScroll);updateScroll();
+  up.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  const links=[...document.querySelectorAll('.toc a')];
+  const sections=[...document.querySelectorAll('section.section[id]')];
+  if('IntersectionObserver' in window){
+    const observer=new IntersectionObserver(entries=>{
+      const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);
+      if(!visible.length)return;
+      const id=visible[0].target.id;
+      links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));
+    },{rootMargin:'-70px 0px -66% 0px',threshold:0});
+    sections.forEach(s=>observer.observe(s));
+  }
+  document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{
+    const content=btn.closest('.codeblock').querySelector('pre').innerText;
+    try{await navigator.clipboard.writeText(content);const old=btn.textContent;btn.textContent='已复制';setTimeout(()=>btn.textContent=old,1300)}
+    catch(e){btn.textContent='请手动复制';setTimeout(()=>btn.textContent='复制',1600)}
+  }));
+})();
+</script>
+</body>
+</html>

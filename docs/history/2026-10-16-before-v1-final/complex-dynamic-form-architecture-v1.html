@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="复杂动态表单与数据录入引擎 V1：架构分层、服务对象、核心能力、取舍、边界与逐层设计路线。">
+<title>复杂动态表单与数据录入引擎 · 整体架构设计 V1</title>
+<style>
+:root {--bg:#ffffff;--surface:#ffffff;--soft:#f7f7f8;--soft2:#f1f1f2;--text:#171717;--muted:#646464;--quiet:#888;--line:#e8e8e8;--strong:#d4d4d4;--inverse:#171717;--inverse-text:#fff;--code:#f7f7f8;--shadow:0 8px 28px rgba(0,0,0,.035);--sidebar:#fafafa}
+html[data-theme="dark"] {--bg:#181818;--surface:#181818;--soft:#242424;--soft2:#303030;--text:#f4f4f4;--muted:#b3b3b3;--quiet:#8e8e8e;--line:#363636;--strong:#585858;--inverse:#f4f4f4;--inverse-text:#171717;--code:#222222;--shadow:none;--sidebar:#1d1d1d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.86 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit}button{font:inherit}::selection{background:#a5a5a552}h1,h2,h3,h4{line-height:1.42;letter-spacing:-.025em}p{margin:12px 0}strong{font-weight:650}code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.87em;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:2px 4px}pre code{padding:0;border:0;background:transparent;font-size:inherit}ul,ol{padding-left:1.45rem}li{padding:2px 0}li::marker{color:var(--muted)}
+.layout{display:grid;grid-template-columns:256px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--sidebar);border-right:1px solid var(--line);padding:25px 15px 28px 18px;scrollbar-width:thin}.brand{display:flex;gap:10px;align-items:center;padding:0 10px 22px;text-decoration:none}.brandmark{width:28px;height:28px;border:1.5px solid var(--text);display:grid;place-items:center;border-radius:9px;font-size:14px;font-weight:800;line-height:1}.brandname{font-weight:690;letter-spacing:-.03em;font-size:14px}.brandsub{font-size:11px;color:var(--quiet);margin-top:-3px}.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--quiet);margin:16px 10px 6px;font-weight:700}.toc a{display:flex;align-items:center;gap:8px;border-radius:8px;text-decoration:none;color:var(--muted);font-size:12px;line-height:1.55;padding:8px 10px;margin:1px 0}.toc a .num{color:var(--quiet);font-size:10px;min-width:20px;font-variant-numeric:tabular-nums}.toc a:hover,.toc a.active{background:var(--soft2);color:var(--text)}.toc a.active{font-weight:640}.sidebarfoot{border-top:1px solid var(--line);margin-top:20px;padding:15px 10px;color:var(--quiet);font-size:11px;line-height:1.65}
+.main{min-width:0}.topbar{height:57px;padding:0 38px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);position:sticky;top:0;z-index:40}.breadcrumb{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.breadcrumb b{color:var(--text);font-weight:620}.topactions{display:flex;gap:6px;align-items:center}.btn{appearance:none;background:transparent;border:1px solid var(--line);color:var(--muted);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}.btn:hover{background:var(--soft);color:var(--text)}.progress{position:fixed;height:2px;top:0;left:256px;background:var(--inverse);width:0;z-index:60;transition:width .08s linear}.content{max-width:1060px;padding:54px 55px 120px;margin:0 auto}.kicker{font-size:11px;color:var(--muted);letter-spacing:.13em;text-transform:uppercase;font-weight:700}.hero h1{font-size:clamp(30px,3.4vw,45px);letter-spacing:-.055em;line-height:1.22;font-weight:740;margin:18px 0}.lede{font-size:17px;line-height:1.92;color:var(--muted);max-width:790px}.meta{display:flex;flex-wrap:wrap;gap:10px;margin:25px 0 0}.meta span{font-size:11px;border:1px solid var(--line);border-radius:100px;padding:4px 10px;color:var(--muted)}.leadhr{border:0;border-top:1px solid var(--line);margin:40px 0 45px}.section{scroll-margin-top:85px;margin:52px 0 65px}.sectionhead{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:0 0 14px;margin-bottom:22px}.sectionindex{font-size:13px;color:var(--quiet);font-family:monospace}.section h2{font-size:25px;letter-spacing:-.045em;margin:0;font-weight:720}.section h3{font-size:18px;margin:34px 0 11px;font-weight:700}.section h4{font-size:15px;margin:23px 0 7px;font-weight:700}.section p{color:var(--text)}.subtle{color:var(--muted)!important}.sm{font-size:12px;color:var(--muted)}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}.emphasis{font-size:17px;line-height:1.8;font-weight:660;border-left:3px solid var(--text);padding:4px 0 4px 19px;margin:25px 0}.callout{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:23px 0}.callout p{margin:4px 0}.tiny{font-size:12px;color:var(--muted)}
+.tablewrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0 24px}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7;min-width:570px}th,td{text-align:left;vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--line)}th{color:var(--muted);background:var(--soft);font-weight:660;white-space:nowrap}tr:last-child td{border-bottom:0}td:first-child{font-weight:580}.tablewrap.compact td,.tablewrap.compact th{padding:10px 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.panel{border:1px solid var(--line);border-radius:12px;padding:17px 18px;background:var(--surface)}.panel.soft{background:var(--soft)}.paneltitle{font-size:13px;font-weight:700;margin-bottom:5px}.panel p{font-size:12px;color:var(--muted);margin:0;line-height:1.75}.smalltitle{font-size:12px;font-weight:650;letter-spacing:-.015em}.diagram{border:1px solid var(--line);border-radius:15px;padding:22px;background:var(--surface);margin:22px 0 25px;overflow:hidden}.diagram-title{font-size:11px;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;font-weight:700;margin-bottom:19px}.arch-node{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:15px 15px;text-align:center}.arch-node.major{border:1.5px solid var(--text);background:var(--surface)}.arch-node h4{font-size:14px;margin:0 0 4px;letter-spacing:-.01em}.arch-node p{margin:0;font-size:11px;color:var(--muted);line-height:1.6}.arr{display:flex;justify-content:center;align-items:center;color:var(--quiet);font-size:18px;height:29px;line-height:1}.diagram-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.chipgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}.chip{font-size:11px;text-align:center;padding:9px;border-radius:7px;background:var(--soft);border:1px solid var(--line);font-weight:580}.subsystem{display:grid;grid-template-columns:1fr 1fr;gap:10px}.process{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:16px 0 20px}.step{padding:9px 12px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--soft);font-weight:600;flex:1;min-width:105px;text-align:center}.process .right{display:grid;place-items:center;color:var(--quiet)}
+.numberlist{display:grid;gap:12px;margin:23px 0}.numberitem{display:grid;grid-template-columns:43px minmax(0,1fr);gap:13px;border-bottom:1px solid var(--line);padding:0 0 15px}.numberitem:last-child{border-bottom:0}.numbericon{width:37px;height:37px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font:600 12px monospace;color:var(--text)}.numberitem h4{margin:1px 0 3px;font-size:14px}.numberitem p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}.numberitem .output{color:var(--quiet);font-size:11px;margin-top:6px}
+.codeblock{position:relative;margin:18px 0 25px;border-radius:11px;border:1px solid var(--line);background:var(--code);overflow:hidden}.codehdr{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--quiet);padding:8px 13px;border-bottom:1px solid var(--line);letter-spacing:.02em}.copy{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;padding:3px 7px;border-radius:5px}.copy:hover{background:var(--soft2)}pre{padding:15px 18px;margin:0;overflow-x:auto;color:var(--text);font-size:12px;line-height:1.75;tab-size:2}.footnotes{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:19px;margin-top:45px}.footnotes a{color:var(--text);text-decoration-color:var(--strong);text-underline-offset:3px}.pill{display:inline-block;border:1px solid var(--line);border-radius:30px;padding:2px 8px;font-size:10px;color:var(--muted);white-space:nowrap}.status-done{border-color:var(--strong);color:var(--text)}.status-open{border-style:dashed}.footer{font-size:12px;color:var(--quiet);border-top:1px solid var(--line);padding-top:26px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.up{position:fixed;bottom:25px;right:26px;width:38px;height:38px;background:var(--surface);border:1px solid var(--line);border-radius:100%;color:var(--text);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s}.up.visible{opacity:1;pointer-events:auto}
+@media(max-width:1080px){.layout{grid-template-columns:215px minmax(0,1fr)}.progress{left:215px}.content{padding:44px 34px 100px}.topbar{padding:0 25px}}
+@media(max-width:800px){.layout{display:block}.sidebar{display:none}.progress{left:0}.content{padding:30px 21px 85px}.topbar{padding:0 18px}.breadcrumb{font-size:11px}.hero h1{font-size:32px}.lede{font-size:15px}.grid.three{grid-template-columns:1fr 1fr}.section h2{font-size:23px}.section{margin:40px 0 55px}.meta{gap:6px}}
+@media(max-width:540px){.grid,.grid.three,.diagram-grid,.subsystem{grid-template-columns:1fr}.topactions .print{display:none}.diagram{padding:15px}.content{padding:24px 17px 70px}.topbar{height:52px}.process{display:block}.process .right{margin:4px 0}.step{min-width:0}.sectionhead{gap:9px}.section h2{font-size:21px}}
+@media print{html,body{background:#fff!important;color:#111!important}.layout{display:block}.sidebar,.topbar,.progress,.up,.copy{display:none!important}.content{max-width:none;padding:0}.section{break-before:auto;break-inside:auto}.diagram,.panel,.callout,.numberitem{break-inside:avoid}.tablewrap{overflow:visible}.tablewrap table{min-width:0;font-size:10px}.arch-node{background:#f7f7f7!important}h1,h2,h3{break-after:avoid}a{text-decoration:none}}
+</style>
+</head>
+<body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:14px 20px;background:#fff3cd;color:#171717;position:relative;z-index:10000">历史过程快照 · 已由 L1 V1.0 定稿替代，不作为当前规范。 <a href="../../reading/l1-definition-protocol-v1.html">阅读定稿</a> · <a href="../index.html">历史索引</a></div>
+<div class="progress" id="progress"></div>
+<div class="layout">
+<aside class="sidebar" aria-label="章节目录">
+  <a class="brand" href="#top"><span class="brandmark">F</span><span><div class="brandname">Form Architecture</div><div class="brandsub">System Design · V1</div></span></a>
+  <div class="navlabel">Documentation</div>
+  <nav class="toc" aria-label="文档导航"><a href="index.html">← 文档首页与设计路线</a><a href="l1-definition-decisions-and-roadmap.html">L1 · 决策归档与路线图</a></nav>
+  <div class="navlabel">Contents</div>
+  <nav class="toc" id="toc">
+    <a href="#boundary"><span class="num">01</span>产品能力边界</a>
+    <a href="#architecture"><span class="num">02</span>整体架构与职责</a>
+    <a href="#overview"><span class="num">03</span>能力、取舍与服务对象</a>
+    <a href="#definition"><span class="num">04</span>L1 · Definition</a>
+    <a href="#preparation"><span class="num">05</span>L2 · Preparation</a>
+    <a href="#runtime"><span class="num">06</span>L3 · Runtime</a>
+    <a href="#renderer"><span class="num">07</span>L4 · Renderer</a>
+    <a href="#materials"><span class="num">08</span>Material · 物料</a>
+    <a href="#capabilities"><span class="num">09</span>Host · 外部集成</a>
+    <a href="#tooling"><span class="num">10</span>Tooling · 工程治理</a>
+    <a href="#flow"><span class="num">11</span>完整执行流程</a>
+    <a href="#mapping"><span class="num">12</span>六大架构方向映射</a>
+    <a href="#decisions"><span class="num">13</span>架构决策清单</a>
+    <a href="#roadmap"><span class="num">14</span>逐层设计路线</a>
+  </nav>
+  <div class="sidebarfoot">复杂动态表单与数据录入引擎<br>Architecture Baseline / Aligned<br>2026.10.16</div>
+</aside>
+<div class="main" id="top">
+  <header class="topbar"><div class="breadcrumb">Architecture <span style="color:var(--quiet)">/</span> <b>复杂动态表单引擎</b></div><div class="topactions"><button type="button" class="btn" id="themeBtn" title="切换深浅色">◐ 主题</button><button type="button" class="btn print" onclick="window.print()">打印 / PDF</button></div></header>
+  <main class="content">
+    <header class="hero">
+      <div class="kicker">Architecture Blueprint / Greenfield Design</div>
+      <h1>复杂动态表单与<br>数据录入引擎</h1>
+      <p class="lede">从产品边界出发，重新推导分层架构、核心领域模型与系统接口。逐层明确：为谁服务、提供什么能力、内部需要如何取舍，以及什么不应该做。</p>
+      <div class="meta"><span>V1 · 总体分层已确定</span><span>四层核心 + 受控扩展 + Host 集成</span><span>面向复杂业务表单</span><span>同步于 2026.10.16</span></div>
+    </header>
+    <hr class="leadhr">
+    <div class="emphasis">核心原则：以尽量少的概念，可靠覆盖大多数复杂数据录入场景。缩小产品边界，但不牺牲状态、依赖、事务与数组的可靠性，以及 Host 集成的明确边界。</div>
+    <div class="grid three">
+      <div class="panel"><div class="paneltitle">配置者足够简单</div><p>常见字段、条件、校验、联动无需理解内部编程模型。</p></div>
+      <div class="panel"><div class="paneltitle">复杂业务足够可靠</div><p>核心支持嵌套数组、跨字段依赖与同步状态一致性；外部异步由 Host 集成。</p></div>
+      <div class="panel"><div class="paneltitle">开发维护足够清晰</div><p>职责、扩展入口、版本与质量边界长期稳定。</p></div>
+    </div>
+
+    <section class="section" id="boundary">
+      <div class="sectionhead"><span class="sectionindex">01</span><h2>产品能力边界</h2></div>
+      <p>我们建设的是<strong>复杂动态表单与数据录入引擎</strong>，不是通用页面搭建器、任意逻辑编排平台或完整 BPM 系统。所有原生能力都应服务于表单式数据交互。</p>
+      <div class="tablewrap"><table><thead><tr><th>能力范围</th><th>处理方式</th><th>原因</th></tr></thead><tbody>
+      <tr><td>字段定义、数据绑定、布局分组</td><td>引擎原生</td><td>表单基础能力</td></tr>
+      <tr><td>条件显隐、必填、禁用</td><td>引擎原生</td><td>高频且容易标准化</td></tr>
+      <tr><td>跨字段计算、动态校验</td><td>引擎原生</td><td>复杂表单核心价值</td></tr>
+      <tr><td>嵌套对象、动态数组、重复区块</td><td>引擎原生</td><td>需要统一状态及身份管理</td></tr>
+      <tr><td>初始化、批量赋值、重置</td><td>核心需明确生命周期契约</td><td>D7 原则已确认；F1/F2 推荐静态补缺与最近初始化基准，精确 API/触发仍待细化</td></tr>
+      <tr><td>异步选项、远程查询、服务端校验</td><td>Host / View Adapter（核心外）</td><td>请求、缓存和重试归外部；Runtime 登记被动五态/有效性与 Readiness，精确接口待细化</td></tr>
+      <tr><td>分步骤表单</td><td>View / Lifecycle 范围</td><td>View 方向已定，F5 Readiness 已确认；Host 执行提交，步骤及接口细节仍待协议收敛</td></tr>
+      <tr><td>自定义复杂业务字段</td><td>物料扩展</td><td>隔离领域特殊性</td></tr>
+      <tr><td>报价、核保、审批</td><td>宿主业务服务</td><td>保留权威业务状态</td></tr>
+      <tr><td>任意页面搭建、营销动效、通用 BPM</td><td>明确不在范围</td><td>成本与核心目标不匹配</td></tr>
+      </tbody></table></div>
+      <div class="callout"><strong>边界决策</strong><p>仅为“表单式数据交互”提供完整执行语义。核心提供被保人录入、纯计算、同步条件联动及约束；异步报价预览由 Host / View Adapter 集成，审批、支付、生成保单等跨系统流程由宿主系统负责。</p></div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="sectionhead"><span class="sectionindex">02</span><h2>整体架构：四层核心、受控扩展与宿主边界</h2></div>
+      <p>不为了架构完整而制造大量层次。我们先划定清晰的逻辑职责，再决定代码模块和部署形态。</p>
+      <div class="diagram">
+        <div class="diagram-title">Logical Architecture · V1</div>
+        <div class="arch-node"><h4>Tooling / Form Studio</h4><p>配置编辑 · 预览 · Devtools · 测试工具 · 发布治理</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node"><h4>L1 · Definition / 表单定义</h4><p>Data · Views · Pure Expressions · Constraints · Command / Reaction</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node"><h4>L2 · Preparation / 定义预处理</h4><p>Normalize · Validate · Resolve · Analyze · Index</p></div>
+        <div class="arr">↓</div>
+        <div class="arch-node major"><h4>L3 · Form Runtime / 表单运行时</h4><p>唯一的表单业务交互状态所有者</p>
+          <div class="chipgrid"><div class="chip">Data & State Store</div><div class="chip">Scope & Identity</div><div class="chip">Dependency & Rules</div><div class="chip">Transaction & Commands</div><div class="chip">Validation</div><div class="chip">Form Lifecycle & Editing Context</div></div>
+        </div>
+        <div class="arr">↕</div>
+        <div class="arch-node"><h4>L4 · Renderer / UI Adapter</h4><p>Vue · React · Flutter · Component Bindings</p></div>
+        <div class="arr">↕</div>
+        <div class="diagram-grid"><div class="arch-node"><h4>Material Registry</h4><p>组件 / 容器 / 领域物料</p></div><div class="arch-node"><h4>Host / View Adapter（核心外）</h4><p>API / 远程选项 / 上传 / 业务服务</p></div></div>
+        <div class="arr">↕</div>
+        <div class="arch-node"><h4>Host Application / Backend</h4><p>业务数据 · 权限 · 权威校验 · 存储 · 外部流程</p></div>
+        <p class="tiny" style="margin:14px 2px 0">说明：图中各层表示职责关系，并非逐跳调用顺序。Material 同时服务工具、准备层和 Renderer；Host / View Adapter 管理外部请求、缓存和业务流程，经过 Command 写回。内部可扩展Pure Function，不建立通用 Capability 执行引擎。</p>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>层</th><th>核心问题</th><th>主要服务对象</th></tr></thead><tbody>
+      <tr><td>L1 · Definition</td><td>表单是什么？业务规则是什么？</td><td>业务配置者、设计器、Preparation</td></tr>
+      <tr><td>L2 · Preparation</td><td>定义是否合法、如何高效执行？</td><td>Runtime、开发工具、发布流程</td></tr>
+      <tr><td>L3 · Runtime</td><td>数据如何变化、何时稳定、如何协调规则？</td><td>Renderer、宿主应用、业务能力</td></tr>
+      <tr><td>L4 · Renderer</td><td>如何展示状态、适配用户输入？</td><td>最终用户、UI 开发者</td></tr>
+      <tr><td>Material</td><td>如何复用并扩展表单组件？</td><td>设计器、物料开发者、Renderer</td></tr>
+      <tr><td>Host Integration</td><td>如何由外部组织业务能力并安全写回？</td><td>宿主应用、View Adapter、业务服务</td></tr>
+      <tr><td>Tooling</td><td>如何配置、调试、测试和发布？</td><td>配置者、开发者、运维</td></tr>
+      </tbody></table></div>
+      <div class="grid"><div class="panel soft"><div class="paneltitle">状态归属只有一个权威源</div><p>每个 Form Runtime 实例拥有表单业务交互状态。Renderer 不能维护第二份权威数据，也不独立求值业务规则。</p></div><div class="panel soft"><div class="paneltitle">不交付多个独立系统</div><p>不预先建设独立 View Engine、Workflow Engine 和复杂桥接平台。外部流程通过受控宿主接口集成。</p></div></div>
+    </section>
+
+    <section class="section" id="overview">
+      <div class="sectionhead"><span class="sectionindex">03</span><h2>各层总览：能力、取舍与责任边界</h2></div>
+      <div class="tablewrap"><table><thead><tr><th>层次</th><th>核心能力</th><th>最重要的取舍</th><th>不应该负责</th></tr></thead><tbody>
+      <tr><td>Definition</td><td>数据、视图、同步约束、Command / Reaction</td><td>灵活性与协议复杂度</td><td>执行调度细节</td></tr>
+      <tr><td>Preparation</td><td>静态检查、标准化、索引</td><td>预处理深度与维护成本</td><td>用户运行状态</td></tr>
+      <tr><td>Runtime</td><td>工作数据、同步联动、事务、纯计算与约束</td><td>确定性、性能与简单性</td><td>DOM 和具体 UI 框架</td></tr>
+      <tr><td>Renderer</td><td>组件渲染、事件适配、局部交互</td><td>跨端一致性与平台体验</td><td>业务规则求值</td></tr>
+      <tr><td>Material</td><td>组件契约、注册、扩展</td><td>灵活度与规范约束</td><td>篡改 Runtime 内部</td></tr>
+      <tr><td>Host Integration</td><td>外部查询、异步校验执行、上传、业务操作</td><td>平台差异与受控数据交互</td><td>绕过 Command 写入 Work Data</td></tr>
+      <tr><td>Tooling</td><td>配置、测试、诊断、发布</td><td>易用性与建设成本</td><td>成为线上执行必需依赖</td></tr>
+      </tbody></table></div>
+      <p>总体分层与产品边界已确定，作为后续设计基线。L1 已确认方向按决策归档执行；其他内部模型、机制与协议示例仍为候选方案，需逐项比较与验证，不能由总体分层的接受推导为内部实现已定稿。</p>
+    </section>
+
+    <section class="section" id="definition"><div class="sectionhead"><span class="sectionindex">04</span><h2>L1 · Definition：当前已确认的设计边界</h2></div><p>L1 声明数据、视图、纯表达式、同步约束及 Command / Reaction；Host 集成约定保持明确边界。具体协议组织仍未定，当前结论与状态以 <a href="l1-definition-decisions-and-roadmap.html#matrix">L1 决策台账</a> 为准。</p><div class="tablewrap"><table><thead><tr><th>关注点</th><th>当前边界</th></tr></thead><tbody><tr><td>Data / View</td><td>已定稿：共享 Data、多份独立 View Profile，可有不同树与交互路径。Profile 与平台目标分离。</td></tr><tr><td>Constraint</td><td>已定稿：Schema 基础与原生约束 + Form Constraint 复杂约束 + 按需 Rule Asset；统一结果。</td></tr><tr><td>Expression</td><td>第二组原则确认：JSON AST、严格类型读取、Pure Function、命名复用、受控 Slot 与多维预算；不另立 Computation DSL。</td></tr><tr><td>Behavior</td><td>第三组：核心行为收敛为 Command + 同步 Reaction；派生不自动写回，约束只判合法性，外部请求归 Host。</td></tr><tr><td>引用与编辑</td><td>第一轮已采用类型化 Reference、词法 Scope、Runtime ID 和受控 Binding；精确语法及迁移细则待细化；V7 已确认默认 Live Edit，额外隔离/撤销按未来明确需求另评审。</td></tr><tr><td>协议与复用</td><td>AST 规范表示已确立；精确节点、目录与字段名、片段参数、可选作者简写仍待细化；当前采用单一逻辑 Definition、Profile entry / Named Template，不预设无限 Override。</td></tr></tbody></table></div><p>一个 Data 可被多个 View 消费，一个复合控件可读写多个字段；UI 显隐与数据合法性分开，字段未挂载不自动取消约束。</p><div class="callout"><strong>下一步</strong><p>第一轮决策已收敛，见 <a href="l1-round01-data-value-reference-scope-binding.html#map">D1–D7</a>。第二组 <a href="l1-round02-expression-pure-function-constraint.html#ledger">E1–E7 / C1–C3</a> 已归档。第三组 <a href="l1-round03-behavior-reaction-command.html#ledger">B1–B8 与 Host 边界</a> 已集成，第四组 <a href="l1-round04-view-profile-material-interaction.html#ledger">V1–V7</a> 已集成，第五组 <a href="l1-round05-form-lifecycle-validation-submission.html#r5-03">F1–F6</a> 已归档，第六组 <a href="l1-round06-definition-protocol-convergence.html#r6-02">统一协议方向</a> 已归档，下一步为 <a href="l1-definition-decisions-and-roadmap.html#handoff">Material Contract + Validation Metadata</a>。</p></div></section>
+
+    <section class="section" id="preparation">
+      <div class="sectionhead"><span class="sectionindex">05</span><h2>L2 · Preparation：定义预处理层</h2></div>
+      <p>先不把它设计成完整编译器。它的核心职责是：把易编辑的 Form Definition 安全、稳定地转换成 Runtime 可直接消费的 Prepared Form。</p>
+      <h3>5.1 服务对象</h3>
+      <p>直接服务 Runtime、配置设计器、发布构建流程与测试工具。业务配置者主要消费它输出的诊断结果。</p>
+      <h3>5.2 预处理流水线</h3>
+      <div class="diagram"><div class="diagram-title">Preparation Pipeline</div>
+      <div class="process"><div class="step">Form Definition</div><span class="right">→</span><div class="step">Validate</div><span class="right">→</span><div class="step">Normalize</div></div>
+      <div class="process"><div class="step">Resolve Materials</div><span class="right">→</span><div class="step">Analyze Dependencies</div><span class="right">→</span><div class="step">Detect Issues</div></div>
+      <div class="process"><div class="step">Build Indices</div><span class="right">→</span><div class="step" style="border-color:var(--text)">Prepared Form</div></div>
+      </div>
+      <div class="callout"><strong>第二组补充：Slot 与复杂度治理</strong><p>L2 只在声明的 Expression/ValueSpec 位置识别表达式；ValueSpec 内递归显式 $expr，不逐深层 Prop 白名单，不按 op 对象形状猜测。Work Data、Schema default、外部原始 JSON 和结构字段不被扫描执行。检查 AST、类型、引用环与可达图成本；Named Expression 不无限展开。Literal 精确转义和具体阈值继续细化。L3 消费准备产物，执行实际规模与累计成本保护，不静默截断集合返回错误结果。</p></div><h3>5.3 复杂度取舍</h3>
+      <div class="tablewrap"><table><thead><tr><th>问题</th><th>V1 方案</th><th>暂不引入</th></tr></thead><tbody>
+      <tr><td>解释 vs 预处理</td><td>加载时准备一次</td><td>每次联动重新解析配置</td></tr>
+      <tr><td>编译深度</td><td>Normalizer + Analyzer + Indices</td><td>完整代码生成与重型优化器</td></tr>
+      <tr><td>依赖关系</td><td>预提取表达式依赖</td><td>通用动态依赖语言</td></tr>
+      <tr><td>物料检查</td><td>检查标识、版本和接口</td><td>执行物料内部代码</td></tr>
+      <tr><td>循环检查</td><td>检测纯计算环并报错</td><td>默认支持固定点求解</td></tr>
+      <tr><td>产物缓存</td><td>按版本与内容 Hash 缓存</td><td>复杂编译集群</td></tr>
+      </tbody></table></div>
+      <p>例如 500 个字段和 200 条表达式的表单，Runtime 应能根据预处理索引找到受影响节点，而不是字段每次变化都扫描整份配置。但性能收益必须实测。</p>
+      <div class="callout"><strong>边界：Preparation 不是第二套 Runtime</strong><p>Prepared Form 可以包含数据定义、已准备表达式、Command/Reaction 描述、依赖索引与物料契约，但不能包含用户输入、焦点、错误状态、请求状态和当前会话。一个 Prepared Form 应允许多个表单实例安全复用。</p></div>
+    </section>
+
+    <section class="section" id="runtime"><div class="sectionhead"><span class="sectionindex">06</span><h2>L3 · Runtime：表单内部状态事务</h2></div><p>Runtime 拥有唯一可写 Work Data，处理表单内部确定性修改、纯计算、同步约束与联动。第三组把 Resource Store、网络生命周期和通用外部动作移出核心；以下为模块职责，不冻结内部算法。</p><div class="tablewrap"><table><thead><tr><th>模块</th><th>当前职责</th><th>不承担</th></tr></thead><tbody><tr><td>Data / Value</td><td>工作态允许无效或暂不可解析；Typed Read 仅成功/失败，不能回退旧值</td><td>第二个可写输入 Buffer 或 Incomplete 类型</td></tr><tr><td>Scope / Identity</td><td>类型化引用、词法 Scope、稳定 Runtime ID 与数组实例</td><td>数组下标永久身份、强制业务 __id</td></tr><tr><td>Expression</td><td>受控 AST、Pure Function、命名 DAG、类型检查与成本保护</td><td>I/O、任意脚本和自动写回</td></tr><tr><td>Command / Reaction</td><td>受控数据修改、多引用 OR watch、纯 when、同步 then</td><td>业务函数调用、异步 Reaction、通用事件总线</td></tr><tr><td>Validation / Readiness</td><td>同步约束 + 已知外部义务/被动五态/Issues/依赖有效性；统一报告与输出准备</td><td>发起远程校验、重试/超时或业务提交</td></tr><tr><td>Form Lifecycle / Editing Context</td><td>实例能力和正交状态；F1/F2 初始化/Reset 推荐，F3 默认 Live、F6 不建统一流程状态机</td><td>Host 持久化、提交流程及跨系统事务</td></tr></tbody></table></div><h3>6.1 修改与变化不是一一对应</h3><p>Set/Replace、Patch、Remove、数组 Insert/Remove/Move、Batch 表达数据修改意图；字段名和最终 API 尚未冻结。一次替换对象可影响多个子引用，Diff 与去重属于 L2/L3。</p><h3>6.2 Reaction 与纯派生分开</h3><p>watch 中任意实际变化使规则成为候选；when 的读取依赖不自动加入 watch。then 只修改 Work Data。显隐、总价和合法性分别由 View Slot / Expression / Constraint 表达，不通过 Reaction 写入另一份状态。</p><h3>6.3 顺序与稳定发布</h3><p>同步顺序确定，同目标后写覆盖，不默认报错或要求 priority。跨轮级联顺序、相等性、循环、预算、回滚与候选状态算法留待 Runtime 契约。执行失败不发布半成品；业务 invalid 或 Parse Failure 不自动拒绝普通编辑。</p><h3>6.4 外部数据与被动校验事实</h3><p>Host 订阅稳定数据并管理外部请求，再用 Command 写回。Runtime 被动登记已知义务的 Unverified/Pending/Valid/Invalid/Error 及有效性，生成 Readiness；这是校验事实，不是请求执行器、Retry 或网络 Cache。具体接口与失效机制待细化，不恢复 Resource Store。</p><div class="callout"><strong>第三组依据</strong><p>详见 <a href="l1-round03-behavior-reaction-command.html#layers">职责交接</a> 与 <a href="l1-round03-behavior-reaction-command.html#open">未冻结事项</a>。Runtime 算法没有在 L1 冻结。</p></div></section>
+
+    <section class="section" id="renderer"><div class="sectionhead"><span class="sectionindex">07</span><h2>L4 · Renderer：MaterialNode / ScopeNode / TemplateUse</h2></div><p>ViewNode 收敛为 MaterialNode、结构性 ScopeNode 与 TemplateUse。容器、布局和复合业务组件都是 Material；Material 通过 trigger/content 等 Slots 自主管理开闭、焦点、动画与 UI State，Slot 名称本身不自动赋予点击行为。</p><p>Profile 使用 entry；需要复用或独立引用时定义 Named View Template 并静态 $use，不再另建 root/targets/fragments 多套内容目录。模板参数显式接收 ScopeHandle，不隐式捕获外部局部变量；共享定义不共享组件实例和 UI State，也不复制业务数据。</p><p>Binding 只关联数据，默认端口与具名端口沿用同一模型；具体绑定字段名仍候选。children 建议作为 slots.default 的 Authoring 简写，同一节点不能同时给两者。Manifest 声明 Props 类型、Binding/Slot/Event 端口；Material Validation Metadata 的消费契约仍是明确缺口。</p><p>核心 view.present / view.dismiss 与独立 Presentation Spec 已移出。Interaction 仅保留 form.command、host.emit 的受限连接；普通字段修改走 Binding Adapter，不额外重复声明写入事件。跨树 UI 协作先用复合容器或 Host，不恢复核心 UI Action Engine。</p><h3>默认 Live 与校验事实</h3><p>所有 Profile 默认编辑唯一 Work Data；Profile 切换不自动初始化或重放修改。Material 消费当前值、同步结果和 Runtime 被动外部校验事实；如何向输入、对象摘要和列表提供 Validation Metadata 是本轮明确缺口，尚未冻结具体 Adapter API。</p><p>完整依据：<a href="l1-round06-definition-protocol-convergence.html#r6-16">ViewNode</a>、<a href="l1-round06-definition-protocol-convergence.html#r6-26">组合验收缺口</a>。</p></section>
+
+    <section class="section" id="materials"><div class="sectionhead"><span class="sectionindex">08</span><h2>Material：容器、端口与校验元数据</h2></div><p>Material 包括输入、展示、布局、Modal/Drawer/BottomSheet 等容器及复合业务物料。容器负责开闭、Portal、焦点与 UI State；不是核心 Presentation Mode。</p><div class="tablewrap"><table><thead><tr><th>契约</th><th>当前方向</th><th>剩余边界</th></tr></thead><tbody><tr><td>Props</td><td>按 Material Schema 校验递归 ValueSpec；显式 $expr 与 Literal 转义。</td><td>Schema 包装、最终转义与类型推断。</td></tr><tr><td>Binding</td><td>默认/具名 DataReference 端口，只关联数据；修改走 Command。</td><td>端口值类型、复合变更与错误传播接口。</td></tr><tr><td>Slots</td><td>容器声明基数；children 建议简写 slots.default，不允许重复提供。</td><td>具体 Slots Schema、交付展开和平台适配。</td></tr><tr><td>Events</td><td>按需类型化事件端口，仅 form.command / host.emit 受限映射。</td><td>Payload/source:event 与捕获 Scope 的精确消费和权限。</td></tr><tr><td>Validation Metadata</td><td>Issues 归 DataReference + Scope，与 UI 节点分离。</td><td>输入物料、对象摘要、数组项汇总如何读取状态与 Issues，需优先补齐。</td></tr></tbody></table></div><p>Named Template 静态复用结构，显式 ScopeHandle 参数；不共享组件实例或独立业务 Store。Host Services 可注入给物料内部远程需求，不在 L1 新建通用 Service/Action 模块。</p></section>
+
+    <section class="section" id="capabilities"><div class="sectionhead"><span class="sectionindex">09</span><h2>Host / View Adapter：外部集成边界</h2></div><p>保留章节锚点以兼容旧链接。第三组替代此前 Runtime 调用 Capability、管理 Resource 生命周期的建议：远程请求、Loading / Error / Retry / Cache、上传、提交及工作流均由 Host / View Adapter 管理。</p><div class="tablewrap"><table><thead><tr><th>能力</th><th>责任流向</th></tr></thead><tbody><tr><td>远程城市选项</td><td>Host 订阅 country → 外部查询与选项状态 → View 显示 → 用户选择经 Command 写回。</td></tr><tr><td>地址自动填充</td><td>Host 验证请求结果仍适用 → 通过单个对象或复合 Command 更新 → Runtime 同步结算。</td></tr><tr><td>用户名唯一性</td><td>Definition/Host 登记义务 → Host 执行并上报五态 → Runtime 校验结论有效性、汇总 Readiness → 多 View 消费状态/诊断；正式接口未定。</td></tr><tr><td>上传与提交</td><td>Host 管理业务成功、失败和持久化；不当作表单内部 Command。</td></tr><tr><td>复杂纯计算</td><td>注册、版本化Pure Function，可有跨端实现；不包含网络副作用。</td></tr></tbody></table></div><p>Command 只描述 Form Data 修改，不提供业务 Command 执行器；Host 不能绕过 Command 写 Store。第五组已确认 Runtime 登记校验义务、被动状态和 Issues/有效性，生成 Readiness；精确 API 未冻结。Ready 不等于 Host 提交许可，Host 仍自行执行请求、权限与业务检查。</p><p>第六组明确三条 Host 路径：外部 Constraint 义务 / Validator，Material 事件 host.emit，物料内部注入 Host Services。必要能力缺失需诊断，不建设通用宿主工作流。详见 <a href="l1-round03-behavior-reaction-command.html#external">EXT-1 / EXT-2</a>、<a href="l1-round03-behavior-reaction-command.html#async-validation">VAL-EXT</a>。</p></section>
+
+    <section class="section" id="tooling">
+      <div class="sectionhead"><span class="sectionindex">10</span><h2>Tooling：设计器、调试器、发布与治理</h2></div>
+      <p>先解决定义和运行时语义，再投入复杂拖拽设计器。第一阶段优先实现 <strong>Definition Editor + Preview + Runtime Devtools</strong>，降低验证成本。</p>
+      <div class="tablewrap"><table><thead><tr><th>阶段</th><th>工具</th><th>直接价值</th></tr></thead><tbody>
+      <tr><td>阶段一</td><td>Definition Editor、Preview、Diagnostics</td><td>快速验证协议与运行时</td></tr>
+      <tr><td>阶段二</td><td>Rule Builder、Runtime Trace</td><td>降低逻辑配置与调试成本</td></tr>
+      <tr><td>阶段三</td><td>可视化 Form Studio</td><td>降低业务配置门槛</td></tr>
+      <tr><td>阶段四</td><td>Release Console、Material Manager</td><td>规模化交付与治理</td></tr>
+      </tbody></table></div>
+      <h3>10.1 版本从第一版开始治理</h3>
+      <div class="tablewrap"><table><thead><tr><th>版本对象</th><th>意义</th></tr></thead><tbody>
+      <tr><td>Definition Revision</td><td>具体表单业务定义的修订</td></tr>
+      <tr><td>Definition Format Version</td><td>协议格式与语义版本</td></tr>
+      <tr><td>Runtime Compatibility</td><td>该表单需要的执行能力</td></tr>
+      <tr><td>Material Versions</td><td>所依赖的物料及其版本</td></tr>
+      <tr><td>Data Contract Version</td><td>草稿与已保存数据的结构版本</td></tr>
+      </tbody></table></div>
+      <p>发布表单应形成不可变 Release Artifact，默认让运行中的会话固定已发布版本，避免中途变更计算语义。配置迁移与历史草稿数据迁移应分开处理。</p>
+      <h3>10.2 工程质量保障</h3>
+      <div class="grid"><div class="panel"><div class="paneltitle">静态质量</div><p>引用检查、类型校验、物料能力验证、潜在写入告警与依赖环分析，不默认拒绝合理同目标顺序覆盖。</p></div><div class="panel"><div class="paneltitle">运行时质量</div><p>事务一致性、同步级联、动态数组、循环与错误隔离；远程竞态在 Host 集成测试验证。</p></div><div class="panel"><div class="paneltitle">跨端契约</div><p>同一数据、上下文和共享规则产生一致语义；不同 Profile 的交互路径与 staged 模式分别验证。</p></div><div class="panel"><div class="paneltitle">发布与可观测性</div><p>不可变版本、灰度回滚、因果链 Trace、性能指标和脱敏日志。</p></div></div>
+    </section>
+
+    <section class="section" id="flow"><div class="sectionhead"><span class="sectionindex">11</span><h2>完整交互：内部稳定修改与 Host 请求分开</h2></div><p>案例仍用投保录入验证复杂表单，但外部报价并非核心 Resource。业务流程由 Host 自主组织。</p><div class="codeblock"><div class="codehdr"><span>职责时序示意，非调度算法</span></div><pre><code>用户修改数据 → View 发出 Command
+Runtime → 当前 Work Data + 同步 Reaction 结算
+Runtime → 纯计算与同步 Constraint → 稳定状态 / 诊断
+View / Host ← 订阅稳定结果
+
+Host → 判断是否需要报价 → 发起并管理请求
+Host → 检查结果仍适用 → 外部报价状态供 View 展示
+Host → 确需更新业务字段时发出 Command
+Runtime → 新一轮内部同步结算
+
+Definition / Host → 注册必需校验义务
+Host → 执行并上报外部校验状态
+Runtime → 检查当前有效性 → 统一 Report / Readiness / Output（精确 API 待定）
+Host → 核对当前报告/输出及业务条件 → 自主提交</code></pre></div><p>执行失败不发布部分成功；业务不合法仍可作为工作态。网络失败不是内部同步事务回滚，Host 负责请求及业务恢复。内部字段值和外部候选/报价状态不混为一份 Work Data。</p></section>
+
+    <section class="section" id="mapping">
+      <div class="sectionhead"><span class="sectionindex">12</span><h2>六大设计方向映射到各层</h2></div>
+      <p>六个方向不是六个纵向层级，而是贯穿各层的设计与评审维度。</p>
+      <div class="tablewrap"><table><thead><tr><th>设计方向</th><th>主要涉及层次</th><th>核心问题</th></tr></thead><tbody>
+      <tr><td>协议灵活度与复杂度</td><td>Definition + Preparation</td><td>简单配置简单，复杂场景可组合</td></tr>
+      <tr><td>逻辑编排与运行时</td><td>Runtime</td><td>状态如何稳定计算、提交与恢复</td></tr>
+      <tr><td>跨端一致性</td><td>Definition + Runtime + Renderer</td><td>哪些规则共享，哪些视图与行为按显式策略差异化</td></tr>
+      <tr><td>物料与扩展性</td><td>Material + Renderer + Host Integration</td><td>业务扩展不侵入核心</td></tr>
+      <tr><td>版本兼容与演进</td><td>Definition + Preparation + Tooling</td><td>历史配置、数据与依赖长期可用</td></tr>
+      <tr><td>工程治理与质量</td><td>所有层</td><td>每个关键语义可验证、可追踪</td></tr>
+      </tbody></table></div>
+      <h3>必须警惕的跨层破坏</h3>
+      <div class="grid"><div class="panel"><div class="paneltitle">协议任意 JS</div><p>可能破坏跨端语义和静态分析能力。</p></div><div class="panel"><div class="paneltitle">物料直接写 Store</div><p>可能绕过事务与状态一致性。</p></div><div class="panel"><div class="paneltitle">索引不带版本</div><p>可能破坏缓存、发布及回滚正确性。</p></div><div class="panel"><div class="paneltitle">Renderer 自算业务</div><p>导致各端规则漂移与权威数据分裂。</p></div></div>
+    </section>
+
+    <section class="section" id="decisions"><div class="sectionhead"><span class="sectionindex">13</span><h2>架构决策与 L1 主台账</h2></div><p>总体产品定位与四层架构保持；横向集成按第三组收缩为Pure Function / Material 与核心外 Host 边界。L1 决策状态集中维护在 <a href="l1-definition-decisions-and-roadmap.html#matrix">决策归档的唯一主台账</a>，本文不另维护一份可能漂移的详细 ADR 状态表。</p><p>台账区分已定稿、原则确定、待讨论和已修正/不沿用。已定稿指职责与方向，不代表协议字段、AST 和运行策略已经冻结。</p><p>L2 / L3 / L4 的内部实现、数据结构及接口草图仍为候选，不因 L1 方向确定而自动接受。后续若改变已定方向，应记录前提、替代方案与历史变更。</p></section>
+
+    <section class="section" id="roadmap"><div class="sectionhead"><span class="sectionindex">14</span><h2>逐层设计路线与当前讨论入口</h2></div><p>当前聚焦 L1，前六组架构方向已阶段归档。按 <a href="l1-definition-decisions-and-roadmap.html#roadmap">L1 ADR 路线图</a> 第六组已阶段归档，优先 Material Contract + Validation Metadata，再定稿 Schema；外部 I/O 交给 Host。以下为跨层推进顺序，与 L1 内部 ADR 不是同一层次。</p><div class="tablewrap"><table><thead><tr><th>阶段</th><th>内容</th></tr></thead><tbody><tr><td>01 · L1</td><td>前六组已阶段归档；补齐 Material Validation Metadata，再交付最终 Schema；保留细节后续细化。</td></tr><tr><td>02 · Runtime 状态</td><td>在 L1 契约约束下设计工作数据、稳定身份、快照与编辑上下文。</td></tr><tr><td>03 · Runtime 执行</td><td>依赖计算、数据 Command、同步 Reaction、事务与同步约束；反向验证 L1。</td></tr><tr><td>04 · Preparation</td><td>根据执行需求确定规范化、静态诊断、依赖索引与准备产物。</td></tr><tr><td>05 · Renderer / 扩展</td><td>实现 Profile、平台与物料，衔接 Host Adapter；不引入核心 Capability 引擎。</td></tr><tr><td>06 · 治理</td><td>兼容、迁移、作者体验、测试矩阵、发布及观测。</td></tr></tbody></table></div><p>定义与执行契约迭代验证，语义讨论不等于提前实现全部 Runtime。每项 ADR 使用需求 → 候选 → 配置示例 → 覆盖与成本 → 失败路径 → 决策的模板，并使用 <a href="l1-definition-decisions-and-roadmap.html#cases">固定用例 S1–S6</a> 检查。</p><div class="emphasis">第六组已阶段归档；下一步补齐 Material Contract + Validation Metadata，再定稿 Schema / 类型 / L2 契约与 Profile Bundle，随后 L3 专项。F1/F2、P6 与精确接口仍保留推荐/候选状态。</div></section>
+
+    <div class="footnotes"><strong>设计说明</strong><p>本文件的总体分层与产品边界已确定；L1 当前方向以决策归档为准，其余内部设计仍为候选，不等于正式接口规范。图示、类型定义和协议示例均用于验证职责与语义；最终需结合真实业务样例、基准测试和 ADR 决策收敛。</p><p>可进一步参考的公开技术材料：<a href="https://json-schema.org/" target="_blank" rel="noopener noreferrer">JSON Schema</a>、<a href="https://jsonforms.io/" target="_blank" rel="noopener noreferrer">JSON Forms</a>、<a href="https://surveyjs.io/" target="_blank" rel="noopener noreferrer">SurveyJS</a>。这些仅作为设计参考，不代表本方案选择直接依赖其中某个引擎。</p></div>
+    <footer class="footer"><span>Form Engine · Architecture V1</span><span>Focused scope. Strong semantics. Clear boundaries.</span></footer>
+  </main>
+</div>
+</div>
+<button class="up" id="up" aria-label="回到顶部" title="回到顶部">↑</button>
+<script>
+(function(){
+  const doc=document.documentElement;
+  const themeBtn=document.getElementById('themeBtn');
+  let saved=null;
+  try {saved=localStorage.getItem('form-architecture-theme')}catch(e){}
+  const preferDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  doc.dataset.theme=saved || (preferDark?'dark':'light');
+  themeBtn.addEventListener('click',()=>{
+    const newTheme=doc.dataset.theme==='dark'?'light':'dark';
+    doc.dataset.theme=newTheme;
+    try{localStorage.setItem('form-architecture-theme',newTheme)}catch(e){}
+  });
+  const p=document.getElementById('progress');
+  const up=document.getElementById('up');
+  function updateScroll(){
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    p.style.width=(max>0?window.scrollY/max*100:0)+'%';
+    up.classList.toggle('visible',window.scrollY>500);
+  }
+  window.addEventListener('scroll',updateScroll,{passive:true});
+  window.addEventListener('resize',updateScroll);updateScroll();
+  up.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  const links=[...document.querySelectorAll('.toc a')];
+  const sections=[...document.querySelectorAll('section.section[id]')];
+  if('IntersectionObserver' in window){
+    const observer=new IntersectionObserver(entries=>{
+      const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);
+      if(!visible.length)return;
+      const id=visible[0].target.id;
+      links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));
+    },{rootMargin:'-70px 0px -66% 0px',threshold:0});
+    sections.forEach(s=>observer.observe(s));
+  }
+  document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{
+    const content=btn.closest('.codeblock').querySelector('pre').innerText;
+    try{await navigator.clipboard.writeText(content);const old=btn.textContent;btn.textContent='已复制';setTimeout(()=>btn.textContent=old,1300)}
+    catch(e){btn.textContent='请手动复制';setTimeout(()=>btn.textContent='复制',1600)}
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!doctype html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="复杂动态表单引擎 L1 第二组 Expression Pure Function Constraint 设计决策归档 E1-E7 C1-C3，含静态动态槽位和表达式复杂度治理。"><title>L1 第二组 · Expression / Pure Function / Constraint 决策归档</title><style>
+:root{--bg:#fff;--surface:#fff;--soft:#f7f7f8;--softer:#f2f2f3;--sidebar:#fafafa;--text:#171717;--muted:#656565;--quiet:#858585;--line:#e7e7e7;--line-strong:#d4d4d4;--shadow:0 7px 30px #0000000a;--ink:#181818;--inverse:#fff}
+html[data-theme=dark]{--bg:#171717;--surface:#171717;--soft:#242424;--softer:#2e2e2e;--sidebar:#1c1c1c;--text:#f3f3f3;--muted:#b5b5b5;--quiet:#979797;--line:#353535;--line-strong:#555;--shadow:none;--ink:#f0f0f0;--inverse:#171717}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.85;font-size:15px;-webkit-font-smoothing:antialiased;color:var(--text);background:var(--bg);margin:0}::selection{background:#9995}a{color:inherit}button{font:inherit;cursor:pointer}strong{font-weight:700}p{margin:12px 0}h1,h2,h3,h4{line-height:1.4;letter-spacing:-.032em}code,pre{font-family:SFMono-Regular,Consolas,"Liberation Mono",monospace}code{border-radius:5px;background:var(--soft);border:1px solid var(--line);padding:1px 5px;font-size:.89em}pre code{background:none;border:0;padding:0;font-size:inherit}
+.layout{display:grid;grid-template-columns:257px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:var(--sidebar);overflow-y:auto;scrollbar-width:thin;padding:26px 15px 24px 17px;z-index:50}.brand{display:flex;align-items:center;gap:11px;padding:0 9px 22px;text-decoration:none}.brandicon{border:1.5px solid var(--text);border-radius:10px;width:31px;height:31px;display:grid;place-items:center;font-weight:800;font-size:13px}.brandname{font-weight:750;font-size:13px;letter-spacing:-.025em}.brandsub{font-size:10px;color:var(--quiet)}.navtitle{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.15em;color:var(--quiet);padding:12px 10px 7px}.toc a{display:flex;align-items:baseline;gap:9px;border-radius:8px;padding:8px 9px;margin:1px 0;text-decoration:none;color:var(--muted);font-size:12px;line-height:1.5}.toc a .num{color:var(--quiet);font:10px monospace;min-width:21px}.toc a:hover,.toc a.active{background:var(--softer);color:var(--text)}.toc a.active{font-weight:650}.sidebarfoot{border-top:1px solid var(--line);padding:15px 10px;color:var(--quiet);font-size:11px;margin-top:14px}.main{min-width:0}.topbar{position:sticky;top:0;z-index:35;display:flex;justify-content:space-between;align-items:center;gap:15px;height:59px;padding:0 36px;border-bottom:1px solid var(--line);background:var(--bg)}.crumb{color:var(--muted);font-size:12px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.crumb strong{color:var(--text)}.actions{display:flex;gap:7px;align-items:center}.btn{font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);padding:6px 11px;white-space:nowrap}.btn:hover{background:var(--soft);color:var(--text)}.menu{display:none}.progress{height:2px;position:fixed;left:257px;top:0;width:0;background:var(--text);z-index:80;pointer-events:none}.content{max-width:1120px;padding:54px 56px 125px;margin:auto;min-width:0}.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.13em;font-weight:750;text-transform:uppercase}.hero h1{font-size:clamp(33px,3.5vw,48px);line-height:1.23;letter-spacing:-.055em;margin:17px 0 17px;font-weight:780}.hero .desc{font-size:17px;color:var(--muted);line-height:1.9;max-width:850px}.meta{display:flex;gap:9px;flex-wrap:wrap;margin:24px 0 0}.meta span{border:1px solid var(--line);border-radius:30px;padding:4px 11px;color:var(--muted);font-size:11px}.hero-sep{border:0;border-top:1px solid var(--line);margin:42px 0 40px}.section{scroll-margin-top:85px;margin:53px 0 72px}.section-head{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:24px}.section-no{font-size:12px;color:var(--quiet);font-family:monospace}.section h2{font-size:25px;font-weight:730;margin:0}.section h3{font-size:18px;font-weight:700;margin:33px 0 13px}.section h4{font-size:14px;margin:1px 0 5px}.section ul{padding-left:23px}.section li{margin:7px 0}.section li::marker{color:var(--muted)}.muted,.tiny{color:var(--muted)!important}.tiny{font-size:11px}.quote{border-left:3px solid var(--text);padding:10px 20px;font-size:17px;line-height:1.8;font-weight:550;margin:23px 0}.hero-statement{font-size:18px;font-weight:650;line-height:1.75;padding:5px 0 5px 18px;border-left:3px solid var(--text);margin:15px 0 25px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 22px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.panel{border:1px solid var(--line);padding:18px 19px;border-radius:12px;min-width:0}.paneltitle{font-size:13px;font-weight:700;line-height:1.7}.panel p{font-size:12px;line-height:1.75;color:var(--muted);margin:7px 0 0}.state{display:inline-block;font-size:10px;color:var(--text);white-space:nowrap;padding:1px 7px;border:1px solid var(--line-strong);border-radius:20px;vertical-align:middle;margin:0 3px 0 0;line-height:1.7}.state-done{font-weight:700}.state-principle{border-style:solid;color:var(--muted)}.state-open{border-style:dashed;color:var(--muted)}.state-retired{border:0;background:var(--soft);color:var(--quiet);text-decoration:line-through}.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin:19px 0 24px}table{border-collapse:collapse;width:100%;min-width:625px;font-size:12.5px;line-height:1.75}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--soft);font-weight:700;color:var(--muted);white-space:nowrap}td:first-child{font-weight:620}tr:last-child td{border-bottom:0}.tight td,.tight th{padding:10px 11px}.callout{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:18px 20px;margin:22px 0}.callout strong{font-size:13px}.callout p{font-size:13px;line-height:1.85;margin:5px 0}.callout.focus{background:var(--surface);border:1.5px solid var(--line-strong)}.diagram{border:1px solid var(--line);border-radius:13px;padding:22px 20px;margin:23px 0}.diagram-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--quiet);font-weight:700;margin-bottom:17px}.node-row{max-width:760px;margin:auto}.node{border:1px solid var(--line);border-radius:9px;padding:13px 15px;background:var(--soft);text-align:center;min-width:0}.node.major{border:1.5px solid var(--text);background:var(--surface)}.node strong{display:block;font-size:13px;line-height:1.5}.node small{display:block;font-size:11px;color:var(--muted);line-height:1.65;margin-top:3px}.arrow{text-align:center;line-height:27px;color:var(--quiet);font-size:18px}.split-arrows{display:grid;grid-template-columns:1fr 1fr;text-align:center;height:31px;color:var(--quiet);font-size:21px}.diagram-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.diagram-footer{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;margin-top:19px;text-align:center}.codeblock{border:1px solid var(--line);background:var(--soft);border-radius:11px;overflow:hidden;margin:20px 0 26px}.codehdr{display:flex;justify-content:space-between;align-items:center;gap:9px;border-bottom:1px solid var(--line);padding:8px 13px;color:var(--quiet);font-size:11px}.copy{background:transparent;color:var(--muted);border:0;padding:4px 8px;border-radius:7px;font-size:11px}.copy:hover{background:var(--softer)}pre{padding:16px 19px;font-size:12px;line-height:1.75;overflow:auto;margin:0;white-space:pre;tab-size:2}.numberlist{margin:23px 0;display:grid;gap:0}.numberitem{display:grid;grid-template-columns:40px minmax(0,1fr);gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}.numberitem:last-child{border-bottom:0}.numbericon{height:37px;width:37px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font:650 12px monospace}.numberitem h4{margin:1px 0 5px}.numberitem p{margin:0;color:var(--muted);font-size:12px}.endmark{text-align:center;font-size:11px;color:var(--quiet);letter-spacing:.15em;margin:65px 0 20px}.footer{border-top:1px solid var(--line);padding:25px 0;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px}.up{position:fixed;bottom:25px;right:26px;border:1px solid var(--line);border-radius:100%;background:var(--surface);color:var(--text);width:38px;height:38px;display:grid;place-items:center;box-shadow:var(--shadow);opacity:0;pointer-events:none}.up.visible{opacity:1;pointer-events:auto}
+@media(max-width:1100px){.layout{grid-template-columns:220px minmax(0,1fr)}.progress{left:220px}.content{padding:45px 33px 95px}.topbar{padding:0 24px}}
+@media(max-width:820px){.layout{display:block}.sidebar{position:fixed;left:0;top:0;bottom:0;width:275px;height:auto;transform:translateX(-105%);transition:transform .2s ease;box-shadow:var(--shadow)}body.menu-open .sidebar{transform:translateX(0)}.menu{display:inline-flex}.menu-overlay{display:none;position:fixed;inset:0;z-index:45;background:#0007}body.menu-open .menu-overlay{display:block}.progress{left:0}.topbar{padding:0 17px;height:55px}.content{padding:31px 21px 78px}.grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h1{font-size:34px}.section h2{font-size:23px}.section{margin:46px 0 62px}}
+@media(max-width:520px){.grid,.grid.three,.diagram-grid{grid-template-columns:1fr}.content{padding:27px 17px 80px}.hero h1{font-size:27px}.hero .desc{font-size:15px}.section h2{font-size:21px}.section-head{gap:9px}.topbar{gap:8px}.crumb{max-width:150px}.btn{padding:6px 9px}.diagram{padding:16px 13px}.split-arrows{display:none}.codeblock pre{font-size:11px}.panel{padding:15px}}
+@media print{html{scroll-behavior:auto}body{background:#fff;color:#111;font-size:11pt}.sidebar,.menu-overlay,.topbar,.progress,.up,.copy{display:none!important}.layout{display:block}.content{padding:0;margin:0;max-width:none}.hero h1{font-size:25pt}.section{break-inside:auto;margin:26px 0}.section-head{break-after:avoid}.panel,.diagram,.callout,.codeblock{break-inside:avoid;background:#fff}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0;font-size:9pt}th,td{padding:6px 8px}.diagram-grid,.grid{break-inside:avoid}a{text-decoration:none}.footer{font-size:9pt}@page{size:A4;margin:16mm}}
+
+.status-strip{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 21px}.status-strip div{display:flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:8px;font-size:12px}.status-strip strong{font-family:monospace;font-size:12px}.pill{display:inline-block;border-radius:7px;border:1px solid var(--line-strong);font-size:10px;font-weight:680;line-height:1.5;padding:3px 7px;margin-left:6px;white-space:nowrap}.pill.closed{background:var(--soft)}.pill.tentative{border-style:dashed}.pill.todo{color:var(--muted);border-style:dashed}.subtitleline{color:var(--muted);font-size:12px;font-weight:550;margin-top:-6px}.compare{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:19px 0 26px}.compare .panel{padding:15px}.compare .panel h4{margin:0 0 4px}.compare .panel p{margin:6px 0}.caption{font-size:11px;color:var(--muted);margin:-14px 0 23px}.rail{display:grid;grid-template-columns:125px 1fr;gap:10px;margin:14px 0}.rail>div:first-child{border-radius:8px;background:var(--soft);text-align:center;padding:13px 9px;font-size:12px;font-weight:700}.rail>div:last-child{border:1px solid var(--line);border-radius:8px;padding:10px 15px;font-size:13px}.rail p{margin:2px 0 0;color:var(--muted);font-size:12px}.labelnote{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--quiet);margin:26px 0 10px}.blackrule{border-left:3px solid var(--text);padding:11px 16px;margin:19px 0;font-size:15px;font-weight:650;line-height:1.85}.adrhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.adrhead code{font-size:12px}.topic{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin:17px 0;font-size:13px}.topic strong{display:block;margin-bottom:4px}.nextlist{display:grid;gap:9px;margin:17px 0}.nextrow{display:grid;grid-template-columns:43px 1fr;gap:14px;border-bottom:1px solid var(--line);padding:10px 2px 13px}.nextrow .n{font:700 12px monospace;border-radius:8px;background:var(--soft);height:39px;display:grid;place-items:center}.nextrow h4{margin:0}.nextrow p{margin:3px 0 0;color:var(--muted);font-size:12px}.summarybar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0 26px}.summarybox{border:1px solid var(--line);border-radius:11px;padding:17px}.summarybox strong{display:block;font-size:25px;line-height:1.35}.summarybox small{display:block;font-size:11px;color:var(--muted)}
+@media(max-width:850px){.compare{grid-template-columns:1fr}.rail{grid-template-columns:100px 1fr}}
+@media(max-width:520px){.summarybar{grid-template-columns:1fr 1fr}.rail{grid-template-columns:1fr}.rail>div:first-child{text-align:left;padding:8px 12px}.compare{grid-template-columns:1fr}}
+
+.choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:17px 0 23px}.choice>.panel{padding:15px}.choice .cap{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--quiet)}.choice .yes{border:1.5px solid var(--text)}
+.slotgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:18px 0 24px}.slot{border:1px solid var(--line);border-radius:10px;padding:16px}.slot strong{display:block;font-size:13px}.slot small{display:block;font-size:11px;color:var(--muted);margin-top:6px}
+.tag{display:inline-block;padding:3px 8px;border:1px solid var(--line-strong);border-radius:7px;font-size:10px;line-height:1.5;font-weight:670}.tag.fixed{background:var(--soft)}.tag.principle{border-style:solid}.tag.detail{border-style:dashed;color:var(--muted)}.tag.future{color:var(--quiet);border-style:dashed}
+.compass{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;margin:13px 0}.compass b{font-size:12px;background:var(--soft);padding:13px;border-radius:9px}.compass>div{padding:12px 15px;border:1px solid var(--line);border-radius:9px;font-size:12px}.compass em{color:var(--muted);font-style:normal}
+.inlinekey{font-family:monospace;color:var(--muted);font-size:12px}.decision-foot{border-top:1px solid var(--line);padding-top:12px;margin-top:18px;font-size:12px;color:var(--muted)}
+.mini-map{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mini-map .node{height:100%;display:grid;align-content:center}.minor{font-size:12px;color:var(--muted)}.accentline{border-left:3px solid var(--text);padding:10px 18px;margin:18px 0;font-size:14px;font-weight:600}.footnotes{font-size:12px;color:var(--muted);line-height:1.9}
+@media(max-width:850px){.choice,.slotgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.choice,.slotgrid,.mini-map{grid-template-columns:1fr}.compass{grid-template-columns:1fr}.compass b{padding:8px 12px}}
+</style></head><body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:14px 20px;background:#fff3cd;color:#171717;position:relative;z-index:10000">历史过程快照 · 已由 L1 V1.0 定稿替代，不作为当前规范。 <a href="../../reading/l1-definition-protocol-v1.html">阅读定稿</a> · <a href="../index.html">历史索引</a></div><div class="progress"></div><div class="menu-overlay" role="presentation"></div><div class="layout"><aside class="sidebar"><a class="brand" href="#top"><span class="brandicon">L1</span><span><span class="brandname">FORM ENGINE / DESIGN</span><br><span class="brandsub">Definition · Architecture ADR</span></span></a><div class="navtitle">文档导航</div><div style="padding:0 10px 12px;font-size:12px"><a href="index.html">← 文档首页</a> · <a href="l1-definition-decisions-and-roadmap.html#matrix">L1 主台账</a> · <a href="l1-round01-data-value-reference-scope-binding.html">第一轮决策</a></div><div class="navtitle">第二组决策归档 · 目录</div><nav class="toc" aria-label="章节导航"><a data-to="overview" href="#overview"><span class="num">01</span><span>归档范围与边界</span></a><a data-to="ledger" href="#ledger"><span class="num">02</span><span>ADR 决策总表</span></a><a data-to="e1" href="#e1"><span class="num">03</span><span>E1 · 统一 Expression 形式</span></a><a data-to="e2" href="#e2"><span class="num">04</span><span>E2 · 类型、工作值与错误传播</span></a><a data-to="e3" href="#e3"><span class="num">05</span><span>E3 · Pure Function 的内置范围与扩展</span></a><a data-to="e4" href="#e4"><span class="num">06</span><span>E4 · 命名表达式与复用</span></a><a data-to="e5" href="#e5"><span class="num">07</span><span>E5 · 集合计算与词法 Scope</span></a><a data-to="e6" href="#e6"><span class="num">08</span><span>E6 · Expression Slot 与静态/动态识别</span></a><a data-to="e7" href="#e7"><span class="num">09</span><span>E7 · 复杂度收拢与预算</span></a><a data-to="c1" href="#c1"><span class="num">10</span><span>C1 · Constraint 的最小协议</span></a><a data-to="c2" href="#c2"><span class="num">11</span><span>C2 · 校验生命周期与错误归属</span></a><a data-to="c3" href="#c3"><span class="num">12</span><span>C3 · 规则资产与跨端一致性</span></a><a data-to="demo" href="#demo"><span class="num">13</span><span>端到端组合 Demo：静态与动态的边界</span></a><a data-to="pipeline" href="#pipeline"><span class="num">14</span><span>L1 / L2 / L3 / L4 的执行契约</span></a><a data-to="open" href="#open"><span class="num">15</span><span>未定稿清单：哪些留待后续？</span></a><a data-to="handoff" href="#handoff"><span class="num">16</span><span>后续接口与当前推进路线</span></a></nav><div class="sidebarfoot">文档版本 V0.1<br>2026-10-15<br>阶段性确认，语法未冻结</div></aside><div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:11px;min-width:0"><button class="btn menu" type="button" aria-label="展开目录" aria-expanded="false">☰ 目录</button><div class="crumb">Dynamic Form / L1 / <strong>Round 02</strong></div></div><div class="actions"><button id="theme" class="btn" type="button" aria-label="切换配色">深色</button><button id="print" class="btn" type="button">打印 / PDF</button></div></header><main id="top" class="content"><div class="hero"><div class="eyebrow">DECISION RECORD / L1 / ROUND 02</div><h1>Expression / Pure Function / Constraint<br>架构决策归档</h1><p class="desc">统一表达式语言、受控动态槽位、复杂度治理与数据约束。集中归档第二组已认可的设计原则、备选方案、演示协议及留待后续设计的边界。</p><div class="meta"><span>V0.1 · 2026-10-15</span><span>阶段性确认</span><span>10 项 ADR</span><span>规范语法未冻结</span><span>纯黑白文档</span></div></div><hr class="hero-sep"><div class="callout"><strong>当前同步版 · 已同步第六组 · 2026.10.16</strong><p>正文、示例和后续路线已按前六组最新决策调整；以当前主台账及后确认的结论为准。原始 V0.1 仅保存在 <a href="../2026-10-15-round-originals/l1-round02-expression-pure-function-constraint.html">历史原稿</a>，不作为现行规范。<a href="consistency-review-2026-10-16.md">查看一致性检查记录</a>。</p></div><section class="section" id="overview"><div class="section-head"><span class="section-no">01</span><h2>归档范围与边界</h2></div><p>本轮归档覆盖 <strong>第二组 L1：Expression / Pure Function / Constraint</strong> 的全部评审结果，包括最初的 E1–E5、C1–C3，以及后续补充的 E6（动态槽位）与 E7（复杂度治理）。文档为<strong>阶段性决策归档</strong>，不是可直接部署的正式 DSL 规范。</p><div class="callout focus"><strong>本轮一句话结论</strong><p>采用<strong>受控的结构化 Expression</strong>：只允许出现在已声明的动态槽位，简单条件内联、重复逻辑命名复用、复杂算法封装为Pure Function；复杂约束采用独立 Constraint，基础约束继续复用 JSON Schema；L2 静态分析，L3 按规范执行。</p></div><div class="summarybar"><div class="summarybox"><strong>7</strong><small>Expression / Pure Function 决策（E1–E7）</small></div><div class="summarybox"><strong>3</strong><small>Constraint 决策（C1–C3）</small></div><div class="summarybox"><strong>3</strong><small>决策状态：已确认／原则确认／待细化</small></div></div><h3>本次与上一组的关系</h3><div class="tablewrap"><table class="tight"><thead><tr><th>上一组已确定的基础</th><th>第二组如何使用</th></tr></thead><tbody><tr><td>唯一权威 Form Working Data</td><td>表达式只读当前工作数据的类型化解释，不维护第二份可写业务数据。</td></tr><tr><td>解析仅成功 / 失败</td><td>不引入 Incomplete；读取失败必须有明确的表达式错误传播。</td></tr><tr><td>Missing ≠ null</td><td>缺失是引用存在性问题，null 是明确的 JSON 值；二者不混淆。</td></tr><tr><td>Type / Reference / Scope</td><td>统一供 View、Constraint、Behavior、Host 集成边界的只读值消费；不因此建立核心 Resource。</td></tr><tr><td>JSON Schema + 补充约束</td><td>保留标准基础校验；复杂同步校验使用独立 Constraint；异步请求由 Host 执行；F4/F5 已确认 Runtime 登记义务/五态/有效性和 Readiness，精确接口仍待细化。</td></tr><tr><td>Data / Multiple Views / Shared Behavior</td><td>不同端复用业务表达式和 Constraint，不把业务规则复制到各端 View。</td></tr></tbody></table></div><p>状态口径：<span class="tag fixed">已确认</span>表示前几轮明确接受的原则；<span class="tag principle">本轮原则确认</span>表示方向已认可、不再反复比较顶层方案；<span class="tag detail">待细化</span>表示名称、类型签名、边界状态或执行策略尚未正式冻结。</p></section><section class="section" id="ledger"><div class="section-head"><span class="section-no">02</span><h2>ADR 决策总表</h2></div><p>表中“原则确认”不等于完整 JSON 字段与 Runtime 算法均已定稿；细节会根据跨端一致性和 Runtime 可实现性继续校验。</p><div class="tablewrap"><table class="tight"><thead><tr><th>编号</th><th>主题</th><th>阶段性设计结论</th><th>状态</th><th>仍需补齐</th></tr></thead><tbody><tr><td><code>E1</code></td><td>表达形式</td><td>JSON AST 为规范表示；不直接以任意 JS 字符串为运行协议</td><td><span class="tag principle">本轮原则确认</span></td><td>AST 精确判别节点及序列化形状</td></tr><tr><td><code>E2</code></td><td>类型与求值</td><td>严格运算类型 + Schema 驱动 Typed Read；失败不回退旧值</td><td><span class="tag principle">本轮原则确认</span></td><td>Missing/null/Error 传播表及短路细则</td></tr><tr><td><code>E3</code></td><td>Pure Function</td><td>小型内置纯函数集 + 有版本的领域纯函数；禁 I/O/写入</td><td><span class="tag principle">本轮原则确认</span></td><td>最终纯函数清单、签名与成本声明</td></tr><tr><td><code>E4</code></td><td>组合与复用</td><td>内联 + 可选 Named Expression；命名引用不无限展开</td><td><span class="tag principle">本轮原则确认</span></td><td>命名空间、作用域、跨实例缓存键</td></tr><tr><td><code>E5</code></td><td>集合运算</td><td>有限 count/some/every/sum 等 + 局部词法 Scope</td><td><span class="tag detail">方向认可</span></td><td>filter 是否 V1、空集合与失效项语义</td></tr><tr><td><code>E6</code></td><td>Expression Slot</td><td>只在受控语义位置；ValueSpec 内递归显式 $expr，不逐深层 Prop 白名单</td><td><span class="tag principle">本轮原则确认</span></td><td>Literal 精确转义、ValueSpec 与 Material Schema 类型检查</td></tr><tr><td><code>E7</code></td><td>复杂度治理</td><td>命名复用 + Pure Function 收拢 + 静态/运行双重预算</td><td><span class="tag principle">本轮原则确认</span></td><td>深度/节点/图成本阈值与运行保护</td></tr><tr><td><code>C1</code></td><td>复杂约束</td><td>同步统一断言；异步校验采用独立执行语义</td><td><span class="tag detail">方向认可</span></td><td>when/assert/target/Scope 完整约束契约</td></tr><tr><td><code>C2</code></td><td>校验与错误</td><td>规则与执行/展示策略分离，统一错误归属与状态</td><td><span class="tag detail">方向认可</span></td><td>校验触发、pending/error/submit 行为</td></tr><tr><td><code>C3</code></td><td>规则资产</td><td>内联为主；高频规则可资产化；V1 不建设完整 Registry</td><td><span class="tag principle">本轮原则确认</span></td><td>资产参数、版本锁定、解析与治理</td></tr></tbody></table></div><div class="callout"><strong>不再重新引入的模型</strong><p><strong>Computation 不再是与 Expression 并列的 L1 领域协议。</strong>命名表达式是复用方式；L2/L3 可以有 Prepared Expression / 计算节点，但那是内部执行模型。</p></div></section><section class="section" id="e1"><div class="section-head"><span class="section-no">03</span><h2>E1 · 统一 Expression 形式</h2></div><p><strong>决策：</strong>采用结构化 JSON AST 作为 L1 规范表示，后续设计器可以提供条件构建器；字符串语法若有价值，只能作为可选 Authoring 输入并转换为规范 AST。 <span class="tag principle">本轮原则确认</span></p><div class="tablewrap"><table class=""><thead><tr><th>备选方案</th><th>优势</th><th>主要风险</th><th>判断</th></tr></thead><tbody><tr><td>A · 字符串 DSL</td><td>写起来短</td><td>解析器、沙箱、静态检查、跨语言兼容成本高</td><td>不作为核心规范</td></tr><tr><td>B · 自定义 JSON AST</td><td>结构清晰、易类型检查、可视化编辑友好</td><td>原始 JSON 较冗长</td><td><strong>采用</strong></td></tr><tr><td>C · JsonLogic 等现成 DSL</td><td>部分生态可复用</td><td>运算符、类型、Missing/错误、Scope 与当前需求仍需适配</td><td>参考而非直接等同于协议</td></tr></tbody></table></div><h3>核心 AST 基元：字面量 / 引用 / 纯函数调用</h3><div class="codeblock"><div class="codehdr"><span>JSON · 示意 AST；规范化 Reference 形式沿用第一组</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "op": "and",
+  "args": [
+    {
+      "op": "gte",
+      "args": [
+        {
+          "ref": "/age"
+        },
+        18
+      ]
+    },
+    {
+      "op": "eq",
+      "args": [
+        {
+          "ref": "/country"
+        },
+        "JP"
+      ]
+    }
+  ]
+}</code></pre></div><p>静态 JSON 对象与表达式对象绝不能通过“是否恰好拥有 <code>op</code> 字段”做全局猜测。这是 E6 Dynamic Slot 的根本动机。</p><div class="decision-foot">未冻结：字面量对象的包装形式、所有 AST 节点标签、Schema 类型定义与 Source Location 诊断信息。</div></section><section class="section" id="e2"><div class="section-head"><span class="section-no">04</span><h2>E2 · 类型、工作值与错误传播</h2></div><p><strong>决策：</strong>运算符遵循严格类型语义；Data 引用通过 Schema/Codec 做类型化读取。表单的唯一可变权威数据是 Work Data；读取失败不使用上一次合法值。 <span class="tag principle">本轮原则确认</span></p><div class="diagram"><div class="diagram-label">Typed Read · From single Work Data</div><div class="node-row"><div class="node major"><strong>Form Working Data</strong><small>唯一可变的数据源 · 可暂时不满足目标契约</small></div><div class="arrow">↓</div><div class="node"><strong>Schema / Codec Typed Read</strong><small>读取当前工作值并尝试按目标类型解析</small></div><div class="arrow">↓</div><div class="diagram-grid"><div class="node"><strong>Success(value)</strong><small>提供明确类型的当前值</small></div><div class="node"><strong>Failure(error)</strong><small>向上传播读取／类型错误</small></div></div></div></div><div class="tablewrap"><table class="tight"><thead><tr><th>工作值或数据情况</th><th>读取语义</th><th>计算与校验</th></tr></thead><tbody><tr><td>age = "20"，Schema integer</td><td>可解析为数值 20</td><td>继续数值比较</td></tr><tr><td>age = "abc"，Schema integer</td><td>Parse Failure</td><td>相关表达式失败，不静默判 false</td></tr><tr><td>age = "12."，严格整数/小数输入规则不接受</td><td>Parse Failure</td><td>与其他无效输入统一；没有 Incomplete</td></tr><tr><td>age 属性不存在</td><td>Missing</td><td>由存在性和规则适用策略处理</td></tr><tr><td>age = null</td><td>明确 JSON null</td><td>依 Schema 和纯函数签名判断</td></tr></tbody></table></div><h3>哪些语义仍然要细化？</h3><ul><li>Missing 是独立引用结果还是求值错误的一类；无论采用哪种表示都不得等同于数值 0、字符串空值或布尔 false。</li><li>逻辑运算符的短路顺序及错误传播（例如 <code>false && Failed</code> 是否产生 false）需要明文规定。</li><li>空值、零、空字符串、空数组等不得依赖 JavaScript 真值性隐式转换。</li><li>当类型不可用时，派生表达式与同步 Constraint 分别按消费契约处理；Host 不得把旧值当作当前可用输入。逐纯函数错误传播仍待细化，不能统一吞错。</li></ul><div class="callout"><strong>避免重开第一组 D2</strong><p>不重新引入双 Store、通用 Input Buffer 或 Incomplete 解析态。不同终端控件的临时焦点、选区和输入法状态是本地 UI 状态，不是第二个业务数据源。</p></div></section><section class="section" id="e3"><div class="section-head"><span class="section-no">05</span><h2>E3 · Pure Function 的内置范围与扩展</h2></div><p><strong>决策：</strong>小型通用纯函数集满足高频条件和简单计算；复杂、领域性强的算法由已注册、纯函数、版本化的 Pure Function 承载。 <span class="tag principle">本轮原则确认</span></p><div class="tablewrap"><table class="tight"><thead><tr><th>类别</th><th>候选能力</th><th>阶段性判断</th></tr></thead><tbody><tr><td>比较</td><td>eq / ne / gt / gte / lt / lte</td><td>基础候选</td></tr><tr><td>逻辑</td><td>and / or / not</td><td>基础候选</td></tr><tr><td>存在与空值</td><td>exists / isNull / isEmpty</td><td>基础候选，具体定义待定</td></tr><tr><td>算术</td><td>add / sub / mul / div</td><td>基础候选</td></tr><tr><td>条件</td><td>if</td><td>基础候选</td></tr><tr><td>集合</td><td>count / some / every / sum</td><td>限量提供，详见 E5</td></tr><tr><td>字符串／日期／显式转换</td><td>length / contains / compareDate / toNumber 等</td><td>按真实场景分批进入，不追求全量</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>JSON · 复杂领域算法收敛至Pure Function</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "call": "calendar.ageAtDate",
+  "version": "1",
+  "args": [
+    {
+      "ref": "/birthDate"
+    },
+    {
+      "ref": "/referenceDate"
+    },
+    {
+      "ref": {
+        "source": "context",
+        "path": "/agePolicy"
+      }
+    }
+  ]
+}</code></pre></div><div class="codeblock"><div class="codehdr"><span>TypeScript · 概念契约，非最终接口</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>interface PureFunction&lt;I extends readonly unknown[], O&gt; {
+  id: string;
+  version: string;
+  inputTypes: readonly ValueType[];
+  outputType: ValueType;
+  evaluate(args: I): O;
+  // 能力声明还需明确可移植性和成本约束
+}</code></pre></div><ul><li>必须是纯计算：不得在求值中调用网络、执行不可控副作用或直接写 Form Data。</li><li>确定性的上下文通过显式参数传入，不能随意读取当前时间、Locale 或宿主全局变量。</li><li>跨端实现需要同一签名、版本和黄金测试；未实现的纯函数应在 Preparation 或目标平台兼容性检查中被明确拒绝。</li><li>Pure Function 封装不能绕过成本预算和治理，应有性能约定、测试和诊断。</li></ul><div class="decision-foot">待细化：内置纯函数的精确定义、日期／金额精度、Pure Function Registry 声明、版本匹配、成本标注。</div></section><section class="section" id="e4"><div class="section-head"><span class="section-no">06</span><h2>E4 · 命名表达式与复用</h2></div><p><strong>决策：</strong>小表达式默认内联；较复杂或反复使用的逻辑用可选 Named Expression；表达式之间允许引用但不允许循环。 <span class="tag principle">本轮原则确认</span></p><div class="codeblock"><div class="codehdr"><span>JSON · 命名复用的候选表示</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "expressions": {
+    "ageAtDeparture": {
+      "call": "calendar.ageAtDate",
+      "version": "1",
+      "args": [
+        {
+          "ref": "/birthDate"
+        },
+        {
+          "ref": "/departureDate"
+        },
+        {
+          "ref": {
+            "source": "context",
+            "path": "/agePolicy"
+          }
+        }
+      ]
+    },
+    "isMinor": {
+      "op": "lt",
+      "args": [
+        {
+          "use": "ageAtDeparture"
+        },
+        18
+      ]
+    }
+  }
+}</code></pre></div><div class="diagram"><div class="diagram-label">Named Expression · DAG instead of copy/paste</div><div class="node-row"><div class="node major"><strong>ageAtDeparture</strong><small>纯领域计算</small></div><div class="arrow">↓</div><div class="node"><strong>isMinor</strong><small>引用已有表达式</small></div><div class="split-arrows"><span>↙</span><span>↘</span></div><div class="diagram-grid"><div class="node"><strong>View.visible</strong><small>消费布尔结果</small></div><div class="node"><strong>Constraint.assert</strong><small>消费派生结果或原始年龄</small></div></div></div></div><ul><li>命名表达式<strong>不是</strong>自动回写 Data 的计算字段。</li><li>L2 构建共享的表达式依赖关系，不应将 <code>use</code> 递归展开为无数重复 AST。</li><li>引用在定义词法环境中确定；全局命名表达式不得隐式捕获调用者局部 Scope。局部逻辑优先内联；不恢复通用参数化函数或动态作用域。</li><li>V1 不支持协议内自定义带参数函数、递归、任意循环或高阶函数。</li></ul><div class="decision-foot">待细化：作用域内名称可见性、覆盖与冲突策略、缓存键和失效依赖、是否允许跨 Form Definition 复用 Named Expression。</div></section><section class="section" id="e5"><div class="section-head"><span class="section-no">07</span><h2>E5 · 集合计算与词法 Scope</h2></div><p><strong>决策方向：</strong>不引入完整 map/filter/reduce 数据编程语言；针对表单常用的数量、存在性、全称判断、求和提供受限集合纯函数，并复用第一组定义的词法 Scope。 <span class="tag detail">方向认可</span></p><div class="tablewrap"><table class=""><thead><tr><th>方案</th><th>覆盖能力</th><th>代价</th><th>阶段性结论</th></tr></thead><tbody><tr><td>只有 count 等最少集合纯函数</td><td>集合长度等简单计算</td><td>计算单项结果频繁需要专有纯函数</td><td>能力偏弱</td></tr><tr><td>有限聚合 + 局部 Scope</td><td>count/some/every/sum 及 item 局部读取</td><td>引入受控迭代绑定</td><td><strong>推荐</strong></td></tr><tr><td>完整函数式集合语言</td><td>map/filter/reduce/flatMap 等</td><td>接近通用编程 DSL，类型与成本复杂</td><td>V1 不采用</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>JSON · 数组中逐项计算 price × quantity 再求和</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "op": "sum",
+  "collection": {
+    "ref": "/items"
+  },
+  "as": "item",
+  "select": {
+    "op": "mul",
+    "args": [
+      {
+        "ref": {
+          "scope": "item",
+          "path": "/price"
+        }
+      },
+      {
+        "ref": {
+          "scope": "item",
+          "path": "/quantity"
+        }
+      }
+    ]
+  }
+}</code></pre></div><p>这里的 <code>as: item</code> 是求值期间的<strong>词法绑定</strong>，不是新的业务数据源，也不等于 Repeater 的运行时组件实例。</p><h3>必须继续确认的边界</h3><ul><li>空集合下 <code>sum</code>、<code>every</code>、<code>some</code> 的返回规则。</li><li>部分数组项类型解析失败时，是整项失败、跳过，还是产生带位置的诊断；不允许隐式跳过导致错误结果。</li><li>数组深度、集合规模、嵌套迭代复杂度的上限；<code>filter</code> 是否真的值得作为 V1 原生能力。</li><li>依赖提取需覆盖集合结构及其元素属性，且在数组项移动、增删时能够正确失效。</li></ul><div class="callout"><strong>当前边界</strong><p>有限聚合是一种 <strong>Expression 能力</strong>，不是通用表格查询语言。复杂多层分组、排序、递归统计优先用可测试的Pure Function 解决。</p></div></section><section class="section" id="e6"><div class="section-head"><span class="section-no">08</span><h2>E6 · Expression Slot：ValueSpec 递归显式动态值</h2></div><p>受控 Slot 原则不变，第六组 P3 明确：在声明为 ValueSpec 的 Material props / Command value 中递归识别显式 $expr，不再给每个深层属性分别配置动态白名单。</p><p>Expression 仍为纯 JSON AST。Expression-only 位置（assert/when）可直接 AST；Material props、Command value 等声明为 ValueSpec 的位置，在嵌套任意深度递归识别显式 $expr。静态对象确有保留形状时使用 $literal 或等价显式转义，精确语法未冻结。</p><p>不按 op/args 的对象形状猜测，不扫描 Data Schema default、Work Data 或任意外部原始 JSON。Material ID、规则 ID、引用目标等结构字段仍静态；递归 ValueSpec 不等于动态结构编程。Manifest 属性 Schema 用于值类型检查，不再为每个深层 Prop 维护动态白名单。</p><p>全局 Named Expression 不隐式捕获调用者局部 Scope；局部逻辑优先内联。命名 DAG、有限聚合、Pure Function、静态/运行成本保护继续沿用，不恢复参数化通用函数与任意脚本。</p><div class="codeblock"><div class="codehdr"><span>嵌套 ValueSpec；不是普通数据扫描</span></div><pre><code>{
+  "props": {
+    "badge": {
+      "visible": {
+        "$expr": {
+          "op": "eq",
+          "args": [
+            {
+              "ref": "/country"
+            },
+            "JP"
+          ]
+        }
+      },
+      "label": {
+        "$expr": {
+          "ref": "/status"
+        }
+      }
+    }
+  }
+}</code></pre></div><p>L2 发现 ValueSpec 内表达式并做属性类型、引用、词法 Scope 与成本检查，生成常量/表达式的准备结构；L3 不重新扫描任意 JSON。Host 原始响应、Work Data、Schema default 和结构标识都不因 $expr 形状而执行。</p></section><section class="section" id="e7"><div class="section-head"><span class="section-no">09</span><h2>E7 · 复杂度收拢与预算</h2></div><p><strong>决策：</strong>核心纯计算按“内联 → 命名表达式 → Pure Function”收拢；需要 I/O 或权威服务时退出核心，由 Host 自主执行，不作为表达式求值链的下一节点；采用静态和运行时的多维成本预算，而不是只限制 AST 深度。 <span class="tag principle">本轮原则确认</span></p><div class="diagram"><div class="diagram-label">Expression abstraction ladder</div><div class="node-row"><div class="node"><strong>Inline Expression</strong><small>条件少、规模小，直接使用</small></div><div class="arrow">↓ 逻辑复用 / 结构增长</div><div class="node"><strong>Named Expression</strong><small>共享局部计算关系，形成可分析的 DAG</small></div><div class="arrow">↓ 领域算法复杂</div><div class="node"><strong>Pure Registered Pure Function</strong><small>版本化、强类型、测试覆盖的复杂计算</small></div><div class="arrow">↓ 需要真实 I/O / 权威判断</div><div class="node major"><strong>Host / View Adapter（核心边界外）</strong><small>外部管理请求、缓存、异步校验与副作用；需要写回时发出 Command，不是可求值的表达式节点</small></div></div></div><div class="tablewrap"><table class="tight"><thead><tr><th>控制维度</th><th>L2 / 发布前检查</th><th>L3 / 运行时保护</th></tr></thead><tbody><tr><td>AST 深度与节点数</td><td>限制单表达式大小</td><td>不重复解析 AST</td></tr><tr><td>命名表达式图</td><td>环检测、可达图规模、最大引用链</td><td>按 Scope / 快照复用；不无限展开</td></tr><tr><td>Pure Function 合法性</td><td>注册、版本、输入输出类型、成本声明</td><td>对计算失败与超预算执行诊断</td></tr><tr><td>集合和嵌套聚合</td><td>限制迭代层数与静态估算成本</td><td>限制实际集合规模和累计运算成本</td></tr><tr><td>全表单总体成本</td><td>估计规则数量、依赖度与最坏情况</td><td>约束高频触发的累计计算量</td></tr></tbody></table></div><ul><li>不支持递归表达式、任意循环和用户定义的通用高阶函数。</li><li>把长表达式拆成十个命名表达式，不能绕过整个可达依赖图的限制。</li><li>Pure Function 也会消耗 CPU；不能通过“藏进代码”绕过治理。同步计算是否能够真正中断，需要特定执行隔离机制，不能只靠同步调用外层的超时检查。</li><li>超限必须产生确定的诊断或错误，不静默截断集合后返回不完整结果。</li></ul><div class="decision-foot">待细化：阈值（深度／节点数／图大小）、Pure Function 成本分级、是否启用隔离执行及性能基准。</div></section><section class="section" id="c1"><div class="section-head"><span class="section-no">10</span><h2>C1 · Constraint 的最小协议</h2></div><p><strong>既定基线：</strong>结构和基础约束复用 JSON Schema；复杂同步约束声明为独立 Constraint；高频规则未来可以版本化资产化。 <span class="tag fixed">已确认</span></p><p><strong>本轮方向：</strong>复杂同步约束优先采用统一 <code>when + assert + target</code> 语义，避免按 field/cross-field/collection/form 创建大量互相重叠的规则子类型。异步权威校验采用独立生命周期而非伪装为纯 Expression。 <span class="tag detail">方向认可</span></p><div class="tablewrap"><table class=""><thead><tr><th>备选方案</th><th>优点</th><th>问题</th><th>推荐</th></tr></thead><tbody><tr><td>统一同步断言</td><td>可复用 Expression/Reference/Scope；静态分析直接</td><td>需要补充错误归属、异步策略</td><td><strong>采用为基础</strong></td></tr><tr><td>按字段／集合／跨字段细分类型</td><td>对某些场景易读</td><td>分类相互重叠，执行分支多</td><td>不作为核心分类</td></tr><tr><td>异步同一断言表达式</td><td>表面统一</td><td>破坏纯求值和同步性边界</td><td>不采用</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>JSON · 独立复杂约束的示意：字段归属不等于全部依赖</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "id": "age-limit",
+  "when": {
+    "op": "allPresent",
+    "args": [
+      {
+        "ref": "/birthDate"
+      },
+      {
+        "ref": "/eventDate"
+      }
+    ]
+  },
+  "assert": {
+    "op": "lte",
+    "args": [
+      {
+        "call": "calendar.ageAtDate",
+        "version": "1",
+        "args": [
+          {
+            "ref": "/birthDate"
+          },
+          {
+            "ref": "/eventDate"
+          },
+          {
+            "ref": {
+              "source": "context",
+              "path": "/agePolicy"
+            }
+          }
+        ]
+      },
+      18
+    ]
+  },
+  "target": "/birthDate",
+  "errorCode": "AGE_LIMIT",
+  "message": "活动当天年龄不能超过 18 岁"
+}</code></pre></div><p>注意：<code>when</code> 遇到 Missing、Error 时的处理、<code>assert</code> 未能求值时的校验结果，需要作为正式契约补齐；不能默认将其视为通过。</p><div class="callout"><strong>与 Behavior 的边界</strong><p>Constraint 只报告合法性，不修改 Work Data。Behavior 的 Reaction / Command 负责显式数据变更。二者可以共享 Expression 语言，但不共享副作用语义。</p></div></section><section class="section" id="c2"><div class="section-head"><span class="section-no">11</span><h2>C2 · 校验生命周期与错误归属</h2></div><p><strong>方向：</strong>把“当前数据是否符合约束”与“什么时候执行／展示错误”分开设计；前者属于同步 Constraint 语义；本地执行策略由 Validation Policy / Runtime 细化，展示由 View，外部请求与提交策略由 Host 管理。 <span class="tag detail">方向认可</span></p><div class="tablewrap"><table class="tight"><thead><tr><th>议题</th><th>当前原则</th><th>保留讨论</th></tr></thead><tbody><tr><td>校验时机</td><td>不强制每条规则重复定义 change/blur/submit</td><td>默认策略和覆盖层级</td></tr><tr><td>错误归属</td><td>使用数据引用／Scope 定位，不绑定某一 ViewNode</td><td>多目标及汇总错误规范</td></tr><tr><td>字段显隐</td><td>不因未渲染或隐藏就隐式取消约束</td><td>约束适用条件与用户反馈</td></tr><tr><td>编辑态</td><td>允许暂时无效工作数据，不因此拒绝普通编辑</td><td>提交门禁与分步校验</td></tr><tr><td>异步校验</td><td>Host 执行任务；Runtime 被动登记 Unverified / Pending / Valid / Invalid / Error 结论状态，不属于值解析态</td><td>F4/F5 已确认义务、有效性和 Readiness；请求执行/重试/超时仍归 Host，精确接口待细化</td></tr><tr><td>错误显示</td><td>PC 字段下错误／移动卡片汇总由 View 负责</td><td>跨视图错误定位策略</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>TypeScript · 错误归属概念示例</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>interface ValidationIssue {
+  ruleId: string;
+  code: string;
+  target?: Reference;
+  params?: Record&lt;string, unknown&gt;;
+}
+// 错误状态与执行生命周期需在后续 Validation Contract 定义</code></pre></div><p>必须继续保留第一组结论：<strong>Value ParseResult 只有成功／失败</strong>，而异步校验的 Pending 是任务状态，不是值的 Incomplete 状态。</p><div class="decision-foot">待细化：执行策略、跳过条件、部分无效输入如何阻止校验通过、并发与提交门禁。</div></section><section class="section" id="c3"><div class="section-head"><span class="section-no">12</span><h2>C3 · 规则资产与跨端一致性</h2></div><p><strong>决策：</strong>简单约束留在 Data Schema，复杂一次性约束内联在当前表单；跨表单高频复用时才将规则提取为带参数和版本的 Rule Asset。V1 只要求能声明和解析能力，暂不建设完整规则市场。 <span class="tag principle">本轮原则确认</span></p><div class="tablewrap"><table class="tight"><thead><tr><th>复用层级</th><th>推荐做法</th><th>主要价值</th></tr></thead><tbody><tr><td>标准数据约束</td><td>JSON Schema</td><td>标准生态和简单配置</td></tr><tr><td>一次性复杂规则</td><td>Form Inline Constraint</td><td>最低平台治理成本</td></tr><tr><td>同表单复用计算</td><td>Named Expression</td><td>避免重复 DSL</td></tr><tr><td>通用领域计算算法</td><td>Versioned Pure Function</td><td>算法复用、跨端一致</td></tr><tr><td>跨表单复用约束</td><td>Optional Rule Asset</td><td>统一规则版本、参数、错误码</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>JSON · 未来的规则资产引用示意；不是 V1 必须引入的独立 Registry</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "id": "age-check",
+  "use": "calendar.ageLimit@1.0.0",
+  "with": {
+    "birthDate": {
+      "ref": "/birthDate"
+    },
+    "referenceDate": {
+      "ref": "/eventDate"
+    },
+    "policy": {
+      "ref": {
+        "source": "context",
+        "path": "/agePolicy"
+      }
+    },
+    "maximum": 18
+  },
+  "target": "/birthDate"
+}</code></pre></div><h3>跨端一致性的必要测试</h3><ul><li>相同字段 Work Data、Context、Pure Function 版本和 Scope，应有相同 Expression 及 Constraint 结果。</li><li>类型、日期、数字精度、字符串比较、逻辑短路、缺失值及错误传播都应形成规范测试向量。</li><li>不同 Renderer 可以采用不同 UI 呈现和错误定位，但不能私自重新定义业务合法性。</li></ul><div class="decision-foot">待细化：规则资产版本锁定、参数契约、构建期解析、差异化跨端兼容策略。</div></section><section class="section" id="demo"><div class="section-head"><span class="section-no">13</span><h2>端到端组合 Demo：静态与动态的边界</h2></div><p>下面以一份通用活动报名表演示同一数据契约如何被 View、Expression 与 Constraint 复用。该示例只覆盖本轮关注的语义，<strong>不是完整已冻结的 FormDefinition JSON Schema</strong>。</p><div class="codeblock"><div class="codehdr"><span>JSON · 候选组合示例，字段位置与协议语法均未冻结</span><button type="button" class="copy" aria-label="复制代码">复制</button></div><pre><code>{
+  "id": "registration.demo",
+  "formatVersion": "0.1-draft",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "birthDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "eventDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "accountType": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "views": {
+    "expanded": {
+      "entry": {
+        "material": "stack",
+        "props": {
+          "visible": {
+            "$expr": {
+              "op": "eq",
+              "args": [
+                {
+                  "ref": "/accountType"
+                },
+                "enterprise"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "compact": {
+      "entry": {
+        "material": "text",
+        "bind": "/birthDate"
+      }
+    }
+  },
+  "expressions": {
+    "ageAtEvent": {
+      "call": "calendar.ageAtDate",
+      "version": "1",
+      "args": [
+        {
+          "ref": "/birthDate"
+        },
+        {
+          "ref": "/eventDate"
+        },
+        {
+          "ref": {
+            "source": "context",
+            "path": "/agePolicy"
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "age-limit",
+      "when": {
+        "op": "allPresent",
+        "args": [
+          {
+            "ref": "/birthDate"
+          },
+          {
+            "ref": "/eventDate"
+          }
+        ]
+      },
+      "assert": {
+        "op": "lte",
+        "args": [
+          {
+            "use": "ageAtEvent"
+          },
+          18
+        ]
+      },
+      "target": "/birthDate",
+      "errorCode": "AGE_LIMIT"
+    }
+  ]
+}</code></pre></div><div class="callout"><strong>Demo 说明</strong><p><code>expressions</code> 与 <code>constraints</code> 在这里只是展示概念的示意位置；它们最终可能成为顶层区块或逻辑子模块。<code>formatVersion: 0.1-draft</code> 明确表示非正式版。</p></div><h3>同一个 Data 如何驱动两端？</h3><div class="diagram"><div class="diagram-label">Shared business semantics, different views</div><div class="node-row"><div class="node major"><strong>One Form Working Data</strong><small>Data Schema + typed read + trusted context</small></div><div class="arrow">↓</div><div class="node"><strong>One Expression / Constraint Semantic Model</strong><small>统一求值结果 · 统一错误归属</small></div><div class="split-arrows"><span>↙</span><span>↘</span></div><div class="diagram-grid"><div class="node"><strong>Expanded View</strong><small>PC 平铺的字段与错误展示</small></div><div class="node"><strong>Compact View</strong><small>移动摘要、卡片与详情编辑</small></div></div></div></div></section><section class="section" id="pipeline"><div class="section-head"><span class="section-no">14</span><h2>L1 / L2 / L3 / L4 的执行契约</h2></div><div class="diagram"><div class="diagram-label">Responsibility map</div><div class="node-row"><div class="node major"><strong>L1 · Definition</strong><small>声明 Slot、AST、约束、版本化Pure Function 依赖</small></div><div class="arrow">↓</div><div class="node"><strong>L2 · Preparation</strong><small>识别合法槽位 · 消歧义 · 类型与作用域检查 · 环检测 · 成本预算 · Prepared IR</small></div><div class="arrow">↓</div><div class="node"><strong>L3 · Runtime</strong><small>Typed Read · 纯表达式求值 · 同步约束 · 错误传播 · 成本限制 · 同步 Command / Reaction</small></div><div class="arrow">↓</div><div class="node major"><strong>L4 · Renderer</strong><small>绑定数据及结果；端侧结构与反馈可不同，但不得修改校验语义</small></div></div></div><div class="tablewrap"><table class="tight"><thead><tr><th>层</th><th>应做</th><th>明确不做</th></tr></thead><tbody><tr><td>L1</td><td>定义表达语义、允许的槽位、纯函数契约、Constraint 声明</td><td>依赖图调度或 HTTP 实现</td></tr><tr><td>L2</td><td>规范化槽位、解析引用、静态类型检查、构建 DAG、拒绝超限与环</td><td>执行用户编辑和发起真实业务请求</td></tr><tr><td>L3</td><td>类型化读取、表达式缓存失效、同步执行与统一本地诊断</td><td>不重新猜测表达式；不管理外部请求、重试或网络缓存</td></tr><tr><td>L4</td><td>使用结果呈现、发出数据 Command 或局部 UI Intent</td><td>重写独立的业务约束或领域计算</td></tr><tr><td>Host / View Adapter</td><td>请求、缓存、异步校验与业务流程；受控写回数据</td><td>不绕过 Command 修改 Work Data</td></tr></tbody></table></div><h3>建议的最小一致性测试矩阵</h3><div class="tablewrap"><table class="tight"><thead><tr><th>场景</th><th>需要证明</th></tr></thead><tbody><tr><td>静态属性中恰好有 {op, args}</td><td>不被错误解释为 Expression</td></tr><tr><td>visible = true 与 visible = {$expr: ...}</td><td>能被 L2 明确区分为 Constant / Dynamic</td></tr><tr><td>严格 Codec 不接受 "12." 或 "abc" 的用例</td><td>都返回 Parse Failure，无 Incomplete；"12." 的接受性取决于 Codec，不能当作全局解析规则</td></tr><tr><td>Missing / null / false / 0</td><td>有不同类型与存在性语义</td></tr><tr><td>Named Expression A→B→A</td><td>构建期拒绝循环</td></tr><tr><td>数组 some/every/sum + 嵌套 Scope</td><td>在正确当前项上下文求值</td></tr><tr><td>无效的纯函数参数 / 缺失 Pure Function</td><td>构建期或运行期产生可定位诊断</td></tr><tr><td>PC / 移动端同一表单</td><td>Expression 与 Constraint 结果一致</td></tr><tr><td>集合规模超过预算</td><td>失败或诊断，绝不返回静默截断结果</td></tr></tbody></table></div></section><section class="section" id="open"><div class="section-head"><span class="section-no">15</span><h2>未定稿清单：哪些留待后续？</h2></div><p>以下内容<strong>不阻碍第二组的阶段性归档</strong>，但也不能视为已完成的正式规范。</p><div class="tablewrap"><table class="tight"><thead><tr><th>编号</th><th>仍需解决</th><th>具体内容</th><th>建议承接专题</th></tr></thead><tbody><tr><td>P1</td><td>AST 完整语法与类型签名</td><td>Literal/Ref/Call/Use、对象字面量封装、类型推断规则</td><td>进入 Expression 详细协议阶段</td></tr><tr><td>P2</td><td>Missing/null/Parse Failure 的逐纯函数传播表</td><td>比较、布尔短路、条件分支与未知值</td><td>Expression 求值语义阶段</td></tr><tr><td>P3</td><td>动态槽位的精确许可清单</td><td>ValueSpec 的结构边界、静态结构字段和 Literal 转义；不再维护逐深层 Prop 动态白名单</td><td>第六组 P3 已收敛；最终 Schema/L2 补齐转义与属性类型检查</td></tr><tr><td>P4</td><td>集合运算边界</td><td>count/some/every/sum 的空集合与无效项，filter 是否 V1</td><td>Expression + Scope 交叉验证</td></tr><tr><td>P5</td><td>复杂度预算具体阈值</td><td>AST 深度、节点、依赖图、集合与 Pure Function 成本</td><td>L2 性能基准 + L3 资源控制</td></tr><tr><td>P6</td><td>同步 Constraint 的完整契约</td><td>Scope/when/assert/target、规则不适用与错误归属</td><td>Validation Contract</td></tr><tr><td>P7</td><td>外部校验契约的精确协议</td><td>F4/F5 已确认义务、五态、有效性及 Readiness；ID、适用条件、依赖快照、调用标识和输出一致性的精确形式仍待细化</td><td>第六组 / L3 / Host Contract，不建设核心 Resource 调度</td></tr><tr><td>P8</td><td>Rule Asset 具体治理</td><td>命名空间、参数、版本锁定、兼容、发布与回滚</td><td>复用规模足够后建设</td></tr></tbody></table></div><div class="callout"><strong>明确不会在 V1 贸然增加的能力</strong><p>任意 JS 脚本、通用字符串 DSL 执行器、递归表达式、无限循环、任意双向变换函数、表达式内部 I/O、第一版完整 Rule Registry。这些并非永远无法扩展，而是当前没有足够 ROI 证明应该作为核心语义。</p></div></section><section class="section" id="handoff"><div class="section-head"><span class="section-no">16</span><h2>后续接口与当前推进路线</h2></div><p>第二组 E1–E7 / C1–C3 的逐项状态保持。第三组已确认核心只新增数据 Command 与同步 Reaction，网络和业务流程移交 Host。之前将 Resource / 外部业务调用作为核心行为下一步的议程已被替代。</p><div class="tablewrap"><table><thead><tr><th>第二组交接问题</th><th>第三组已确认方向或后续承接</th></tr></thead><tbody><tr><td>事件来源</td><td>Reaction 按实际 Data Change 触发；View Intent 不混入通用 Event Bus，Lifecycle 触发另议。</td></tr><tr><td>Command</td><td>仅数据 Set/Replace、Patch、Remove、数组与 Batch；Reset Lifecycle 和提交业务流程不是已确认的普通数据操作。</td></tr><tr><td>Reaction</td><td>多 watch OR + 可选纯 when + 同步 then；when 依赖不自动变成 watch。</td></tr><tr><td>写入顺序</td><td>确定顺序、后写覆盖；不默认强制冲突或 priority，跨轮顺序仍待 L3。</td></tr><tr><td>外部请求与校验</td><td>Host / View Adapter 管理请求，F4/F5 已确认 Runtime 被动校验事实与 Readiness，不执行异步工作流。</td></tr></tbody></table></div><p>第四组已确认 Material 组合、关联式 Binding、有限 Event → Intent 与默认 Live Edit。第五组已确认外部校验义务、被动五态/有效性与 Readiness，F1/F2 仍推荐；第六组已阶段归档，当前优先 <a href="l1-definition-decisions-and-roadmap.html#handoff">Material Contract + Validation Metadata</a>。第四组参数与交付接口继续细化。</p><div class="callout"><strong>仍未冻结</strong><p>精确 AST、逐纯函数传播、Slot 转义、集合空值/失效项、预算阈值与完整同步 Constraint 契约继续完善，不因归档完成而自动定稿。</p></div></section><footer class="footer"><span>L1 Definition · Round 02 · 2026-10-15</span><span>阶段性决策归档 / 非正式协议规范</span></footer></main></div></div><button type="button" class="up" aria-label="返回顶部" title="返回顶部">↑</button><script>(function(){
+ const root=document.documentElement,theme=document.querySelector('#theme'),menu=document.querySelector('.menu');
+ let val='light';try{val=localStorage.getItem('l1-round2-theme')||'light'}catch(e){};
+ root.dataset.theme=val==='dark'?'dark':'light';
+ function sync(){theme.textContent=root.dataset.theme==='dark'?'浅色':'深色'}sync();
+ theme.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('l1-round2-theme',root.dataset.theme)}catch(e){};sync()});
+ document.querySelector('#print').addEventListener('click',()=>window.print());
+ function m(on){document.body.classList.toggle('menu-open',on);menu.setAttribute('aria-expanded',String(on))}
+ menu.addEventListener('click',()=>m(!document.body.classList.contains('menu-open')));
+ document.querySelector('.menu-overlay').addEventListener('click',()=>m(false));
+ document.querySelectorAll('.toc a').forEach(a=>a.addEventListener('click',()=>m(false)));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')m(false)});
+ document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{
+  const v=btn.closest('.codeblock').querySelector('code').innerText;
+  try{await navigator.clipboard.writeText(v);btn.textContent='已复制'}catch(e){const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();btn.textContent=ok?'已复制':'复制失败'}
+  setTimeout(()=>btn.textContent='复制',1300);
+ }));
+ const items=[...document.querySelectorAll('.section')], links=new Map([...document.querySelectorAll('.toc a')].map(a=>[a.dataset.to,a])),up=document.querySelector('.up');
+ function tick(){const y=window.scrollY,max=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);document.querySelector('.progress').style.width=(100*y/max)+'%';up.classList.toggle('visible',y>400);let current=items[0];for(const x of items){if(x.getBoundingClientRect().top<=170)current=x;}links.forEach((a,id)=>{a.classList.toggle('active',id===current?.id);if(id===current?.id)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')})}
+ up.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));window.addEventListener('scroll',tick,{passive:true});window.addEventListener('resize',tick);tick();
+})();</script></body></html>

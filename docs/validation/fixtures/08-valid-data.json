@@ -1,0 +1,26 @@
+{
+  "profile": {
+    "name": "Ada",
+    "alias": null
+  },
+  "prefs": {
+    "theme": "light",
+    "nested": {
+      "keep": "old",
+      "replace": "old"
+    }
+  },
+  "items": [
+    {
+      "label": "Alpha"
+    },
+    {
+      "label": "Beta"
+    }
+  ],
+  "literalBox": {},
+  "": "empty-name-key",
+  "a/b": {
+    "~tag": "escaped-value"
+  }
+}

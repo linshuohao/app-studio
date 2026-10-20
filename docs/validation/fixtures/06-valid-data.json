@@ -1,0 +1,27 @@
+{
+  "cart": {
+    "country": "A",
+    "city": "CityA",
+    "district": "DistrictA",
+    "lines": [
+      {
+        "sku": "L1",
+        "quantity": 2,
+        "unitPrice": 100,
+        "subtotal": 200
+      },
+      {
+        "sku": "L2",
+        "quantity": 1,
+        "unitPrice": 50,
+        "subtotal": 50
+      }
+    ],
+    "total": 250,
+    "discount": 25,
+    "payable": 225,
+    "discountEnabled": true,
+    "campaign": "standard",
+    "note": "保留"
+  }
+}

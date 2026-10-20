@@ -1,0 +1,487 @@
+{
+  "protocolVersion": "1.0",
+  "id": "cascade-cart",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "cart": {
+          "type": "object",
+          "properties": {
+            "country": {
+              "type": "string"
+            },
+            "city": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "district": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Line"
+              }
+            },
+            "total": {
+              "type": "number"
+            },
+            "discount": {
+              "type": "number"
+            },
+            "payable": {
+              "type": "number"
+            },
+            "discountEnabled": {
+              "type": "boolean"
+            },
+            "campaign": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "country",
+            "city",
+            "district",
+            "lines",
+            "total",
+            "discount",
+            "payable",
+            "discountEnabled",
+            "campaign"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "cart"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "Line": {
+          "type": "object",
+          "properties": {
+            "sku": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unitPrice": {
+              "type": "number"
+            },
+            "subtotal": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "sku",
+            "quantity",
+            "unitPrice",
+            "subtotal"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "expressions": {
+    "gross": {
+      "op": "demo.sumSubtotals.v1",
+      "args": [
+        {
+          "ref": {
+            "source": "data",
+            "path": "/cart/lines"
+          }
+        }
+      ]
+    },
+    "net": {
+      "op": "sub",
+      "args": [
+        {
+          "use": "gross"
+        },
+        {
+          "ref": {
+            "source": "data",
+            "path": "/cart/discount"
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "payable-nonnegative",
+      "kind": "internal",
+      "assert": {
+        "op": "gte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/cart/payable"
+            }
+          },
+          0
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/cart/payable"
+        },
+        "code": "PAYABLE_NONNEGATIVE"
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "country-clears-city",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cart/country"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/city"
+          },
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "city-clears-district",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cart/city"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/district"
+          },
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "line-subtotal",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/quantity",
+          "scope": "line"
+        },
+        {
+          "source": "data",
+          "path": "/unitPrice",
+          "scope": "line"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/subtotal",
+            "scope": "line"
+          },
+          "value": {
+            "$expr": {
+              "op": "mul",
+              "args": [
+                {
+                  "ref": {
+                    "source": "data",
+                    "path": "/quantity",
+                    "scope": "line"
+                  }
+                },
+                {
+                  "ref": {
+                    "source": "data",
+                    "path": "/unitPrice",
+                    "scope": "line"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/cart/lines"
+        },
+        "as": "line",
+        "mode": "each"
+      }
+    },
+    {
+      "id": "aggregate-total",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cart/lines"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/total"
+          },
+          "value": {
+            "$expr": {
+              "use": "gross"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "campaign-discount",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cart/campaign"
+        },
+        {
+          "source": "data",
+          "path": "/cart/total"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/discount"
+          },
+          "value": 0
+        },
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/discount"
+          },
+          "value": {
+            "$expr": {
+              "op": "mul",
+              "args": [
+                {
+                  "ref": {
+                    "source": "data",
+                    "path": "/cart/total"
+                  }
+                },
+                0.1
+              ]
+            }
+          }
+        }
+      ],
+      "when": {
+        "ref": {
+          "source": "data",
+          "path": "/cart/discountEnabled"
+        }
+      }
+    },
+    {
+      "id": "net-payable",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cart/total"
+        },
+        {
+          "source": "data",
+          "path": "/cart/discount"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/cart/payable"
+          },
+          "value": {
+            "$expr": {
+              "use": "net"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "country-picker",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/cart/country"
+              }
+            },
+            "props": {
+              "label": "国家"
+            }
+          },
+          {
+            "material": "city-picker",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/cart/city"
+              }
+            },
+            "props": {
+              "label": "城市"
+            }
+          },
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/cart/lines"
+              },
+              "as": "line",
+              "mode": "each"
+            },
+            "node": {
+              "material": "section",
+              "props": {
+                "title": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/sku",
+                      "scope": "line"
+                    }
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "material": "number-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/quantity",
+                        "scope": "line"
+                      }
+                    },
+                    "props": {
+                      "label": "数量"
+                    }
+                  },
+                  {
+                    "material": "number-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/unitPrice",
+                        "scope": "line"
+                      }
+                    },
+                    "props": {
+                      "label": "单价"
+                    }
+                  },
+                  {
+                    "material": "summary-card",
+                    "props": {
+                      "title": "当前行金额",
+                      "total": {
+                        "$expr": {
+                          "ref": {
+                            "source": "data",
+                            "path": "/subtotal",
+                            "scope": "line"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "material": "summary-card",
+            "props": {
+              "title": "应付",
+              "total": {
+                "$expr": {
+                  "use": "net"
+                }
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "请求重新报价"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "cart.quoteRequested",
+                "payload": {
+                  "lines": {
+                    "$expr": {
+                      "ref": {
+                        "source": "data",
+                        "path": "/cart/lines"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "scenario": "多级联动与跨项汇总",
+    "testPureFunctions": [
+      "demo.sumSubtotals.v1"
+    ],
+    "note": "价格计算演示；不代表真实计价规则"
+  }
+}

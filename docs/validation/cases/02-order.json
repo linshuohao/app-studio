@@ -1,0 +1,229 @@
+{
+  "protocolVersion": "1.0",
+  "id": "order-live-pricing",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "order"
+      ],
+      "properties": {
+        "order": {
+          "type": "object",
+          "required": [
+            "country",
+            "quantity",
+            "unitPrice",
+            "type"
+          ],
+          "properties": {
+            "country": {
+              "type": "string"
+            },
+            "city": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "premium"
+              ]
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unitPrice": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "constraints": [
+    {
+      "id": "positive-quantity",
+      "kind": "internal",
+      "assert": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/order/quantity"
+            }
+          },
+          0
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/order/quantity"
+        },
+        "code": "POSITIVE_QUANTITY"
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "reset-city",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/order/country"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/order/city"
+          },
+          "value": null
+        }
+      ]
+    }
+  ],
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "country-picker",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/order/country"
+              }
+            },
+            "props": {
+              "label": "国家"
+            }
+          },
+          {
+            "material": "city-picker",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/order/city"
+              }
+            },
+            "props": {
+              "label": "城市"
+            }
+          },
+          {
+            "material": "select",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/order/type"
+              }
+            },
+            "props": {
+              "label": "商品类型"
+            }
+          },
+          {
+            "material": "number-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/order/quantity"
+              }
+            },
+            "props": {
+              "label": "购买数量"
+            }
+          },
+          {
+            "material": "number-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/order/unitPrice"
+              }
+            },
+            "props": {
+              "label": "单价"
+            }
+          },
+          {
+            "material": "summary-card",
+            "props": {
+              "title": "订单摘要",
+              "total": {
+                "$expr": {
+                  "use": "orderTotal"
+                }
+              },
+              "badge": {
+                "visible": {
+                  "$expr": {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/order/type"
+                        }
+                      },
+                      "premium"
+                    ]
+                  }
+                },
+                "text": "尊享"
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "order.submitRequested"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "tier": "02",
+    "scenario": "订单联动与动态摘要",
+    "testValue": "Expression + Reaction + Constraint + nested ValueSpec"
+  },
+  "expressions": {
+    "orderTotal": {
+      "op": "mul",
+      "args": [
+        {
+          "ref": {
+            "source": "data",
+            "path": "/order/quantity"
+          }
+        },
+        {
+          "ref": {
+            "source": "data",
+            "path": "/order/unitPrice"
+          }
+        }
+      ]
+    }
+  }
+}

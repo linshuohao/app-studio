@@ -1,0 +1,28 @@
+{
+  "sourceDirectory": "/Users/samuel/Downloads/l1_protocol_validation",
+  "files": {
+    "README.md": "be45298f5eef583b72cdd3abde216d1856b73ade996ff02484a16bcf595c23cc",
+    "baseline/L1-Definition-Protocol-V1.0.html": "de1dce61f695e45d7a2a4355448b08a0fbc8f8c59fb0e0040c45abe28bd63593",
+    "build_cases.py": "86ab5a1207974c05728897d6d60fae572a37ea2f871e9633d1a843115c6d94d5",
+    "cases/01-basic.json": "f3b566c38ceab27d28c13539cce45f62f70cbc17607b8725b259f70045d15b79",
+    "cases/02-order.json": "2027ee4663aede8d1e97a5fcac2329e7e004b2dfd4d05c5755378afc7890f8ea",
+    "cases/03-nested.json": "40ffc35fd5246988c66536263fb3157b5d96d39c9eec548c07b6e27c85588b20",
+    "cases/04-insurance-archive.json": "f6a2e5db41d0da47e0be74469591db5ca3da4b8663a0e90a3364f27196fa6330",
+    "cases/05-claims-complex.json": "59caed4a13d53279055f06b41e37111b3fd6ee9f291cb4e700fa2d596b28e377",
+    "create_report.py": "efff821d282a00337a5e54a9967c1a9b844464041a0c48e584b984de75d6293c",
+    "fixtures/01-valid-data.json": "c2a8502e4ab72c3da847579a2cac64f0fbdee0118b66e69f61f81d5db7011476",
+    "fixtures/02-valid-data.json": "024311402b52e07f952d7cf2f105443fa4bb39af11067b207f03406267b11b26",
+    "fixtures/03-valid-data.json": "a2557faf6e369eac69c4d2224fa1fd5ae7fd3901b6c7c3594323b08edc9dff0b",
+    "fixtures/04-valid-data.json": "22052843bed63d47ef75e57b00fcd06a8d8b8c8f4c488e6694fba7d468244542",
+    "fixtures/05-valid-data.json": "5463b246eed3dda9935f2da20846c7505bd7de29c46d248b387ccd907a7800b9",
+    "index.html": "70a4b46d102f5a917997b2b6649124bb8af277ef661794a4e36ccdc1601bc805",
+    "manifests/host-events.json": "3385b054e75fbc8376d537b06fe9250d25d4c3e93d9eb6326809dd20b8118757",
+    "manifests/materials.json": "88a22a8ffb7c14178f1550b600a8ff8feb424ee6b99c1e2217f5f9aa1c7a9e07",
+    "report.json": "c1919912351d29da916edffdb64961c1264b3a430dac05eeabb8f538f6b3753f",
+    "requirements.txt": "e4eeefe7e37d6268d8cb88e34764ab37417a6cc38c3d23fabd71a8952668d759",
+    "validator/behavior_smoke.py": "b4248f11915601dd39859940011ed2026c53533e95cd8df854c11ba6953c0168",
+    "validator/create_schema.py": "b4514465a6489849ea03e914654fd631a469d7d3c82e2edca7777379ce5fa3cd",
+    "validator/l1-candidate-structural.schema.json": "073cf387f2d5c2af20d8a19ae70982e35c87d31f14fa54f79976a8ffa69effb0",
+    "validator/validate_cases.py": "1881402ee499693475edf53e0b6baa9ca602862a26abbe1daf269b01bd198049"
+  }
+}

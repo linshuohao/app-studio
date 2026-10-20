@@ -1,0 +1,33 @@
+{
+  "status": "测试域纯函数，不是正式内置 Pure Function 清单",
+  "pureFunctions": [
+    {
+      "id": "demo.sumSubtotals.v1",
+      "args": [
+        "Line[]"
+      ],
+      "result": "number",
+      "pure": true
+    },
+    {
+      "id": "demo.dateOrdered.v1",
+      "args": [
+        "date",
+        "date"
+      ],
+      "result": "boolean",
+      "pure": true
+    },
+    {
+      "id": "demo.ageEligible.v1",
+      "args": [
+        "birthDate",
+        "departureDate",
+        "demoRegion",
+        "minimumAge"
+      ],
+      "result": "boolean",
+      "pure": true
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "applicant": {
+    "email": "user@example.com"
+  },
+  "policies": [
+    {
+      "policyNo": "POL-1",
+      "maxClaim": 5000,
+      "travellers": [
+        {
+          "name": "A",
+          "passport": "P123",
+          "claims": [
+            {
+              "type": "medical",
+              "amount": 1200,
+              "incidentCountry": "JP",
+              "incidentCity": "Tokyo",
+              "documents": [
+                "receipt-1"
+              ]
+            },
+            {
+              "type": "baggage",
+              "amount": 100,
+              "incidentCountry": "SG",
+              "incidentCity": "Singapore",
+              "documents": []
+            }
+          ]
+        }
+      ],
+      "travelStart": "2026-11-01",
+      "travelEnd": "2026-11-20"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "teams": [
+    {
+      "title": "第一团",
+      "members": [
+        {
+          "name": "A",
+          "age": 28,
+          "passport": "P123",
+          "address": {
+            "country": "JP",
+            "city": "Tokyo"
+          }
+        },
+        {
+          "name": "B",
+          "age": 19,
+          "passport": "P456",
+          "address": {
+            "country": "SG",
+            "city": "Singapore"
+          }
+        }
+      ]
+    }
+  ]
+}

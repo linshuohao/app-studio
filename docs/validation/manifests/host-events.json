@@ -1,0 +1,54 @@
+{
+  "allowedEvents": [
+    "basic.submitRequested",
+    "order.submitRequested",
+    "team.submitRequested",
+    "insurance.submitRequested",
+    "claim.submitRequested",
+    "cart.quoteRequested",
+    "travel.submitRequested",
+    "demo.lookupRequested"
+  ],
+  "payloadSchemas": {
+    "cart.quoteRequested": {
+      "type": "object",
+      "properties": {
+        "lines": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "lines"
+      ],
+      "additionalProperties": false
+    },
+    "travel.submitRequested": {
+      "type": "object",
+      "properties": {
+        "departure": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "departure"
+      ],
+      "additionalProperties": false
+    },
+    "demo.lookupRequested": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "query",
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

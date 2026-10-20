@@ -1,0 +1,95 @@
+{
+  "protocolVersion": "1.0",
+  "id": "basic-enrollment",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "email",
+        "age"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 18
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "text-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/name"
+              }
+            },
+            "props": {
+              "label": "姓名"
+            }
+          },
+          {
+            "material": "text-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/email"
+              }
+            },
+            "props": {
+              "label": "邮箱"
+            }
+          },
+          {
+            "material": "number-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/age"
+              }
+            },
+            "props": {
+              "label": "年龄"
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "basic.submitRequested"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "tier": "01",
+    "scenario": "基础信息表单",
+    "testValue": "仅 Data + Material + Binding"
+  }
+}

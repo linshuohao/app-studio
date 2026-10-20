@@ -1,0 +1,806 @@
+{
+  "protocolVersion": "1.0",
+  "id": "travel-claim-complex",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "applicant",
+        "policies"
+      ],
+      "properties": {
+        "applicant": {
+          "type": "object",
+          "required": [
+            "email"
+          ],
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Policy"
+          },
+          "minItems": 1
+        }
+      },
+      "$defs": {
+        "Policy": {
+          "type": "object",
+          "required": [
+            "policyNo",
+            "maxClaim",
+            "travellers",
+            "travelStart",
+            "travelEnd"
+          ],
+          "properties": {
+            "policyNo": {
+              "type": "string"
+            },
+            "maxClaim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "travellers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Traveller"
+              }
+            },
+            "travelStart": {
+              "type": "string",
+              "format": "date"
+            },
+            "travelEnd": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        },
+        "Traveller": {
+          "type": "object",
+          "required": [
+            "name",
+            "passport",
+            "claims"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "passport": {
+              "type": "string"
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Claim"
+              }
+            }
+          }
+        },
+        "Claim": {
+          "type": "object",
+          "required": [
+            "type",
+            "amount",
+            "incidentCountry",
+            "incidentCity",
+            "documents"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "medical",
+                "baggage"
+              ]
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0
+            },
+            "incidentCountry": {
+              "type": "string"
+            },
+            "incidentCity": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "documents": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "constraints": [
+    {
+      "id": "claim-under-limit",
+      "kind": "internal",
+      "assert": {
+        "op": "lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/amount",
+              "scope": "claim"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/maxClaim",
+              "scope": "policy"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/amount",
+          "scope": "claim"
+        },
+        "code": "CLAIM_UNDER_LIMIT"
+      },
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/policies"
+          },
+          "as": "policy",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/travellers",
+            "scope": "policy"
+          },
+          "as": "traveller",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/claims",
+            "scope": "traveller"
+          },
+          "as": "claim",
+          "mode": "each"
+        }
+      ]
+    },
+    {
+      "id": "medical-documents",
+      "kind": "internal",
+      "assert": {
+        "op": "gt",
+        "args": [
+          {
+            "op": "length",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/documents",
+                  "scope": "claim"
+                }
+              }
+            ]
+          },
+          0
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/documents",
+          "scope": "claim"
+        },
+        "code": "MEDICAL_DOCUMENTS"
+      },
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/policies"
+          },
+          "as": "policy",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/travellers",
+            "scope": "policy"
+          },
+          "as": "traveller",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/claims",
+            "scope": "traveller"
+          },
+          "as": "claim",
+          "mode": "each"
+        }
+      ],
+      "when": {
+        "op": "eq",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/type",
+              "scope": "claim"
+            }
+          },
+          "medical"
+        ]
+      }
+    },
+    {
+      "id": "fraud-screening",
+      "kind": "external",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/passport",
+          "scope": "traveller"
+        },
+        {
+          "source": "data",
+          "path": "/amount",
+          "scope": "claim"
+        },
+        {
+          "source": "data",
+          "path": "/incidentCountry",
+          "scope": "claim"
+        }
+      ],
+      "target": {
+        "source": "data",
+        "path": "/amount",
+        "scope": "claim"
+      },
+      "requiredForSubmit": true,
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/policies"
+          },
+          "as": "policy",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/travellers",
+            "scope": "policy"
+          },
+          "as": "traveller",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/claims",
+            "scope": "traveller"
+          },
+          "as": "claim",
+          "mode": "each"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "reset-incident-city",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/incidentCountry",
+          "scope": "claim"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/incidentCity",
+            "scope": "claim"
+          },
+          "value": null
+        }
+      ],
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/policies"
+          },
+          "as": "policy",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/travellers",
+            "scope": "policy"
+          },
+          "as": "traveller",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/claims",
+            "scope": "traveller"
+          },
+          "as": "claim",
+          "mode": "each"
+        }
+      ]
+    }
+  ],
+  "views": {
+    "desktop": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "text-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/applicant/email"
+              }
+            },
+            "props": {
+              "label": "申请人邮箱"
+            }
+          },
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/policies"
+              },
+              "as": "policy",
+              "mode": "each"
+            },
+            "node": {
+              "material": "section",
+              "props": {
+                "title": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/policyNo",
+                      "scope": "policy"
+                    }
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "material": "date-range",
+                    "bindings": {
+                      "start": {
+                        "source": "data",
+                        "path": "/travelStart",
+                        "scope": "policy"
+                      },
+                      "end": {
+                        "source": "data",
+                        "path": "/travelEnd",
+                        "scope": "policy"
+                      }
+                    },
+                    "props": {
+                      "label": "保障期间"
+                    }
+                  },
+                  {
+                    "scope": {
+                      "from": {
+                        "source": "data",
+                        "path": "/travellers",
+                        "scope": "policy"
+                      },
+                      "as": "traveller",
+                      "mode": "each"
+                    },
+                    "node": {
+                      "material": "section",
+                      "props": {
+                        "title": {
+                          "$expr": {
+                            "ref": {
+                              "source": "data",
+                              "path": "/name",
+                              "scope": "traveller"
+                            }
+                          }
+                        }
+                      },
+                      "slots": {
+                        "default": [
+                          {
+                            "scope": {
+                              "from": {
+                                "source": "data",
+                                "path": "/claims",
+                                "scope": "traveller"
+                              },
+                              "as": "claim",
+                              "mode": "each"
+                            },
+                            "node": {
+                              "material": "stack",
+                              "slots": {
+                                "default": [
+                                  {
+                                    "$use": "claim-fields",
+                                    "with": {
+                                      "claim": {
+                                        "source": "data",
+                                        "path": "",
+                                        "scope": "claim"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "material": "button",
+                                    "props": {
+                                      "label": "删除理赔项"
+                                    },
+                                    "on": {
+                                      "activate": {
+                                        "type": "form.command",
+                                        "command": {
+                                          "op": "array.remove",
+                                          "target": {
+                                            "source": "data",
+                                            "path": "/claims",
+                                            "scope": "traveller"
+                                          },
+                                          "item": {
+                                            "$scope": "claim"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "claim.submitRequested"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "mobile": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "text-input",
+            "bindings": {
+              "value": {
+                "source": "data",
+                "path": "/applicant/email"
+              }
+            },
+            "props": {
+              "label": "申请人邮箱"
+            }
+          },
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/policies"
+              },
+              "as": "policy",
+              "mode": "each"
+            },
+            "node": {
+              "material": "section",
+              "props": {
+                "title": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/policyNo",
+                      "scope": "policy"
+                    }
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "material": "date-range",
+                    "bindings": {
+                      "start": {
+                        "source": "data",
+                        "path": "/travelStart",
+                        "scope": "policy"
+                      },
+                      "end": {
+                        "source": "data",
+                        "path": "/travelEnd",
+                        "scope": "policy"
+                      }
+                    },
+                    "props": {
+                      "label": "保障期间"
+                    }
+                  },
+                  {
+                    "scope": {
+                      "from": {
+                        "source": "data",
+                        "path": "/travellers",
+                        "scope": "policy"
+                      },
+                      "as": "traveller",
+                      "mode": "each"
+                    },
+                    "node": {
+                      "material": "section",
+                      "props": {
+                        "title": {
+                          "$expr": {
+                            "ref": {
+                              "source": "data",
+                              "path": "/name",
+                              "scope": "traveller"
+                            }
+                          }
+                        }
+                      },
+                      "slots": {
+                        "default": [
+                          {
+                            "scope": {
+                              "from": {
+                                "source": "data",
+                                "path": "/claims",
+                                "scope": "traveller"
+                              },
+                              "as": "claim",
+                              "mode": "each"
+                            },
+                            "node": {
+                              "material": "bottom-sheet-editor",
+                              "slots": {
+                                "trigger": [
+                                  {
+                                    "material": "claim-summary",
+                                    "bindings": {
+                                      "value": {
+                                        "source": "data",
+                                        "path": "",
+                                        "scope": "claim"
+                                      }
+                                    }
+                                  }
+                                ],
+                                "content": [
+                                  {
+                                    "$use": "claim-fields",
+                                    "with": {
+                                      "claim": {
+                                        "source": "data",
+                                        "path": "",
+                                        "scope": "claim"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "material": "button",
+                                    "props": {
+                                      "label": "删除理赔项"
+                                    },
+                                    "on": {
+                                      "activate": {
+                                        "type": "form.command",
+                                        "command": {
+                                          "op": "array.remove",
+                                          "target": {
+                                            "source": "data",
+                                            "path": "/claims",
+                                            "scope": "traveller"
+                                          },
+                                          "item": {
+                                            "$scope": "claim"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "claim.submitRequested"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "viewTemplates": {
+    "claim-fields": {
+      "params": {
+        "claim": {
+          "schemaRef": "#/$defs/Claim"
+        }
+      },
+      "node": {
+        "material": "section",
+        "props": {
+          "title": "理赔明细"
+        },
+        "slots": {
+          "default": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/type",
+                  "scope": "claim"
+                }
+              },
+              "props": {
+                "label": "理赔类型"
+              }
+            },
+            {
+              "material": "number-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/amount",
+                  "scope": "claim"
+                }
+              },
+              "props": {
+                "label": "金额"
+              }
+            },
+            {
+              "material": "country-picker",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/incidentCountry",
+                  "scope": "claim"
+                }
+              },
+              "props": {
+                "label": "事发国家"
+              }
+            },
+            {
+              "material": "city-picker",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/incidentCity",
+                  "scope": "claim"
+                }
+              },
+              "props": {
+                "label": "事发城市"
+              }
+            },
+            {
+              "material": "conditional",
+              "props": {
+                "show": {
+                  "$expr": {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/type",
+                          "scope": "claim"
+                        }
+                      },
+                      "medical"
+                    ]
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "material": "file-upload",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/documents",
+                        "scope": "claim"
+                      }
+                    },
+                    "props": {
+                      "label": "凭证"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "metadata": {
+    "tier": "05",
+    "scenario": "三层嵌套、双端容器与理赔校验",
+    "testValue": "cross-parent scope + conditional constraint + multi-profile + external"
+  }
+}

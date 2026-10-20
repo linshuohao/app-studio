@@ -1,0 +1,125 @@
+{
+  "status": "跨层契约图解，未执行的 Runtime / Host 场景；不是新增 L1 字段",
+  "lifecycle": [
+    {
+      "step": "Initialize",
+      "input": {
+        "name": "Ada",
+        "alias": null
+      },
+      "schemaDefaults": {
+        "theme": "light",
+        "alias": "guest"
+      },
+      "expected": {
+        "name": "Ada",
+        "alias": null,
+        "theme": "light"
+      },
+      "meaning": "Host 提供初始输入；既有 Host 值优先 / 缺失补默认语义保持，显式 null 不覆盖。Runtime 建真实实例并按 runOnActivate 首次执行，不自动建业务 Baseline 或 Dirty；具体合成 / SDK 待固化。"
+    },
+    {
+      "step": "Host chooses a business snapshot",
+      "owner": "Host",
+      "optional": true,
+      "meaning": "Host 可在所需规则完成后读取稳定 snapshot 自行保存业务基准；读取不 Flush、不标 Clean，时点由应用选择。"
+    },
+    {
+      "step": "Update",
+      "input": {
+        "name": "Lin"
+      },
+      "meaning": "普通 Command 修改当前 Data；旧稳定快照不变，是否计入 Dirty 或更新业务基准由 Host 决定。"
+    },
+    {
+      "step": "Host Reset",
+      "command": {
+        "op": "set",
+        "target": {
+          "source": "data",
+          "path": "/name"
+        },
+        "value": "Ada"
+      },
+      "expectedName": "Ada",
+      "meaning": "本业务 Host 选择恢复所存 Ada；Runtime 只执行普通 Command。若相关 Watch 没有有效变化，现存 Reaction 不重跑，也不重新应用 runOnActivate。"
+    },
+    {
+      "step": "New external data / instance replacement",
+      "input": {
+        "name": "Bo"
+      },
+      "meaning": "Host 明确选择普通导入或真实替换实例；后者新建规则可按首次激活策略。是否保存 Bo 为新的业务基准由 Host 决定，不是 Runtime 自动重设基准。"
+    }
+  ],
+  "validation": [
+    {
+      "status": "unverified",
+      "ready": false,
+      "meaning": "当前适用且必需义务尚无结论"
+    },
+    {
+      "status": "pending",
+      "ready": false,
+      "meaning": "Host 正在执行验证"
+    },
+    {
+      "status": "invalid",
+      "ready": false,
+      "meaning": "结果匹配当前依赖，但业务不通过；显示 Issues"
+    },
+    {
+      "status": "error",
+      "ready": false,
+      "meaning": "验证执行失败；不能按通过处理"
+    },
+    {
+      "status": "valid",
+      "ready": "仍需 Schema、内部约束、其他必需义务和输出有效",
+      "meaning": "不是收到一个 Valid 就允许真实提交"
+    }
+  ],
+  "async": [
+    "请求 A 关联 traveller 实例及依赖版本 v1",
+    "数据变化到 v2，A 的旧结论失效；发起请求 B",
+    "B 返回当前有效 Valid，A 之后返回仍应丢弃，不能覆盖 B",
+    "同一业务值发生 ABA 也必须检查调用/依赖有效性；不能只比较 payload 值",
+    "非依赖字段变化不要求全量失效；真实结果接收与竞态测试留给 L3"
+  ],
+  "output": [
+    "编辑态可暂时保存业务不合法值，解析失败与 false / null / Missing 分开",
+    "Binding 经 Runtime Field State 让物料显示相应 Issues，不新增 validationBind / errorBind",
+    "校验与输出转换成功，构造 Normalized Output",
+    "Host 根据 Readiness 和业务许可提交；HTTP 成功不是 L1 的状态字段"
+  ],
+  "delivery": [
+    "Authoring bind:/name → Canonical bindings.value:{source:data,path:/name}",
+    "Authoring children:[...] → Canonical slots.default:[...]；不允许重复提供同一 Slot",
+    "选中 compact Profile，只交付入口及其静态 Template 依赖",
+    "保留共享 data / constraints / reactions 及所需命名表达式，不能按可见字段裁剪业务规则",
+    "Prepared 是 L2 内部结构，不混入 Canonical"
+  ],
+  "hostServices": [
+    "country-picker / city-picker 的远程选项由 Material Adapter 注入的 Host Services 获取",
+    "file-upload 由 Host 执行上传、重试等；完成后经受控 Command 写回业务引用",
+    "不在 Definition 里声明 URL、Promise、通用 Resource 或 Action 管道"
+  ],
+  "pendingCommands": [
+    {
+      "op": "array.insert",
+      "stableFields": [
+        "target",
+        "value"
+      ],
+      "pending": "插入位置结构与默认位置规则待固化"
+    },
+    {
+      "op": "array.move",
+      "stableFields": [
+        "target",
+        "item.$scope"
+      ],
+      "pending": "目的位置结构与移动边界待固化"
+    }
+  ]
+}

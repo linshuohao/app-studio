@@ -1,0 +1,398 @@
+{
+  "protocolVersion": "1.0",
+  "id": "travel-dynamic-age",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "trip": {
+          "type": "object",
+          "properties": {
+            "startDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "endDate": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "required": [
+            "startDate",
+            "endDate"
+          ],
+          "additionalProperties": false
+        },
+        "travellers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Traveller"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "trip",
+        "travellers"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "Traveller": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "birthDate": {
+              "type": "string",
+              "format": "date"
+            },
+            "region": {
+              "type": "string",
+              "enum": [
+                "demo-A",
+                "demo-B"
+              ]
+            },
+            "passport": {
+              "type": "string"
+            },
+            "needsReview": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "name",
+            "birthDate",
+            "region",
+            "passport",
+            "needsReview"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "constraints": [
+    {
+      "id": "travel-period",
+      "kind": "internal",
+      "assert": {
+        "op": "demo.dateOrdered.v1",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/trip/startDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/trip/endDate"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/trip/endDate"
+        },
+        "code": "TRAVEL_PERIOD"
+      }
+    },
+    {
+      "id": "age-on-departure",
+      "kind": "internal",
+      "assert": {
+        "op": "demo.ageEligible.v1",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/birthDate",
+              "scope": "traveller"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/trip/startDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/region",
+              "scope": "traveller"
+            }
+          },
+          18
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/birthDate",
+          "scope": "traveller"
+        },
+        "code": "AGE_ON_DEPARTURE"
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/travellers"
+        },
+        "as": "traveller",
+        "mode": "each"
+      }
+    },
+    {
+      "id": "passport-required",
+      "kind": "external",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/passport",
+          "scope": "traveller"
+        },
+        {
+          "source": "data",
+          "path": "/region",
+          "scope": "traveller"
+        },
+        {
+          "source": "data",
+          "path": "/trip/startDate"
+        }
+      ],
+      "target": {
+        "source": "data",
+        "path": "/passport",
+        "scope": "traveller"
+      },
+      "requiredForSubmit": true,
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/travellers"
+        },
+        "as": "traveller",
+        "mode": "each"
+      },
+      "when": {
+        "ref": {
+          "source": "data",
+          "path": "/needsReview",
+          "scope": "traveller"
+        }
+      }
+    },
+    {
+      "id": "optional-advisory",
+      "kind": "external",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/region",
+          "scope": "traveller"
+        }
+      ],
+      "target": {
+        "source": "data",
+        "path": "/region",
+        "scope": "traveller"
+      },
+      "requiredForSubmit": false,
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/travellers"
+        },
+        "as": "traveller",
+        "mode": "each"
+      }
+    }
+  ],
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "material": "date-range",
+            "bindings": {
+              "start": {
+                "source": "data",
+                "path": "/trip/startDate"
+              },
+              "end": {
+                "source": "data",
+                "path": "/trip/endDate"
+              }
+            },
+            "props": {
+              "label": "出行期间"
+            }
+          },
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/travellers"
+              },
+              "as": "traveller",
+              "mode": "each"
+            },
+            "node": {
+              "$use": "traveller-fields",
+              "with": {
+                "traveller": {
+                  "source": "data",
+                  "path": "",
+                  "scope": "traveller"
+                }
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交申请"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "travel.submitRequested",
+                "payload": {
+                  "departure": {
+                    "$expr": {
+                      "ref": {
+                        "source": "data",
+                        "path": "/trip/startDate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "viewTemplates": {
+    "traveller-fields": {
+      "params": {
+        "traveller": {
+          "schemaRef": "#/$defs/Traveller"
+        }
+      },
+      "node": {
+        "material": "section",
+        "props": {
+          "title": "旅客"
+        },
+        "slots": {
+          "default": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/name",
+                  "scope": "traveller"
+                }
+              },
+              "props": {
+                "label": "姓名"
+              }
+            },
+            {
+              "material": "date-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/birthDate",
+                  "scope": "traveller"
+                }
+              },
+              "props": {
+                "label": "出生日期"
+              }
+            },
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/region",
+                  "scope": "traveller"
+                }
+              },
+              "props": {
+                "label": "演示地区"
+              }
+            },
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/passport",
+                  "scope": "traveller"
+                }
+              },
+              "props": {
+                "label": "护照"
+              }
+            },
+            {
+              "material": "summary-card",
+              "props": {
+                "title": "出行年龄资格",
+                "badge": {
+                  "visible": {
+                    "$expr": {
+                      "op": "demo.ageEligible.v1",
+                      "args": [
+                        {
+                          "ref": {
+                            "source": "data",
+                            "path": "/birthDate",
+                            "scope": "traveller"
+                          }
+                        },
+                        {
+                          "ref": {
+                            "source": "data",
+                            "path": "/trip/startDate"
+                          }
+                        },
+                        {
+                          "ref": {
+                            "source": "data",
+                            "path": "/region",
+                            "scope": "traveller"
+                          }
+                        },
+                        18
+                      ]
+                    }
+                  },
+                  "text": "满足演示规则"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "metadata": {
+    "scenario": "出行日期 × 生日 × 地区规则",
+    "notice": "demo-A 计算已满周岁；demo-B 仅比较年份差。两者是合成测试，不代表任何真实国家法规。"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema": {
+    "type": "object",
+    "properties": {
+      "nameOptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "nameOptions"
+    ],
+    "additionalProperties": false
+  },
+  "value": {
+    "nameOptions": [
+      "Ada",
+      "Lin"
+    ]
+  }
+}

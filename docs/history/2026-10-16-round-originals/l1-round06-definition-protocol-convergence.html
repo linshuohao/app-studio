@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="light dark"/>
+<meta name="description" content="L1 第六组完整协议统一收敛归档：Reference / Scope / Expression / Constraint / Reaction / Command / View / Material / Host 及复杂表单验收。"/>
+<title>L1 第六组 · Definition Protocol · 统一收敛与组合验收</title><style>
+:root{--bg:#fff;--surface:#fff;--soft:#f7f7f8;--softer:#f2f2f3;--sidebar:#fafafa;--text:#171717;--muted:#656565;--quiet:#858585;--line:#e7e7e7;--line-strong:#d4d4d4;--shadow:0 7px 30px #0000000a;--ink:#181818;--inverse:#fff}
+html[data-theme=dark]{--bg:#171717;--surface:#171717;--soft:#242424;--softer:#2e2e2e;--sidebar:#1c1c1c;--text:#f3f3f3;--muted:#b5b5b5;--quiet:#979797;--line:#353535;--line-strong:#555;--shadow:none;--ink:#f0f0f0;--inverse:#171717}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.85;font-size:15px;-webkit-font-smoothing:antialiased;color:var(--text);background:var(--bg);margin:0}::selection{background:#9995}a{color:inherit}button{font:inherit;cursor:pointer}strong{font-weight:700}p{margin:12px 0}h1,h2,h3,h4{line-height:1.4;letter-spacing:-.032em}code,pre{font-family:SFMono-Regular,Consolas,"Liberation Mono",monospace}code{border-radius:5px;background:var(--soft);border:1px solid var(--line);padding:1px 5px;font-size:.89em}pre code{background:none;border:0;padding:0;font-size:inherit}
+.layout{display:grid;grid-template-columns:257px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--line);background:var(--sidebar);overflow-y:auto;scrollbar-width:thin;padding:26px 15px 24px 17px;z-index:50}.brand{display:flex;align-items:center;gap:11px;padding:0 9px 22px;text-decoration:none}.brandicon{border:1.5px solid var(--text);border-radius:10px;width:31px;height:31px;display:grid;place-items:center;font-weight:800;font-size:13px}.brandname{font-weight:750;font-size:13px;letter-spacing:-.025em}.brandsub{font-size:10px;color:var(--quiet)}.navtitle{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.15em;color:var(--quiet);padding:12px 10px 7px}.toc a{display:flex;align-items:baseline;gap:9px;border-radius:8px;padding:8px 9px;margin:1px 0;text-decoration:none;color:var(--muted);font-size:12px;line-height:1.5}.toc a .num{color:var(--quiet);font:10px monospace;min-width:21px}.toc a:hover,.toc a.active{background:var(--softer);color:var(--text)}.toc a.active{font-weight:650}.sidebarfoot{border-top:1px solid var(--line);padding:15px 10px;color:var(--quiet);font-size:11px;margin-top:14px}.main{min-width:0}.topbar{position:sticky;top:0;z-index:35;display:flex;justify-content:space-between;align-items:center;gap:15px;height:59px;padding:0 36px;border-bottom:1px solid var(--line);background:var(--bg)}.crumb{color:var(--muted);font-size:12px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.crumb strong{color:var(--text)}.actions{display:flex;gap:7px;align-items:center}.btn{font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);padding:6px 11px;white-space:nowrap}.btn:hover{background:var(--soft);color:var(--text)}.menu{display:none}.progress{height:2px;position:fixed;left:257px;top:0;width:0;background:var(--text);z-index:80;pointer-events:none}.content{max-width:1120px;padding:54px 56px 125px;margin:auto;min-width:0}.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.13em;font-weight:750;text-transform:uppercase}.hero h1{font-size:clamp(33px,3.5vw,48px);line-height:1.23;letter-spacing:-.055em;margin:17px 0 17px;font-weight:780}.hero .desc{font-size:17px;color:var(--muted);line-height:1.9;max-width:850px}.meta{display:flex;gap:9px;flex-wrap:wrap;margin:24px 0 0}.meta span{border:1px solid var(--line);border-radius:30px;padding:4px 11px;color:var(--muted);font-size:11px}.hero-sep{border:0;border-top:1px solid var(--line);margin:42px 0 40px}.section{scroll-margin-top:85px;margin:53px 0 72px}.section-head{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:24px}.section-no{font-size:12px;color:var(--quiet);font-family:monospace}.section h2{font-size:25px;font-weight:730;margin:0}.section h3{font-size:18px;font-weight:700;margin:33px 0 13px}.section h4{font-size:14px;margin:1px 0 5px}.section ul{padding-left:23px}.section li{margin:7px 0}.section li::marker{color:var(--muted)}.muted,.tiny{color:var(--muted)!important}.tiny{font-size:11px}.quote{border-left:3px solid var(--text);padding:10px 20px;font-size:17px;line-height:1.8;font-weight:550;margin:23px 0}.hero-statement{font-size:18px;font-weight:650;line-height:1.75;padding:5px 0 5px 18px;border-left:3px solid var(--text);margin:15px 0 25px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 22px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.panel{border:1px solid var(--line);padding:18px 19px;border-radius:12px;min-width:0}.paneltitle{font-size:13px;font-weight:700;line-height:1.7}.panel p{font-size:12px;line-height:1.75;color:var(--muted);margin:7px 0 0}.state{display:inline-block;font-size:10px;color:var(--text);white-space:nowrap;padding:1px 7px;border:1px solid var(--line-strong);border-radius:20px;vertical-align:middle;margin:0 3px 0 0;line-height:1.7}.state-done{font-weight:700}.state-principle{border-style:solid;color:var(--muted)}.state-open{border-style:dashed;color:var(--muted)}.state-retired{border:0;background:var(--soft);color:var(--quiet);text-decoration:line-through}.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin:19px 0 24px}table{border-collapse:collapse;width:100%;min-width:625px;font-size:12.5px;line-height:1.75}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--soft);font-weight:700;color:var(--muted);white-space:nowrap}td:first-child{font-weight:620}tr:last-child td{border-bottom:0}.tight td,.tight th{padding:10px 11px}.callout{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:18px 20px;margin:22px 0}.callout strong{font-size:13px}.callout p{font-size:13px;line-height:1.85;margin:5px 0}.callout.focus{background:var(--surface);border:1.5px solid var(--line-strong)}.diagram{border:1px solid var(--line);border-radius:13px;padding:22px 20px;margin:23px 0}.diagram-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--quiet);font-weight:700;margin-bottom:17px}.node-row{max-width:760px;margin:auto}.node{border:1px solid var(--line);border-radius:9px;padding:13px 15px;background:var(--soft);text-align:center;min-width:0}.node.major{border:1.5px solid var(--text);background:var(--surface)}.node strong{display:block;font-size:13px;line-height:1.5}.node small{display:block;font-size:11px;color:var(--muted);line-height:1.65;margin-top:3px}.arrow{text-align:center;line-height:27px;color:var(--quiet);font-size:18px}.split-arrows{display:grid;grid-template-columns:1fr 1fr;text-align:center;height:31px;color:var(--quiet);font-size:21px}.diagram-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.diagram-footer{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;margin-top:19px;text-align:center}.codeblock{border:1px solid var(--line);background:var(--soft);border-radius:11px;overflow:hidden;margin:20px 0 26px}.codehdr{display:flex;justify-content:space-between;align-items:center;gap:9px;border-bottom:1px solid var(--line);padding:8px 13px;color:var(--quiet);font-size:11px}.copy{background:transparent;color:var(--muted);border:0;padding:4px 8px;border-radius:7px;font-size:11px}.copy:hover{background:var(--softer)}pre{padding:16px 19px;font-size:12px;line-height:1.75;overflow:auto;margin:0;white-space:pre;tab-size:2}.numberlist{margin:23px 0;display:grid;gap:0}.numberitem{display:grid;grid-template-columns:40px minmax(0,1fr);gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}.numberitem:last-child{border-bottom:0}.numbericon{height:37px;width:37px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font:650 12px monospace}.numberitem h4{margin:1px 0 5px}.numberitem p{margin:0;color:var(--muted);font-size:12px}.endmark{text-align:center;font-size:11px;color:var(--quiet);letter-spacing:.15em;margin:65px 0 20px}.footer{border-top:1px solid var(--line);padding:25px 0;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px}.up{position:fixed;bottom:25px;right:26px;border:1px solid var(--line);border-radius:100%;background:var(--surface);color:var(--text);width:38px;height:38px;display:grid;place-items:center;box-shadow:var(--shadow);opacity:0;pointer-events:none}.up.visible{opacity:1;pointer-events:auto}
+@media(max-width:1100px){.layout{grid-template-columns:220px minmax(0,1fr)}.progress{left:220px}.content{padding:45px 33px 95px}.topbar{padding:0 24px}}
+@media(max-width:820px){.layout{display:block}.sidebar{position:fixed;left:0;top:0;bottom:0;width:275px;height:auto;transform:translateX(-105%);transition:transform .2s ease;box-shadow:var(--shadow)}body.menu-open .sidebar{transform:translateX(0)}.menu{display:inline-flex}.menu-overlay{display:none;position:fixed;inset:0;z-index:45;background:#0007}body.menu-open .menu-overlay{display:block}.progress{left:0}.topbar{padding:0 17px;height:55px}.content{padding:31px 21px 78px}.grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h1{font-size:34px}.section h2{font-size:23px}.section{margin:46px 0 62px}}
+@media(max-width:520px){.grid,.grid.three,.diagram-grid{grid-template-columns:1fr}.content{padding:27px 17px 80px}.hero h1{font-size:27px}.hero .desc{font-size:15px}.section h2{font-size:21px}.section-head{gap:9px}.topbar{gap:8px}.crumb{max-width:150px}.btn{padding:6px 9px}.diagram{padding:16px 13px}.split-arrows{display:none}.codeblock pre{font-size:11px}.panel{padding:15px}}
+@media print{html{scroll-behavior:auto}body{background:#fff;color:#111;font-size:11pt}.sidebar,.menu-overlay,.topbar,.progress,.up,.copy{display:none!important}.layout{display:block}.content{padding:0;margin:0;max-width:none}.hero h1{font-size:25pt}.section{break-inside:auto;margin:26px 0}.section-head{break-after:avoid}.panel,.diagram,.callout,.codeblock{break-inside:avoid;background:#fff}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0;font-size:9pt}th,td{padding:6px 8px}.diagram-grid,.grid{break-inside:avoid}a{text-decoration:none}.footer{font-size:9pt}@page{size:A4;margin:16mm}}
+
+.status-strip{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 21px}.status-strip div{display:flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:8px;font-size:12px}.status-strip strong{font-family:monospace;font-size:12px}.pill{display:inline-block;border-radius:7px;border:1px solid var(--line-strong);font-size:10px;font-weight:680;line-height:1.5;padding:3px 7px;margin-left:6px;white-space:nowrap}.pill.closed{background:var(--soft)}.pill.tentative{border-style:dashed}.pill.todo{color:var(--muted);border-style:dashed}.subtitleline{color:var(--muted);font-size:12px;font-weight:550;margin-top:-6px}.compare{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:19px 0 26px}.compare .panel{padding:15px}.compare .panel h4{margin:0 0 4px}.compare .panel p{margin:6px 0}.caption{font-size:11px;color:var(--muted);margin:-14px 0 23px}.rail{display:grid;grid-template-columns:125px 1fr;gap:10px;margin:14px 0}.rail>div:first-child{border-radius:8px;background:var(--soft);text-align:center;padding:13px 9px;font-size:12px;font-weight:700}.rail>div:last-child{border:1px solid var(--line);border-radius:8px;padding:10px 15px;font-size:13px}.rail p{margin:2px 0 0;color:var(--muted);font-size:12px}.labelnote{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--quiet);margin:26px 0 10px}.blackrule{border-left:3px solid var(--text);padding:11px 16px;margin:19px 0;font-size:15px;font-weight:650;line-height:1.85}.adrhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.adrhead code{font-size:12px}.topic{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin:17px 0;font-size:13px}.topic strong{display:block;margin-bottom:4px}.nextlist{display:grid;gap:9px;margin:17px 0}.nextrow{display:grid;grid-template-columns:43px 1fr;gap:14px;border-bottom:1px solid var(--line);padding:10px 2px 13px}.nextrow .n{font:700 12px monospace;border-radius:8px;background:var(--soft);height:39px;display:grid;place-items:center}.nextrow h4{margin:0}.nextrow p{margin:3px 0 0;color:var(--muted);font-size:12px}.summarybar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0 26px}.summarybox{border:1px solid var(--line);border-radius:11px;padding:17px}.summarybox strong{display:block;font-size:25px;line-height:1.35}.summarybox small{display:block;font-size:11px;color:var(--muted)}
+@media(max-width:850px){.compare{grid-template-columns:1fr}.rail{grid-template-columns:100px 1fr}}
+@media(max-width:520px){.summarybar{grid-template-columns:1fr 1fr}.rail{grid-template-columns:1fr}.rail>div:first-child{text-align:left;padding:8px 12px}.compare{grid-template-columns:1fr}}
+
+.choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:17px 0 23px}.choice>.panel{padding:15px}.choice .cap{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--quiet)}.choice .yes{border:1.5px solid var(--text)}
+.slotgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:18px 0 24px}.slot{border:1px solid var(--line);border-radius:10px;padding:16px}.slot strong{display:block;font-size:13px}.slot small{display:block;font-size:11px;color:var(--muted);margin-top:6px}
+.tag{display:inline-block;padding:3px 8px;border:1px solid var(--line-strong);border-radius:7px;font-size:10px;line-height:1.5;font-weight:670}.tag.fixed{background:var(--soft)}.tag.principle{border-style:solid}.tag.detail{border-style:dashed;color:var(--muted)}.tag.future{color:var(--quiet);border-style:dashed}
+.compass{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;margin:13px 0}.compass b{font-size:12px;background:var(--soft);padding:13px;border-radius:9px}.compass>div{padding:12px 15px;border:1px solid var(--line);border-radius:9px;font-size:12px}.compass em{color:var(--muted);font-style:normal}
+.inlinekey{font-family:monospace;color:var(--muted);font-size:12px}.decision-foot{border-top:1px solid var(--line);padding-top:12px;margin-top:18px;font-size:12px;color:var(--muted)}
+.mini-map{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mini-map .node{height:100%;display:grid;align-content:center}.minor{font-size:12px;color:var(--muted)}.accentline{border-left:3px solid var(--text);padding:10px 18px;margin:18px 0;font-size:14px;font-weight:600}.footnotes{font-size:12px;color:var(--muted);line-height:1.9}
+@media(max-width:850px){.choice,.slotgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.choice,.slotgrid,.mini-map{grid-template-columns:1fr}.compass{grid-template-columns:1fr}.compass b{padding:8px 12px}}
+
+
+.arch-boundary{display:grid;gap:14px;margin:24px 0}.boundary-cell{border:1px solid var(--line);padding:19px 20px;border-radius:12px}.boundary-cell.dark-border{border:1.5px solid var(--text)}.boundary-over{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:baseline;margin-bottom:8px}.boundary-over h3{font-size:16px!important;margin:0!important}.boundary-over span{font-size:11px;color:var(--muted)}.boundary-cell p{font-size:12px;color:var(--muted);margin:4px 0}.boundary-arrow{text-align:center;color:var(--muted);font-size:19px;line-height:14px}.io-pills{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.io-pills span{border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11px;background:var(--soft)}.decision-list{margin:20px 0;border-top:1px solid var(--line)}.decision-row{display:grid;grid-template-columns:90px 1fr auto;gap:10px;padding:13px 4px;border-bottom:1px solid var(--line);align-items:start}.decision-row .id{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}.decision-row strong{font-size:13px}.decision-row p{font-size:12px;color:var(--muted);margin:3px 0 0}.decision-row .tag{margin-top:1px}.situation{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:22px 0}.situation-head{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--soft);border-bottom:1px solid var(--line);font-size:12px;font-weight:700}.situation-content{padding:18px}.situation-content p{margin:6px 0;font-size:13px}.keypoint{border-left:3px solid var(--text);padding:9px 0 9px 15px;margin:18px 0 23px;font-size:14px;font-weight:650}.steps{counter-reset:s;display:grid;gap:9px;margin:18px 0}.step{display:flex;gap:11px;border:1px solid var(--line);border-radius:10px;padding:11px 13px}.step:before{counter-increment:s;content:counter(s,decimal-leading-zero);font:650 11px ui-monospace,monospace;color:var(--muted);background:var(--soft);border-radius:7px;min-width:32px;height:30px;display:grid;place-items:center}.step strong{display:block;font-size:13px}.step small{color:var(--muted);font-size:12px;display:block;line-height:1.8}.lineage{border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin:19px 0}.lineage strong{font-size:12px}.lineage p{font-size:12px;color:var(--muted);margin:6px 0}.lineage .end{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;font-weight:700;color:var(--text)}.kbd{font-family:monospace;padding:1px 5px;border:1px solid var(--line);border-radius:4px;font-size:11px}.side-note{font-size:11px;color:var(--muted);line-height:1.85}.doc-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-bottom:1px solid var(--line-strong);font-size:13px;padding-bottom:2px}.doc-link:hover{border-color:var(--text)}.comparison-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}.comparison-two .panel{height:100%}.trace-line{font:12px/1.9 ui-monospace,monospace;color:var(--text);white-space:pre-wrap}.note-caption{font-size:11px;color:var(--muted);margin:9px 0 12px}.tag{white-space:nowrap}
+@media(max-width:700px){.decision-row{grid-template-columns:58px 1fr;gap:7px}.decision-row .tag{grid-column:2;width:max-content}.comparison-two{grid-template-columns:1fr}}
+@media print{.arch-boundary,.situation,.steps,.decision-row{break-inside:avoid}.doc-link{border:0}}
+
+/* Round 04 additions */
+.protocol-note{padding:12px 15px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--soft);font-size:12px;color:var(--muted);margin:12px 0 17px}
+.mini-label{font-size:10px;color:var(--quiet);font-weight:730;text-transform:uppercase;letter-spacing:.13em;margin:12px 0 7px}
+.profiles{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.profile{border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0}
+.profile h4{margin:0 0 12px;font-size:14px}
+.fieldmock{background:var(--soft);border:1px solid var(--line);padding:10px 12px;border-radius:8px;margin:8px 0;font-size:12px;line-height:1.5}
+.fieldmock em{font-style:normal;color:var(--muted);display:block;font-size:11px}
+.detailmock{border:1px solid var(--line-strong);border-radius:11px;padding:13px;margin:12px 0;background:var(--surface)}
+.mono{font-family:SFMono-Regular,Consolas,monospace}
+.flow3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;margin:18px 0}
+.flow3 .node{border:1px solid var(--line);padding:14px 11px;border-radius:10px;font-size:12px;text-align:center;font-weight:650;min-height:68px;display:flex;align-items:center;justify-content:center}
+.flow3 .arrow{color:var(--muted);font-weight:700}
+.section .callout p:last-child{margin-bottom:0}
+.decision-box{border:1px solid var(--line);padding:16px 19px;border-radius:12px;margin:14px 0;display:flex;gap:16px;justify-content:space-between;align-items:start}
+.decision-box strong{font-size:13px;display:block;line-height:1.7}
+.decision-box p{color:var(--muted);font-size:12px;line-height:1.8;margin:5px 0 0}
+.decision-box .state{flex-shrink:0}
+.checkline{border-bottom:1px solid var(--line);padding:12px 0;font-size:13px}
+.checkline:last-child{border-bottom:0}
+@media(max-width:800px){.profiles{grid-template-columns:1fr}.flow3{grid-template-columns:1fr;gap:4px}.flow3 .arrow{text-align:center;transform:rotate(90deg)}.decision-box{display:block}.decision-box .state{margin:9px 0 0}}
+@media print{.profile,.decision-box,.protocol-note{break-inside:avoid}}
+
+
+blockquote{border-left:3px solid var(--text);padding:9px 19px;margin:20px 0;color:var(--text);font-size:15px;line-height:1.9;background:transparent}
+blockquote p{margin:4px 0} .section strong{color:var(--text)}
+.section h2{overflow-wrap:anywhere} .tagrail{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}.tagrail span{font-size:11px;border:1px solid var(--line);border-radius:20px;padding:5px 10px;color:var(--muted)}
+.hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:26px 0 0}.hero-item{min-width:0;border:1px solid var(--line);padding:16px 15px;border-radius:11px}.hero-item .big{font-size:18px;font-weight:750;letter-spacing:-.025em;line-height:1.4}.hero-item .sm{font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px}
+.lead-note{border:1px solid var(--line-strong);border-radius:12px;padding:17px 20px;margin:24px 0;background:var(--soft)}.lead-note .kicker{font-size:10px;letter-spacing:.13em;font-weight:700;color:var(--quiet);text-transform:uppercase}.lead-note p{font-size:15px;font-weight:610;line-height:1.8;margin:6px 0 0}
+.decisionline{margin:18px 0;padding:15px 16px;border-left:3px solid var(--text);background:var(--soft);border-radius:0 9px 9px 0}.decisionline b{display:block;margin-bottom:5px;font-size:12px}.decisionline div{font-size:13px;line-height:1.8}
+.ladder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ladder .node{align-content:center}.ladder .node strong{font-size:14px}
+.state-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:18px 0}.statebox{padding:13px 11px;border:1px solid var(--line);border-radius:9px;min-width:0}.statebox strong{font-size:12px;display:block}.statebox span{font-size:11px;line-height:1.6;color:var(--muted);display:block;margin-top:5px}
+.handbook{border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:32% 1fr;margin:19px 0;overflow:hidden}.handbook .left{background:var(--soft);padding:16px}.handbook .right{padding:16px}.handbook strong{font-size:12px}.handbook p{font-size:12px;color:var(--muted);margin:4px 0 0}
+.eyebrowline{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--quiet);margin:10px 0}.protocol-note{border:1px dashed var(--line-strong);border-radius:9px;padding:12px 16px;margin:17px 0;color:var(--muted);font-size:12px;line-height:1.9}
+.section hr{border:0;border-top:1px solid var(--line);margin:27px 0}.section td code{white-space:nowrap}.section .codeblock{margin:17px 0 24px}.diagram-lines{display:grid;gap:11px;max-width:760px;margin:0 auto}.diagram-step{border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;background:var(--soft)}.diagram-step strong{display:block;font-size:13px}.diagram-step span{display:block;font-size:11px;color:var(--muted)}.diagram-down{text-align:center;color:var(--muted);font-size:20px;line-height:14px}.scenario{border:1px solid var(--line);border-radius:11px;padding:18px 21px;margin:18px 0}.scenario .t{font-weight:700;font-size:13px}.scenario p{font-size:12px;margin:6px 0}.end-rule{border-top:2px solid var(--text);padding-top:24px;font-size:17px;font-weight:670;line-height:1.7;margin-top:23px}
+@media(max-width:1100px){.hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.state-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ladder{grid-template-columns:1fr}.hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-item{padding:12px}.handbook{grid-template-columns:1fr}.section .tablewrap table{min-width:650px}}
+@media print{.hero-grid,.state-grid{-webkit-print-color-adjust:exact;print-color-adjust:exact}.section{break-inside:auto}.codeblock,blockquote,.callout,.hero-item{break-inside:avoid}}
+
+.chapter-mark{display:flex;align-items:center;gap:11px;margin:75px 0 8px;color:var(--muted);font-size:11px;letter-spacing:.12em;font-weight:750;text-transform:uppercase}.chapter-mark:after{content:"";display:block;height:1px;background:var(--line);flex:1}.section .minor{margin:21px 0 10px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.08em}.decision-list{display:grid;gap:10px;margin:22px 0}.decision-row{display:grid;grid-template-columns:70px minmax(0,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}.decision-row .key{background:var(--soft);font:700 12px monospace;padding:14px 11px;border-right:1px solid var(--line)}.decision-row .value{padding:12px 15px;font-size:13px}.decision-row .value small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.toc-search{margin:6px 8px 7px;padding:8px 10px;width:calc(100% - 16px);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:12px;outline:none}.toc-search:focus{border-color:var(--line-strong)}.toc a.hidden{display:none}.section-intro{font-size:15px;color:var(--muted);line-height:1.9}.crosslink{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:24px}.term{display:inline-block;border-bottom:1px dotted var(--line-strong)}.small-lines{font-size:12px;color:var(--muted);line-height:1.9}.footnotes{font-size:12px;color:var(--muted)}.status-legend{display:flex;gap:11px;flex-wrap:wrap;margin:16px 0}.no-draft{border-left:3px solid var(--text);padding:10px 17px;background:var(--soft);font-size:13px;line-height:1.85}.spec strong{font-size:13px}.spec{border-left:2px solid var(--line-strong);padding-left:15px;margin:16px 0}.spec p{font-size:12px;color:var(--muted);margin:5px 0}.cover-diagram{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:27px 0}.cover-diagram .node{padding:12px 5px}.cover-diagram .node strong{font-size:12px}.cover-diagram .node small{font-size:10px}@media(max-width:720px){.cover-diagram{grid-template-columns:repeat(2,minmax(0,1fr))}.decision-row{grid-template-columns:50px minmax(0,1fr)}.decision-row .key{padding:12px 7px}}
+</style></head>
+<body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:12px 20px;background:#fff3cd;color:#171717">历史原始归档 · 非现行规范。<a href="../2026-10-16-before-v1-final/l1-round06-definition-protocol-convergence.html">当前同步版</a> · <a href="../2026-10-16-before-v1-final/l1-definition-decisions-and-roadmap.html">主台账</a></div><div class="progress"></div><div class="menu-overlay"></div><div class="layout">
+<aside class="sidebar"><a class="brand" href="#top"><span class="brandicon">L1</span><span><span class="brandname">FORM ENGINE / ADR</span><span class="brandsub" style="display:block">Round 06 · Definition Protocol</span></span></a>
+<div class="navtitle">DECISION RECORD / 目录</div><input class="toc-search" type="search" aria-label="搜索章节" placeholder="筛选目录章节…"/><nav class="toc"><a href="#r6-01" data-to="r6-01"><span class="num">01</span><span>文档定位与阅读说明</span></a><a href="#r6-02" data-to="r6-02"><span class="num">02</span><span>第六组总决策矩阵</span></a><a href="#r6-03" data-to="r6-03"><span class="num">03</span><span>架构分层与两条“不可越界”红线</span></a><a href="#r6-04" data-to="r6-04"><span class="num">04</span><span>顶层 Form Definition：单一逻辑文档</span></a><a href="#r6-05" data-to="r6-05"><span class="num">05</span><span>Authoring / Canonical / Prepared 三层表示</span></a><a href="#r6-06" data-to="r6-06"><span class="num">06</span><span>Reference：数据寻址的唯一规则</span></a><a href="#r6-07" data-to="r6-07"><span class="num">07</span><span>Scope 的权责：来源、绑定、实例三分离</span></a><a href="#r6-08" data-to="r6-08"><span class="num">08</span><span>统一 ScopeBinder：对象与集合项</span></a><a href="#r6-09" data-to="r6-09"><span class="num">09</span><span>ScopeHandle、事件参数与跨视图传递</span></a><a href="#r6-10" data-to="r6-10"><span class="num">10</span><span>Expression：一套纯 AST + 递归动态值</span></a><a href="#r6-11" data-to="r6-11"><span class="num">11</span><span>Constraint：内部断言、外部校验义务</span></a><a href="#r6-12" data-to="r6-12"><span class="num">12</span><span>外部校验状态、有效性与 Readiness</span></a><a href="#r6-13" data-to="r6-13"><span class="num">13</span><span>Command：封闭的结构化数据修改</span></a><a href="#r6-14" data-to="r6-14"><span class="num">14</span><span>Reaction：watch / when / then 的语义边界</span></a><a href="#r6-15" data-to="r6-15"><span class="num">15</span><span>View：Material 必须包含容器与复合业务组件</span></a><a href="#r6-16" data-to="r6-16"><span class="num">16</span><span>ViewNode：MaterialNode / ScopeNode / Template Use</span></a><a href="#r6-17" data-to="r6-17"><span class="num">17</span><span>Binding、Slots 与 Material Manifest</span></a><a href="#r6-18" data-to="r6-18"><span class="num">18</span><span>View Profile、Named Template 与 $use 的真实含义</span></a><a href="#r6-19" data-to="r6-19"><span class="num">19</span><span>容器交互：从 view.present 回归 Material 内聚</span></a><a href="#r6-20" data-to="r6-20"><span class="num">20</span><span>Interaction：保留受限 Event → Intent</span></a><a href="#r6-21" data-to="r6-21"><span class="num">21</span><span>Host Integration：三条调用路径</span></a><a href="#r6-22" data-to="r6-22"><span class="num">22</span><span>按 View Profile 交付和完整规则保留</span></a><a href="#r6-23" data-to="r6-23"><span class="num">23</span><span>版本和能力兼容策略</span></a><a href="#r6-24" data-to="r6-24"><span class="num">24</span><span>完整业务案例：复杂投保表单 · Canonical 草案</span></a><a href="#r6-25" data-to="r6-25"><span class="num">25</span><span>完整样例逐层解读</span></a><a href="#r6-26" data-to="r6-26"><span class="num">26</span><span>组合验收：通过、前提及发现的能力缺口</span></a><a href="#r6-27" data-to="r6-27"><span class="num">27</span><span>讨论中的架构修订记录</span></a><a href="#r6-28" data-to="r6-28"><span class="num">28</span><span>架构取舍：收益、复杂度与长期成本</span></a><a href="#r6-29" data-to="r6-29"><span class="num">29</span><span>不纳入核心的设计与对应替代</span></a><a href="#r6-30" data-to="r6-30"><span class="num">30</span><span>尚未冻结的语法与关键边界</span></a><a href="#r6-31" data-to="r6-31"><span class="num">31</span><span>下一阶段交付清单与验收顺序</span></a><a href="#r6-32" data-to="r6-32"><span class="num">32</span><span>最终摘要：第六组的核心收敛</span></a></nav>
+<div class="sidebarfoot">协议统一与组合验收 · V0.1<br/>Scope / Rules / View / Host<br/>归档日期：2026-10-16</div></aside>
+<div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:9px;min-width:0"><button type="button" class="btn menu" aria-expanded="false" aria-label="打开目录">目录</button><div class="crumb">L1 Definition <span style="opacity:.5">/</span> <strong>第六组 · 协议统一收敛</strong></div></div>
+<div class="actions"><button id="theme" type="button" class="btn">深色</button><button id="print" type="button" class="btn">打印 / PDF</button></div></header>
+<main class="content" id="top"><div class="hero"><div class="eyebrow">Architecture Decision Record · Round 06</div>
+<h1>Definition Protocol<br/>统一收敛与组合验收</h1>
+<p class="desc">从顶层协议与 Scope 所有权出发，统一 Reference、Expression、Constraint、Command、Reaction、View、Material 和 Host Integration；保留设计修订过程，并以复杂投保表单验证各模块能否协同工作。</p>
+<div class="meta"><span>L1 / 协议收敛</span><span>V0.1 归档</span><span>32 个章节</span><span>含完整 JSON 组合样例</span><span>2026-10-16</span></div></div>
+<hr class="hero-sep"/><div class="chapter-mark">总览 · PART</div><section id="r6-01" class="section"><div class="section-head"><span class="section-no">01</span><h2>文档定位与阅读说明</h2></div><p>本文件归档的是<strong>第六组：L1 Definition Protocol 统一收敛</strong>从顶层组织、基础引用与 Scope，到 Expression / Constraint / Command / Reaction、View / Material / Interaction、Host Integration，以及复杂表单组合验收的连续讨论。它不是重新编写前五组完整 ADR，而是记录这些结论如何组成同一套协议。</p><div class="callout focus"><strong>状态标识说明</strong><p><span class="state state-done">既有共识</span> 已在前面讨论反复确认的原则；<span class="state state-principle">本轮收敛</span> 本轮明确采纳或强烈收敛的方向；<span class="state state-open">候选语法</span> 用于检验能力但尚未冻结的 JSON / TypeScript 写法；<span class="state state-retired">已排除</span> 本轮明确否决或移出核心的设计。</p></div><p>重要边界：<strong>L1 定义语义；L2 Preparation 解析与验证；L3 管理唯一 Working Data、Command、Reaction 与校验状态；L4/Material 渲染具体组件；Host 执行网络、提交与业务副作用。</strong> 本轮不讨论 L3 调度算法、框架渲染策略或可视化编辑器的具体实现。</p><div class="cover-diagram"><div class="node"><strong>DATA</strong><small>结构 / 值</small></div><div class="node"><strong>RULES</strong><small>表达式 / 校验</small></div><div class="node"><strong>BEHAVIOR</strong><small>命令 / 联动</small></div><div class="node"><strong>VIEW</strong><small>多端物料</small></div><div class="node"><strong>HOST</strong><small>外部校验 / 提交</small></div></div><p>建议阅读顺序：先看「总决策矩阵」「协议边界」，再看各统一语义，最后阅读完整保险场景验收、取舍记录与遗留问题。</p></section><section id="r6-02" class="section"><div class="section-head"><span class="section-no">02</span><h2>第六组总决策矩阵</h2></div><div class="tablewrap"><table class="tight"><thead><tr><th>领域</th><th>最终趋向</th><th>状态</th></tr></thead><tbody><tr><td>P1 顶层组织</td><td>一份逻辑 Definition，按 Data / Expressions / Constraints / Reactions / Views 分区</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>P2 复用方式</td><td>简单内联；需要复用或独立引用时命名</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>P3 动态表达式</td><td>显式 <code>$expr</code> 在 ValueSpec 内递归识别，不按对象形状猜测</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>P4 Host Integration</td><td>外部约束、<code>host.emit</code>、Material Host Services 三条路径</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>P5 多端交付</td><td>Canonical Definition 与选定 Profile Bundle 分离</td><td><span class="state state-done">既有共识</span></td></tr><tr><td>P6 版本兼容</td><td>Protocol / Form / 独立扩展能力分层版本管理</td><td><span class="state state-open">候选细化</span></td></tr><tr><td>Scope</td><td>局部词法绑定 + L3 统一数据实例身份；不建全局 Scope Registry</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>规则模型</td><td>一套 Reference / Expression；Constraint / Reaction 分治；Command 封闭</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>视图协议</td><td>Material（含容器） + ScopeNode + 静态 Template Use</td><td><span class="state state-principle">本轮收敛</span></td></tr><tr><td>View 操作</td><td>取消核心 <code>view.present</code> / <code>view.dismiss</code> / Presentation DSL</td><td><span class="state state-retired">已排除</span></td></tr><tr><td>完整验收</td><td>多被保人、外部校验、双端复用可组合表达；Material 校验元信息有待补齐</td><td><span class="state state-principle">已验收原理</span></td></tr></tbody></table></div><p>这些是协议<strong>架构方向</strong>的收敛，不表示本页每一个示例字段名、枚举或类型都已成为正式的 Canonical Schema。</p></section><section id="r6-03" class="section"><div class="section-head"><span class="section-no">03</span><h2>架构分层与两条“不可越界”红线</h2></div><div class="diagram"><div class="diagram-label">Conceptual flow / 概念关系</div><div class="diagram-lines"><div class="diagram-step"><strong>L1 Canonical Form Definition</strong><span>Data / Expression / Constraint / Reaction / View / Interaction</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L2 Preparation</strong><span>规范化、静态分析、Scope 绑定、依赖、Profile 选择、能力检查</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L3 Form Runtime</strong><span>唯一 Work Data / 稳定 Item Identity / Command / 同步 Reaction / Validation</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L4 Renderer & Material + Host</strong><span>展示容器、组件交互；外部校验、提交和其他业务请求</span></div></div></div><div class="grid"><div class="panel"><div class="paneltitle">红线 01：单一数据源</div><p>PC、移动端卡片与弹窗默认编辑同一份 Form Working Data；UI 临时状态不是第二份业务数据。</p></div><div class="panel"><div class="paneltitle">红线 02：不扩张成低代码工作流</div><p>External Constraint 不发请求；Reaction 不等待外部 Promise；Modal/Drawer 不要求核心 View Action Engine。</p></div></div><p>对象类型解析失败、同步约束失败、外部校验失败属于不同层次。引擎不能把“业务校验不通过”简单转化成“所有联动停止”。</p></section><section id="r6-04" class="section"><div class="section-head"><span class="section-no">04</span><h2>顶层 Form Definition：单一逻辑文档</h2></div><div class="codeblock"><div class="codehdr"><span>结构草案 · 非冻结类型</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">interface FormDefinition {
+  protocolVersion: string;
+  id: string;
+  version: string;
+
+  data: DataDefinition;
+  expressions?: Record&lt;string, Expression&gt;;
+  constraints?: Constraint[];
+  reactions?: Reaction[];
+  views: Record&lt;string, ViewProfile&gt;;
+  viewTemplates?: Record&lt;string, ViewTemplate&gt;;
+  metadata?: Record&lt;string, unknown&gt;;
+}</code></pre></div><p>Schema 为数据结构的权威来源。<code>expressions</code> 是可选的命名复用入口；Constraint、Reaction 作为规则条目具有身份；View 是独立 Profile。<code>viewTemplates</code> 只在结构复用时需要。</p><div class="callout"><strong>未设立的顶层模块</strong><p>不新增 <code>resources</code>、<code>services</code>、<code>actions</code>、<code>lifecycle</code>、<code>submitWorkflow</code>、<code>presentation</code>、<code>inputBuffers</code>。讨论过实例能力，并不意味着一定要成为配置字段。</p></div><p>“单一逻辑定义”不等于只能存一个物理 JSON 文件。设计器可拆分管理，但发布时必须能够形成有明确版本的完整逻辑 Definition。</p></section><section id="r6-05" class="section"><div class="section-head"><span class="section-no">05</span><h2>Authoring / Canonical / Prepared 三层表示</h2></div><div class="tablewrap"><table class=""><thead><tr><th>层次</th><th>服务对象</th><th>边界</th></tr></thead><tbody><tr><td>Authoring Syntax</td><td>人工配置、设计器</td><td>受控简写，不允许引入 Canonical 无法表达的新语义</td></tr><tr><td>Canonical Definition</td><td>跨端协议语义</td><td>引用、类型、Scope 与扩展规则明确，无隐式猜测</td></tr><tr><td>Prepared Representation</td><td>L2 → L3/L4 的内部结构</td><td>已解析绑定、表达式、依赖与 Profile；默认不是对外公共标准</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>简写与规范语义的关系（示意）</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-javascript">// 方便编写：
+{ &quot;bind&quot;: &quot;/applicant/name&quot; }
+
+// 规范化后可理解为：
+{ &quot;binding&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/applicant/name&quot; } }
+
+// L2 内部可能包含 resolved binding / dependency index 等，
+// 不要求使用者在 Definition 中手写。</code></pre></div><p>上一轮曾在「全局强制 <code>$expr</code> 包装」与「类型化 Expression 字段直接 AST」之间比较。当前倾向是：<strong>Expression 专用位置可以直接 AST，普通 JSON 值使用显式包装</strong>；最终 Canonical 包装是否绝对统一，仍留到 Schema 冻结时决定。</p></section><div class="chapter-mark">基础语义 · PART</div><section id="r6-06" class="section"><div class="section-head"><span class="section-no">06</span><h2>Reference：数据寻址的唯一规则</h2></div><p>所有 Data、Expression、Constraint、Reaction、Command、View Binding 使用统一寻址语义，但各位置允许访问的 Source 和权限不同。</p><div class="codeblock"><div class="codehdr"><span>Reference · 候选 Canonical 形式</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{ &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/applicant/name&quot; }
+{ &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; }
+{ &quot;source&quot;: &quot;context&quot;, &quot;path&quot;: &quot;/locale&quot; }
+{ &quot;source&quot;: &quot;event&quot;, &quot;path&quot;: &quot;/selected&quot; }</code></pre></div><div class="tablewrap"><table class=""><thead><tr><th>路径</th><th>明确含义</th></tr></thead><tbody><tr><td><code>""</code></td><td>根值（JSON Pointer）</td></tr><tr><td><code>"/"</code></td><td>名称为空字符串的属性，<strong>不是根</strong></td></tr><tr><td><code>"/a~1b"</code></td><td>属性名 <code>a/b</code></td></tr><tr><td><code>"/a~0b"</code></td><td>属性名 <code>a~b</code></td></tr><tr><td><code>"/insureds"</code></td><td>Data Root 的 insureds 属性，当前局部 Scope 不改变它的含义</td></tr></tbody></table></div><p>根路径短写默认指向 Form Data Root；局部数据使用明确的 <code>scope</code>。不允许在某个 Repeater 内让同一个 <code>"/name"</code> 自动从根引用变成当前行引用。</p></section><section id="r6-07" class="section"><div class="section-head"><span class="section-no">07</span><h2>Scope 的权责：来源、绑定、实例三分离</h2></div><div class="diagram"><div class="diagram-label">Conceptual flow / 概念关系</div><div class="diagram-lines"><div class="diagram-step"><strong>Data Schema + Form Working Data</strong><span>结构与实际数据唯一来源；不单设 data.scopes 顶层表</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>局部 ScopeBinder</strong><span>View / Reaction / Constraint 的限定结构位置声明 from + as + mode</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L2 Lexical Compiler</strong><span>类型检查、词法别名与可见性、编译期绑定 ID</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L3 Data Identity / Location Resolver</strong><span>统一解析数据位置和数组项稳定身份；多消费者指向同一实例</span></div></div></div><p>Scope <strong>不是独立 Store、不是另一个全局命名空间</strong>，也不是只有 View.repeat 才能创建。View 和 Reaction 可以有各自的词法绑定帧，但不能产生两套互相独立的业务实例身份。</p><div class="tablewrap"><table class=""><thead><tr><th>概念</th><th>谁定义/拥有</th><th>意义</th></tr></thead><tbody><tr><td>Data Location</td><td>Data Schema / Working Data</td><td>业务数据在当前实例中的位置</td></tr><tr><td>ScopeBinder</td><td>在协议允许的词法边界声明</td><td>为某个数据位置或数组项引入局部别名</td></tr><tr><td>Lexical Binder ID</td><td>L2 内部生成</td><td>消除局部别名解析歧义，不是全局 Scope ID</td></tr><tr><td>Data Item Identity</td><td>L3 统一管理</td><td>数组移动后同一项身份不改变，删除后句柄失效</td></tr></tbody></table></div></section><section id="r6-08" class="section"><div class="section-head"><span class="section-no">08</span><h2>统一 ScopeBinder：对象与集合项</h2></div><div class="codeblock"><div class="codehdr"><span>最小 Binder 候选结构</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">type ScopeBinder = {
+  from: DataReference;
+  as: string;
+  mode?: &#x27;one&#x27; | &#x27;each&#x27;;
+};
+type ScopeDeclaration = ScopeBinder | ScopeBinder[];</code></pre></div><div class="grid"><div class="panel"><div class="paneltitle">mode: one · 默认</div><p>绑定确定的数据位置。独立对象 /applicant 可以绑定为 applicant，不要求写所有字段的完整根路径。</p></div><div class="panel"><div class="paneltitle">mode: each · 集合</div><p>针对数组每一项建立局部环境。View 中逐项实例化子树；Reaction / Constraint 中逐项应用规则。</p></div></div><div class="codeblock"><div class="codehdr"><span>多层数组的有序词法绑定链</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;scope&quot;: [
+    { &quot;from&quot;: &quot;/applicants&quot;, &quot;as&quot;: &quot;applicant&quot;, &quot;mode&quot;: &quot;each&quot; },
+    {
+      &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;applicant&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+      &quot;as&quot;: &quot;insured&quot;,
+      &quot;mode&quot;: &quot;each&quot;
+    }
+  ]
+}</code></pre></div><ul><li><strong>只允许在结构性边界引入</strong>：View 的 ScopeNode、规则入口；Expression、Command 和普通 Props 只能使用既有绑定。</li><li>同一词法链建议不允许重名遮蔽；没有 <code>from</code> 的绑定声明应被拒绝。</li><li><code>from</code> 不接受任意 Expression 动态计算数据路径；若当前引用不存在或类型不符，不自动创建数组/对象。</li><li>多处使用相同别名或 <code>from</code> 不等于多份数据或多个独立 Scope Registry。</li></ul><div class="callout"><strong>已比较并倾向放弃：全局 scopes Registry</strong><p>集中声明所有对象/集合能减少少量 from 的重复，却引入命名、嵌套关系、Schema 重复维护和跨片段耦合。局部词法绑定 + L3 统一实例身份更适合当前的最小协议。</p></div></section><section id="r6-09" class="section"><div class="section-head"><span class="section-no">09</span><h2>ScopeHandle、事件参数与跨视图传递</h2></div><p>Data Reference 取得业务值，ScopeHandle 表示当前实例定位身份；两项数据值完全相同的数组成员仍然是两个不同实例。</p><div class="codeblock"><div class="codehdr"><span>ScopeHandle 不等于业务值</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">// 当前联系人数据值：
+{ &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;contact&quot;, &quot;path&quot;: &quot;&quot; }
+
+// 当前联系人实例句柄：
+{ &quot;$scope&quot;: &quot;contact&quot; }
+
+// 在集合操作中精确指向当前项：
+{
+  &quot;op&quot;: &quot;array.remove&quot;,
+  &quot;target&quot;: &quot;/contacts&quot;,
+  &quot;item&quot;: { &quot;$scope&quot;: &quot;contact&quot; }
+}</code></pre></div><p>Interaction 的临时环境包含两部分：Material 的事件参数（可由 <code>source:event</code> 读取），以及当前结构性 Scope 捕获。某个事件的 Payload 可能为空，但它发生在特定被保人卡片内，其实例定位仍然可用。</p><div class="codeblock"><div class="codehdr"><span>事件 → Command · 当前行定位</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;on&quot;: {
+    &quot;remove&quot;: {
+      &quot;type&quot;: &quot;form.command&quot;,
+      &quot;command&quot;: {
+        &quot;op&quot;: &quot;array.remove&quot;,
+        &quot;target&quot;: &quot;/insureds&quot;,
+        &quot;item&quot;: { &quot;$scope&quot;: &quot;insured&quot; }
+      }
+    }
+  }
+}</code></pre></div><p>内部 Handle 不应被当作普通可序列化业务 ID 发送给外部服务；Host 需要外部调用时，应明确取得业务值与业务标识，并在异步返回后核对当前实例是否仍然有效。</p></section><div class="chapter-mark">规则与计算 · PART</div><section id="r6-10" class="section"><div class="section-head"><span class="section-no">10</span><h2>Expression：一套纯 AST + 递归动态值</h2></div><p>第二组已经确定 Expression 为 JSON AST，Pure Function 为已注册的纯同步能力。第六组的重要修订是：<strong>ValueSpec 的嵌套结构默认递归识别显式 <code>$expr</code> 标记，不对每个深层 Material Props 再维护动态字段白名单。</strong></p><div class="codeblock"><div class="codehdr"><span>在 ValueSpec 中任意深度发现显式 Expression</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;props&quot;: {
+    &quot;badge&quot;: {
+      &quot;visible&quot;: {
+        &quot;$expr&quot;: {
+          &quot;op&quot;: &quot;eq&quot;,
+          &quot;args&quot;: [{ &quot;ref&quot;: &quot;/country&quot; }, &quot;JP&quot;]
+        }
+      },
+      &quot;label&quot;: { &quot;$expr&quot;: { &quot;ref&quot;: &quot;/status&quot; } }
+    }
+  }
+}</code></pre></div><div class="tablewrap"><table class=""><thead><tr><th>语义位置</th><th>建议写法</th><th>解释</th></tr></thead><tbody><tr><td><code>constraint.assert</code> / <code>reaction.when</code></td><td>Expression AST（可直接写）</td><td>槽位类型本身已确定</td></tr><tr><td><code>material.props</code> / <code>command.value</code></td><td>递归 ValueSpec；嵌入 <code>$expr</code></td><td>允许静态 JSON 和动态节点混合</td></tr><tr><td>静态配置值中确实有 <code>$expr</code> 形状</td><td>显式 <code>$literal</code> 或等价转义</td><td>保留普通 JSON 数据原样</td></tr><tr><td>Material ID / 引用目标 / 规则 ID</td><td>结构性静态字段</td><td>L2 检查，不因为递归发现就支持动态结构名</td></tr></tbody></table></div><div class="callout"><strong>递归识别 ≠ 猜测</strong><p>只有规范的显式包装会被识别；任意 <code>{"op":"eq"}</code> 对象不是自动 Expression。Data Schema 的 default、Working Data 和不属于 ValueSpec 的外部原始 JSON 不能无差别扫描并执行。</p></div><p>命名 Expression 可以复用，但 V1 不允许全局命名表达式隐式捕获调用者的局部 Scope。局部逻辑优先内联，避免引入动态作用域或参数化函数系统。</p></section><section id="r6-11" class="section"><div class="section-head"><span class="section-no">11</span><h2>Constraint：内部断言、外部校验义务</h2></div><div class="codeblock"><div class="codehdr"><span>Internal Constraint · 条件检查（片段）</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;insured-age-range&quot;,
+  &quot;kind&quot;: &quot;internal&quot;,
+  &quot;scope&quot;: { &quot;from&quot;: &quot;/insureds&quot;, &quot;as&quot;: &quot;insured&quot;, &quot;mode&quot;: &quot;each&quot; },
+  &quot;assert&quot;: {
+    &quot;op&quot;: &quot;gte&quot;,
+    &quot;args&quot;: [
+      { &quot;ref&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; } },
+      18
+    ]
+  },
+  &quot;issue&quot;: {
+    &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; },
+    &quot;code&quot;: &quot;AGE_TOO_LOW&quot;
+  }
+}</code></pre></div><div class="codeblock"><div class="codehdr"><span>External Constraint · 声明义务而非网络调用</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;insured-eligibility&quot;,
+  &quot;kind&quot;: &quot;external&quot;,
+  &quot;scope&quot;: { &quot;from&quot;: &quot;/insureds&quot;, &quot;as&quot;: &quot;insured&quot;, &quot;mode&quot;: &quot;each&quot; },
+  &quot;dependsOn&quot;: [
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; },
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/idNumber&quot; }
+  ],
+  &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/idNumber&quot; },
+  &quot;requiredForSubmit&quot;: true
+}</code></pre></div><div class="tablewrap"><table class=""><thead><tr><th>问题</th><th>结论</th></tr></thead><tbody><tr><td>Expression 无法解析</td><td>传播不可求值/诊断；不得偷换为布尔 false 或旧值</td></tr><tr><td>同步 Constraint 不通过</td><td>记录问题，不默认阻断其他数据 Reaction</td></tr><tr><td>外部校验未执行</td><td>Unverified，不等价于通过</td></tr><tr><td>外部校验 Pending / Invalid / Error</td><td>不满足必需提交校验；不自动等待或重启 Reaction</td></tr><tr><td>条件约束的 <code>when</code></td><td>决定约束适用性；无法求值不能视为自动通过</td></tr></tbody></table></div><p>Constraint 不直接执行 <code>onFail Command</code>。需要影响数据时，应通过独立 Reaction 条件或 Host 在外部完成必要验证后发出 Command。</p></section><section id="r6-12" class="section"><div class="section-head"><span class="section-no">12</span><h2>外部校验状态、有效性与 Readiness</h2></div><div class="tablewrap"><table class=""><thead><tr><th>状态</th><th>语义</th><th>是否满足必需校验</th></tr></thead><tbody><tr><td><code>unverified</code></td><td>当前适用输入尚无有效结论</td><td>否</td></tr><tr><td><code>pending</code></td><td>Host 报告正在执行</td><td>否</td></tr><tr><td><code>valid</code></td><td>当前输入存在有效通过结论</td><td>是</td></tr><tr><td><code>invalid</code></td><td>当前输入业务校验失败</td><td>否</td></tr><tr><td><code>error</code></td><td>校验执行错误，不能判断合法性</td><td>否</td></tr></tbody></table></div><p>每项外部结果至少关联 Form Instance、Constraint ID、Scope Instance、所依赖数据的有效性标识及调用身份。输入依赖变化后，旧结论应立即失效；与校验无关的字段修改不必使其失效。</p><div class="diagram"><div class="diagram-label">Conceptual flow / 概念关系</div><div class="diagram-lines"><div class="diagram-step"><strong>Definition / Host 注册外部校验义务</strong><span>由 dependsOn 指出适用的数据依赖；Host 可补充宿主特有义务</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>Host 执行并报告状态</strong><span>网络、重试、防抖等都不由引擎负责</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L3 被动登记 / 检查结果是否仍适用于当前数据</strong><span>不接受过期 Invocation 对当前值的错误覆盖</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>Validation Readiness</strong><span>内部约束与规范化输出成功 + 所有已注册且适用的必需外部约束 valid</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>Host 最终决定提交</strong><span>再次核对一致数据版本，再进行权限和业务检查、HTTP 提交</span></div></div></div><div class="callout"><strong>关键边界</strong><p><strong>Readiness 只涵盖 Runtime 已知的校验义务</strong>，不是对 Host 所有业务规则的全知判断。服务端业务事实在数据不变时也可能变化，Host 需负责有效期、重新验证或主动撤销结论。</p></div><p>外部校验结果不会自动恢复某个先前因类型失败而没有执行的 Reaction；如外部结果需要回填城市、资格或保费，Host 明确发出普通 Command，Runtime 再执行同步联动。</p></section><section id="r6-13" class="section"><div class="section-head"><span class="section-no">13</span><h2>Command：封闭的结构化数据修改</h2></div><div class="tablewrap"><table class=""><thead><tr><th>操作</th><th>受控语义</th></tr></thead><tbody><tr><td><code>set</code></td><td>设置/替换目标值，目标对象未指定键不会被隐式保留</td></tr><tr><td><code>patch</code></td><td>局部修改指定对象属性；初版倾向浅 Patch，不递归深合并</td></tr><tr><td><code>remove</code></td><td>移除对象属性或指定数据位置，具体合法目标有待正式类型收敛</td></tr><tr><td><code>array.insert</code></td><td>插入数组项</td></tr><tr><td><code>array.remove</code></td><td>删除指定项，模板中可通过 ScopeHandle 定位</td></tr><tr><td><code>array.move</code></td><td>移动数组项并保留运行时稳定身份</td></tr><tr><td><code>batch</code></td><td>对受控操作做显式组合；Reaction.then 可直接是 Command[]</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>Command.value 直接使用 ValueSpec</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;op&quot;: &quot;set&quot;,
+  &quot;target&quot;: &quot;/order/total&quot;,
+  &quot;value&quot;: {
+    &quot;$expr&quot;: {
+      &quot;op&quot;: &quot;mul&quot;,
+      &quot;args&quot;: [{ &quot;ref&quot;: &quot;/order/price&quot; }, { &quot;ref&quot;: &quot;/order/quantity&quot; }]
+    }
+  }
+}</code></pre></div><p>Command Target 限制为可修改的 Data Reference，不能写入 Context 或 Event，也不支持任意 Expression 动态生成修改路径。Command 本身不调用 HTTP，不允许注入任意脚本或自定义执行器绕过 Runtime。</p></section><section id="r6-14" class="section"><div class="section-head"><span class="section-no">14</span><h2>Reaction：watch / when / then 的语义边界</h2></div><div class="codeblock"><div class="codehdr"><span>同步规则片段</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;clear-insured-city&quot;,
+  &quot;scope&quot;: { &quot;from&quot;: &quot;/insureds&quot;, &quot;as&quot;: &quot;insured&quot;, &quot;mode&quot;: &quot;each&quot; },
+  &quot;watch&quot;: [
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/country&quot; }
+  ],
+  &quot;then&quot;: [
+    {
+      &quot;op&quot;: &quot;set&quot;,
+      &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/city&quot; },
+      &quot;value&quot;: null
+    }
+  ]
+}</code></pre></div><ul><li><code>watch</code> 是明确的变化触发源，可监听多个 Data Reference；<code>when</code> 是触发后的可选纯条件。</li><li><code>when</code> 读取的其他依赖，不能被 L2 擅自添加到 <code>watch</code> 里而改变业务触发语义。</li><li><code>then</code> 直接保留有序 <code>Command[]</code>，不强制套一层无额外价值的 Batch 包装。</li><li>字段业务校验不通过不意味着整个 Form 的所有 Reaction 都停止；只有依赖无法求值时，相应的修改才不能产生有效 Command。</li><li>Reaction 只处理同步内部数据联动；不等待外部校验，也不订阅视图临时 UI 事件。</li></ul><div class="callout"><strong>执行调度已移出 L1</strong><p>Change Detection、触发队列、去重、循环保护、候选状态与一次稳定发布，属于 L3。L1 只定义行为的可观察语义与受控数据修改意图。</p></div></section><div class="chapter-mark">View 与物料 · PART</div><section id="r6-15" class="section"><div class="section-head"><span class="section-no">15</span><h2>View：Material 必须包含容器与复合业务组件</h2></div><p>本轮 View 讨论有一次重要修订：原先把 Modal、Drawer 当作特殊 Presentation Mode，后根据 C 端交互多样性的要求，统一归入 Material 体系。</p><div class="tablewrap"><table class=""><thead><tr><th>Material 类别</th><th>例子</th><th>自身职责</th></tr></thead><tbody><tr><td>输入</td><td>Input / Select / DatePicker</td><td>编辑交互 + Binding Adapter</td></tr><tr><td>展示</td><td>Summary / Price / BenefitCard</td><td>读取数据 / UI 展示</td></tr><tr><td>布局</td><td>Stack / Grid / Section</td><td>组合 Slots</td></tr><tr><td>容器</td><td>Modal / Drawer / BottomSheet / Popover</td><td>打开关闭、Portal、动画、遮罩、焦点和 UI 局部状态</td></tr><tr><td>复合业务</td><td>InsuredEditor / AddressPicker</td><td>封装复杂视图与内部交互</td></tr><tr><td>操作</td><td>Button / ArrayAdd</td><td>语义事件，必要时连接 Command 或 Host</td></tr></tbody></table></div><p>只要一个 Material 能通过 Props、Binding 和 Slots 自行完成相关交互，L1 就不重复定义打开、关闭、抽屉层级或 UI 事务。</p><div class="callout"><strong>正式修订</strong><p>移出核心：<code>view.present</code> / <code>view.dismiss</code> / 独立 Presentation Spec。它们不是概念上绝无价值，但目前不足以抵消新增 View Controller、跨树实例身份与 UI Action 调度的成本。</p></div></section><section id="r6-16" class="section"><div class="section-head"><span class="section-no">16</span><h2>ViewNode：MaterialNode / ScopeNode / Template Use</h2></div><div class="codeblock"><div class="codehdr"><span>ViewNode 概念类型 · 待冻结字段</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">type ViewNode = MaterialNode | ScopeNode | TemplateUse;
+
+type MaterialNode = {
+  material: string;
+  props?: Record&lt;string, ValueSpec&gt;;
+  bind?: DataReference | Record&lt;string, DataReference&gt;;
+  children?: ViewNode[];
+  slots?: Record&lt;string, ViewNode | ViewNode[]&gt;;
+  on?: Record&lt;string, InteractionIntent&gt;;
+};
+
+type ScopeNode = {
+  scope: ScopeDeclaration;
+  node: ViewNode;
+};
+
+type TemplateUse = {
+  $use: string;
+  with?: Record&lt;string, ScopeHandleReference&gt;;
+};</code></pre></div><p>动态集合的 View 重复实例化直接由结构性 <code>ScopeNode.scope.mode = "each"</code> 表达，父级 Material 不需要再写 <code>repeat</code>，也不需要给每类组件实现自己的 Scope。</p><div class="codeblock"><div class="codehdr"><span>一处结构语义同时完成每项绑定与重复实例化</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;scope&quot;: { &quot;from&quot;: &quot;/insureds&quot;, &quot;as&quot;: &quot;insured&quot;, &quot;mode&quot;: &quot;each&quot; },
+  &quot;node&quot;: {
+    &quot;material&quot;: &quot;insured-card&quot;,
+    &quot;bind&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;&quot; }
+  }
+}</code></pre></div><p>ScopeNode 是引擎能理解的结构包装，不应与 <code>material.props.scope</code> 混用。子树实例化是 View 消费该 Binder 的含义；Reaction 中相同 Binder 的含义是逐项适用规则。</p></section><section id="r6-17" class="section"><div class="section-head"><span class="section-no">17</span><h2>Binding、Slots 与 Material Manifest</h2></div><p>Binding 只声明<strong>关联哪份数据</strong>，不再以 <code>read/write</code> DSL 重复描述组件的更新行为。普通 Input 由 Material Adapter 更新 Runtime；展示物料可读取同一 Reference；UI <code>readonly</code> 是物料属性，不代表 Host 数据权限。</p><div class="codeblock"><div class="codehdr"><span>默认 Binding Port 与具名 Port</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">// 单字段 Binding：
+{ &quot;material&quot;: &quot;text-input&quot;, &quot;bind&quot;: &quot;/applicant/name&quot; }
+
+// 多字段复合 Binding：
+{
+  &quot;material&quot;: &quot;date-range&quot;,
+  &quot;bind&quot;: { &quot;start&quot;: &quot;/startDate&quot;, &quot;end&quot;: &quot;/endDate&quot; }
+}</code></pre></div><p><code>children</code> 建议只是 <code>slots.default</code> 的 Authoring 简写。对有多个插槽的复合物料，使用 <code>slots.trigger</code>、<code>slots.content</code> 等明确 Slot。禁止同一节点重复提供 <code>children</code> 和 <code>slots.default</code>。</p><div class="codeblock"><div class="codehdr"><span>Manifest 概念契约</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">interface MaterialManifest {
+  id: string;
+  propsSchema?: JsonSchema;
+  bindings?: Record&lt;string, { valueSchema: JsonSchema }&gt;;
+  slots?: Record&lt;string, { cardinality: &#x27;one&#x27; | &#x27;many&#x27; }&gt;;
+  events?: Record&lt;string, { payloadSchema?: JsonSchema }&gt;;
+}</code></pre></div><p>Material 事件元数据用于类型检查、工具提示和选择性外部连接；并不代表所有内部点击、开合和手势都必须在 Definition 的 <code>on</code> 中声明。</p></section><section id="r6-18" class="section"><div class="section-head"><span class="section-no">18</span><h2>View Profile、Named Template 与 $use 的真实含义</h2></div><p>原先曾设计 Profile 下的 <code>root + targets</code>，另有全局 <code>fragments</code>；讨论发现它们都在重复定义同一种 ViewNode 内容，因此收敛为：<strong>Profile Entry + 可选 Named View Template + Template Use</strong>。</p><div class="codeblock"><div class="codehdr"><span>Profile Entry 选择内容，Template 按需定义</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;views&quot;: {
+    &quot;expanded&quot;: { &quot;entry&quot;: { &quot;$use&quot;: &quot;expanded-form&quot; } },
+    &quot;compact&quot;:  { &quot;entry&quot;: { &quot;$use&quot;: &quot;compact-form&quot; } }
+  },
+  &quot;viewTemplates&quot;: {
+    &quot;expanded-form&quot;: { &quot;node&quot;: { &quot;material&quot;: &quot;stack&quot;, &quot;children&quot;: [] } },
+    &quot;compact-form&quot;:  { &quot;node&quot;: { &quot;material&quot;: &quot;stack&quot;, &quot;children&quot;: [] } }
+  }
+}</code></pre></div><p><code>$use</code> 是<strong>静态结构引用</strong>，不是 DOM 替换命令、不是动态模板切换，不默认共享 React/Vue/Flutter 组件实例或 UI 局部状态。L2 可以展开或保留已解析引用；L4 按当前位置建立视图实例。</p><p>同一 Template 在 PC 内嵌和移动端弹层中使用，复用的是视图<strong>定义</strong>，不共享 Modal 的打开状态、焦点或滚动位置。但两处字段都绑定到同一个 Form Working Data。</p><div class="callout"><strong>Fragment 的边界</strong><p>Fragment 不再需要独立领域注册表；通过 Named Template 复用即可。模板若需要局部 Scope，显式声明参数、由调用者提供 Handle，不隐式捕获外部局部变量。模板不能递归无限嵌套，L2 应检查引用环。</p></div></section><section id="r6-19" class="section"><div class="section-head"><span class="section-no">19</span><h2>容器交互：从 view.present 回归 Material 内聚</h2></div><div class="grid"><div class="panel"><div class="paneltitle">容器物料负责呈现</div><p>Modal、Drawer、BottomSheet 的开闭、Portal/Teleport、视觉与局部 UI 生命周期由对应 Material 自己实现。</p></div><div class="panel"><div class="paneltitle">View 协议只传内容</div><p>外层容器通过 trigger/content 等 Slots 接收视图定义；内部结构可用同一模板复用。</p></div></div><div class="codeblock"><div class="codehdr"><span>容器负责内部交互；Slot 契约由物料声明</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;bottom-sheet-editor&quot;,
+  &quot;slots&quot;: {
+    &quot;trigger&quot;: {
+      &quot;material&quot;: &quot;insured-summary&quot;,
+      &quot;bind&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;&quot; }
+    },
+    &quot;content&quot;: {
+      &quot;$use&quot;: &quot;insured-editor&quot;,
+      &quot;with&quot;: { &quot;insured&quot;: { &quot;$scope&quot;: &quot;insured&quot; } }
+    }
+  }
+}</code></pre></div><p>上述配置成立的前提是 <code>bottom-sheet-editor</code> 自身定义 <code>trigger</code> Slot 如何打开 <code>content</code>。Slot 名称不会自动赋予点击行为。</p><div class="callout"><strong>已知限制与可选扩展方向</strong><p>两个完全无父子关系的物料要在纯 Definition 中实现跨树 UI 协作，容器自身状态可能不够。V1 先通过复合容器 Material 或 Host 进行协调；只有大量实际需求出现，才重新评估可选 UI State / Action 扩展，而不是提前恢复通用 view.present。</p></div></section><section id="r6-20" class="section"><div class="section-head"><span class="section-no">20</span><h2>Interaction：保留受限 Event → Intent</h2></div><div class="tablewrap"><table class=""><thead><tr><th>映射</th><th>执行方</th><th>保留原因</th></tr></thead><tbody><tr><td><code>form.command</code></td><td>Form Runtime</td><td>普通 Button/Card 触发封闭 Command，不需为每个数据操作造专有物料</td></tr><tr><td><code>host.emit</code></td><td>Host</td><td>需要跨业务外部能力时进行有类型、有授权的意图通知</td></tr><tr><td><code>view.present / view.dismiss</code></td><td>不纳入 V1 核心</td><td>展示编排由容器物料承担，避免第二套 UI Action Engine</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>宿主意图映射</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;button&quot;,
+  &quot;props&quot;: { &quot;label&quot;: &quot;提交&quot; },
+  &quot;on&quot;: {
+    &quot;activate&quot;: {
+      &quot;type&quot;: &quot;host.emit&quot;,
+      &quot;event&quot;: &quot;insurance.submitRequested&quot;
+    }
+  }
+}</code></pre></div><p>普通字段修改仍优先由 Binding Adapter 处理，不要求每次 <code>change</code> 再声明 <code>form.command</code>，以免双重写入。Event Payload 如需映射到 Command Value，可以在 Interaction 内通过 <code>source:event</code> 的 Expression 使用。</p><p>反应边界：Interaction 是组件事件的连接关系，Reaction 是 Form Data Change 驱动的数据联动。两者共享 Command，但不合并为同一个异步通用 Behavior DSL。</p></section><div class="chapter-mark">交付与边界 · PART</div><section id="r6-21" class="section"><div class="section-head"><span class="section-no">21</span><h2>Host Integration：三条调用路径</h2></div><div class="tablewrap"><table class=""><thead><tr><th>调用类别</th><th>Definition 中如何表达</th><th>谁决定调用时机</th></tr></thead><tbody><tr><td>外部校验</td><td><code>kind: external</code> 的 Constraint + dependsOn</td><td>Host 根据数据变化、策略或提交需要执行 Validator</td></tr><tr><td>用户业务意图</td><td><code>on: { event: { type:"host.emit" } }</code></td><td>Material 发出语义事件后，Host Handler 执行</td></tr><tr><td>物料内部需要远程资源</td><td>Material Contract / Host Service 注入</td><td>Material Adapter 自己调用，而不是把每次请求写成表单行为</td></tr></tbody></table></div><div class="codeblock"><div class="codehdr"><span>Host 能力是运行环境契约</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">// Host 接口形状，仅示意，不要求变成 Definition 顶层服务表：
+interface FormHost {
+  validators?: Record&lt;string, ExternalValidator&gt;;
+  events?: Record&lt;string, HostEventHandler&gt;;
+  services?: Record&lt;string, HostService&gt;;
+}
+
+// 外部副作用完成后，如果需要更新表单：
+form.dispatchCommand({ op: &#x27;patch&#x27;, target: &#x27;/address&#x27;, value: result });</code></pre></div><ul><li>Host 的能力是否存在、参数/输出是否匹配，需要显式校验；未知的必要能力不能静默放行。</li><li>Definition 写了一个事件名，不等于获得相应权限。Host 和服务端必须做授权与参数校验。</li><li>与特定物料内部行为紧密相关的请求，可直接通过注入服务调用，不强制走 host.emit。</li><li>不新增一个统一的 Resource/Provider/Service/Action 工作流定义模块。</li></ul></section><section id="r6-22" class="section"><div class="section-head"><span class="section-no">22</span><h2>按 View Profile 交付和完整规则保留</h2></div><div class="diagram"><div class="diagram-label">Conceptual flow / 概念关系</div><div class="diagram-lines"><div class="diagram-step"><strong>Canonical Definition</strong><span>全部 Profile、共享 Data Schema、Constraint、Reaction 与命名资源</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>L2 选择 Profile 并解析它引用的模板</strong><span>编译 Scope/Reference/Expression；检查 Material / Pure Function / Host 所需能力</span></div><div class="diagram-down">↓</div><div class="diagram-step"><strong>Target Bundle</strong><span>仅交付当前 Profile 的必要视图；保留正确执行表单所需的业务语义</span></div></div></div><p>例如客户端请求 <code>GET /forms/insurance/definition?profile=compact</code>，不应把 Expanded View 也原样发过去。但<strong>不能因为某个字段在 Compact View 中没被展示，就删除相应的 Schema、Reaction 或必需 Constraint。</strong></p><p>按需裁剪是一项交付/Preparation 能力，不等于访问控制。敏感字段能否下发仍然由 Host 服务端权限策略决定。</p></section><section id="r6-23" class="section"><div class="section-head"><span class="section-no">23</span><h2>版本和能力兼容策略</h2></div><div class="tablewrap"><table class=""><thead><tr><th>版本身份</th><th>职责</th><th>建议</th></tr></thead><tbody><tr><td>Protocol Version</td><td>Definition 结构和规范解释规则</td><td>明确；破坏性变更迁移</td></tr><tr><td>Form Version</td><td>业务表单某次发布</td><td>独立于协议版本</td></tr><tr><td>Material / Pure Function Version</td><td>独立注册能力的兼容契约</td><td>只有独立发布的能力需要管理</td></tr><tr><td>Node / Reaction 局部版本</td><td>通常无需</td><td>不为每个节点单独引入版本体系</td></tr></tbody></table></div><p>当前 Profile 必须依赖的 Material、Pure Function、Host Validator 缺失时应可诊断；关键语义未知不允许静默忽略。Material 在不同端不一定视觉完全一致，但其 Binding / Slot / Event 契约应明确兼容。</p></section><div class="chapter-mark">组合验收 · PART</div><section id="r6-24" class="section"><div class="section-head"><span class="section-no">24</span><h2>完整业务案例：复杂投保表单 · Canonical 草案</h2></div><p>下例以投保人 + 被保人数组为主，验证数据结构、逐项约束、外部校验、同步联动、两种 View Profile、容器物料和 Host 提交意图是否能组合。<strong>它是完整的组合验收样例，不是最终发布格式，也不代表 id、属性名称和默认值策略已冻结。</strong></p><div class="codeblock"><div class="codehdr"><span>保险投保表单 · 完整组合示例，可复制</span><button class="copy" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;protocolVersion&quot;: &quot;0.1&quot;,
+  &quot;id&quot;: &quot;insurance-application&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;data&quot;: {
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;applicant&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;phone&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        &quot;insureds&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;default&quot;: [],
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;name&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              &quot;age&quot;: {
+                &quot;type&quot;: &quot;integer&quot;
+              },
+              &quot;country&quot;: {
+                &quot;type&quot;: &quot;string&quot;,
+                &quot;default&quot;: &quot;CN&quot;
+              },
+              &quot;city&quot;: {
+                &quot;type&quot;: [
+                  &quot;string&quot;,
+                  &quot;null&quot;
+                ]
+              },
+              &quot;idNumber&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            },
+            &quot;required&quot;: [
+              &quot;name&quot;,
+              &quot;age&quot;,
+              &quot;idNumber&quot;
+            ]
+          }
+        }
+      }
+    }
+  },
+  &quot;constraints&quot;: [
+    {
+      &quot;id&quot;: &quot;insured-age&quot;,
+      &quot;kind&quot;: &quot;internal&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: &quot;/insureds&quot;,
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;assert&quot;: {
+        &quot;op&quot;: &quot;gte&quot;,
+        &quot;args&quot;: [
+          {
+            &quot;ref&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/age&quot;
+            }
+          },
+          18
+        ]
+      },
+      &quot;issue&quot;: {
+        &quot;target&quot;: {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/age&quot;
+        },
+        &quot;code&quot;: &quot;AGE_TOO_LOW&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;insured-eligibility&quot;,
+      &quot;kind&quot;: &quot;external&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: &quot;/insureds&quot;,
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;dependsOn&quot;: [
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/age&quot;
+        },
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/idNumber&quot;
+        }
+      ],
+      &quot;target&quot;: {
+        &quot;source&quot;: &quot;data&quot;,
+        &quot;scope&quot;: &quot;insured&quot;,
+        &quot;path&quot;: &quot;/idNumber&quot;
+      },
+      &quot;requiredForSubmit&quot;: true
+    }
+  ],
+  &quot;reactions&quot;: [
+    {
+      &quot;id&quot;: &quot;clear-insured-city&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: &quot;/insureds&quot;,
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;watch&quot;: [
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/country&quot;
+        }
+      ],
+      &quot;then&quot;: [
+        {
+          &quot;op&quot;: &quot;set&quot;,
+          &quot;target&quot;: {
+            &quot;source&quot;: &quot;data&quot;,
+            &quot;scope&quot;: &quot;insured&quot;,
+            &quot;path&quot;: &quot;/city&quot;
+          },
+          &quot;value&quot;: null
+        }
+      ]
+    }
+  ],
+  &quot;viewTemplates&quot;: {
+    &quot;insured-editor&quot;: {
+      &quot;params&quot;: {
+        &quot;insured&quot;: &quot;data-scope&quot;
+      },
+      &quot;node&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;children&quot;: [
+          {
+            &quot;material&quot;: &quot;text-input&quot;,
+            &quot;bind&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/name&quot;
+            },
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;姓名&quot;
+            }
+          },
+          {
+            &quot;material&quot;: &quot;number-input&quot;,
+            &quot;bind&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/age&quot;
+            },
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;年龄&quot;
+            }
+          },
+          {
+            &quot;material&quot;: &quot;select&quot;,
+            &quot;bind&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/country&quot;
+            },
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;国家&quot;
+            }
+          },
+          {
+            &quot;material&quot;: &quot;text-input&quot;,
+            &quot;bind&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/city&quot;
+            },
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;城市&quot;
+            }
+          },
+          {
+            &quot;material&quot;: &quot;text-input&quot;,
+            &quot;bind&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/idNumber&quot;
+            },
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;证件号码&quot;
+            }
+          }
+        ]
+      }
+    }
+  },
+  &quot;views&quot;: {
+    &quot;expanded&quot;: {
+      &quot;entry&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;children&quot;: [
+          {
+            &quot;material&quot;: &quot;text-input&quot;,
+            &quot;bind&quot;: &quot;/applicant/name&quot;,
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;投保人姓名&quot;
+            }
+          },
+          {
+            &quot;scope&quot;: {
+              &quot;from&quot;: &quot;/insureds&quot;,
+              &quot;as&quot;: &quot;insured&quot;,
+              &quot;mode&quot;: &quot;each&quot;
+            },
+            &quot;node&quot;: {
+              &quot;$use&quot;: &quot;insured-editor&quot;,
+              &quot;with&quot;: {
+                &quot;insured&quot;: {
+                  &quot;$scope&quot;: &quot;insured&quot;
+                }
+              }
+            }
+          },
+          {
+            &quot;material&quot;: &quot;button&quot;,
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;新增被保人&quot;
+            },
+            &quot;on&quot;: {
+              &quot;activate&quot;: {
+                &quot;type&quot;: &quot;form.command&quot;,
+                &quot;command&quot;: {
+                  &quot;op&quot;: &quot;array.insert&quot;,
+                  &quot;target&quot;: &quot;/insureds&quot;,
+                  &quot;value&quot;: {
+                    &quot;name&quot;: &quot;&quot;,
+                    &quot;age&quot;: 0,
+                    &quot;country&quot;: &quot;CN&quot;,
+                    &quot;city&quot;: null,
+                    &quot;idNumber&quot;: &quot;&quot;
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    &quot;compact&quot;: {
+      &quot;entry&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;children&quot;: [
+          {
+            &quot;material&quot;: &quot;text-input&quot;,
+            &quot;bind&quot;: &quot;/applicant/name&quot;,
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;投保人姓名&quot;
+            }
+          },
+          {
+            &quot;scope&quot;: {
+              &quot;from&quot;: &quot;/insureds&quot;,
+              &quot;as&quot;: &quot;insured&quot;,
+              &quot;mode&quot;: &quot;each&quot;
+            },
+            &quot;node&quot;: {
+              &quot;material&quot;: &quot;bottom-sheet-editor&quot;,
+              &quot;slots&quot;: {
+                &quot;trigger&quot;: {
+                  &quot;material&quot;: &quot;insured-summary&quot;,
+                  &quot;bind&quot;: {
+                    &quot;source&quot;: &quot;data&quot;,
+                    &quot;scope&quot;: &quot;insured&quot;,
+                    &quot;path&quot;: &quot;&quot;
+                  }
+                },
+                &quot;content&quot;: {
+                  &quot;$use&quot;: &quot;insured-editor&quot;,
+                  &quot;with&quot;: {
+                    &quot;insured&quot;: {
+                      &quot;$scope&quot;: &quot;insured&quot;
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            &quot;material&quot;: &quot;button&quot;,
+            &quot;props&quot;: {
+              &quot;label&quot;: &quot;提交投保单&quot;
+            },
+            &quot;on&quot;: {
+              &quot;activate&quot;: {
+                &quot;type&quot;: &quot;host.emit&quot;,
+                &quot;event&quot;: &quot;insurance.submitRequested&quot;
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}</code></pre></div><div class="callout"><strong>样例使用前提</strong><p><code>stack</code>、<code>bottom-sheet-editor</code>、<code>insured-summary</code>、各输入组件以及 <code>gte</code> 等 Pure Function 都需在目标环境中注册并具有一致契约。样例的 <code>age: 0</code> 是待填写的工作值，不代表承保年龄校验通过。</p></div></section><section id="r6-25" class="section"><div class="section-head"><span class="section-no">25</span><h2>完整样例逐层解读</h2></div><div class="tablewrap"><table class=""><thead><tr><th>路径</th><th>解决的业务问题</th><th>不承担的职责</th></tr></thead><tbody><tr><td><code>data.schema</code></td><td>投保人与被保人的结构、类型和默认值</td><td>视图布局、远程数据源</td></tr><tr><td><code>constraints[*].scope</code></td><td>每位被保人都有自己的年龄及外部资格校验义务</td><td>外部 API 执行</td></tr><tr><td><code>reactions[*].scope</code></td><td>某被保人国家变化，仅清空该被保人的城市</td><td>UI 弹层操作</td></tr><tr><td><code>viewTemplates.insured-editor</code></td><td>PC/移动共享一套字段配置</td><td>共享 UI 组件实例</td></tr><tr><td><code>views.expanded</code></td><td>PC 平铺逐项编辑</td><td>额外 Form Data</td></tr><tr><td><code>views.compact</code></td><td>摘要卡片 + 物料自管弹层</td><td>View Action Engine</td></tr><tr><td><code>host.emit</code></td><td>请求宿主执行提交检查与业务接口</td><td>表单引擎内部 HTTP Workflow</td></tr></tbody></table></div><p>移动弹层修改年龄时，直接进入相同 Form Working Data，并影响同一份 Constraint 与相关 Expression。它的关闭只关闭 UI，不意味着业务数据回滚。如果某个业务真的要“取消即撤销”，应由明确的独立编辑会话需求另行设计。</p></section><section id="r6-26" class="section"><div class="section-head"><span class="section-no">26</span><h2>组合验收：通过、前提及发现的能力缺口</h2></div><div class="tablewrap"><table class=""><thead><tr><th>验收场景</th><th>结果</th><th>必要说明</th></tr></thead><tbody><tr><td>普通对象与嵌套数组定位</td><td><span class="state state-done">通过</span></td><td>Object one + 集合 each；稳定身份由 L3 管理</td></tr><tr><td>数组移动、删除后正确定位</td><td><span class="state state-principle">原则成立</span></td><td>ScopeHandle 语义明确；具体失效和替换策略留 L3</td></tr><tr><td>逐项独立同步联动</td><td><span class="state state-done">通过</span></td><td>Reaction 不依赖具体 View Profile</td></tr><tr><td>外部校验逐项独立 Pending</td><td><span class="state state-principle">原则成立</span></td><td>Constraint ID + 实例身份 + 当前输入有效性</td></tr><tr><td>PC 平铺、Mobile 底部编辑</td><td><span class="state state-done">通过</span></td><td>Material Container + Template Use</td></tr><tr><td>同一 Template 多处复用</td><td><span class="state state-done">通过</span></td><td>共享定义与 Data，不共享 UI 局部状态</td></tr><tr><td>事件映射修改数据与提交</td><td><span class="state state-done">通过</span></td><td>form.command / host.emit；无 view.present</td></tr><tr><td>字段错误如何提供给输入与摘要卡</td><td><span class="state state-open">待补充</span></td><td>需要统一 Material Adapter 的 Validation Metadata 消费契约</td></tr><tr><td>递归 Expression Props 的类型检查</td><td><span class="state state-open">待细化</span></td><td>Material 属性 Schema + L2 Prepared Value 类型检查</td></tr><tr><td>Profile Bundle 所需依赖与能力清单</td><td><span class="state state-open">待细化</span></td><td>L2 递归解析模板与扩展能力</td></tr></tbody></table></div><p>组合验收说明：这里的“通过”表示<strong>L1 描述能力足以表达该场景</strong>，不是宣称真实 L2/L3/L4 已实现并通过运行测试。</p></section><div class="chapter-mark">决策归档 · PART</div><section id="r6-27" class="section"><div class="section-head"><span class="section-no">27</span><h2>讨论中的架构修订记录</h2></div><div class="tablewrap"><table class="tight"><thead><tr><th>原建议 / 中间方案</th><th>问题</th><th>当前收敛</th></tr></thead><tbody><tr><td>Expression 只允许显式 Dynamic Slot</td><td>Material 嵌套 Props 的白名单维护负担过高</td><td>ValueSpec 默认递归识别明确 <code>$expr</code></td></tr><tr><td>View 和 Reaction 分别“定义 Scope”</td><td>容易误解为各自拥有 Scope 身份体系</td><td>仅能建立局部 Binder，数据身份统一属于 L3</td></tr><tr><td>只有 Repeat 才能产生 Scope</td><td>独立对象必须重复写完整根路径</td><td><code>mode: one/each</code> 统一对象与集合项</td></tr><tr><td>所有 Scope 全局注册</td><td>Schema 重复、全局命名与复用复杂</td><td>局部词法绑定，不建全局 Scope Registry</td></tr><tr><td>View.repeat / Reaction.each 各套语法</td><td>相同来源和别名语义被重复描述</td><td>共享 ScopeBinder；View each 自动逐项实例化</td></tr><tr><td>Root / Targets / Fragments 三套视图定义</td><td>视图内容的结构重复</td><td>Profile Entry + 可选 Named Template + $use</td></tr><tr><td>view.present + Presentation.mode</td><td>Modal / Drawer 需要核心特殊理解与管理</td><td>容器与复合 Material 自己管理展示交互</td></tr><tr><td>ViewReference 嵌入视图</td><td>容易被理解为动态 DOM 替换</td><td>Template Use 仅静态结构组合</td></tr><tr><td>外部校验只注入 Issues</td><td>无法区分未校验、执行中和通过</td><td>校验义务 + 五态 + Readiness + 有效性约束</td></tr><tr><td>统一通用 Host Integration DSL</td><td>实际重复了 Validator、Event、Material Service</td><td>分别使用现有能力入口</td></tr></tbody></table></div><p>这份修订记录保留了设计发生变化的原因。后续不要再直接复制中间态示例（例如 <code>view.present</code> 和 Profile.targets）作为最终协议依据。</p></section><section id="r6-28" class="section"><div class="section-head"><span class="section-no">28</span><h2>架构取舍：收益、复杂度与长期成本</h2></div><div class="tablewrap"><table class=""><thead><tr><th>设计选择</th><th>直接收益</th><th>成本 / 风险</th></tr></thead><tbody><tr><td>统一 ScopeBinder</td><td>减少 View / Reaction / Constraint 的重复模型</td><td>L2 要维护显式词法环境，L3 要保障稳定身份</td></tr><tr><td>显式 Reference + JSON Pointer</td><td>路径语义清晰，跨端一致</td><td>局部路径比隐式相对路径稍啰嗦</td></tr><tr><td>ValueSpec 递归 Expression</td><td>物料无需单独动态属性白名单</td><td>要定义安全的 Literal 转义和结构字段限制</td></tr><tr><td>封闭 Command + 同步 Reaction</td><td>变更入口受控、可追踪与验证</td><td>未来任意脚本扩展不如通用工作流灵活</td></tr><tr><td>Material 包含容器与复合组件</td><td>C 端视觉/交互扩展不改核心协议</td><td>某些跨树纯配置协调需 Host 或复合容器</td></tr><tr><td>View Template 纯结构复用</td><td>重复视图少，状态所有权清楚</td><td>需检查引用环、参数、Scope 兼容</td></tr><tr><td>外部校验状态被动登记</td><td>完整判断必需校验是否完成</td><td>Host 与 Runtime 需要身份和有效性契约</td></tr><tr><td>Profile Bundle</td><td>减少无关 View 下发并检查端能力</td><td>Preparation 需要分析模板与依赖闭包</td></tr></tbody></table></div><p>上述“成本”为相对架构与维护复杂度判断，不是实际人力或金钱报价。本轮没有基于工程实测提供工时数字。</p></section><section id="r6-29" class="section"><div class="section-head"><span class="section-no">29</span><h2>不纳入核心的设计与对应替代</h2></div><div class="tablewrap"><table class=""><thead><tr><th>不纳入核心</th><th>替代与原因</th></tr></thead><tbody><tr><td>通用 Resource / Query Scheduler</td><td>Host、Material Services；不会让 Form Engine 负责网络缓存重试</td></tr><tr><td>Async Reaction / Action Workflow</td><td>Host 等待外部结果并通过 Command 修改数据</td></tr><tr><td>独立 Input Buffer / 普遍 Modal Draft</td><td>唯一 Work Data；输入法等 UI 临时状态留给 Material</td></tr><tr><td>View Presentation Engine / view.present</td><td>容器 Material + Slots；跨树协作可由 Host 承担</td></tr><tr><td>FieldNode / ModalNode / DrawerNode 等大量类型</td><td>MaterialNode + ScopeNode + TemplateUse</td></tr><tr><td>全局数据 Scope Registry</td><td>局部 ScopeBinder + L3 统一实例身份</td></tr><tr><td>任意自定义 Command 执行器</td><td>封闭结构化数据修改集合</td></tr><tr><td>完整 Submit Workflow</td><td>Host 使用一致的校验和规范化输出契约</td></tr><tr><td>所有 View 默认共享 UI 状态</td><td>复用 Definition 不复用组件实例/焦点/展开状态</td></tr></tbody></table></div><div class="callout"><strong>删掉概念不等于删掉能力</strong><p>例如取消 <code>view.present</code> 不等于不能做弹窗，而是让弹窗由容器 Material 提供。同理，取消 Resource 定义不等于不能远程加载选项。</p></div></section><section id="r6-30" class="section"><div class="section-head"><span class="section-no">30</span><h2>尚未冻结的语法与关键边界</h2></div><div class="tablewrap"><table class="tight"><thead><tr><th>待收敛点</th><th>已确认的语义边界</th><th>后续要定什么</th></tr></thead><tbody><tr><td>Reference / Scope</td><td>根路径固定、具名局部 Scope、稳定实例身份</td><td>最终 JSON 写法、对象替换/集合整体替换后的 Handle 规则</td></tr><tr><td>ValueSpec / Literal</td><td>显式 $expr 递归解析</td><td>专用 Expression 槽包装策略、静态保留字转义</td></tr><tr><td>Command patch / remove</td><td>封闭数据写入、Set≠Patch</td><td>浅 Patch 的正式语义、数组插入位置与参数类型</td></tr><tr><td>命名表达式复用</td><td>不隐式捕获调用者 Scope</td><td>若未来需要参数化表达式，如何受控扩展</td></tr><tr><td>Template Params</td><td>跨位置显式传递 Scope，不复制业务数据</td><td>参数类型语法、作用域绑定的 Canonical 形式</td></tr><tr><td>Material Validation Metadata</td><td>Issues 属于 Data Reference + Scope</td><td>输入物料与摘要物料如何消费问题列表、状态和汇总</td></tr><tr><td>Host Validation 注册</td><td>Definition 固有约束 + Host 补充</td><td>校验注册时机、实例定位、结果 token 接口</td></tr><tr><td>Profile Delivery</td><td>只裁剪无关 View；业务语义完整</td><td>Prepared Bundle 格式、兼容性报告、版本策略</td></tr><tr><td>Lifecycle 默认策略</td><td>单一 Work Data、外部提交</td><td>F1 默认值补缺、F2 Reset 基准等仍以推荐默认策略为草案</td></tr></tbody></table></div><p>这些是<strong>正式 JSON Schema 和接口设计</strong>的待办，不构成增加新顶层领域模型的理由。第三组 L3 的运行时调度与错误恢复策略也应单独评审，不能混入 L1。</p></section><section id="r6-31" class="section"><div class="section-head"><span class="section-no">31</span><h2>下一阶段交付清单与验收顺序</h2></div><div class="numberlist"><div class="numberitem"><div class="numbericon">01</div><div><h4>Material Contract + Validation Metadata</h4><p>确认 Binding Port、Slots、Events 和字段/对象范围的校验元数据消费能力。</p></div></div><div class="numberitem"><div class="numbericon">02</div><div><h4>最终 Canonical Schema</h4><p>定稿 Reference、Scope、ValueSpec、Constraint、Command、Reaction、ViewNode 与 Host 引用字段。</p></div></div><div class="numberitem"><div class="numbericon">03</div><div><h4>TypeScript 类型与 Schema 校验器</h4><p>从同一规范生成或维护一致的静态类型与运行时 schema 验证。</p></div></div><div class="numberitem"><div class="numbericon">04</div><div><h4>L2 Preparation Contract</h4><p>规范化、词法 Scope 编译、Expression 发现、依赖分析、模板展开和能力检查。</p></div></div><div class="numberitem"><div class="numbericon">05</div><div><h4>Profile Bundle 与跨端验收</h4><p>PC / Mobile Profile 的差异化交付，保留共享业务规则。</p></div></div><div class="numberitem"><div class="numbericon">06</div><div><h4>L3 运行时专项</h4><p>变化检测、Reaction 调度、事务与稳定状态发布、实例身份与失效策略。</p></div></div></div><div class="callout focus"><strong>定稿判据</strong><p>当简单表单、对象与嵌套数组、多端不同 View、同步联动、外部校验 Pending、Host 业务事件等场景都能用一套无歧义的协议解释，并且没有无谓的双重配置，就可以冻结 L1 V1 Schema。</p></div></section><section id="r6-32" class="section"><div class="section-head"><span class="section-no">32</span><h2>最终摘要：第六组的核心收敛</h2></div><div class="decision-list"><div class="decision-row"><div class="key">DATA</div><div class="value"><strong>Data Schema 定结构，Form Runtime 只有一份 Working Data</strong><small>移动端弹窗默认实时编辑；UI 局部状态不成为第二份业务数据</small></div></div><div class="decision-row"><div class="key">SCOPE</div><div class="value"><strong>ScopeBinder 可局部声明，但实例身份由 L3 统一</strong><small>one/each 复用相同语义；不建立全局 Scopes Registry</small></div></div><div class="decision-row"><div class="key">EXPR</div><div class="value"><strong>一套纯 Expression AST，ValueSpec 递归识别显式 $expr</strong><small>不推断普通 JSON、不执行任意脚本</small></div></div><div class="decision-row"><div class="key">RULES</div><div class="value"><strong>Constraint 产出合法性结论；Reaction 负责同步数据联动</strong><small>外部校验不阻塞或恢复同步 Reaction</small></div></div><div class="decision-row"><div class="key">COMMAND</div><div class="value"><strong>受控封闭数据修改，唯一写入入口</strong><small>set/patch/array 操作；Command 不承载 HTTP</small></div></div><div class="decision-row"><div class="key">VIEW</div><div class="value"><strong>Profile + MaterialNode + ScopeNode + TemplateUse</strong><small>容器也是物料，Template 只是静态结构复用</small></div></div><div class="decision-row"><div class="key">HOST</div><div class="value"><strong>外部约束、host.emit、Material Host Service 三种清晰路径</strong><small>Readiness 由 Runtime 汇总已知义务，最终提交由 Host 决策</small></div></div></div><div class="end-rule">我们设计的是“可组合、可跨端、职责清晰的复杂表单定义协议”，不是“可以通过 JSON 驱动所有页面、请求与业务流程的通用低代码系统”。</div><p>本档案建议与第一至第五组 ADR 配套使用。若后续具体 Schema 细节改变，应优先检查是否破坏这里已收敛的领域语义，而不是通过新增隐式规则维持旧示例。</p></section>
+<div class="endmark">END OF DECISION RECORD · ROUND 06</div>
+<footer class="footer"><span>Form Engine · L1 Definition Protocol</span><span>设计原则归档，不替代后续最终 JSON Schema</span></footer>
+</main></div></div><button class="up" type="button" aria-label="返回顶部">↑</button>
+<script>
+(function(){
+const root=document.documentElement, theme=document.querySelector('#theme'), menu=document.querySelector('.menu');
+let val='light';try{val=localStorage.getItem('l1-round6-theme')||'light'}catch(e){};
+root.dataset.theme=val==='dark'?'dark':'light';
+function sync(){theme.textContent=root.dataset.theme==='dark'?'浅色':'深色'}sync();
+theme.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('l1-round6-theme',root.dataset.theme)}catch(e){}sync()});
+document.querySelector('#print').addEventListener('click',()=>window.print());
+function m(on){document.body.classList.toggle('menu-open',on);menu.setAttribute('aria-expanded',String(on))}
+menu.addEventListener('click',()=>m(!document.body.classList.contains('menu-open')));
+document.querySelector('.menu-overlay').addEventListener('click',()=>m(false));
+document.querySelectorAll('.toc a').forEach(a=>a.addEventListener('click',()=>m(false)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')m(false)});
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{
+const v=btn.closest('.codeblock').querySelector('code').innerText;
+try{await navigator.clipboard.writeText(v);btn.textContent='已复制'}catch(e){const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();btn.textContent=ok?'已复制':'复制失败'}
+setTimeout(()=>btn.textContent='复制',1300);
+}));
+const query=document.querySelector('.toc-search'); query.addEventListener('input',()=>{const q=query.value.trim().toLowerCase();document.querySelectorAll('.toc a').forEach(a=>a.classList.toggle('hidden',!!q&&!a.textContent.toLowerCase().includes(q)))});
+const items=[...document.querySelectorAll('.section')], links=new Map([...document.querySelectorAll('.toc a')].map(a=>[a.dataset.to,a])),up=document.querySelector('.up');
+function tick(){const y=window.scrollY,max=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);document.querySelector('.progress').style.width=(100*y/max)+'%';up.classList.toggle('visible',y>400);let current=items[0];for(const x of items){if(x.getBoundingClientRect().top<=170)current=x;}links.forEach((a,id)=>{a.classList.toggle('active',id===current?.id);if(id===current?.id)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')})}
+up.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));window.addEventListener('scroll',tick,{passive:true});window.addEventListener('resize',tick);tick();
+})();
+</script></body></html>

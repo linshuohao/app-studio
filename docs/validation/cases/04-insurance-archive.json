@@ -1,0 +1,424 @@
+{
+  "protocolVersion": "1.0",
+  "id": "insurance-application-demo",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applicant",
+        "insureds"
+      ],
+      "properties": {
+        "applicant": {
+          "$ref": "#/$defs/Applicant"
+        },
+        "insureds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Insured"
+          },
+          "minItems": 1,
+          "maxItems": 5
+        },
+        "plan": {
+          "type": "string",
+          "enum": [
+            "basic",
+            "premium"
+          ],
+          "default": "basic"
+        }
+      },
+      "$defs": {
+        "Applicant": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "phone"
+          ]
+        },
+        "Insured": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "age": {
+              "type": "integer"
+            },
+            "country": {
+              "type": "string"
+            },
+            "city": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "idNumber": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "age",
+            "idNumber"
+          ]
+        }
+      }
+    }
+  },
+  "constraints": [
+    {
+      "id": "age-min-18",
+      "kind": "internal",
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/insureds"
+        },
+        "as": "insured",
+        "mode": "each"
+      },
+      "assert": {
+        "op": "gte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "scope": "insured",
+              "path": "/age"
+            }
+          },
+          18
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "scope": "insured",
+          "path": "/age"
+        },
+        "code": "MIN_AGE_18"
+      }
+    },
+    {
+      "id": "insured-eligibility",
+      "kind": "external",
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/insureds"
+        },
+        "as": "insured",
+        "mode": "each"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "scope": "insured",
+          "path": "/age"
+        },
+        {
+          "source": "data",
+          "scope": "insured",
+          "path": "/idNumber"
+        }
+      ],
+      "target": {
+        "source": "data",
+        "scope": "insured",
+        "path": "/idNumber"
+      },
+      "requiredForSubmit": true
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-city-on-country-change",
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/insureds"
+        },
+        "as": "insured",
+        "mode": "each"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "scope": "insured",
+          "path": "/country"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "scope": "insured",
+            "path": "/city"
+          },
+          "value": null
+        }
+      ]
+    }
+  ],
+  "viewTemplates": {
+    "insured-fields": {
+      "params": {
+        "insured": {
+          "schemaRef": "#/$defs/Insured"
+        }
+      },
+      "node": {
+        "material": "stack",
+        "slots": {
+          "default": [
+            {
+              "material": "text-input",
+              "props": {
+                "label": "姓名"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "scope": "insured",
+                  "path": "/name"
+                }
+              }
+            },
+            {
+              "material": "number-input",
+              "props": {
+                "label": "年龄"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "scope": "insured",
+                  "path": "/age"
+                }
+              }
+            },
+            {
+              "material": "country-picker",
+              "props": {
+                "label": "国家"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "scope": "insured",
+                  "path": "/country"
+                }
+              }
+            },
+            {
+              "material": "city-picker",
+              "props": {
+                "label": "城市"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "scope": "insured",
+                  "path": "/city"
+                }
+              }
+            },
+            {
+              "material": "text-input",
+              "props": {
+                "label": "证件号码"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "scope": "insured",
+                  "path": "/idNumber"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "expanded-form": {
+      "node": {
+        "material": "stack",
+        "slots": {
+          "default": [
+            {
+              "material": "text-input",
+              "props": {
+                "label": "投保人姓名"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/applicant/name"
+                }
+              }
+            },
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/insureds"
+                },
+                "as": "insured",
+                "mode": "each"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "被保人资料"
+                },
+                "slots": {
+                  "default": [
+                    {
+                      "$use": "insured-fields",
+                      "with": {
+                        "insured": {
+                          "source": "data",
+                          "scope": "insured",
+                          "path": ""
+                        }
+                      }
+                    },
+                    {
+                      "material": "button",
+                      "props": {
+                        "label": "移除被保人"
+                      },
+                      "on": {
+                        "activate": {
+                          "type": "form.command",
+                          "command": {
+                            "op": "array.remove",
+                            "target": {
+                              "source": "data",
+                              "path": "/insureds"
+                            },
+                            "item": {
+                              "$scope": "insured"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "提交投保"
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "insurance.submitRequested"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "compact-form": {
+      "node": {
+        "material": "stack",
+        "slots": {
+          "default": [
+            {
+              "material": "applicant-summary",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/applicant"
+                }
+              }
+            },
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/insureds"
+                },
+                "as": "insured",
+                "mode": "each"
+              },
+              "node": {
+                "material": "bottom-sheet-editor",
+                "slots": {
+                  "trigger": [
+                    {
+                      "material": "insured-summary",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "scope": "insured",
+                          "path": ""
+                        }
+                      }
+                    }
+                  ],
+                  "content": [
+                    {
+                      "$use": "insured-fields",
+                      "with": {
+                        "insured": {
+                          "source": "data",
+                          "scope": "insured",
+                          "path": ""
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "提交投保"
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "insurance.submitRequested"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "views": {
+    "expanded": {
+      "$use": "expanded-form"
+    },
+    "compact": {
+      "$use": "compact-form"
+    }
+  },
+  "metadata": {
+    "description": "L1 架构验收示例；未作为 JSON Schema 正式验收样本发布"
+  }
+}

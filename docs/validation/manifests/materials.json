@@ -1,0 +1,419 @@
+{
+  "stack": {
+    "id": "stack",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {
+      "default": {
+        "cardinality": "many"
+      }
+    },
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "section": {
+    "id": "section",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {
+      "default": {
+        "cardinality": "many"
+      }
+    },
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "text-input": {
+    "id": "text-input",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "number-input": {
+    "id": "number-input",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "number",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "country-picker": {
+    "id": "country-picker",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "city-picker": {
+    "id": "city-picker",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "select": {
+    "id": "select",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "button": {
+    "id": "button",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {},
+    "events": {
+      "activate": {}
+    },
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "summary-card": {
+    "id": "summary-card",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "total": {
+          "type": "number"
+        },
+        "badge": {
+          "type": "object",
+          "properties": {
+            "visible": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "applicant-summary": {
+    "id": "applicant-summary",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "object",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "insured-summary": {
+    "id": "insured-summary",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "object",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "claim-summary": {
+    "id": "claim-summary",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "object",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "bottom-sheet-editor": {
+    "id": "bottom-sheet-editor",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {
+      "trigger": {
+        "cardinality": "one"
+      },
+      "content": {
+        "cardinality": "many"
+      }
+    },
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "file-upload": {
+    "id": "file-upload",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "array",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "date-range": {
+    "id": "date-range",
+    "version": "1.0.0",
+    "bindings": {
+      "start": {
+        "type": "string",
+        "required": true
+      },
+      "end": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "conditional": {
+    "id": "conditional",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {
+      "default": {
+        "cardinality": "many"
+      }
+    },
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "show"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "date-input": {
+    "id": "date-input",
+    "version": "1.0.0",
+    "bindings": {
+      "value": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "demo-event-picker": {
+    "id": "demo-event-picker",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {},
+    "events": {
+      "confirm": {
+        "payloadSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "request": {
+        "payloadSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "debug-panel": {
+    "id": "debug-panel",
+    "version": "1.0.0",
+    "bindings": {},
+    "slots": {},
+    "events": {},
+    "propsSchema": {
+      "type": "object",
+      "properties": {
+        "sample": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

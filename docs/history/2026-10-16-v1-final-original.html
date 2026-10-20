@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="L1 Definition Protocol V1.0 架构定稿归档：完整数据与引用语义、Scope、Expression、Constraint、Command、Reaction、View、Template、Material、Host 及保险表单组合验收。">
+<title>L1 · Definition Protocol V1.0｜架构定稿与完整决策归档</title>
+<style>
+:root{--bg:#fff;--surface:#fff;--panel:#fafafa;--subtle:#f6f6f6;--ink:#191919;--muted:#666;--quiet:#929292;--border:#e7e7e7;--border-strong:#d7d7d7;--accent:#151515;--accentText:#fff;--shadow:0 8px 38px #00000009}
+html[data-theme="dark"]{--bg:#171717;--surface:#1b1b1b;--panel:#202020;--subtle:#252525;--ink:#f2f2f2;--muted:#b7b7b7;--quiet:#929292;--border:#393939;--border-strong:#535353;--accent:#f1f1f1;--accentText:#171717;--shadow:none}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.85 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft Yahei",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit}button,input{font:inherit}button{cursor:pointer}::selection{background:#92929265}code,pre{font-family:SFMono-Regular,Consolas,Monaco,"Liberation Mono",monospace}p{margin:12px 0 17px}strong{font-weight:700}h1,h2,h3,h4{line-height:1.4;letter-spacing:-.03em}h3{font-size:17px;margin:30px 0 12px}h4{font-size:14px;margin:22px 0 8px}ul.bullets{padding-left:23px;margin:14px 0 23px}ul.bullets li{margin:9px 0}ul.bullets li::marker{color:var(--quiet)}p code,li code,td code,.note code,.mini-card code, .compare code{padding:2px 5px;border:1px solid var(--border);background:var(--subtle);border-radius:5px;font-size:.87em;overflow-wrap:anywhere}
+.layout{display:grid;grid-template-columns:265px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;border-right:1px solid var(--border);background:var(--panel);overflow-y:auto;padding:24px 13px 28px 18px;z-index:51;scrollbar-width:thin}.sidebar-header{display:flex;align-items:center;gap:11px;padding:3px 8px 20px}.brand-mark{width:35px;height:35px;border:1.5px solid var(--ink);border-radius:11px;display:grid;place-items:center;font-weight:760;font-size:14px;letter-spacing:-.05em}.brand-title{font-size:13px;font-weight:760;line-height:1.4}.brand-desc{font-size:10px;color:var(--quiet);line-height:1.55}.search-wrap{padding:0 7px 9px}.search-wrap input{width:100%;height:37px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;font-size:12px;padding:0 12px}.search-wrap input:focus{border-color:var(--border-strong)}.nav-caption{padding:13px 9px 5px;color:var(--quiet);font-size:10px;font-weight:700;letter-spacing:.16em}.toc a{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--muted);line-height:1.45;font-size:12px;margin:1px 0}.toc a:hover,.toc a.active{color:var(--ink);background:var(--subtle)}.toc a.active{font-weight:650}.nav-num{font-size:10px;font-family:monospace;color:var(--quiet);min-width:20px}.nav-label{min-width:0}.toc a.hidden{display:none}.sidebar-bottom{margin:20px 6px 0;border-top:1px solid var(--border);padding:15px 9px;color:var(--quiet);font-size:11px}.main{min-width:0}.topbar{height:59px;position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 38px}.crumb{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crumb strong{color:var(--ink)}.actions{display:flex;gap:8px;align-items:center}.btn{color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;padding:6px 11px;white-space:nowrap}.btn:hover{color:var(--ink);background:var(--subtle)}.menu-btn{display:none}.reading-progress{position:fixed;left:265px;top:0;width:0;height:2px;z-index:70;background:var(--ink);pointer-events:none}.content{max-width:1100px;padding:54px 58px 120px;margin:0 auto;min-width:0}.eyebrow{font-size:11px;letter-spacing:.15em;color:var(--muted);font-weight:720}.hero h1{font-size:clamp(32px,3.65vw,50px);letter-spacing:-.06em;line-height:1.24;font-weight:770;margin:18px 0 16px}.hero h1 span{color:var(--muted);font-weight:540}.hero .desc{max-width:880px;color:var(--muted);font-size:16px;line-height:1.95}.pills{display:flex;flex-wrap:wrap;gap:8px;margin:23px 0 0}.pill{border:1px solid var(--border);border-radius:30px;padding:3px 11px;font-size:11px;color:var(--muted)}.hero-line{border:0;border-top:1px solid var(--border);margin:46px 0 45px}.section{scroll-margin-top:82px;margin:0 0 80px}.section-head{border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:24px}.kicker{font-size:11px;letter-spacing:.14em;color:var(--quiet);font-weight:700;margin-bottom:10px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.section h2{font-size:25px;font-weight:750;margin:0}.status{font-size:11px;white-space:nowrap;border:1px solid var(--border-strong);border-radius:20px;color:var(--ink);padding:2px 8px}.status.open{color:var(--muted);border-style:dashed}.keyline{border-left:3px solid var(--ink);padding:8px 0 8px 19px;margin:21px 0 27px;line-height:1.85;font-size:17px;font-weight:570}.note{border:1px solid var(--border);border-radius:11px;padding:15px 17px;background:var(--panel);font-size:13px;line-height:1.85;margin:21px 0}.note-head{font-weight:730;margin-bottom:5px}.note.warn{border-style:dashed}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:21px 0 25px}.mini-card{border:1px solid var(--border);padding:18px 19px;border-radius:12px}.mini-card strong{display:block;font-size:13px}.mini-card p{font-size:12px;color:var(--muted);margin:7px 0 0}.table-wrap{border:1px solid var(--border);border-radius:12px;overflow-x:auto;margin:20px 0 25px}table{width:100%;min-width:605px;border-collapse:collapse;font-size:12.5px;line-height:1.75}th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--border)}th{color:var(--muted);background:var(--panel);font-weight:730;white-space:nowrap}td:first-child{font-weight:620}tr:last-child td{border-bottom:0}.code-box{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:20px 0 25px;background:var(--panel);min-width:0}.code-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--border);padding:8px 12px 8px 16px;font-size:11px;color:var(--quiet);min-height:38px}.copy{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:6px;font-size:11px;line-height:1.5;padding:4px 11px;position:static;flex-shrink:0}.copy:hover{color:var(--ink);border-color:var(--border-strong)}pre{font-size:12px;line-height:1.75;padding:18px 20px 21px;overflow-x:auto;max-height:700px;margin:0;white-space:pre;tab-size:2}pre code{font-size:inherit;background:none!important;border:none!important;padding:0!important;color:var(--ink)!important}.arch{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:14px;margin:21px 0}.arch-main{border:1px solid var(--border);padding:12px;border-radius:12px;display:grid;gap:9px}.arch-item{display:flex;align-items:center;gap:13px;border:1px solid var(--border);border-radius:8px;padding:13px}.arch-item>span{font-family:monospace;font-size:12px;font-weight:750;width:33px;color:var(--muted)}.arch-item strong,.arch-side strong{display:block;font-size:13px}.arch-item small,.arch-side small{display:block;font-size:11px;color:var(--muted);line-height:1.7}.arch-side{display:grid;gap:10px}.arch-side>div{border:1px solid var(--border);border-radius:11px;padding:18px;background:var(--panel);display:flex;flex-direction:column;justify-content:center}.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:20px 0}.compare>div{border:1px solid var(--border);border-radius:11px;padding:17px;min-width:0}.compare span{display:inline-block;margin-bottom:12px;font-size:11px;color:var(--muted)}.compare span.tag-old{text-decoration:line-through}.compare p{font-size:12px;color:var(--muted)}.compare code{display:block;white-space:normal}.timeline{position:relative;border-left:1px solid var(--border-strong);margin:24px 0 22px 16px}.timeline-row{position:relative;padding:0 0 22px 27px}.timeline-mark{position:absolute;left:-15px;top:0;border:1px solid var(--border-strong);background:var(--bg);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;font:11px monospace;color:var(--muted)}.timeline-row strong{display:block;font-size:13px}.timeline-row p{font-size:12px;color:var(--muted);margin:5px 0}.checkgrid{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:20px 0}.checkgrid>div{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:11px;font-size:13px}.checkgrid>div:last-child{border-bottom:0}.checkgrid input{margin-top:5px;accent-color:var(--ink)}.checkgrid label{cursor:pointer}.document-foot{font-size:12px;color:var(--quiet);border-top:1px solid var(--border);padding:25px 0 0}.mobile-mask{display:none}
+@media(max-width:1150px){.layout{grid-template-columns:225px minmax(0,1fr)}.reading-progress{left:225px}.sidebar{padding-left:10px}.topbar{padding:0 24px}.content{padding:42px 34px 90px}}@media(max-width:760px){.layout{display:block}.sidebar{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);transform:translateX(-103%);transition:transform .22s ease;box-shadow:var(--shadow);z-index:100}.sidebar.open{transform:translateX(0)}.mobile-mask.open{display:block;position:fixed;inset:0;background:#0008;z-index:90}.menu-btn{display:inline-block}.reading-progress{left:0}.topbar{padding:0 17px;height:55px}.content{padding:34px 20px 72px}.hero h1{font-size:34px}.hero .desc{font-size:14px}.hero-line{margin:33px 0}.section{margin-bottom:62px}.section h2{font-size:21px}.section-title{align-items:flex-start}.status{font-size:10px}.cards,.arch,.compare{grid-template-columns:minmax(0,1fr)}.table-wrap{margin-left:-1px;margin-right:-1px}table{min-width:545px;font-size:12px}pre{font-size:11px;padding:14px;max-height:550px}.code-head{padding-left:13px}.keyline{font-size:15px}}@media print{html{scroll-behavior:auto}.sidebar,.topbar,.mobile-mask,.reading-progress,.copy{display:none!important}.layout{display:block}.content{max-width:none;padding:0 10mm}.section{break-inside:auto;margin:28px 0 40px}.section-head{break-after:avoid}.code-box,.note,.mini-card{break-inside:avoid}.code-box pre{max-height:none;white-space:pre-wrap;overflow:visible;font-size:9px}.hero h1{font-size:31px}body{font-size:12px;line-height:1.6}table{font-size:10px;min-width:0}.table-wrap{overflow:visible}.cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:14px 20px;background:#fff3cd;color:#171717;position:relative;z-index:10000">用户提供的 V1.0 来源归档 · 正文保留原样。<a href="../reading/l1-definition-protocol-v1.html">当前定稿入口</a> · <a href="index.html">历史索引</a></div>
+<div class="mobile-mask" id="mask"></div>
+<div class="reading-progress" id="progress"></div>
+<div class="layout"><aside class="sidebar" id="sidebar">
+<a class="sidebar-header" href="#top" style="text-decoration:none"><span class="brand-mark">L1</span><span><span class="brand-title">Definition Protocol</span><br><span class="brand-desc">V1.0 · Architecture Archive</span></span></a>
+<div class="search-wrap"><input id="tocSearch" type="search" placeholder="搜索目录章节…" aria-label="搜索目录"></div>
+<div class="nav-caption">CONTENTS · 32 SECTIONS</div>
+<nav class="toc" id="toc"><a href="#summary" data-to="summary"><span class="nav-num">01</span><span class="nav-label">定稿结论与阅读说明</span></a>
+<a href="#principles" data-to="principles"><span class="nav-num">02</span><span class="nav-label">设计目标、边界与硬约束</span></a>
+<a href="#architecture" data-to="architecture"><span class="nav-num">03</span><span class="nav-label">四层架构与外部契约</span></a>
+<a href="#decisions" data-to="decisions"><span class="nav-num">04</span><span class="nav-label">核心决策总表</span></a>
+<a href="#top-level" data-to="top-level"><span class="nav-num">05</span><span class="nav-label">唯一 FormDefinition 顶层结构</span></a>
+<a href="#representations" data-to="representations"><span class="nav-num">06</span><span class="nav-label">Canonical、Authoring、Prepared 的分离</span></a>
+<a href="#data" data-to="data"><span class="nav-num">07</span><span class="nav-label">Data / Value / Default / Output</span></a>
+<a href="#reference" data-to="reference"><span class="nav-num">08</span><span class="nav-label">Reference：统一寻址规则</span></a>
+<a href="#scope" data-to="scope"><span class="nav-num">09</span><span class="nav-label">ScopeBinder：局部词法绑定，不建全局注册表</span></a>
+<a href="#scope-handle" data-to="scope-handle"><span class="nav-num">10</span><span class="nav-label">ScopeHandle 与数组实例身份</span></a>
+<a href="#expression" data-to="expression"><span class="nav-num">11</span><span class="nav-label">Expression AST 与 ValueSpec</span></a>
+<a href="#constraint" data-to="constraint"><span class="nav-num">12</span><span class="nav-label">Constraint：内部断言与外部校验义务</span></a>
+<a href="#validation" data-to="validation"><span class="nav-num">13</span><span class="nav-label">校验状态与提交 Readiness 的协议边界</span></a>
+<a href="#commands" data-to="commands"><span class="nav-num">14</span><span class="nav-label">Command：封闭的受控数据修改语言</span></a>
+<a href="#reactions" data-to="reactions"><span class="nav-num">15</span><span class="nav-label">Reaction：明确触发与条件的边界</span></a>
+<a href="#view" data-to="view"><span class="nav-num">16</span><span class="nav-label">View：Profile 与三种结构节点</span></a>
+<a href="#binding" data-to="binding"><span class="nav-num">17</span><span class="nav-label">Binding：唯一 Canonical 是具名端口映射</span></a>
+<a href="#slots" data-to="slots"><span class="nav-num">18</span><span class="nav-label">Slots：容器组合与 children 简写</span></a>
+<a href="#templates" data-to="templates"><span class="nav-num">19</span><span class="nav-label">Typed View Template Params：可直接落地的方案</span></a>
+<a href="#materials" data-to="materials"><span class="nav-num">20</span><span class="nav-label">Material Manifest：协议机制与物料限制分层</span></a>
+<a href="#interaction" data-to="interaction"><span class="nav-num">21</span><span class="nav-label">Interaction：只保留数据命令和宿主事件</span></a>
+<a href="#host" data-to="host"><span class="nav-num">22</span><span class="nav-label">Host Integration：明确三条路径</span></a>
+<a href="#lifecycle" data-to="lifecycle"><span class="nav-num">23</span><span class="nav-label">初始化、更新、重初始化与提交</span></a>
+<a href="#profiles" data-to="profiles"><span class="nav-num">24</span><span class="nav-label">多 Profile 与按需交付</span></a>
+<a href="#sample" data-to="sample"><span class="nav-num">25</span><span class="nav-label">完整保险投保 FormDefinition 示例</span></a>
+<a href="#walkthrough" data-to="walkthrough"><span class="nav-num">26</span><span class="nav-label">业务组合验收：哪些场景由谁完成？</span></a>
+<a href="#simple" data-to="simple"><span class="nav-num">27</span><span class="nav-label">用极简表单检验协议使用成本</span></a>
+<a href="#history" data-to="history"><span class="nav-num">28</span><span class="nav-label">从早期方案到当前决策：修订记录</span></a>
+<a href="#tradeoffs" data-to="tradeoffs"><span class="nav-num">29</span><span class="nav-label">被排除或延期的能力</span></a>
+<a href="#boundaries" data-to="boundaries"><span class="nav-num">30</span><span class="nav-label">仍需规范固化的事项：不等于重开架构</span></a>
+<a href="#types" data-to="types"><span class="nav-num">31</span><span class="nav-label">附录：完整的核心类型关系（概念稿）</span></a>
+<a href="#release" data-to="release"><span class="nav-num">32</span><span class="nav-label">正式 V1.0 发布前的验收与交付</span></a></nav>
+<div class="sidebar-bottom">架构定稿 · 规范固化待完成<br>2026 · L1 / Definition</div>
+</aside><div class="main"><header class="topbar"><div style="display:flex;align-items:center;gap:11px;min-width:0"><button class="btn menu-btn" id="menuBtn" aria-label="打开目录">目录</button><span class="crumb">Architecture / <strong>L1 Definition Protocol</strong> / V1.0</span></div><div class="actions"><button class="btn" id="themeBtn">深色</button><button class="btn" id="printBtn">打印</button><a class="btn" href="#decisions" style="text-decoration:none">决策总表</a></div></header>
+<main class="content" id="top"><div class="hero"><div class="eyebrow">FORM ENGINE · LAYER 01 · ARCHITECTURE FREEZE</div><h1>Definition Protocol <span>V1.0</span><br>架构定稿与完整决策归档</h1><div class="desc">从 Data / Reference / Scope 到 Expression / Constraint / Reaction，再到 Material、View Template 与 Host：汇总完整讨论、最终方案、关键纠偏与正式发布前的固化清单。保持协议最小而完整，避免过早发展为通用应用 DSL。</div><div class="pills"><span class="pill">架构 / 语义已收敛</span><span class="pill">32 个主题章节</span><span class="pill">完整投保表单示例</span><span class="pill">黑白 · 阅读 / 打印</span><span class="pill">类型 / Schema 待工程固化</span></div></div><hr class="hero-line">
+<section class="section" id="summary" data-search="定稿结论与阅读说明"><div class="section-head"><div class="kicker">00 · EXECUTIVE SUMMARY</div><div class="section-title"><h2>定稿结论与阅读说明</h2><span class="status done">已收敛</span></div></div>
+<div class="keyline">L1 的架构模型可以定稿；本文件是 <strong>架构与语义决策定稿</strong>，并非已通过机器校验的最终 JSON Schema 发布包。</div>
+<p>这份文档整合此前六组专题及后续统一收敛讨论，并按<strong>最终有效决策</strong>重排：先讲协议、后讲组合，最后归档被否决的方案。历史示例中与最终方案冲突的字段（例如 <code>view.present</code>、<code>bind</code> 作为 Canonical、独立 <code>fragments</code>）均不再视为当前规范。</p>
+<div class="cards"><div class="mini-card"><strong>定位</strong><p>面向复杂 C 端业务表单的<strong>声明式 Definition Protocol</strong>，不建设通用应用 DSL。</p></div><div class="mini-card"><strong>已定方向</strong><p>Data / Reference / Scope / Expression / Constraint / Command / Reaction / View / Material / Host 边界。</p></div><div class="mini-card"><strong>发布状态</strong><p><strong>架构已冻结</strong>；TS 类型、JSON Schema、兼容规则和机器化验收仍属于协议固化工作。</p></div><div class="mini-card"><strong>阅读方法</strong><p>优先看「总决策表」和「规范示例」；需要了解方案取舍再看「修订史」。</p></div></div>
+<div class="note neutral"><div class="note-head">规范声明级别</div><div><strong>已冻结</strong>：架构或语义已经有明确共识。<strong>待固化</strong>：方向明确，但特定类型形状、静态检查算法或字面量语法仍应由正式 TS/JSON Schema 对齐。示例中的字段名以本文 V1 候选 Canonical 为准；不能将“架构定稿”误读为所有细节已通过校验。</div></div>
+</section>
+<section class="section" id="principles" data-search="设计目标、边界与硬约束"><div class="section-head"><div class="kicker">01 · FOUNDATIONS</div><div class="section-title"><h2>设计目标、边界与硬约束</h2><span class="status done">已收敛</span></div></div>
+<ul class="bullets"><li><strong>唯一业务数据源：</strong>一个 Form Instance 只有一份权威 Working Data；视图复用不复制业务数据。</li><li><strong>跨端共享业务语义：</strong>Data / Rules 不依赖 Web、Flutter、Modal 或 Drawer。</li><li><strong>协议只承载稳定语义：</strong>复杂视觉与内部交互交由 Material，外部请求与业务流程交由 Host。</li><li><strong>可静态分析：</strong>引用、表达式和指令受到约束；不接受任意 JS 函数、动态路径拼接和通用工作流。</li><li><strong>默认使用成本低：</strong>简单表单只应需要 Schema + Material View + Binding；复杂场景按需引入 Scope、Reaction、Template。</li></ul>
+<div class="table-wrap"><table><thead><tr><th>L1 应表达</th><th>不属于 L1 Definition</th></tr></thead><tbody><tr><td>数据形状、字段引用、作用域</td><td>数据存储结构、字段状态机具体实现</td></tr><tr><td>纯表达式、约束、同步联动、受控指令</td><td>求值调度、事务与通知算法</td></tr><tr><td>物料结构、端口绑定与语义事件映射</td><td>DOM、Portal、焦点、滚动、局部 UI State</td></tr><tr><td>外部校验义务</td><td>实际 API、网络请求、重试、提交流程</td></tr></tbody></table></div>
+</section>
+<section class="section" id="architecture" data-search="四层架构与外部契约"><div class="section-head"><div class="kicker">02 · OWNERSHIP</div><div class="section-title"><h2>四层架构与外部契约</h2><span class="status done">已收敛</span></div></div>
+<div class="arch"><div class="arch-main"><div class="arch-item"><span>L1</span><div><strong>Definition</strong><small>Schema · Reference · Scope · Expression · Constraint · Reaction · View</small></div></div><div class="arch-item"><span>L2</span><div><strong>Preparation</strong><small>规范化 · 静态检查 · 引用解析 · 依赖分析 · Profile 准备</small></div></div><div class="arch-item"><span>L3</span><div><strong>Form Runtime</strong><small>唯一 Working Data · Command · Reaction · Validation · Field State</small></div></div><div class="arch-item"><span>L4</span><div><strong>Renderer & Material Adapter</strong><small>UI 树 · Material 实例 · Binding 连接 · 局部交互状态</small></div></div></div><div class="arch-side"><div><strong>Material Registry</strong><small>Props / Bindings / Slots / Events 契约与实现</small></div><div><strong>Host</strong><small>初始化 / 外部校验 / 业务事件 / 提交</small></div></div></div>
+<p>Material Registry 和 Host 是外部能力边界，不是要往 <code>FormDefinition</code> 顶层增加 <code>services</code> 或 <code>resources</code>。L1 可以声明需要哪些能力，但不需要把实现细节写进业务配置。</p>
+</section>
+<section class="section" id="decisions" data-search="核心决策总表"><div class="section-head"><div class="kicker">03 · DECISION REGISTER</div><div class="section-title"><h2>核心决策总表</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>模块</th><th>最终决定</th><th>说明</th></tr></thead><tbody><tr><td>D1</td><td>Data</td><td><strong>JSON Schema + 唯一 Working Data</strong></td><td>允许临时不合法值；Normalized Output 单独校验</td></tr><tr><td>D2</td><td>Reference</td><td><strong>结构化 Reference</strong></td><td>根路径字符串是 Authoring 简写</td></tr><tr><td>D3</td><td>Scope</td><td><strong>局部 ScopeBinder · one / each</strong></td><td>无全局 Scope Registry；数组项身份统一管理</td></tr><tr><td>D4</td><td>Expression</td><td><strong>纯 AST + 递归 $expr</strong></td><td>动态 JSON 值由显式包装识别</td></tr><tr><td>D5</td><td>Constraint</td><td><strong>Internal / External</strong></td><td>外部约束只声明义务，不编排请求</td></tr><tr><td>D6</td><td>Command</td><td><strong>有限数据修改集合</strong></td><td>不等于任意 Action 脚本</td></tr><tr><td>D7</td><td>Reaction</td><td><strong>watch / when / then</strong></td><td>仅内部同步数据联动</td></tr><tr><td>D8</td><td>View</td><td><strong>Material / Scope / TemplateUse</strong></td><td>每个 Profile 选择入口</td></tr><tr><td>D9</td><td>Binding</td><td><strong>Canonical: bindings 端口映射</strong></td><td>不增加 read/write/validationBind</td></tr><tr><td>D10</td><td>Slots</td><td><strong>Canonical: slots</strong></td><td>children 是默认 Slot 简写</td></tr><tr><td>D11</td><td>Template</td><td><strong>Typed Data Params</strong></td><td>schemaRef 复用 Data Schema；with 传 Data Reference</td></tr><tr><td>D12</td><td>Interaction</td><td><strong>form.command / host.emit</strong></td><td>view.present/dismiss 不进入核心</td></tr><tr><td>D13</td><td>Material</td><td><strong>物料自有能力限制由 Manifest 定义</strong></td><td>协议统一机制，Manifest 定义具体端口和类型</td></tr><tr><td>D14</td><td>Host</td><td><strong>外部业务能力不内嵌</strong></td><td>网络、上传、提交都在 Host / 自定义物料服务中</td></tr><tr><td>D15</td><td>Lifecycle</td><td><strong>初始化 / 更新 / 重初始化 / Reset 区分</strong></td><td>属于宿主-运行时 API 语义，不定义生命周期脚本</td></tr></tbody></table></div>
+</section>
+<section class="section" id="top-level" data-search="唯一 FormDefinition 顶层结构"><div class="section-head"><div class="kicker">04 · CANONICAL ROOT</div><div class="section-title"><h2>唯一 FormDefinition 顶层结构</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>架构定稿 · 顶层字段</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">interface FormDefinition {
+  protocolVersion: string;
+  id: string;
+  version: string;
+
+  data: { schema: JsonSchema };
+  expressions?: Record&lt;string, Expression&gt;;
+  constraints?: Constraint[];
+  reactions?: Reaction[];
+  views: Record&lt;string, ViewProfile&gt;;
+  viewTemplates?: Record&lt;string, ViewTemplate&gt;;
+  metadata?: Record&lt;string, JsonValue&gt;;
+}</code></pre></div>
+<p>业务规则处于 Form Definition 级别，不能因为切换 View Profile 或某字段暂时隐藏就失效。<code>metadata</code> 只用于非执行性元数据，不能通过它绕过已确定的协议语义。</p>
+<div class="note neutral"><div class="note-head">明确不增加的顶层域</div><div><code>actions</code>、<code>behaviors</code>、<code>resources</code>、<code>services</code>、<code>submissionWorkflow</code>、<code>presentation</code>、<code>validationState</code>、<code>scopes</code> 不进入 V1 核心。</div></div>
+</section>
+<section class="section" id="representations" data-search="Canonical、Authoring、Prepared 的分离"><div class="section-head"><div class="kicker">05 · REPRESENTATION</div><div class="section-title"><h2>Canonical、Authoring、Prepared 的分离</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>形式</th><th>定位</th><th>示例</th></tr></thead><tbody><tr><td>Canonical Protocol</td><td>唯一正式结构：机器验收与交换</td><td><code>bindings.value = {source:"data",path:"/name"}</code></td></tr><tr><td>Authoring Syntax</td><td>可选的书写简化，不扩展语义</td><td><code>bind: "/name"</code>；<code>children: [...]</code></td></tr><tr><td>Prepared Representation</td><td>L2 内部交付产物，非 L1 文档的一部分</td><td>已解析引用、编译依赖、索引及 Profile 选择</td></tr></tbody></table></div>
+<p>遵循“一种语义，一种 Canonical 形式”。有简写也不能把简写当成第二套协议。跨端传递、规范校验和文档样例均应优先使用 Canonical。</p>
+</section>
+<section class="section" id="data" data-search="Data / Value / Default / Output"><div class="section-head"><div class="kicker">06 · DATA</div><div class="section-title"><h2>Data / Value / Default / Output</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>数据结构只定义一次</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;applicant&quot;: { &quot;$ref&quot;: &quot;#/$defs/Person&quot; },
+        &quot;insureds&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/Person&quot; } }
+      },
+      &quot;$defs&quot;: {
+        &quot;Person&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; },
+            &quot;age&quot;: { &quot;type&quot;: &quot;integer&quot; }
+          }
+        }
+      }
+    }
+  }
+}</code></pre></div>
+<ul class="bullets"><li><strong>数据与视图分离：</strong>JSON Schema 管结构与基础约束；单个 Form 不需要按 Profile 创建多份业务 Schema。</li><li><strong>Working Data 允许暂时不合法：</strong>例如输入过程、Host 回填或旧数据，不得静默以“最后一次合法值”替换当前数据。</li><li><strong>缺失与 null 不同：</strong>Missing、null、解析失败属于不同语义；不设计独立的 Incomplete 解析状态。</li><li><strong>默认值：</strong>Host 初始化数据优先，Schema 默认值可填充真正缺失的位置；不覆盖显式 null。</li><li><strong>提交：</strong>通过 Schema、内部约束、必要外部约束和输出转换后才构造规范化输出；Host 负责真正提交。</li></ul>
+</section>
+<section class="section" id="reference" data-search="Reference：统一寻址规则"><div class="section-head"><div class="kicker">07 · REFERENCE</div><div class="section-title"><h2>Reference：统一寻址规则</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>引用类别</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">type DataReference = {
+  source: &#x27;data&#x27;;
+  path: string;          // JSON Pointer
+  scope?: string;        // 仅词法可见的局部名称
+};
+type ContextReference = {
+  source: &#x27;context&#x27;;
+  path: string;
+};
+type EventReference = {
+  source: &#x27;event&#x27;;
+  path: string;
+};</code></pre></div>
+<div class="code-box"><div class="code-head"><span>不同来源的只读/可写能力由所处位置约束</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{ &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/applicant/name&quot; }
+{ &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; }
+{ &quot;source&quot;: &quot;context&quot;, &quot;path&quot;: &quot;/countryOptions&quot; }
+{ &quot;source&quot;: &quot;event&quot;, &quot;path&quot;: &quot;/selectedValue&quot; }</code></pre></div>
+<p>统一使用 JSON Pointer：<code>""</code> 表示引用根值，<code>"/"</code> 表示空字符串字段名。绝对路径简写（例如 <code>"/applicant/name"</code>）始终从 Form Data 根开始，不会随当前 Scope 隐式变成相对路径。</p>
+<div class="note neutral"><div class="note-head">位置级约束</div><div>Expression 可读取受允许的 Data / Context（Event 仅在交互上下文有效）；Command <code>target</code> 只能写 Data，不能写 Context、Event 或 Material Props。</div></div>
+</section>
+<section class="section" id="scope" data-search="ScopeBinder：局部词法绑定，不建全局注册表"><div class="section-head"><div class="kicker">08 · SCOPE</div><div class="section-title"><h2>ScopeBinder：局部词法绑定，不建全局注册表</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>唯一绑定语义</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">interface ScopeBinder {
+  from: DataReference;
+  as: string;
+  mode?: &#x27;one&#x27; | &#x27;each&#x27;;
+}</code></pre></div>
+<p><code>one</code> 将一个数据位置绑定为局部名称；<code>each</code> 对一个数组的每个项建立独立上下文。在 View 的 ScopeNode 中，<code>each</code> <strong>直接表示重复实例化对应子视图</strong>，父 Material 不需要额外 <code>repeat</code>。</p>
+<div class="code-box"><div class="code-head"><span>View 中的逐项实例化</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;scope&quot;: {
+    &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+    &quot;as&quot;: &quot;insured&quot;,
+    &quot;mode&quot;: &quot;each&quot;
+  },
+  &quot;node&quot;: {
+    &quot;material&quot;: &quot;insured-card&quot;,
+    &quot;bindings&quot;: {
+      &quot;value&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;&quot; }
+    }
+  }
+}</code></pre></div>
+<p>View、Reaction、Constraint 在协议允许的位置建立局部 Binder；它们不定义独立的数据存储域。L2 处理词法名称绑定，L3 对应实际数据位置与数组项稳定身份；不同规则使用同名别名，不构成全局 Scope 冲突。</p>
+<div class="note neutral"><div class="note-head">不扩张为通用变量系统</div><div>Scope 只能出现于明确的结构性入口；普通 Props、Expression 和 Command 都不能随意创建 Scope。<code>from</code> 不接受任意 Expression 拼出的动态数据位置；词法链中不得重复遮蔽已有别名（V1 保守规则）。</div></div>
+</section>
+<section class="section" id="scope-handle" data-search="ScopeHandle 与数组实例身份"><div class="section-head"><div class="kicker">09 · ITEM IDENTITY</div><div class="section-title"><h2>ScopeHandle 与数组实例身份</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>Data Reference 与 ScopeHandle 不混用</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">// 获取当前数组项的业务值：
+{ &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;&quot; }
+
+// 在需要项身份的命令中表达当前实例：
+{ &quot;$scope&quot;: &quot;insured&quot; }
+
+// 示例：精确删除当前项，而不是按数组下标删除
+{
+  &quot;op&quot;: &quot;array.remove&quot;,
+  &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+  &quot;item&quot;: { &quot;$scope&quot;: &quot;insured&quot; }
+}</code></pre></div>
+<p>ScopeHandle 表示数据实例的定位身份，不代表数据副本，也不是业务主键。数组排序后不能悄悄指向新的同下标对象；原实例被删除时句柄失效。普通 View Template 参数则<strong>只传 Data Reference</strong>，不需要对外暴露 ScopeHandle。</p>
+</section>
+<section class="section" id="expression" data-search="Expression AST 与 ValueSpec"><div class="section-head"><div class="kicker">10 · EXPRESSION</div><div class="section-title"><h2>Expression AST 与 ValueSpec</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>概念类型 · 正式 Union 仍需消歧校验</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">type Expression =
+  | JsonPrimitive
+  | { ref: Reference }
+  | { use: string }
+  | { op: string; args: Expression[] }
+  | { literal: JsonValue };
+
+type ValueSpec =
+  | JsonPrimitive
+  | { $expr: Expression }
+  | { $literal: JsonValue }
+  | ValueSpec[]
+  | { [key: string]: ValueSpec };</code></pre></div>
+<p>Expression 是纯计算 AST，采用严格类型、有限内置 Pure Function 与版本化领域纯函数。Named Expression 可复用，但全局命名表达式不得隐式捕获调用方的局部 Scope；V1 不引入参数化函数语言。</p>
+<div class="code-box"><div class="code-head"><span>动态 Expression 可以出现在任意嵌套 ValueSpec 内</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;summary-card&quot;,
+  &quot;props&quot;: {
+    &quot;title&quot;: &quot;投保摘要&quot;,
+    &quot;badge&quot;: {
+      &quot;visible&quot;: {
+        &quot;$expr&quot;: {
+          &quot;op&quot;: &quot;eq&quot;,
+          &quot;args&quot;: [
+            { &quot;ref&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/plan&quot; } },
+            &quot;premium&quot;
+          ]
+        }
+      }
+    }
+  }
+}</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th>协议位置</th><th>表达式形态</th></tr></thead><tbody><tr><td><code>constraint.assert</code> / <code>reaction.when</code> / <code>expressions.*</code></td><td>直接使用 Expression AST</td></tr><tr><td><code>props.*</code> / <code>command.value</code> / <code>host.emit.payload</code></td><td>递归 ValueSpec，通过完整的 <code>$expr</code> 包装进入表达式</td></tr><tr><td>需要原样保留标记对象</td><td>通过显式 Literal 转义表达，不能按普通对象形状误判表达式</td></tr></tbody></table></div>
+<div class="note neutral"><div class="note-head">求值失败的语义</div><div>解析失败或类型不匹配不等于 Expression 返回 <code>false</code>，也不等于自动使用最近一次合法值。同步业务 Constraint 不通过、外部校验 Pending 也不应自动阻断全部 Reaction。</div></div>
+</section>
+<section class="section" id="constraint" data-search="Constraint：内部断言与外部校验义务"><div class="section-head"><div class="kicker">11 · CONSTRAINT</div><div class="section-title"><h2>Constraint：内部断言与外部校验义务</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>Internal · 可同步求值的业务约束</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;age-eligible&quot;,
+  &quot;kind&quot;: &quot;internal&quot;,
+  &quot;scope&quot;: {
+    &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+    &quot;as&quot;: &quot;insured&quot;,
+    &quot;mode&quot;: &quot;each&quot;
+  },
+  &quot;assert&quot;: {
+    &quot;op&quot;: &quot;gte&quot;,
+    &quot;args&quot;: [
+      { &quot;ref&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; } },
+      18
+    ]
+  },
+  &quot;issue&quot;: {
+    &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; },
+    &quot;code&quot;: &quot;AGE_BELOW_MINIMUM&quot;
+  }
+}</code></pre></div>
+<div class="code-box"><div class="code-head"><span>External · 声明义务，不声明 URL 或请求策略</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;insured-eligibility&quot;,
+  &quot;kind&quot;: &quot;external&quot;,
+  &quot;scope&quot;: {
+    &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+    &quot;as&quot;: &quot;insured&quot;,
+    &quot;mode&quot;: &quot;each&quot;
+  },
+  &quot;dependsOn&quot;: [
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/age&quot; },
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/idNumber&quot; }
+  ],
+  &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/idNumber&quot; },
+  &quot;requiredForSubmit&quot;: true
+}</code></pre></div>
+<p>内部约束使用可选 <code>when</code> 和必需的 <code>assert</code>；外部约束声明依赖、归属位置及是否阻断提交。<strong>Constraint 不执行 Command，不设计 onFail 动作链。</strong></p>
+</section>
+<section class="section" id="validation" data-search="校验状态与提交 Readiness 的协议边界"><div class="section-head"><div class="kicker">12 · VALIDATION</div><div class="section-title"><h2>校验状态与提交 Readiness 的协议边界</h2><span class="status done">已收敛</span></div></div>
+<p>L1 只需要完整声明约束；各约束实例的结果、失效和状态迁移由 L3 统一管理，不是一个需要写入 Form Definition 的 <code>validationState</code> 字段。外部校验由 Host 执行并上报，而不是由 Form Runtime 自行发送网络请求。</p>
+<div class="table-wrap"><table><thead><tr><th>状态</th><th>语义</th></tr></thead><tbody><tr><td>unverified</td><td>尚未对当前有效数据版本取得结论</td></tr><tr><td>pending</td><td>对应校验正在进行</td></tr><tr><td>valid</td><td>当前有效输入版本验证通过</td></tr><tr><td>invalid</td><td>当前有效输入版本验证未通过</td></tr><tr><td>error</td><td>校验执行错误，不能被当成通过</td></tr></tbody></table></div>
+<p>一个外部 Constraint 在数组 Scope 下会派生出多个实例义务；结果需与具体数据项及版本关联。数据发生依赖变化后旧结果失效。Submit Readiness 依赖 Schema、内部约束、输出有效性及所有<strong>当前适用且 requiredForSubmit</strong> 的外部约束，不能以“未知或请求失败”冒充通过。</p>
+<div class="note neutral"><div class="note-head">与 View 的关系已经定稿</div><div>View 的 <code>bindings</code> 只写数据位置。无需 <code>validationBind</code>、<code>errorBind</code> 或物料校验管理字段；Runtime 提供状态，Material 只负责显示。字段状态机的具体结构留到 L3。</div></div>
+</section>
+<section class="section" id="commands" data-search="Command：封闭的受控数据修改语言"><div class="section-head"><div class="kicker">13 · COMMAND</div><div class="section-title"><h2>Command：封闭的受控数据修改语言</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>语义</th><th>边界</th></tr></thead><tbody><tr><td>set</td><td>替换目标 Data 值</td><td>目标必须为可写 Data Reference</td></tr><tr><td>patch</td><td>浅层对象字段更新</td><td>不隐式递归深度合并</td></tr><tr><td>remove</td><td>删除属性位置</td><td>区分将属性设为 null</td></tr><tr><td>array.insert</td><td>插入集合项</td><td>受目标 Schema 约束</td></tr><tr><td>array.remove</td><td>按稳定项身份删除</td><td>不可仅依赖不稳定 index</td></tr><tr><td>array.move</td><td>按稳定项身份移动</td><td>保留被移动项身份</td></tr><tr><td>batch</td><td>把多个 Command 视为一次逻辑提交</td><td>不能变成通用工作流</td></tr></tbody></table></div>
+<div class="code-box"><div class="code-head"><span>修改目标与计算值必须严格区分</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;op&quot;: &quot;set&quot;,
+  &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/order/total&quot; },
+  &quot;value&quot;: {
+    &quot;$expr&quot;: {
+      &quot;op&quot;: &quot;mul&quot;,
+      &quot;args&quot;: [
+        { &quot;ref&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/order/price&quot; } },
+        { &quot;ref&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/order/quantity&quot; } }
+      ]
+    }
+  }
+}</code></pre></div>
+<p>Command 只做表单数据修改。请求上传、业务审批、支付、弹窗动画和远端提交均不变成 Command 类型。复杂业务逻辑可以由 Host 根据结果发回一个受控 Command。</p>
+</section>
+<section class="section" id="reactions" data-search="Reaction：明确触发与条件的边界"><div class="section-head"><div class="kicker">14 · REACTION</div><div class="section-title"><h2>Reaction：明确触发与条件的边界</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>规则级作用域可使用有序绑定链</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">interface Reaction {
+  id: string;
+  scope?: ScopeBinder | ScopeBinder[];
+  watch: DataReference[];
+  when?: Expression;
+  then: Command[];
+}</code></pre></div>
+<div class="code-box"><div class="code-head"><span>数据变化时的最小联动声明</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;id&quot;: &quot;clear-city-on-country-change&quot;,
+  &quot;scope&quot;: {
+    &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+    &quot;as&quot;: &quot;insured&quot;,
+    &quot;mode&quot;: &quot;each&quot;
+  },
+  &quot;watch&quot;: [
+    { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/country&quot; }
+  ],
+  &quot;then&quot;: [
+    {
+      &quot;op&quot;: &quot;set&quot;,
+      &quot;target&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/city&quot; },
+      &quot;value&quot;: null
+    }
+  ]
+}</code></pre></div>
+<p><code>watch</code> 决定何时触发，<code>when</code> 决定触发后是否执行；二者不能互相代替。Expression 读取到的依赖不应自动变成触发条件。<code>then</code> 已经是有序 Command 数组，不必再强制包一层 <code>batch</code>。</p>
+<div class="note neutral"><div class="note-head">范围约束</div><div>Reaction 只消费内部同步 Data Change；外部异步校验完成并不会自动重新触发所有联动。需要改变数据时由 Host 显式提交 Command。</div></div>
+</section>
+<section class="section" id="view" data-search="View：Profile 与三种结构节点"><div class="section-head"><div class="kicker">15 · VIEW</div><div class="section-title"><h2>View：Profile 与三种结构节点</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>V1 结构形态</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">type ViewNode = MaterialNode | ScopeNode | TemplateUse;
+
+interface ViewProfile {
+  entry: ViewNode;
+}
+
+interface MaterialNode {
+  material: string;
+  props?: Record&lt;string, ValueSpec&gt;;
+  bindings?: Record&lt;string, DataReference&gt;;
+  slots?: Record&lt;string, ViewNode[]&gt;;
+  on?: Record&lt;string, InteractionIntent&gt;;
+}
+
+interface ScopeNode {
+  scope: ScopeBinder;
+  node: ViewNode;
+}
+
+interface TemplateUse {
+  $use: string;
+  with?: Record&lt;string, DataReference&gt;;
+}</code></pre></div>
+<p>View Profile 是不同场景的<strong>入口选择</strong>，不是不同业务数据源。PC 可以平铺编辑；移动端可以使用卡片和底部弹层。是否渲染列表，由 ScopeNode <code>mode: each</code> 决定，不额外声明 Repeat。</p>
+<p><code>$use</code> 是对命名视图结构的<strong>静态复用</strong>，不是 DOM 替换命令，不共享 UI 组件实例，更不是子表单。是否 Portal / Teleport、何时展开、动画如何实现均由容器 Material 自行决定。</p>
+</section>
+<section class="section" id="binding" data-search="Binding：唯一 Canonical 是具名端口映射"><div class="section-head"><div class="kicker">16 · BINDING</div><div class="section-title"><h2>Binding：唯一 Canonical 是具名端口映射</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>Material Port → Data Reference</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;date-range&quot;,
+  &quot;bindings&quot;: {
+    &quot;start&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/travel/startDate&quot; },
+    &quot;end&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/travel/endDate&quot; }
+  }
+}</code></pre></div>
+<p>Canonical 永远使用 <code>bindings: Record&lt;PortName, DataReference&gt;</code>。<code>bind: "/name"</code> 仅是 Authoring 简写；没有 <code>read</code>/<code>write</code> 独立 DSL，也不承载字段状态、校验元数据或 Codec 的生命周期设计。</p>
+<p>具体端口名称和端口数量由物料注册的 Manifest 决定；统一 Binding 语义属于 Protocol，不允许各物料自行把 <code>bindings</code> 重新定义为初始化值或网络事件。</p>
+</section>
+<section class="section" id="slots" data-search="Slots：容器组合与 children 简写"><div class="section-head"><div class="kicker">17 · SLOTS</div><div class="section-title"><h2>Slots：容器组合与 children 简写</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>一个规范的 Slots 模型</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;bottom-sheet-editor&quot;,
+  &quot;slots&quot;: {
+    &quot;trigger&quot;: [{ &quot;material&quot;: &quot;insured-summary&quot; }],
+    &quot;content&quot;: [
+      {
+        &quot;$use&quot;: &quot;insured-fields&quot;,
+        &quot;with&quot;: {
+          &quot;insured&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;&quot; }
+        }
+      }
+    ]
+  }
+}</code></pre></div>
+<p>所有 Slot 在 Canonical 都使用数组；<code>children</code> 可作为 <code>slots.default</code> 的 Authoring 简写。Manifest 声明哪些 Slot 合法、各自允许一个或多个 ViewNode，以及 Material 对这些 Slot 的具体交互含义。</p>
+<p>Slot 是视图节点组合位置，不能与普通 Props JSON 混淆，也不是一个“把组件插入任意 DOM 节点”的操作指令。</p>
+</section>
+<section class="section" id="templates" data-search="Typed View Template Params：可直接落地的方案"><div class="section-head"><div class="kicker">18 · TYPED TEMPLATES</div><div class="section-title"><h2>Typed View Template Params：可直接落地的方案</h2><span class="status done">已收敛</span></div></div>
+<div class="keyline">保留 Typed Data Params，但<strong>只复用已有 Data Schema 的类型</strong>。无需额外泛型系统、参数表达式语言或全局 Scope Registry。</div>
+<div class="code-box"><div class="code-head"><span>最小 Typed Template Params</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">interface TemplateDataParam {
+  schemaRef: string;   // 相对于 data.schema 根的 JSON Schema Pointer
+}
+interface ViewTemplate {
+  params?: Record&lt;string, TemplateDataParam&gt;;
+  node: ViewNode;
+}
+interface TemplateUse {
+  $use: string;
+  with?: Record&lt;string, DataReference&gt;;
+}</code></pre></div>
+<div class="code-box"><div class="code-head"><span>模板定义只注解类型，不复制业务 Schema</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;viewTemplates&quot;: {
+    &quot;insured-fields&quot;: {
+      &quot;params&quot;: {
+        &quot;insured&quot;: { &quot;schemaRef&quot;: &quot;#/$defs/Insured&quot; }
+      },
+      &quot;node&quot;: {
+        &quot;material&quot;: &quot;text-input&quot;,
+        &quot;bindings&quot;: {
+          &quot;value&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;insured&quot;, &quot;path&quot;: &quot;/name&quot; }
+        }
+      }
+    }
+  }
+}</code></pre></div>
+<div class="code-box"><div class="code-head"><span>调用方局部别名 item ≠ 模板参数 insured</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;scope&quot;: {
+    &quot;from&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/insureds&quot; },
+    &quot;as&quot;: &quot;item&quot;,
+    &quot;mode&quot;: &quot;each&quot;
+  },
+  &quot;node&quot;: {
+    &quot;$use&quot;: &quot;insured-fields&quot;,
+    &quot;with&quot;: {
+      &quot;insured&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;scope&quot;: &quot;item&quot;, &quot;path&quot;: &quot;&quot; }
+    }
+  }
+}</code></pre></div>
+<p>参数只承担将一个可定位的数据位置引入模板词法环境的职责。L2 检查必需参数、引用可见性、Data Schema 来源、字段路径与 Material Port 类型。相同 <code>$defs</code> 定义引用优先视为兼容；复杂组合 Schema 若不能静态证明兼容，应明确诊断，而不是伪造保证。</p>
+<div class="note neutral"><div class="note-head">定稿边界</div><div>V1 Template Params 只支持 Typed Data Reference。普通 title、theme、variant 等配置值尽量通过 Material Props 或复合物料解决；不加入模板泛型、动态模板选择和隐式捕获调用方 Scope。</div></div>
+</section>
+<section class="section" id="materials" data-search="Material Manifest：协议机制与物料限制分层"><div class="section-head"><div class="kicker">19 · MATERIAL CONTRACT</div><div class="section-title"><h2>Material Manifest：协议机制与物料限制分层</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>外部注册契约 · 不内嵌到 FormDefinition</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">interface MaterialManifest {
+  id: string;
+  version: string;
+  propsSchema?: JsonSchema;
+  bindings?: Record&lt;string, BindingPortContract&gt;;
+  slots?: Record&lt;string, SlotContract&gt;;
+  events?: Record&lt;string, EventContract&gt;;
+}</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th>限制归属</th><th>示例</th><th>谁负责</th></tr></thead><tbody><tr><td>L1 Protocol</td><td>bindings 必须是端口到 Data Reference；ScopeNode 合法位置</td><td>所有物料统一遵守</td></tr><tr><td>Material Manifest</td><td>text-input 的 placeholder、value 类型、confirm 事件；Modal 的 trigger/content Slot</td><td>物料注册时声明</td></tr><tr><td>Form Definition</td><td>18–65 周岁、证件必填、被保人最多 5 个</td><td>Data Schema / Constraint</td></tr></tbody></table></div>
+<p><strong>视觉/输入限制不等于业务数据校验。</strong>例如 <code>maxLength</code> 是 TextInput 的输入体验；真正的“姓名不能超过 20 字符”仍必须由 Data Schema 或 Constraint 保证。</p>
+<p>Web 与 Flutter 可以实现不同交互形态，但同一物料契约下的 Binding Port、Event Payload、Slot 和 Props 语义必须兼容。Form Definition 需要通过可确定的版本解析规则绑定 Material Manifest；不能依赖不受控的“latest”。</p>
+</section>
+<section class="section" id="interaction" data-search="Interaction：只保留数据命令和宿主事件"><div class="section-head"><div class="kicker">20 · INTERACTION</div><div class="section-title"><h2>Interaction：只保留数据命令和宿主事件</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>受限 Event → Intent</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">type InteractionIntent =
+  | { type: &#x27;form.command&#x27;; command: Command }
+  | { type: &#x27;host.emit&#x27;; event: string; payload?: ValueSpec };</code></pre></div>
+<div class="code-box"><div class="code-head"><span>按钮语义事件与宿主能力连接</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;material&quot;: &quot;button&quot;,
+  &quot;props&quot;: { &quot;label&quot;: &quot;提交&quot; },
+  &quot;on&quot;: {
+    &quot;activate&quot;: {
+      &quot;type&quot;: &quot;host.emit&quot;,
+      &quot;event&quot;: &quot;insurance.submitRequested&quot;
+    }
+  }
+}</code></pre></div>
+<p>普通输入更新首先通过 Binding Port，不应同时要求 <code>on.change → form.command</code> 再写一次。Material 的打开、关闭、滑动、焦点、动画等属于其内部行为。</p>
+<div class="compare"><div><span class="tag-old">历史方案 · 不采用</span><code>view.present → mode: modal / drawer</code><p>增加 View Controller、实例管理和 Presentation 契约，与容器物料职责重叠。</p></div><div><span class="tag-new">最终方案 · 采用</span><code>modal / drawer / bottom-sheet Material</code><p>容器物料通过 Slots 组合已有 View Template，自行管理局部交互。</p></div></div>
+</section>
+<section class="section" id="host" data-search="Host Integration：明确三条路径"><div class="section-head"><div class="kicker">21 · HOST</div><div class="section-title"><h2>Host Integration：明确三条路径</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>场景</th><th>Definition 表达</th><th>外部负责</th></tr></thead><tbody><tr><td>外部 Constraint</td><td><code>kind: external</code> + dependsOn + requiredForSubmit</td><td>注册校验器、请求、上报状态与当前结果</td></tr><tr><td>用户触发外部业务</td><td><code>on → host.emit</code></td><td>根据事件契约执行业务流程</td></tr><tr><td>自定义物料服务</td><td>Material Binding/Props 和外部注入服务契约</td><td>远端选项、文件上传等私有物料服务</td></tr></tbody></table></div>
+<p>Host 异步响应后如果需要改变表单数据，应该调用 Runtime 的受控 Command API；Definition 不需要表达异步 Promise 链、请求重试或服务编排。授权与最终数据安全仍由 Host/服务端负责，不能因为表单本身有前端校验就直接信任提交结果。</p>
+</section>
+<section class="section" id="lifecycle" data-search="初始化、更新、重初始化与提交"><div class="section-head"><div class="kicker">22 · LIFECYCLE</div><div class="section-title"><h2>初始化、更新、重初始化与提交</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>语义约束</th></tr></thead><tbody><tr><td>Initialize</td><td>创建当前 Form 实例基线；Host 数据优先，缺失位置按规则补默认值</td></tr><tr><td>Update</td><td>向当前 Working Data 提交受控数据修改；不是重新初始化</td></tr><tr><td>Reinitialize</td><td>用新的外部初始数据建立新的当前基线；不假扮逐字段用户编辑</td></tr><tr><td>Reset</td><td>回到当前初始化基线，不是必然回到第一次加载的旧基线</td></tr><tr><td>Submit / Readiness</td><td>内外约束以及输出完整性符合要求后，由 Host 执行真实提交</td></tr></tbody></table></div>
+<p>Definition 不增加 <code>onInit</code>、<code>onReset</code>、<code>beforeSubmit</code> 等通用生命周期脚本。宿主 API 的具体返回值或事务流程属于 L3/Host 实现，但上述生命周期的语义差异必须保持。</p>
+</section>
+<section class="section" id="profiles" data-search="多 Profile 与按需交付"><div class="section-head"><div class="kicker">23 · DELIVERY</div><div class="section-title"><h2>多 Profile 与按需交付</h2><span class="status done">已收敛</span></div></div>
+<p>View Profile 表达同一业务数据在不同终端或场景下采用不同的物料树。服务端或 L2 可以按请求只准备当前 Profile 的入口与其静态引用依赖，但共享 Data Schema、Constraint、Reaction 不能仅因为某字段不可见就被裁剪掉。</p>
+<div class="code-box"><div class="code-head"><span>Profile 是选择入口，不是复制 Form Definition</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;views&quot;: {
+    &quot;expanded&quot;: {
+      &quot;entry&quot;: { &quot;$use&quot;: &quot;expanded-form&quot; }
+    },
+    &quot;compact&quot;: {
+      &quot;entry&quot;: { &quot;$use&quot;: &quot;compact-form&quot; }
+    }
+  }
+}</code></pre></div>
+</section>
+<section class="section" id="sample" data-search="完整保险投保 FormDefinition 示例"><div class="section-head"><div class="kicker">24 · INTEGRATED EXAMPLE</div><div class="section-title"><h2>完整保险投保 FormDefinition 示例</h2><span class="status open">待固化</span></div></div>
+<p>下面使用单一 Data Schema、逐项 Scope、内部/外部 Constraint、Reaction、PC 与移动端 Profile、Typed View Template、容器 Material 和 Host Event 拼出同一份表单。<strong>示例为结构与语义验收草案</strong>：需与最终 JSON Schema、各物料 Manifest、Pure Function Registry 对齐后才能称为可运行发布样例。</p>
+<div class="code-box"><div class="code-head"><span>完整示例 · Canonical 候选 · 保险投保表单</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;protocolVersion&quot;: &quot;1.0&quot;,
+  &quot;id&quot;: &quot;insurance-application-demo&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;data&quot;: {
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: false,
+      &quot;required&quot;: [
+        &quot;applicant&quot;,
+        &quot;insureds&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;applicant&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Applicant&quot;
+        },
+        &quot;insureds&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Insured&quot;
+          },
+          &quot;minItems&quot;: 1,
+          &quot;maxItems&quot;: 5
+        },
+        &quot;plan&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;enum&quot;: [
+            &quot;basic&quot;,
+            &quot;premium&quot;
+          ],
+          &quot;default&quot;: &quot;basic&quot;
+        }
+      },
+      &quot;$defs&quot;: {
+        &quot;Applicant&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;minLength&quot;: 1
+            },
+            &quot;phone&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;name&quot;,
+            &quot;phone&quot;
+          ]
+        },
+        &quot;Insured&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;name&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;minLength&quot;: 1
+            },
+            &quot;age&quot;: {
+              &quot;type&quot;: &quot;integer&quot;
+            },
+            &quot;country&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;city&quot;: {
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;idNumber&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;name&quot;,
+            &quot;age&quot;,
+            &quot;idNumber&quot;
+          ]
+        }
+      }
+    }
+  },
+  &quot;constraints&quot;: [
+    {
+      &quot;id&quot;: &quot;age-min-18&quot;,
+      &quot;kind&quot;: &quot;internal&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;path&quot;: &quot;/insureds&quot;
+        },
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;assert&quot;: {
+        &quot;op&quot;: &quot;gte&quot;,
+        &quot;args&quot;: [
+          {
+            &quot;ref&quot;: {
+              &quot;source&quot;: &quot;data&quot;,
+              &quot;scope&quot;: &quot;insured&quot;,
+              &quot;path&quot;: &quot;/age&quot;
+            }
+          },
+          18
+        ]
+      },
+      &quot;issue&quot;: {
+        &quot;target&quot;: {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/age&quot;
+        },
+        &quot;code&quot;: &quot;MIN_AGE_18&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;insured-eligibility&quot;,
+      &quot;kind&quot;: &quot;external&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;path&quot;: &quot;/insureds&quot;
+        },
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;dependsOn&quot;: [
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/age&quot;
+        },
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/idNumber&quot;
+        }
+      ],
+      &quot;target&quot;: {
+        &quot;source&quot;: &quot;data&quot;,
+        &quot;scope&quot;: &quot;insured&quot;,
+        &quot;path&quot;: &quot;/idNumber&quot;
+      },
+      &quot;requiredForSubmit&quot;: true
+    }
+  ],
+  &quot;reactions&quot;: [
+    {
+      &quot;id&quot;: &quot;clear-city-on-country-change&quot;,
+      &quot;scope&quot;: {
+        &quot;from&quot;: {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;path&quot;: &quot;/insureds&quot;
+        },
+        &quot;as&quot;: &quot;insured&quot;,
+        &quot;mode&quot;: &quot;each&quot;
+      },
+      &quot;watch&quot;: [
+        {
+          &quot;source&quot;: &quot;data&quot;,
+          &quot;scope&quot;: &quot;insured&quot;,
+          &quot;path&quot;: &quot;/country&quot;
+        }
+      ],
+      &quot;then&quot;: [
+        {
+          &quot;op&quot;: &quot;set&quot;,
+          &quot;target&quot;: {
+            &quot;source&quot;: &quot;data&quot;,
+            &quot;scope&quot;: &quot;insured&quot;,
+            &quot;path&quot;: &quot;/city&quot;
+          },
+          &quot;value&quot;: null
+        }
+      ]
+    }
+  ],
+  &quot;viewTemplates&quot;: {
+    &quot;insured-fields&quot;: {
+      &quot;params&quot;: {
+        &quot;insured&quot;: {
+          &quot;schemaRef&quot;: &quot;#/$defs/Insured&quot;
+        }
+      },
+      &quot;node&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;slots&quot;: {
+          &quot;default&quot;: [
+            {
+              &quot;material&quot;: &quot;text-input&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;姓名&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;scope&quot;: &quot;insured&quot;,
+                  &quot;path&quot;: &quot;/name&quot;
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;number-input&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;年龄&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;scope&quot;: &quot;insured&quot;,
+                  &quot;path&quot;: &quot;/age&quot;
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;country-picker&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;国家&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;scope&quot;: &quot;insured&quot;,
+                  &quot;path&quot;: &quot;/country&quot;
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;city-picker&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;城市&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;scope&quot;: &quot;insured&quot;,
+                  &quot;path&quot;: &quot;/city&quot;
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;text-input&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;证件号码&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;scope&quot;: &quot;insured&quot;,
+                  &quot;path&quot;: &quot;/idNumber&quot;
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    &quot;expanded-form&quot;: {
+      &quot;node&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;slots&quot;: {
+          &quot;default&quot;: [
+            {
+              &quot;material&quot;: &quot;text-input&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;投保人姓名&quot;
+              },
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;path&quot;: &quot;/applicant/name&quot;
+                }
+              }
+            },
+            {
+              &quot;scope&quot;: {
+                &quot;from&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;path&quot;: &quot;/insureds&quot;
+                },
+                &quot;as&quot;: &quot;insured&quot;,
+                &quot;mode&quot;: &quot;each&quot;
+              },
+              &quot;node&quot;: {
+                &quot;material&quot;: &quot;section&quot;,
+                &quot;props&quot;: {
+                  &quot;title&quot;: &quot;被保人资料&quot;
+                },
+                &quot;slots&quot;: {
+                  &quot;default&quot;: [
+                    {
+                      &quot;$use&quot;: &quot;insured-fields&quot;,
+                      &quot;with&quot;: {
+                        &quot;insured&quot;: {
+                          &quot;source&quot;: &quot;data&quot;,
+                          &quot;scope&quot;: &quot;insured&quot;,
+                          &quot;path&quot;: &quot;&quot;
+                        }
+                      }
+                    },
+                    {
+                      &quot;material&quot;: &quot;button&quot;,
+                      &quot;props&quot;: {
+                        &quot;label&quot;: &quot;移除被保人&quot;
+                      },
+                      &quot;on&quot;: {
+                        &quot;activate&quot;: {
+                          &quot;type&quot;: &quot;form.command&quot;,
+                          &quot;command&quot;: {
+                            &quot;op&quot;: &quot;array.remove&quot;,
+                            &quot;target&quot;: {
+                              &quot;source&quot;: &quot;data&quot;,
+                              &quot;path&quot;: &quot;/insureds&quot;
+                            },
+                            &quot;item&quot;: {
+                              &quot;$scope&quot;: &quot;insured&quot;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;button&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;提交投保&quot;
+              },
+              &quot;on&quot;: {
+                &quot;activate&quot;: {
+                  &quot;type&quot;: &quot;host.emit&quot;,
+                  &quot;event&quot;: &quot;insurance.submitRequested&quot;
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    &quot;compact-form&quot;: {
+      &quot;node&quot;: {
+        &quot;material&quot;: &quot;stack&quot;,
+        &quot;slots&quot;: {
+          &quot;default&quot;: [
+            {
+              &quot;material&quot;: &quot;applicant-summary&quot;,
+              &quot;bindings&quot;: {
+                &quot;value&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;path&quot;: &quot;/applicant&quot;
+                }
+              }
+            },
+            {
+              &quot;scope&quot;: {
+                &quot;from&quot;: {
+                  &quot;source&quot;: &quot;data&quot;,
+                  &quot;path&quot;: &quot;/insureds&quot;
+                },
+                &quot;as&quot;: &quot;insured&quot;,
+                &quot;mode&quot;: &quot;each&quot;
+              },
+              &quot;node&quot;: {
+                &quot;material&quot;: &quot;bottom-sheet-editor&quot;,
+                &quot;slots&quot;: {
+                  &quot;trigger&quot;: [
+                    {
+                      &quot;material&quot;: &quot;insured-summary&quot;,
+                      &quot;bindings&quot;: {
+                        &quot;value&quot;: {
+                          &quot;source&quot;: &quot;data&quot;,
+                          &quot;scope&quot;: &quot;insured&quot;,
+                          &quot;path&quot;: &quot;&quot;
+                        }
+                      }
+                    }
+                  ],
+                  &quot;content&quot;: [
+                    {
+                      &quot;$use&quot;: &quot;insured-fields&quot;,
+                      &quot;with&quot;: {
+                        &quot;insured&quot;: {
+                          &quot;source&quot;: &quot;data&quot;,
+                          &quot;scope&quot;: &quot;insured&quot;,
+                          &quot;path&quot;: &quot;&quot;
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              &quot;material&quot;: &quot;button&quot;,
+              &quot;props&quot;: {
+                &quot;label&quot;: &quot;提交投保&quot;
+              },
+              &quot;on&quot;: {
+                &quot;activate&quot;: {
+                  &quot;type&quot;: &quot;host.emit&quot;,
+                  &quot;event&quot;: &quot;insurance.submitRequested&quot;
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  &quot;views&quot;: {
+    &quot;expanded&quot;: {
+      &quot;entry&quot;: {
+        &quot;$use&quot;: &quot;expanded-form&quot;
+      }
+    },
+    &quot;compact&quot;: {
+      &quot;entry&quot;: {
+        &quot;$use&quot;: &quot;compact-form&quot;
+      }
+    }
+  },
+  &quot;metadata&quot;: {
+    &quot;description&quot;: &quot;L1 架构验收示例；未作为 JSON Schema 正式验收样本发布&quot;
+  }
+}</code></pre></div>
+</section>
+<section class="section" id="walkthrough" data-search="业务组合验收：哪些场景由谁完成？"><div class="section-head"><div class="kicker">25 · ACCEPTANCE</div><div class="section-title"><h2>业务组合验收：哪些场景由谁完成？</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>业务操作</th><th>协议元素</th><th>应维持的不变量</th></tr></thead><tbody><tr><td>PC 展开编辑多被保人</td><td>ScopeNode each + insured-fields Template</td><td>每项独立上下文，数据仍是一份</td></tr><tr><td>移动端点摘要卡片打开底部弹层</td><td>bottom-sheet-editor Material + Slots</td><td>不使用 view.present；不复制被保人对象</td></tr><tr><td>国家变化，清空当前城市</td><td>Reaction watch → set</td><td>没有 UI 时也生效，使用当前项 Scope</td></tr><tr><td>每位被保人独立承保资格校验</td><td>External Constraint each</td><td>结果按实例与版本匹配，Pending 阻断 Readiness</td></tr><tr><td>按当前项删除被保人</td><td>ArrayRemove + ScopeHandle</td><td>排序后不能删错项</td></tr><tr><td>提交</td><td>host.emit + Host Readiness API</td><td>Definition 不直接访问 HTTP 接口</td></tr></tbody></table></div>
+<div class="note neutral"><div class="note-head">示例采用的前置能力</div><div>物料如 <code>bottom-sheet-editor</code>、<code>insured-summary</code>、<code>country-picker</code> 只是已注册 Manifest 的假设名称；<code>gte</code> 等 Pure Function 也须在 Pure Function Contract 中存在。示例不能替代注册表本身。</div></div>
+</section>
+<section class="section" id="simple" data-search="用极简表单检验协议使用成本"><div class="section-head"><div class="kicker">26 · DEVELOPER EXPERIENCE</div><div class="section-title"><h2>用极简表单检验协议使用成本</h2><span class="status done">已收敛</span></div></div>
+<div class="code-box"><div class="code-head"><span>普通表单不应被迫引入 Scope / Template / Reaction</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;protocolVersion&quot;: &quot;1.0&quot;,
+  &quot;id&quot;: &quot;profile-basic&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;data&quot;: {
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: { &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; } },
+      &quot;required&quot;: [&quot;name&quot;]
+    }
+  },
+  &quot;views&quot;: {
+    &quot;default&quot;: {
+      &quot;entry&quot;: {
+        &quot;material&quot;: &quot;text-input&quot;,
+        &quot;props&quot;: { &quot;placeholder&quot;: &quot;请输入姓名&quot; },
+        &quot;bindings&quot;: {
+          &quot;value&quot;: { &quot;source&quot;: &quot;data&quot;, &quot;path&quot;: &quot;/name&quot; }
+        }
+      }
+    }
+  }
+}</code></pre></div>
+<p>判断抽象是否过度，不是数协议一共有多少概念，而是看使用一个普通场景时，是否被迫学习不相关的概念。复杂能力应该按需出现，不强制每张表单携带完整模板系统。</p>
+</section>
+<section class="section" id="history" data-search="从早期方案到当前决策：修订记录"><div class="section-head"><div class="kicker">27 · DESIGN HISTORY</div><div class="section-title"><h2>从早期方案到当前决策：修订记录</h2><span class="status done">已收敛</span></div></div>
+<div class="timeline"><div class="timeline-row"><span class="timeline-mark">01</span><div><strong>数据与业务边界</strong><p>确定 JSON Schema + 唯一 Working Data；Data、View、Validation 与外部业务执行分离。</p></div></div><div class="timeline-row"><span class="timeline-mark">02</span><div><strong>表达式与内部规则</strong><p>由多种可执行配置收敛为纯 Expression、Constraint 与受控 Command/Reaction。</p></div></div><div class="timeline-row"><span class="timeline-mark">03</span><div><strong>Scope 的权柄争论</strong><p>从可能的跨层 Scope 注册表，收敛为 Data 提供位置、局部 Binder 提供词法别名、L3 提供实例身份。</p></div></div><div class="timeline-row"><span class="timeline-mark">04</span><div><strong>View Root / Target / Fragment 重复</strong><p>统一为 Profile Entry + Named View Template + 静态 $use；不再各自维护定义体系。</p></div></div><div class="timeline-row"><span class="timeline-mark">05</span><div><strong>view.present 的撤回</strong><p>发现与容器/复合 Material 重叠，取消核心 Presentation DSL 和 view.present/view.dismiss。</p></div></div><div class="timeline-row"><span class="timeline-mark">06</span><div><strong>Binding/Validation 的纠偏</strong><p>取消 ValidationMetadata 作为独立 L1 DSL 的倾向；Binding 仅映射端口，字段与校验状态由 Runtime 管理。</p></div></div><div class="timeline-row"><span class="timeline-mark">07</span><div><strong>Canonical 结构统一</strong><p>bindings、slots 使用唯一规范形态；bind、children 可以作为 Authoring 简写。</p></div></div><div class="timeline-row"><span class="timeline-mark">08</span><div><strong>Typed Template Params 收敛</strong><p>采用 schemaRef + DataReference 传参；不创建泛型系统，也不暴露额外的 Template ScopeHandle。</p></div></div><div class="timeline-row"><span class="timeline-mark">09</span><div><strong>物料约束职责冻结</strong><p>Protocol 管机制、Material Manifest 管能力限制、Form Definition 管业务合法性。</p></div></div><div class="timeline-row"><span class="timeline-mark">10</span><div><strong>L1 架构定稿</strong><p>顶层结构及主要领域边界冻结，转入 TS 类型、机器 Schema 和一致性验收。</p></div></div></div>
+</section>
+<section class="section" id="tradeoffs" data-search="被排除或延期的能力"><div class="section-head"><div class="kicker">28 · DELIBERATE EXCLUSIONS</div><div class="section-title"><h2>被排除或延期的能力</h2><span class="status done">已收敛</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>方案</th><th>不进入核心的原因</th><th>替代方案</th></tr></thead><tbody><tr><td>全局 scopes 注册表</td><td>与 Data Schema 引用重复，提升解析间接性</td><td>局部 ScopeBinder + 统一实例身份</td></tr><tr><td>通用 Action / Workflow DSL</td><td>把 Form 协议变为应用编排语言</td><td>Command + Host</td></tr><tr><td>view.present / view.dismiss</td><td>重复容器 Material 的展示职责</td><td>Modal/Drawer/BottomSheet Material</td></tr><tr><td>独立 Validation Binding</td><td>同一数据位置重复绑定，增加 L1 语义</td><td>Runtime Field State → 现有 Binding</td></tr><tr><td>动态 Template ID</td><td>引入动态 View 选择与状态替换问题</td><td>静态 $use + 物料内部组合</td></tr><tr><td>通用 Typed Params 泛型</td><td>类型证明器成本远超当前需要</td><td>schemaRef 的 Typed Data Params</td></tr><tr><td>Expression 生成写入路径</td><td>降低引用静态可分析性</td><td>结构化 DataReference 作为 Command Target</td></tr><tr><td>自动双向派生字段镜像</td><td>制造重复业务状态</td><td>需要展示用 Expression，需要保存时显式 Command</td></tr><tr><td>生命周期脚本与请求 URL</td><td>引入通用外部流程执行机制</td><td>Host API 与 External Constraint</td></tr></tbody></table></div>
+</section>
+<section class="section" id="boundaries" data-search="仍需规范固化的事项：不等于重开架构"><div class="section-head"><div class="kicker">29 · SPECIFICATION GATES</div><div class="section-title"><h2>仍需规范固化的事项：不等于重开架构</h2><span class="status open">待固化</span></div></div>
+<div class="table-wrap"><table><thead><tr><th>事项</th><th>当前方向</th><th>固化工作</th></tr></thead><tbody><tr><td>Reference / Expression Union</td><td>类型与用途已经明确</td><td>确定严格判别结构和 Literal 转义边界</td></tr><tr><td>ScopeBinder 单/链</td><td>View 单 Binder、规则可链式绑定</td><td>用 Schema/TS 校验数组链顺序和遮蔽规则</td></tr><tr><td>Pure Function Contract</td><td>纯同步、受限、类型明确</td><td>列出 V1 内置 Pure Function 与签名，指定错误诊断</td></tr><tr><td>Command 全量结构</td><td>封闭 7 类动作</td><td>补完插入位置、移动位置、批量失败边界</td></tr><tr><td>JSON Schema 兼容性</td><td>Typed Params 引用 schemaRef</td><td>明确兼容性规则与静态不可证明时的诊断</td></tr><tr><td>Material Version Resolution</td><td>确定性契约版本</td><td>定义锁定与升级的具体工具/发布策略</td></tr><tr><td>Interaction Event Context</td><td>Event Reference 仅在有效上下文</td><td>明确事件 Payload Schema 与解析限制</td></tr><tr><td>Formal JSON Schema</td><td>Canonical 形状已收敛</td><td>生成并验证 2020-12 Schema 与 TS 类型一致性</td></tr></tbody></table></div>
+<div class="note neutral"><div class="note-head">冻结原则</div><div>这些是将“架构共识”工程化为“正式规范”的工作清单。除非样例或校验出现事实上的冲突，否则不再因局部实现问题增设新的顶层领域模型。</div></div>
+</section>
+<section class="section" id="types" data-search="附录：完整的核心类型关系（概念稿）"><div class="section-head"><div class="kicker">30 · TYPES APPENDIX</div><div class="section-title"><h2>附录：完整的核心类型关系（概念稿）</h2><span class="status open">待固化</span></div></div>
+<div class="code-box"><div class="code-head"><span>架构核心类型汇编（用于后续正式 TypeScript 固化）</span><button class="copy" type="button" aria-label="复制代码" title="复制代码">复制</button></div><pre><code class="language-typescript">type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+type JsonSchema = Record&lt;string, unknown&gt;; // 采用正式 JSON Schema 类型
+
+type DataReference = { source: &#x27;data&#x27;; path: string; scope?: string };
+type ContextReference = { source: &#x27;context&#x27;; path: string };
+type EventReference = { source: &#x27;event&#x27;; path: string };
+type Reference = DataReference | ContextReference | EventReference;
+
+type ScopeBinder = {
+  from: DataReference;
+  as: string;
+  mode?: &#x27;one&#x27; | &#x27;each&#x27;;
+};
+type ScopeDeclaration = ScopeBinder | ScopeBinder[];
+type ScopeHandleReference = { $scope: string };
+
+type Expression =
+  | JsonPrimitive
+  | { ref: Reference }
+  | { use: string }
+  | { op: string; args: Expression[] }
+  | { literal: JsonValue };
+
+type ValueSpec =
+  | JsonPrimitive
+  | { $expr: Expression }
+  | { $literal: JsonValue }
+  | ValueSpec[]
+  | { [key: string]: ValueSpec };
+
+type IssueDefinition = { target: DataReference; code: string };
+
+type InternalConstraint = {
+  id: string; kind: &#x27;internal&#x27;;
+  scope?: ScopeDeclaration;
+  when?: Expression;
+  assert: Expression;
+  issue: IssueDefinition;
+};
+type ExternalConstraint = {
+  id: string; kind: &#x27;external&#x27;;
+  scope?: ScopeDeclaration;
+  when?: Expression;
+  dependsOn: DataReference[];
+  target: DataReference;
+  requiredForSubmit?: boolean;
+};
+type Constraint = InternalConstraint | ExternalConstraint;
+
+// Command 具体每种操作的字段请以正式 JSON Schema 为准
+// 下方展示稳定的分发类别，非已完整定义的公开类型。
+type Command =
+  | { op: &#x27;set&#x27;; target: DataReference; value: ValueSpec }
+  | { op: &#x27;patch&#x27;; target: DataReference; value: Record&lt;string, ValueSpec&gt; }
+  | { op: &#x27;remove&#x27;; target: DataReference }
+  | { op: &#x27;array.insert&#x27;; target: DataReference; value: ValueSpec; [k: string]: unknown }
+  | { op: &#x27;array.remove&#x27;; target: DataReference; item: ScopeHandleReference }
+  | { op: &#x27;array.move&#x27;; target: DataReference; item: ScopeHandleReference; [k: string]: unknown }
+  | { op: &#x27;batch&#x27;; commands: Command[] };
+
+type Reaction = {
+  id: string;
+  scope?: ScopeDeclaration;
+  watch: DataReference[];
+  when?: Expression;
+  then: Command[];
+};
+
+type InteractionIntent =
+  | { type: &#x27;form.command&#x27;; command: Command }
+  | { type: &#x27;host.emit&#x27;; event: string; payload?: ValueSpec };
+
+type MaterialNode = {
+  material: string;
+  props?: Record&lt;string, ValueSpec&gt;;
+  bindings?: Record&lt;string, DataReference&gt;;
+  slots?: Record&lt;string, ViewNode[]&gt;;
+  on?: Record&lt;string, InteractionIntent&gt;;
+};
+type ScopeNode = { scope: ScopeBinder; node: ViewNode };
+type TemplateUse = { $use: string; with?: Record&lt;string, DataReference&gt; };
+type ViewNode = MaterialNode | ScopeNode | TemplateUse;
+type ViewProfile = { entry: ViewNode };
+type ViewTemplate = {
+  params?: Record&lt;string, { schemaRef: string }&gt;;
+  node: ViewNode;
+};
+
+type FormDefinition = {
+  protocolVersion: string;
+  id: string;
+  version: string;
+  data: { schema: JsonSchema };
+  expressions?: Record&lt;string, Expression&gt;;
+  constraints?: Constraint[];
+  reactions?: Reaction[];
+  views: Record&lt;string, ViewProfile&gt;;
+  viewTemplates?: Record&lt;string, ViewTemplate&gt;;
+  metadata?: Record&lt;string, JsonValue&gt;;
+};</code></pre></div>
+<div class="note neutral"><div class="note-head">不要误当成可直接发布的 npm 类型</div><div>本附录刻意把 <code>array.insert</code> / <code>array.move</code> 的具体位置描述留作固化项，且 JsonSchema 使用抽象占位。它是已收敛语义的汇编，不是已经编译与验证的完整类型包。</div></div>
+</section>
+<section class="section" id="release" data-search="正式 V1.0 发布前的验收与交付"><div class="section-head"><div class="kicker">31 · RELEASE CHECKLIST</div><div class="section-title"><h2>正式 V1.0 发布前的验收与交付</h2><span class="status done">已收敛</span></div></div>
+<div class="checkgrid"><div><input type="checkbox" id="c1"><label for="c1">生成完整 <code>form-definition.types.ts</code>，消除占位和不严谨 Union</label></div><div><input type="checkbox" id="c2"><label for="c2">生成完整 <code>form-definition.schema.json</code>，与 TypeScript 一致</label></div><div><input type="checkbox" id="c3"><label for="c3">校验简单表单 / 动态数组 / 多端保险表单三类样例</label></div><div><input type="checkbox" id="c4"><label for="c4">反例验收：非法引用、Scope 越界、模板参数类型不匹配、端口不兼容</label></div><div><input type="checkbox" id="c5"><label for="c5">冻结 Material Manifest 版本解析约定及 Pure Function 合约</label></div><div><input type="checkbox" id="c6"><label for="c6">发布规范语义说明、版本兼容说明与变更记录</label></div></div>
+<p>上述勾选仅供阅读时自查，不自动代表项目真实完成状态。后续阶段 L2、L3、L4 只能在遵守这份 L1 语义的前提下选择自己的实现策略。</p>
+<div class="keyline">最终决策：<strong>停止 L1 的开放式抽象扩张，进入 Canonical Type / JSON Schema / 反例验收</strong>。需要修订时提出能复现的协议冲突，而不是重新设计已确定的领域层次。</div>
+</section>
+<footer class="document-foot">L1 · Definition Protocol · Architecture Decisions Archive · 基于既有讨论整理。示例旨在阐明语义，正式 JSON Schema / TypeScript Release 需完成独立验收。</footer>
+</main></div></div>
+<script>
+(()=>{
+ const doc=document.documentElement;
+ const sidebar=document.getElementById('sidebar'),mask=document.getElementById('mask');
+ const themeBtn=document.getElementById('themeBtn');
+ const stored=(()=>{try{return localStorage.getItem('l1v1-theme')}catch(e){return null}})();
+ const setTheme=t=>{doc.dataset.theme=t;themeBtn.textContent=t==='dark'?'浅色':'深色';try{localStorage.setItem('l1v1-theme',t)}catch(e){}};
+ setTheme(stored==='dark'?'dark':'light');themeBtn.addEventListener('click',()=>setTheme(doc.dataset.theme==='dark'?'light':'dark'));
+ const closeMenu=()=>{sidebar.classList.remove('open');mask.classList.remove('open')};
+ document.getElementById('menuBtn').addEventListener('click',()=>{sidebar.classList.toggle('open');mask.classList.toggle('open')});mask.addEventListener('click',closeMenu);
+ document.getElementById('printBtn').addEventListener('click',()=>window.print());
+ document.querySelectorAll('.toc a').forEach(a=>a.addEventListener('click',closeMenu));
+ document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{
+   const raw=btn.closest('.code-box').querySelector('pre code').innerText;
+   try { await navigator.clipboard.writeText(raw);btn.textContent='已复制';}catch(e){
+     const ta=document.createElement('textarea');ta.value=raw;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');btn.textContent='已复制'}catch(er){btn.textContent='复制失败'}ta.remove();
+   }setTimeout(()=>{btn.textContent='复制'},1400);
+ }));
+ const navLinks=[...document.querySelectorAll('.toc a')],sections=[...document.querySelectorAll('.section')];
+ const update=()=>{
+   const max=document.documentElement.scrollHeight-innerHeight;
+   document.getElementById('progress').style.width=(max>0?Math.max(0,Math.min(100,scrollY/max*100)):0)+'%';
+   let cur=sections[0]?.id;
+   sections.forEach(s=>{if(s.getBoundingClientRect().top<145)cur=s.id});
+   navLinks.forEach(a=>a.classList.toggle('active',a.dataset.to===cur));
+ };
+ let ticking=false;addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(()=>{update();ticking=false});ticking=true}},{passive:true});update();
+ document.getElementById('tocSearch').addEventListener('input',ev=>{
+   const q=ev.target.value.trim().toLocaleLowerCase();navLinks.forEach(a=>a.classList.toggle('hidden',!!q&&!a.textContent.toLocaleLowerCase().includes(q)))
+ });
+})();
+</script>
+</body></html>

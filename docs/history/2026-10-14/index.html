@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>动态表单引擎 · 设计文档</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--text:#171717;--muted:#646464;--line:#e8e8e8;--soft:#f7f7f8}
+@media(prefers-color-scheme:dark){:root{--bg:#181818;--text:#f4f4f4;--muted:#b3b3b3;--line:#363636;--soft:#242424}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.85 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:940px;margin:auto;padding:60px 32px 80px}a{color:inherit;text-underline-offset:4px}a:focus-visible{outline:2px solid var(--text);outline-offset:5px}h1,h2,h3{line-height:1.4;letter-spacing:-.03em}h1{font-size:36px;margin:12px 0 16px}h2{font-size:23px;margin:40px 0 12px}h3{font-size:17px;margin:0 0 6px}p{margin:8px 0}.muted,.kicker{color:var(--muted)}.kicker{font-size:11px;letter-spacing:.12em}.baseline{display:block;text-decoration:none;border:1px solid var(--line);border-radius:14px;background:var(--soft);padding:24px;margin:26px 0}.baseline:hover,.route:hover{border-color:var(--muted)}.baseline strong{display:block;font-size:21px;margin:7px 0}.baseline p{color:var(--muted)}.routes{list-style:none;padding:0;margin:18px 0}.routes li{margin:10px 0}.route{display:grid;grid-template-columns:38px 1fr;gap:14px;padding:20px;border:1px solid var(--line);border-radius:12px;text-decoration:none}.num{font:13px/2 monospace;color:var(--muted)}.route p{color:var(--muted);font-size:13px}.status{font-size:11px;color:var(--muted);display:block;margin-top:9px}.next{border-left:3px solid var(--text);padding:2px 0 2px 18px;margin:24px 0}footer{border-top:1px solid var(--line);padding-top:20px;margin-top:40px;color:var(--muted);font-size:12px}@media(max-width:540px){main{padding:32px 18px 60px}h1{font-size:28px}.baseline{padding:18px}.baseline strong{font-size:18px}.route{padding:16px;grid-template-columns:26px 1fr;gap:8px}}
+</style>
+</head>
+<body><aside style="padding:10px 20px;border-bottom:1px solid #ccc;font-size:12px;background:#fafafa;color:#444">现行修订：Profile 直接定义 ViewNode，旧 entry 包装已移除；metadata 与版本、标识合并展示。此页正文保留历史原文。<a href="../../reading/l1-definition-protocol-v1.html#view">当前规范</a></aside><div style="padding:12px 20px;border-bottom:1px solid #999;background:#fff3cd;color:#171717;font-size:14px">历史快照 · 已被当前文档替代。仅供追踪，不作为现行基线。<a href="../2026-10-16-before-v1-final/l1-definition-decisions-and-roadmap.html">查看当前 L1 决策归档</a></div><main>
+<header><div class="kicker">FORM ENGINE / DESIGN DOCUMENTATION</div><h1>动态表单引擎 · 设计文档</h1><p class="muted">从整体架构出发，逐层明确领域模型、状态语义、执行机制与扩展契约。</p></header>
+<a class="baseline" href="complex-dynamic-form-architecture-v1.html"><span class="kicker">START HERE · 架构讨论基线</span><strong>复杂动态表单与数据录入引擎：整体架构设计 V1</strong><p>产品边界、四层核心、两类扩展、工具体系，以及能力归属与设计取舍。</p><span>阅读整体架构 →</span></a>
+<section aria-labelledby="route-title"><h2 id="route-title">逐层设计路线</h2><p class="muted">以下是设计推进顺序。L1 已形成能力专题与设计草稿；其余专题逐篇形成，目前链接到架构基线中的对应章节。</p>
+<ol class="routes">
+<li><a class="route" href="l1-definition-design-draft.html"><span class="num">01</span><div><h3>L1 · Definition：能力、抽象与协议</h3><p>先确定能力需求，再比较核心抽象及关系，最后组织协议；MVL 保留为候选方案。</p><p>当前产物：《L1 定义层设计草稿》V0.1；能力清单与方案比较见配套专题。</p><span class="status">设计草稿 V0.1 · 概念、组合与默认语义 · 阅读草稿 →</span></div></a></li>
+<li><a class="route" href="complex-dynamic-form-architecture-v1.html#runtime"><span class="num">02</span><div><h3>L3 · Runtime：数据模型与状态管理</h3><p>明确 Store、Field State、Scope、Identity、Snapshot、初始化及生命周期。</p><p>预期产物：运行时数据结构、状态 API、生命周期定义。</p><span class="status">详细设计待展开 · 查看基线章节 →</span></div></a></li>
+<li><a class="route" href="complex-dynamic-form-architecture-v1.html#runtime"><span class="num">03</span><div><h3>L3 · Runtime：逻辑执行与事务机制</h3><p>设计依赖传播、增量计算、命令、事务、校验、异步资源及失败边界。</p><p>预期产物：执行流程、调度算法、时序图、错误边界。</p><span class="status">详细设计待展开 · 查看基线章节 →</span></div></a></li>
+<li><a class="route" href="complex-dynamic-form-architecture-v1.html#preparation"><span class="num">04</span><div><h3>L2 · Preparation：静态分析与执行准备</h3><p>根据 Runtime 的实际需求反推标准化、依赖索引、静态诊断与执行产物。</p><p>预期产物：Prepared Form 结构、依赖索引、诊断规范。</p><span class="status">详细设计待展开 · 查看基线章节 →</span></div></a></li>
+<li><a class="route" href="complex-dynamic-form-architecture-v1.html#renderer"><span class="num">05</span><div><h3>L4 · Renderer / Material / Capability</h3><p>明确跨端 UI 绑定、物料契约和宿主能力接口，验证扩展边界。</p><p>预期产物：Adapter Contract、Material Manifest、Capability API。</p><span class="status">详细设计待展开 · 查看基线章节 →</span></div></a></li>
+<li><a class="route" href="complex-dynamic-form-architecture-v1.html#tooling"><span class="num">06</span><div><h3>版本、工具与工程治理</h3><p>完善兼容与迁移、测试、发布和观测，通过完整业务场景回归验证。</p><p>预期产物：版本模型、测试矩阵、发布治理及实施路线。</p><span class="status">详细设计待展开 · 查看基线章节 →</span></div></a></li>
+</ol></section>
+<section aria-labelledby="method-title"><h2 id="method-title">文档推进约定</h2><p>每个专题依次记录目标与服务对象、模型与职责、接口与数据流、核心机制、方案取舍、验收与演进。</p><p>详细专题形成后，从此页接入并与架构基线互相链接。提案、已接受决策和待讨论问题分别标记；影响整体边界的变更同步更新架构基线。</p><div class="next"><strong>当前专题：L1 · 定义层设计草稿</strong><p class="muted">评审定义分类、引用与组合、校验和联动语义；用代表性场景继续收敛元模型，再确定协议表示。</p></div><p><a href="l1-capabilities-and-abstraction-boundaries.html">L1 能力需求与抽象边界</a> · <a href="complex-dynamic-form-architecture-v1.html#decisions">架构决策清单</a> · <a href="complex-dynamic-form-architecture-v1.html#roadmap">详细设计路线与讨论模板</a></p></section>
+<footer>当前基线：V1 · 总体分层已确定，详细方案待收敛　/　2026.10.14</footer>
+</main></body></html>

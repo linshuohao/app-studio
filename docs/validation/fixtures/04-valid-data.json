@@ -1,0 +1,16 @@
+{
+  "applicant": {
+    "name": "Alice",
+    "phone": "13812345678"
+  },
+  "insureds": [
+    {
+      "name": "A",
+      "age": 30,
+      "country": "JP",
+      "city": "Tokyo",
+      "idNumber": "ID-A"
+    }
+  ],
+  "plan": "basic"
+}

@@ -1,0 +1,22 @@
+{
+  "trip": {
+    "startDate": "2026-11-01",
+    "endDate": "2026-11-20"
+  },
+  "travellers": [
+    {
+      "name": "A",
+      "birthDate": "2000-12-01",
+      "region": "demo-A",
+      "passport": "DEMO-001",
+      "needsReview": true
+    },
+    {
+      "name": "B",
+      "birthDate": "2008-12-01",
+      "region": "demo-B",
+      "passport": "DEMO-002",
+      "needsReview": false
+    }
+  ]
+}

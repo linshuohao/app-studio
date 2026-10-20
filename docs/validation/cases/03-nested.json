@@ -1,0 +1,394 @@
+{
+  "protocolVersion": "1.0",
+  "id": "team-members-nested",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "teams"
+      ],
+      "properties": {
+        "teams": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Team"
+          }
+        }
+      },
+      "$defs": {
+        "Team": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "members": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Member"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "title",
+            "members"
+          ]
+        },
+        "Member": {
+          "type": "object",
+          "required": [
+            "name",
+            "age",
+            "passport",
+            "address"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "age": {
+              "type": "integer"
+            },
+            "passport": {
+              "type": "string"
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "country": {
+                  "type": "string"
+                },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "constraints": [
+    {
+      "id": "member-adult",
+      "kind": "internal",
+      "assert": {
+        "op": "gte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/age",
+              "scope": "member"
+            }
+          },
+          18
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/age",
+          "scope": "member"
+        },
+        "code": "MEMBER_ADULT"
+      },
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/teams"
+          },
+          "as": "team",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/members",
+            "scope": "team"
+          },
+          "as": "member",
+          "mode": "each"
+        }
+      ]
+    },
+    {
+      "id": "passport-screen",
+      "kind": "external",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/passport",
+          "scope": "member"
+        },
+        {
+          "source": "data",
+          "path": "/address/country",
+          "scope": "member"
+        }
+      ],
+      "target": {
+        "source": "data",
+        "path": "/passport",
+        "scope": "member"
+      },
+      "requiredForSubmit": true,
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/teams"
+          },
+          "as": "team",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/members",
+            "scope": "team"
+          },
+          "as": "member",
+          "mode": "each"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "member-country-reset",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/address/country",
+          "scope": "member"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/address/city",
+            "scope": "member"
+          },
+          "value": null
+        }
+      ],
+      "scope": [
+        {
+          "from": {
+            "source": "data",
+            "path": "/teams"
+          },
+          "as": "team",
+          "mode": "each"
+        },
+        {
+          "from": {
+            "source": "data",
+            "path": "/members",
+            "scope": "team"
+          },
+          "as": "member",
+          "mode": "each"
+        }
+      ]
+    }
+  ],
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/teams"
+              },
+              "as": "team",
+              "mode": "each"
+            },
+            "node": {
+              "material": "section",
+              "props": {
+                "title": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/title",
+                      "scope": "team"
+                    }
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "scope": {
+                      "from": {
+                        "source": "data",
+                        "path": "/members",
+                        "scope": "team"
+                      },
+                      "as": "member",
+                      "mode": "each"
+                    },
+                    "node": {
+                      "material": "stack",
+                      "slots": {
+                        "default": [
+                          {
+                            "$use": "member-fields",
+                            "with": {
+                              "member": {
+                                "source": "data",
+                                "path": "",
+                                "scope": "member"
+                              }
+                            }
+                          },
+                          {
+                            "material": "button",
+                            "props": {
+                              "label": "移除成员"
+                            },
+                            "on": {
+                              "activate": {
+                                "type": "form.command",
+                                "command": {
+                                  "op": "array.remove",
+                                  "target": {
+                                    "source": "data",
+                                    "path": "/members",
+                                    "scope": "team"
+                                  },
+                                  "item": {
+                                    "$scope": "member"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "提交"
+            },
+            "on": {
+              "activate": {
+                "type": "host.emit",
+                "event": "team.submitRequested"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "viewTemplates": {
+    "member-fields": {
+      "params": {
+        "member": {
+          "schemaRef": "#/$defs/Member"
+        }
+      },
+      "node": {
+        "material": "section",
+        "props": {
+          "title": "成员"
+        },
+        "slots": {
+          "default": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/name",
+                  "scope": "member"
+                }
+              },
+              "props": {
+                "label": "姓名"
+              }
+            },
+            {
+              "material": "number-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/age",
+                  "scope": "member"
+                }
+              },
+              "props": {
+                "label": "年龄"
+              }
+            },
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/passport",
+                  "scope": "member"
+                }
+              },
+              "props": {
+                "label": "护照"
+              }
+            },
+            {
+              "material": "country-picker",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/address/country",
+                  "scope": "member"
+                }
+              },
+              "props": {
+                "label": "国家"
+              }
+            },
+            {
+              "material": "city-picker",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/address/city",
+                  "scope": "member"
+                }
+              },
+              "props": {
+                "label": "城市"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "metadata": {
+    "tier": "03",
+    "scenario": "多层嵌套数组与模板类型",
+    "testValue": "Scope 链 + Typed Template Params + scoped Command/Constraint"
+  }
+}

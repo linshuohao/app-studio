@@ -1,0 +1,389 @@
+{
+  "scope": "覆盖 V1.0 已确认 L1 能力类别及其跨层契约边界；不宣称覆盖所有业务组合和未知领域纯函数",
+  "items": [
+    {
+      "id": "D01",
+      "capability": "JSON Schema 数据结构与基础约束",
+      "case": 1,
+      "pointer": "/data/schema",
+      "evidence": "静态+数据",
+      "note": ""
+    },
+    {
+      "id": "D02",
+      "capability": "对象 / 数组 / 复用 $defs / $ref",
+      "case": 3,
+      "pointer": "/data/schema",
+      "evidence": "静态+数据",
+      "note": ""
+    },
+    {
+      "id": "D03",
+      "capability": "Schema default、Missing 与 null 区分",
+      "case": 8,
+      "pointer": "/data/schema/properties/prefs/properties/theme",
+      "evidence": "图解",
+      "note": "参见跨层契约生命周期；不宣称默认合成算法已实现"
+    },
+    {
+      "id": "R01",
+      "capability": "Data Root、空 Pointer 与空字段名",
+      "case": 8,
+      "pointer": "/views/default/slots/default/3/props/sample",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "R02",
+      "capability": "JSON Pointer ~1 / ~0 转义",
+      "case": 8,
+      "pointer": "/views/default/slots/default/3/props/sample/escaped",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "R03",
+      "capability": "只读 Context Reference",
+      "case": 8,
+      "pointer": "/views/default/slots/default/1/props/options",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "R04",
+      "capability": "Event Reference：限定交互上下文",
+      "case": 8,
+      "pointer": "/views/default/slots/default/1/on/confirm",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "S01",
+      "capability": "ScopeBinder one",
+      "case": 8,
+      "pointer": "/views/default/slots/default/0/scope",
+      "evidence": "静态",
+      "note": ""
+    },
+    {
+      "id": "S02",
+      "capability": "ScopeBinder each 与多层词法链",
+      "case": 5,
+      "pointer": "/constraints/0/scope",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "S03",
+      "capability": "跨父级 Scope 读取与约束",
+      "case": 5,
+      "pointer": "/constraints/0/assert",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "S04",
+      "capability": "ScopeHandle 精确删除当前数组项",
+      "case": 8,
+      "pointer": "/views/default/slots/default/4/node/slots/default/0/on",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "E01",
+      "capability": "纯 AST / 基础 Pure Function",
+      "case": 6,
+      "pointer": "/reactions/2/then/0/value",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "E02",
+      "capability": "命名 Expression DAG 与复用",
+      "case": 6,
+      "pointer": "/expressions",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "E03",
+      "capability": "递归 ValueSpec 对象与数组",
+      "case": 8,
+      "pointer": "/views/default/slots/default/3/props/sample",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "E04",
+      "capability": "$literal 与 Expression literal 转义",
+      "case": 8,
+      "pointer": "/views/default/slots/default/3/props/sample/literalAst",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "E05",
+      "capability": "版本化领域纯函数：地区年龄、日期范围",
+      "case": 7,
+      "pointer": "/constraints/1/assert",
+      "evidence": "静态+抽测",
+      "note": "合成地区规则；非真实国家法规"
+    },
+    {
+      "id": "C01",
+      "capability": "Internal Constraint、Issue Target",
+      "case": 5,
+      "pointer": "/constraints/0",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "C02",
+      "capability": "条件 Constraint.when",
+      "case": 5,
+      "pointer": "/constraints/1",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "C03",
+      "capability": "External watch、逐项义务与作用域",
+      "case": 7,
+      "pointer": "/constraints/2",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "C04",
+      "capability": "外部约束适用条件、必需/非必需",
+      "case": 7,
+      "pointer": "/constraints/3",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M01",
+      "capability": "Command set",
+      "case": 8,
+      "pointer": "/views/default/slots/default/1/on/confirm/command",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M02",
+      "capability": "Command patch",
+      "case": 8,
+      "pointer": "/views/default/slots/default/2/on/activate/command/commands/0",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M03",
+      "capability": "Command remove",
+      "case": 8,
+      "pointer": "/views/default/slots/default/2/on/activate/command/commands/1",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M04",
+      "capability": "Command batch",
+      "case": 8,
+      "pointer": "/views/default/slots/default/2/on/activate/command",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M05",
+      "capability": "Command array.remove",
+      "case": 8,
+      "pointer": "/views/default/slots/default/4/node/slots/default/0/on/activate/command",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "M06",
+      "capability": "Command array.insert",
+      "case": 8,
+      "pointer": "/views/default/slots/default/5/on/activate/command",
+      "evidence": "方向示意",
+      "note": "位置语法未定；抽测器拒绝执行，不计作行为通过"
+    },
+    {
+      "id": "M07",
+      "capability": "Command array.move",
+      "case": 8,
+      "pointer": "/views/default/slots/default/4/node/slots/default/1/on/activate/command",
+      "evidence": "方向示意",
+      "note": "位置语法未定；抽测器拒绝执行，不计作行为通过"
+    },
+    {
+      "id": "L01",
+      "capability": "多 watch OR、when 不自动变 watch",
+      "case": 6,
+      "pointer": "/reactions/4",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "L02",
+      "capability": "有序 then、同目标后写覆盖",
+      "case": 6,
+      "pointer": "/reactions/4/then",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "L03",
+      "capability": "多级联动：国家 → 城市 → 区县",
+      "case": 6,
+      "pointer": "/reactions/0",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "L04",
+      "capability": "逐项计算 → 父级汇总 → 折扣 → 应付",
+      "case": 6,
+      "pointer": "/reactions/2",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "L05",
+      "capability": "Host 异步结果由新 Command 触发同步联动",
+      "case": 6,
+      "pointer": "/views/default/slots/default/4/on",
+      "evidence": "抽测+图解",
+      "note": "以测试报价响应模拟 Host 回写；未发送网络请求"
+    },
+    {
+      "id": "V01",
+      "capability": "MaterialNode / ScopeNode / TemplateUse",
+      "case": 4,
+      "pointer": "/views",
+      "evidence": "静态",
+      "note": ""
+    },
+    {
+      "id": "V02",
+      "capability": "多 Profile 同数据、共享业务规则",
+      "case": 4,
+      "pointer": "/views",
+      "evidence": "静态+图解",
+      "note": ""
+    },
+    {
+      "id": "V03",
+      "capability": "Typed Template schemaRef + DataReference",
+      "case": 3,
+      "pointer": "/viewTemplates/member-fields",
+      "evidence": "静态",
+      "note": ""
+    },
+    {
+      "id": "V04",
+      "capability": "具名 Binding Ports，复合日期输入",
+      "case": 5,
+      "pointer": "/views/desktop/slots/default/1/node/slots/default/0",
+      "evidence": "静态",
+      "note": ""
+    },
+    {
+      "id": "V05",
+      "capability": "Slots、容器物料 trigger / content",
+      "case": 4,
+      "pointer": "/viewTemplates/compact-form",
+      "evidence": "静态+结构图",
+      "note": ""
+    },
+    {
+      "id": "V06",
+      "capability": "动态 Props、条件物料显示",
+      "case": 5,
+      "pointer": "/viewTemplates/claim-fields/node/slots/default/4",
+      "evidence": "静态+结构图",
+      "note": ""
+    },
+    {
+      "id": "I01",
+      "capability": "form.command 与捕获局部 Scope",
+      "case": 3,
+      "pointer": "/views/default",
+      "evidence": "静态",
+      "note": ""
+    },
+    {
+      "id": "I02",
+      "capability": "host.emit：Event + Data 动态 Payload",
+      "case": 8,
+      "pointer": "/views/default/slots/default/1/on/request",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "H01",
+      "capability": "Host 路径一：External Validator",
+      "case": 7,
+      "pointer": "/constraints/2",
+      "evidence": "静态+图解",
+      "note": ""
+    },
+    {
+      "id": "H02",
+      "capability": "Host 路径二：有类型业务事件",
+      "case": 8,
+      "pointer": "/views/default/slots/default/1/on/request",
+      "evidence": "静态+抽测",
+      "note": ""
+    },
+    {
+      "id": "H03",
+      "capability": "Host 路径三：物料服务注入",
+      "case": 5,
+      "pointer": "/viewTemplates/claim-fields",
+      "evidence": "图解",
+      "note": "见跨层契约；上传/远程选项不新增 Definition 调度字段"
+    },
+    {
+      "id": "X01",
+      "capability": "实例装载 / 首次激活 / Host 业务恢复边界",
+      "file": "walkthroughs.json",
+      "pointer": "/lifecycle",
+      "evidence": "图解",
+      "note": "跨层契约示意；尚无生产 Runtime/Renderer 验收"
+    },
+    {
+      "id": "X02",
+      "capability": "外部校验五态与 Readiness",
+      "file": "walkthroughs.json",
+      "pointer": "/validation",
+      "evidence": "图解",
+      "note": "跨层契约示意；尚无生产 Runtime/Renderer 验收"
+    },
+    {
+      "id": "X03",
+      "capability": "失效、乱序与 ABA 结果接收",
+      "file": "walkthroughs.json",
+      "pointer": "/async",
+      "evidence": "图解",
+      "note": "跨层契约示意；尚无生产 Runtime/Renderer 验收"
+    },
+    {
+      "id": "X04",
+      "capability": "编辑态、解析错误、Field State 与输出",
+      "file": "walkthroughs.json",
+      "pointer": "/output",
+      "evidence": "图解",
+      "note": "跨层契约示意；尚无生产 Runtime/Renderer 验收"
+    },
+    {
+      "id": "X05",
+      "capability": "Authoring → Canonical → Prepared、Profile 交付",
+      "file": "walkthroughs.json",
+      "pointer": "/delivery",
+      "evidence": "图解",
+      "note": "跨层契约示意；尚无生产 Runtime/Renderer 验收"
+    }
+  ]
+}

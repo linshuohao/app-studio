@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>$title · 动态表单引擎</title>
+  <link rel="stylesheet" href="$stylesheet">
+  $extra_stylesheet
+  <script src="$index_script" defer></script>
+  $mermaid_script
+  <script src="$script" defer></script>
+</head>
+<body>
+  <div class="mobile-mask" id="mask"></div>
+  <div class="reading-progress" id="progress"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="文档导航">
+      <a class="sidebar-header" href="$home"><span class="brand-mark">F</span><span><span class="brand-title">动态表单引擎</span><span class="brand-desc">架构设计 · 持续讨论中</span></span></a>
+      <nav class="page-nav" aria-label="文档">$navigation</nav>
+      <div class="sidebar-bottom">按层阅读当前设计<br>未决事项在「继续设计」维护<br><a href="$archive">原始资料归档</a></div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-title"><button class="btn menu-btn" id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="打开目录">导航</button><nav class="primary-navigation" aria-label="阅读模式">$primary_navigation</nav></div>
+        <button type="button" class="global-search-trigger" id="openSearch" aria-haspopup="dialog"><span>搜索全部文档…</span><kbd>⌘ K</kbd></button>
+        <div class="actions">$source_action<button class="btn" id="themeBtn" type="button">深色</button><button class="btn" id="printBtn" type="button">打印</button></div>
+      </header>
+      <div class="reading-layout">
+      <main class="$content_class" id="top">
+        <header class="hero"><div class="eyebrow">$eyebrow</div><h1>$title$subtitle</h1>$lead</header>
+        <hr class="hero-line">
+        $body
+        $knowledge_overview
+        $continuation
+        $redirect_landmarks
+        <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
+      </main>
+      <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
+        <div class="nav-caption">本页目录</div>
+        <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
+        <nav class="toc" id="toc" aria-label="本页目录">$toc</nav>
+        $related_context
+      </aside>
+      </div>
+    </div>
+  </div>
+  <button class="btn context-toggle" id="contextBtn" type="button" aria-controls="contextSidebar" aria-expanded="false">本页目录与关联</button>
+  <a href="#top" class="btn back-top" aria-label="返回顶部">↑</a>
+  <dialog class="search-dialog" id="searchDialog" aria-labelledby="searchTitle">
+    <div class="dialog-heading"><h2 id="searchTitle">搜索架构知识库</h2><button class="btn" id="closeSearch" type="button">关闭</button></div>
+    <label class="global-query-label" for="globalQuery">关键词、概念或决策编号</label>
+    <input id="globalQuery" type="search" placeholder="例如 Scope、整体熔断、ADR-FE-008…" autocomplete="off">
+    <div class="search-filters">
+      <label>检索范围<select id="searchType"><option value="current">当前设计</option><option value="">全部类型（含决策与历史）</option></select></label>
+      <label>模块<select id="searchModule"><option value="">全部模块</option></select></label>
+      <label>文档状态<select id="searchStatus"><option value="">全部状态</option></select></label>
+    </div>
+    <p id="searchCount" class="caption" role="status"></p>
+    <div id="searchResults" class="search-results"></div>
+    <p id="searchScope" class="caption"></p>
+  </dialog>
+  <dialog class="diagram-dialog" id="diagramDialog" aria-label="架构图放大查看"><div class="dialog-heading"><h2>图示详情</h2><button class="btn" id="closeDiagram" type="button">关闭图示</button></div><div id="diagramContent"></div></dialog>
+  <div class="sr-only" id="readerStatus" role="status" aria-live="polite"></div>
+</body>
+</html>

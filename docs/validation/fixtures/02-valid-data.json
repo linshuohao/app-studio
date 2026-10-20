@@ -1,0 +1,9 @@
+{
+  "order": {
+    "country": "Japan",
+    "city": "Tokyo",
+    "type": "premium",
+    "quantity": 2,
+    "unitPrice": 120
+  }
+}

@@ -1,0 +1,397 @@
+{
+  "protocolVersion": "1.0",
+  "id": "protocol-edge-showcase",
+  "version": "1.0.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "alias": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "prefs": {
+          "type": "object",
+          "properties": {
+            "theme": {
+              "type": "string",
+              "default": "light"
+            },
+            "nested": {
+              "type": "object",
+              "properties": {
+                "keep": {
+                  "type": "string"
+                },
+                "replace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "replace"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "theme",
+            "nested"
+          ],
+          "additionalProperties": false
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Item"
+          }
+        },
+        "literalBox": {
+          "type": "object"
+        },
+        "": {
+          "type": "string"
+        },
+        "a/b": {
+          "type": "object",
+          "properties": {
+            "~tag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "~tag"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "profile",
+        "prefs",
+        "items",
+        "literalBox",
+        "",
+        "a/b"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "Item": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "label"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "stack",
+      "slots": {
+        "default": [
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/profile"
+              },
+              "as": "profile",
+              "mode": "one"
+            },
+            "node": {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/name",
+                  "scope": "profile"
+                }
+              },
+              "props": {
+                "label": "姓名"
+              }
+            }
+          },
+          {
+            "material": "demo-event-picker",
+            "props": {
+              "label": "从事件载荷回填",
+              "options": {
+                "$expr": {
+                  "ref": {
+                    "source": "context",
+                    "path": "/nameOptions"
+                  }
+                }
+              }
+            },
+            "on": {
+              "confirm": {
+                "type": "form.command",
+                "command": {
+                  "op": "set",
+                  "target": {
+                    "source": "data",
+                    "path": "/profile/name"
+                  },
+                  "value": {
+                    "$expr": {
+                      "ref": {
+                        "source": "event",
+                        "path": "/name"
+                      }
+                    }
+                  }
+                }
+              },
+              "request": {
+                "type": "host.emit",
+                "event": "demo.lookupRequested",
+                "payload": {
+                  "query": {
+                    "$expr": {
+                      "ref": {
+                        "source": "event",
+                        "path": "/query"
+                      }
+                    }
+                  },
+                  "name": {
+                    "$expr": {
+                      "ref": {
+                        "source": "data",
+                        "path": "/profile/name"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "浅 patch / remove / Literal / batch"
+            },
+            "on": {
+              "activate": {
+                "type": "form.command",
+                "command": {
+                  "op": "batch",
+                  "commands": [
+                    {
+                      "op": "patch",
+                      "target": {
+                        "source": "data",
+                        "path": "/prefs"
+                      },
+                      "value": {
+                        "theme": "dark",
+                        "nested": {
+                          "replace": "new"
+                        }
+                      }
+                    },
+                    {
+                      "op": "remove",
+                      "target": {
+                        "source": "data",
+                        "path": "/profile/alias"
+                      }
+                    },
+                    {
+                      "op": "set",
+                      "target": {
+                        "source": "data",
+                        "path": "/literalBox"
+                      },
+                      "value": {
+                        "$literal": {
+                          "$expr": {
+                            "op": "this-is-data",
+                            "args": []
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "material": "debug-panel",
+            "props": {
+              "sample": {
+                "emptyKey": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/"
+                    }
+                  }
+                },
+                "escaped": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/a~1b/~0tag"
+                    }
+                  }
+                },
+                "rootSnapshot": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": ""
+                    }
+                  }
+                },
+                "rows": [
+                  {
+                    "$expr": {
+                      "ref": {
+                        "source": "data",
+                        "path": "/profile/name"
+                      }
+                    }
+                  },
+                  {
+                    "$literal": {
+                      "$expr": "保留原样"
+                    }
+                  }
+                ],
+                "literalAst": {
+                  "$expr": {
+                    "literal": {
+                      "op": "not-a-pure-function"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "scope": {
+              "from": {
+                "source": "data",
+                "path": "/items"
+              },
+              "as": "item",
+              "mode": "each"
+            },
+            "node": {
+              "material": "section",
+              "props": {
+                "title": {
+                  "$expr": {
+                    "ref": {
+                      "source": "data",
+                      "path": "/label",
+                      "scope": "item"
+                    }
+                  }
+                }
+              },
+              "slots": {
+                "default": [
+                  {
+                    "material": "button",
+                    "props": {
+                      "label": "删除当前实例"
+                    },
+                    "on": {
+                      "activate": {
+                        "type": "form.command",
+                        "command": {
+                          "op": "array.remove",
+                          "target": {
+                            "source": "data",
+                            "path": "/items"
+                          },
+                          "item": {
+                            "$scope": "item"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "material": "button",
+                    "props": {
+                      "label": "移动当前实例（位置待固化）"
+                    },
+                    "on": {
+                      "activate": {
+                        "type": "form.command",
+                        "command": {
+                          "op": "array.move",
+                          "target": {
+                            "source": "data",
+                            "path": "/items"
+                          },
+                          "item": {
+                            "$scope": "item"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "material": "button",
+            "props": {
+              "label": "插入项（位置待固化）"
+            },
+            "on": {
+              "activate": {
+                "type": "form.command",
+                "command": {
+                  "op": "array.insert",
+                  "target": {
+                    "source": "data",
+                    "path": "/items"
+                  },
+                  "value": {
+                    "label": "New"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "scenario": "协议边界、七类命令与事件环境",
+    "pending": [
+      "array.insert 位置形状及默认位置未定稿",
+      "array.move 缺少目的位置，仅展示已确认的类别/身份字段，不可执行"
+    ],
+    "note": "本样本结构通过不表示两个位置未定命令可运行。"
+  }
+}

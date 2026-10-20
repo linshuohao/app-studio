@@ -1,0 +1,30 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const {searchKnowledge, filterKnowledgeRecords} = require('../../docs/reading/assets/documentation.js');
+const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../../docs/reading/assets/knowledge-index.json'), 'utf8'));
+
+const wide = searchKnowledge(catalog, 'Scope');
+assert(wide.length > 10);
+assert(new Set(wide.map(hit => hit.doc.id)).size > 5, 'Search must cover multiple documents');
+const current = searchKnowledge(catalog, 'Scope', {type: 'current'});
+assert(current.length > 0);
+assert(current.every(hit => ['design', 'protocol'].includes(hit.doc.type)), 'Default current-design search must exclude historical proposals and ADRs');
+const adr = searchKnowledge(catalog, 'Baseline', {type: 'decision', status: 'accepted'});
+assert(adr.some(hit => hit.doc.id === 'ADR-FE-008'));
+assert(adr.every(hit => hit.doc.type === 'decision' && hit.doc.status === 'accepted'));
+const moduleHits = searchKnowledge(catalog, 'Pending', {module: 'M09'});
+assert(moduleHits.length > 0 && moduleHits.every(hit => hit.doc.modules.includes('M09')));
+assert.equal(searchKnowledge(catalog, 'there-is-no-such-architecture-term-012039').length, 0);
+const blockers = filterKnowledgeRecords(catalog.records, {kind: 'conflict', severity: 'high', blocking: 'yes'});
+assert.deepEqual(blockers.map(record => record.id), ['REV-02']);
+// Resolved findings remain searchable, but must not return as blocking.
+const explained = filterKnowledgeRecords(catalog.records, {kind: 'conflict', severity: 'high', state: 'explained', blocking: 'no'});
+assert.deepEqual(explained.map(record => record.id), ['REV-01', 'REV-03']);
+const validation = filterKnowledgeRecords(catalog.records, {kind: 'conflict', module: 'M11', blocking: 'yes'});
+assert.deepEqual(validation.map(record => record.id), ['REV-02']);
+assert.equal(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '存在阻塞'}).length, 3);
+assert.equal(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '已完成'}).length, 2);
+assert.deepEqual(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '待设计'}).map(record => record.id), ['M18', 'M19']);
+assert(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '部分完成'}).some(record => record.id === 'M14'));
+console.log('Search / filtering checks passed: cross-document body matches, metadata filters, module scope and blocking semantics.');

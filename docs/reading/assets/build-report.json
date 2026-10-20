@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "local_links_and_unique_anchors": "passed",
+    "metadata_ids_and_references": "passed",
+    "replacement_and_task_dependencies": "passed",
+    "source_anchors_code_and_diagrams": "passed"
+  },
+  "counts": {
+    "html_files": 42,
+    "local_links_and_resources": 4884,
+    "markdown_documents": 40,
+    "source_entries": 393,
+    "typed_records": 82
+  },
+  "generated_by": "tools/docs/build_docs.py",
+  "id": "READER-BUILD-001",
+  "limits": [
+    "This report covers deterministic build checks; unit and browser checks are separate.",
+    "Source inventory is not sentence-by-sentence historical review or production engine verification."
+  ]
+}

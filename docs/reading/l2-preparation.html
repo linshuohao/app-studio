@@ -8,7 +8,7 @@
   <title>L2 预处理与编译 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
+  <script src="assets/knowledge-index.js?v=bc4d4ce1f0b7" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -59,6 +59,7 @@
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
+<a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -74,14 +75,15 @@
       </header>
       <div class="reading-layout">
       <main class="content" id="top">
-        <header class="hero"><div class="eyebrow">FORM ENGINE · LAYER 02 · DESIGN BASELINE</div><h1>L2 预处理与编译</h1><div class="desc">L2 把声明式 Definition 与能力契约编译为 PreparedForm，供运行时消费。它负责规范化、静态检查与执行准备；平台资产管理、运行实例和 UI 各有独立责任。</div></header>
+        <header class="hero"><div class="eyebrow">FORM ENGINE · LAYER 02 · DESIGN BASELINE</div><h1>L2 预处理与编译</h1><div class="desc">L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见<a href="#compiler-io-contract" rel="noopener noreferrer">已确认协议</a>和 <a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>；本页旧接口草图仅追溯，不作为另一套有效 ABI。Compiler 功能清单、检查算法和 SDK 下一专题继续设计，现有生产类型尚未同步。</div></header>
         <hr class="hero-line">
         <section class="section" id="preparation"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>L2 · Preparation：定义预处理层</h2></div></div>
 
 <p>Preparation 将易编辑的定义安全、稳定地转成 Runtime 可消费的 Prepared Form。它服务 Runtime、设计器、发布流程和测试工具；配置者主要消费它输出的诊断信息。</p>
 <p><strong>当前已确认：</strong>L2 是静态协议编译能力；平台另行管理 Form Registry、Capability Registry、代码构建与 Release Management。内置与注册纯计算能力统一称为 Pure Function，Host 在应用运行时注册实现。完整职责、契约草图、发布例子、决策及待固化项见 <a href="" rel="noopener noreferrer">L2 平台能力治理与编译发布</a>。</p>
-<p>L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读取实例 Working Data，也不执行业务纯函数、Command 或 Reaction。平台先提供确定的 Material / Pure Function 契约快照、目标平台 / Profile 与格式要求；Host 静态契约可选，缺失时提取需求并说明无法证明的兼容性，不能据此认定运行时实现不存在。</p>
+<p>L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读取实例 Working Data，也不执行业务纯函数、Command 或 Reaction。调用上下文提供确定的 Material / Pure Function 契约快照，平台 / Profile / 格式按需显式选择或采用确定默认；Host 静态契约可选，缺失时提取需求并说明无法证明的兼容性，不能据此认定运行时实现不存在。</p>
 <h3 id="预处理流水线">预处理流水线</h3>
+<p>图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。整体功能清单与算法下一专题落实。</p>
 <figure class="architecture-diagram" id="figure-preparation"><figcaption>图 3 · Preparation Pipeline：从定义到准备产物</figcaption>
 <div class="arch-row arch-row--flow">
 <div class="arch-node">
@@ -134,7 +136,7 @@
 <li><strong>交付与缓存。</strong>按 Definition 内容、Compiler / Format 版本、目标与锁定依赖确定缓存；交付当前 Profile 的视图闭包，完整保留共享 Schema / Constraint / Reaction，并携带能力锁与 Host Requirements。精确字段和摘要覆盖范围继续固化。</li>
 </ol>
 <p>读取分析覆盖嵌套 ValueSpec、Named use 和全部可能分支，Literal 不参与。随后按 L1 使用位置解释：Internal Constraint 合并 when + assert；External 合并显式 watch 与 when；Reaction 不追加 when / then 读取；View Binding / 动态 Props 自动观察，事件 Payload 只在事件时求值。L2 不执行纯函数发现依赖；整对象输入与无法精确推导的 Schema 条件按子树保守覆盖。</p>
-<p>Dependency Plan 保存行为身份、触发引用、Scope Pattern、激活归属和 Prepared 求值关联，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载节点；View 可关联计划 ID 或内嵌静态依赖，正式 ABI 仍待固化。</p>
+<p>Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope 关系，现行就地交付，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载的表达式消费者；集中计划 ID 是已被修订的旧选择。</p>
 <p>配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。推荐编辑期增量检查、发布期完整编译，并用 Source Map 关联 L1 来源，详见 <a href="#l2-authoring-diagnostics" rel="noopener noreferrer">编辑与编译闭环</a>。</p>
 <h3 id="复杂度取舍">复杂度取舍</h3>
 <div class="table-wrap"><table>
@@ -205,9 +207,9 @@
 <td>不再另建校验函数 DSL 或通用业务执行器</td>
 </tr>
 <tr>
-<td>结构方向已收敛</td>
-<td>PreparedForm、Diagnostics、能力依赖与 Host Requirements；推荐 Form Plan + View Plan 与可序列化交付</td>
-<td>正式 TS / JSON 字段、兼容规则仍需固化</td>
+<td>已确认输入输出</td>
+<td>PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择</td>
+<td>正式类型迁移、Compiler 功能 / 算法及各端消费仍待实现</td>
 </tr>
 <tr>
 <td>跨层设计基线</td>
@@ -225,9 +227,9 @@
 <td>具体字段、增量算法与编辑交互仍待固化</td>
 </tr>
 <tr>
-<td>待固化</td>
-<td>调用字段迁移、Host 缺失等级、Manifest 最小字段、摘要覆盖对象、Prepared Format / ABI 兼容规则</td>
-<td>保留明确判定问题，不能标为已冻结</td>
+<td>待实施 / 继续设计</td>
+<td>输入输出确认后同步旧类型；功能检查、类型连接 / 依赖算法、诊断 SDK 与装载联验继续</td>
+<td>不把输出确认等同于模块完成或生产性能通过</td>
 </tr>
 </tbody>
 </table></div>
@@ -698,6 +700,174 @@
 </section>
 <section class="section" id="l2-compile"><div class="section-head"><div class="kicker">12 · FORM ENGINE</div><div class="section-title"><h2>编译输入、输出与四项核心工作</h2></div></div>
 
+<h3 id="compiler-io-contract">已确认输入输出与默认使用方式</h3>
+<p>2026-10-21 用户确认本节完整方案，并补充开箱即用要求。Canonical / Authoring 是同一协议的规范表示与简写，不要求使用者选择两种模式。公共入口默认接受支持的简写以及规范写法，再统一规范化；不要求 <code>source.syntax</code> 判别包装。内部可以保留两种 TS 类型用于检查 / 文档，不能因此要求调用者分流。简写与完整字段冲突仍须报错，不用默认优先级掩盖冲突。</p>
+<div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">CompileInput</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">definition</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">AuthoringFormDefinition</span><span class="syn-p">;</span><span class="syn-w"> </span><span class="syn-c1">// 包含规范写法；无需 syntax 选择</span>
+<span class="syn-w">  </span><span class="syn-nx">catalog</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">CapabilityCatalogSnapshot</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-nx">target</span><span class="syn-o">?:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nx">profile?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">platform?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">preparedFormatVersion?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-p">};</span>
+<span class="syn-w">  </span><span class="syn-nx">schemaResources?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Record</span><span class="syn-o">&lt;</span><span class="syn-kt">string</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">JsonSchema</span><span class="syn-o">&gt;</span><span class="syn-p">;</span>
+<span class="syn-p">}</span>
+
+<span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">PreparedForm</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">preparedFormatVersion</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-nx">build</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nx">compilerVersion</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">catalogSnapshotId</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">profile</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">platform?</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">string</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-p">};</span>
+<span class="syn-w">  </span><span class="syn-nx">definition</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">PreparedDefinition</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-nx">resources</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nx">schemas</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Record</span><span class="syn-o">&lt;</span><span class="syn-kt">string</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">JsonSchema</span><span class="syn-o">&gt;</span><span class="syn-p">;</span>
+<span class="syn-w">    </span><span class="syn-nx">requestSchemas</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Record</span><span class="syn-o">&lt;</span><span class="syn-kt">string</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">JsonSchema</span><span class="syn-o">&gt;</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-p">};</span>
+<span class="syn-w">  </span><span class="syn-nx">capabilityLock</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">CapabilityLock</span><span class="syn-p">;</span>
+<span class="syn-w">  </span><span class="syn-nx">hostRequirements</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">HostRequirements</span><span class="syn-p">;</span>
+<span class="syn-p">}</span>
+
+<span class="syn-kr">type</span><span class="syn-w"> </span><span class="syn-nx">CompileResult</span><span class="syn-w"> </span><span class="syn-o">=</span>
+<span class="syn-w">  </span><span class="syn-o">|</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">success</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">true</span><span class="syn-p">;</span><span class="syn-w"> </span><span class="syn-nx">prepared</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">PreparedForm</span><span class="syn-p">;</span><span class="syn-w"> </span><span class="syn-nx">diagnostics</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Diagnostic</span><span class="syn-p">[]</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">  </span><span class="syn-o">|</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">success</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">false</span><span class="syn-p">;</span><span class="syn-w"> </span><span class="syn-nx">diagnostics</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">Diagnostic</span><span class="syn-p">[]</span><span class="syn-w"> </span><span class="syn-p">};</span>
+</code></pre></div>
+<p>这些是已确认设计的结构描述，引用类型及位置约束须在后续实现中整合，不表示当前 packages/protocol 的旧 Prepared 类型已经改好。Catalog 可由调用方或预先配置的编译上下文提供；不强制每次调用重复填写，也不凭空补出业务能力。默认格式由 Compiler 的确定支持配置提供；显式目标只作覆盖和匹配要求，不按时间变化的 latest 决定格式。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>选项</th>
+<th>默认行为</th>
+<th>需要显式选择的情况</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语法</td>
+<td>同一入口接受规范及受支持简写，输出统一规范结构</td>
+<td>不要求使用者判断 canonical / authoring；结构冲突给诊断</td>
+</tr>
+<tr>
+<td>Profile</td>
+<td>views 只有一个入口时自动选中，无需额外参数，也不强制入口名为 default</td>
+<td>多入口且调用上下文没有确定默认选择时显式指定；不得随字典顺序任取</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>无需为单一视图手写平台；消费已经确定的能力快照，能唯一确定交付时直接锁定</td>
+<td>需要在多个目标实现中选择时由配置 / 显式目标消除歧义，不猜测 Web，也不删除实际制品的平台身份</td>
+</tr>
+<tr>
+<td>Prepared 格式</td>
+<td>当前 Compiler 的确定默认支持格式</td>
+<td>调用方需要指定另一支持格式时；Runtime 仍精确匹配</td>
+</tr>
+</tbody>
+</table></div>
+<p>保留 <code>views: Record&lt;string, ViewNode&gt;</code> 扩展能力，单视图可写 <code>views: { default: node }</code>，其他唯一名称同样可用；不新增一份 view / views 双字段。Profile 表达场景选择，不等于平台。未明确指定全局平台时 build.platform 可以省略；每项已锁定 artifact 的实际平台、身份和摘要仍保留并在装载时核对。默认入口减少重复配置，不免除所需物料 / Pure Function 契约与运行时实现的提供。</p>
+<h3 id="compiler-io-differences">Definition 保留范围与输出差异</h3>
+<p>PreparedDefinition 保留 protocolVersion / id / version、data、expressions、constraints 数组、reactions 数组、views 字典、viewTemplates 字典、validationMessages 与 metadata。不全面改成 Form / View / Dependency Plan，不增加 preparation 包装，不强制名字编号化、路径拆段或表达式指令化。原始语义和分层不因准备而改变；L3 唯一消费 Prepared 的边界继续有效。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>位置</th>
+<th>输出相对输入的必要变化</th>
+<th>运行时直接使用的结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authoring 简写</td>
+<td>bind → bindings.value、children → slots.default、明确短函数别名 → Canonical ID；语义默认值归一</td>
+<td>只处理规范写法，不建设双解释入口</td>
+</tr>
+<tr>
+<td>Reference / Scope / Expression / Command</td>
+<td>保留 source / scope / JSON Pointer、Binder、op + args、use、ValueSpec 与命令语义</td>
+<td>Runtime 绑定真实 Scope、装配能力并求值；不生成正式代码</td>
+</tr>
+<tr>
+<td>Reaction</td>
+<td>保留显式 watch / when / then；runOnActivate 默认 false</td>
+<td>不追加 when / then 读取，不另存重复依赖集合</td>
+</tr>
+<tr>
+<td>Internal Constraint</td>
+<td>新增完整有效 watch，合并 when / assert 与必要前置读取</td>
+<td>直接绑定观察，不重新发现依赖</td>
+</tr>
+<tr>
+<td>External Constraint</td>
+<td>输出 watch 为显式输入、when 可见读取及前置传递依赖的有效集合</td>
+<td>失效与请求时机分开；不保留第二份原始 watch 供执行端选择</td>
+</tr>
+<tr>
+<td>requires</td>
+<td>沿用字段名；字段前置补充已解析的 constraintIds，规则前置保留确定 constraintId</td>
+<td>Runtime 绑定实例、补齐并执行本轮前置，不重新推导相关规则集合</td>
+</tr>
+<tr>
+<td>View 动态表达式</td>
+<td>每个完整 $expr 包装增加自己的 watch，包含所有可能分支的静态读取</td>
+<td>按表达式失效和复用结果，不按组件合并后全部重算</td>
+</tr>
+<tr>
+<td>Binding</td>
+<td>保留明确引用，不重复复制 watch</td>
+<td>分别接入绑定值及既有校验状态观察</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>保留模板共享及参数绑定，模板体同样准备表达式 watch</td>
+<td>只做调用参数 / 实际 Scope 绑定与实例化，不重新分析模板表达式</td>
+</tr>
+<tr>
+<td>Profile 与资源</td>
+<td>选中一个视图入口、其模板传递闭包和所需能力；完整共享 Schema / Constraint / Reaction 保留</td>
+<td>减少交付内容，不因不可见裁剪业务义务</td>
+</tr>
+<tr>
+<td>Request</td>
+<td>原映射增加确定 concurrency 和物料 / 已知 Host 输入输出 Schema 资源引用</td>
+<td>复用 requests 通道既有接入契约，Payload 仅调用时求值</td>
+</tr>
+</tbody>
+</table></div>
+<p>普通 Data watch 统一沿用 DataReference，可增加 <code>aspect?: 'value' | 'structure'</code>，缺省为 value；结构是 Data 的观察方面，不是另一份状态源。统一条目 / 字段命名不统一各消费者的激活、完成或调度行为。只读 Context、Data-only Reaction.watch、校验状态与 Event 边界不扩张；不因统一 watch 自动新增 Context 触发链或 L1 引用来源。</p>
+<h3 id="compiler-expression-watch">表达式包装、递归与精确更新</h3>
+<div class="code-box"><div class="code-head"><span>JAVASCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-c1">// 输入：动态 Props</span>
+<span class="syn-nx">props</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">disabled</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">$expr</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-cm">/* 读取 status、age 的完整表达式 */</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nx">label</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">$expr</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-cm">/* 读取 age 的完整表达式 */</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+
+<span class="syn-c1">// 输出：Prepared 专用表达式包装；表达式本体不改写</span>
+<span class="syn-nx">props</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nx">disabled</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nx">$expr</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-cm">/* 原表达式 */</span><span class="syn-p">,</span>
+<span class="syn-w">    </span><span class="syn-nx">watch</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">[</span>
+<span class="syn-w">      </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">source</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">path</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"/status"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">      </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nx">source</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">path</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"/age"</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">    </span><span class="syn-p">]</span>
+<span class="syn-w">  </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nx">label</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nx">$expr</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-cm">/* 原表达式 */</span><span class="syn-p">,</span>
+<span class="syn-w">    </span><span class="syn-nx">watch</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-p">[{</span><span class="syn-w"> </span><span class="syn-nx">source</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">path</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-s2">"/age"</span><span class="syn-w"> </span><span class="syn-p">}]</span>
+<span class="syn-w">  </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>status 变化仅使 disabled 失效；age 变化使两者失效。Adapter 统一管理生命周期，但保留各完整表达式的依赖与结果关联，无关表达式的有效结果可复用。递归遍历完整表达式的 args / use 和合法嵌套 ValueSpec；不为内部每个运算子节点另建观察者。props.badge.visible.$expr 与 props.badge.text.$expr 是独立入口。静态依赖覆盖全部可能分支、Literal 不遍历、整对象参数保守覆盖，精确到表达式不等于运行时动态裁剪分支。表达式结果如何缓存、比较与接入各端框架在功能专题落实，协议不承诺某种 DOM 更新次数。</p>
+<p><code>watch</code> 不是业务对象保留键。只有已识别为表达式包装的对象，其 watch 才是生成依赖；<code>props.watch</code> 可正常作为物料属性，甚至可写成 <code>{ $expr: expression, watch: dependencies }</code>。真实对象含 $expr 时沿用 $literal 转义；$literal / literal 内及表达式返回数据不再扫描为协议。输入 $expr 包装保持严格单字段，输出响应式包装允许且要求 $expr + watch，其他字段仍受严格结构约束。</p>
+<p>事件 / Request Payload、Command 值中的 $expr 按调用求值，不因出现 $expr 自动持续订阅；这些位置保留按需包装。全局 expressions.* 仅共享计算定义，本身不拥有订阅，读取归并到实际消费者。Constraint 的 when / assert 保留直接 AST，整条规则的有效观察放在规则 watch；本轮不建立通用表达式结果 DAG。</p>
+<h3 id="compiler-io-delivery">交付资源、诊断和后续边界</h3>
+<p>根业务 Schema 保留在 definition.data.schema；resources.schemas 闭合必要外部引用并保留资源身份 / 引用基址。resources.requestSchemas 单独闭合请求契约；节点 requests 保存 payloadSchemaRef / resultSchemaRef，有 Host 静态契约时保存对应 Host 资源引用，沿用 ADR-FE-016，不靠能力摘要重建输入输出形状。静态节点身份可作为生成字段用于请求需求和来源关联，不取代真实 Scope ID。</p>
+<p>capabilityLock 保留能力 id / version / manifestDigest 和 artifact 的 id / platform / digest；HostRequirements 只沿用 validators / events / requests。能力代码在运行时装配，不把能力表编号误当成代码生成或既成性能收益。旧 services 候选不恢复。</p>
+<p>Diagnostic 包含 code、severity、message、sourcePointer 及可选 relatedLocations；位置相对本次源定义，成功可带 Warning，存在 Error 不产执行制品。详细来源映射可作独立调试附件，不交付完整分析图。Prepared 不包含实例数据、真实 Scope ID、函数、组件、当前 Issues、请求状态或已激活订阅。</p>
+<p>本期确认输入输出，不等于 Compiler 功能清单、检查分类、依赖 / 类型连接算法、首次读取交接、缓存和 SDK 已设计或实现。下一专题讨论这些功能；风险可视化 / 完整 read-write 影响图可按需工具化，不强制进入执行产物生成链。增量分析、模板特化、常量折叠、编号 / 紧凑编码和代码生成仍属后期可评估方向，需要具体收益证据。</p>
+<h3 id="早期接口草图的追溯边界">早期接口草图的追溯边界</h3>
+<p>以下原有 TypeScript 与四项工作表保留原结构方向供追溯，已经由上方确认协议及 ADR-FE-017 修订。特别是必填 platform / profile、三类 Plan、独立准备树及集中依赖 ID 不再是现行输出要求；不能直接复制为新 SDK。Validate / Analyze / Transform / Package 仍是逻辑职责，具体本期功能下一专题确定。</p>
 <p>以下 TypeScript 是工程契约方向，引用的类型仍待正式定义，字段名不作为最终对外 API：</p>
 <div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">CompileInput</span><span class="syn-w"> </span><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-nx">definition</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">FormDefinition</span><span class="syn-p">;</span>
@@ -766,14 +936,13 @@
 <p>PreparedForm 的实际执行观察计划必须在编译时确定；可同时携带分析 Reads / Writes、建议与来源信息，但这些元数据不能在 Runtime 再次补齐 watch。静态可决定的引用解析、能力索引与锁定信息前置；when / ValueSpec 的具体求值、动态数组身份、实际 Change 匹配留给 L3，视图挂载与平台渲染留给 L4。平台仍管理 Release 与不可变发布，编译产物关联锁定能力不代表 Compiler 接管发布治理。</p>
 <h3 id="校验准备与完整-schema-资源">校验准备与完整 Schema 资源</h3>
 <p>选择完整 JSON Schema 根级校验域，不在 L2 自动拆分 Keyword / 局部 Schema。Prepared 交付可序列化 Schema 资源、引用与 Adapter 约定；Web 可缓存 Ajv 编译函数，Dart 由对应 Adapter 执行，不跨端传输生成的 JS 函数。业务 Constraint 仍复用 Pure Function / Host，不转换为 Ajv 自定义 Keyword ABI。</p>
-<p>PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。requires / validationMessages 正式语法尚未冻结，不能直接宣称当前候选 Schema 已支持。</p>
+<p>PreparedValidation 是校验准备信息的概念名称；当前归属 definition.constraints 的规则 watch / requires 和完整业务 Schema，旧 Form Plan 位置不继续作为有效接口。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。现行 requires 沿用字段名，字段前置补充已解析 constraintIds；新 Prepared 仍需同步正式类型 / Schema，候选验证器不作为实现证据。</p>
 <p>前置引用与静态非法配置应尽可能在 L2 诊断。L2 自动推导 Validation 可分析读取，并沿前置关系补全后置有效触发依赖；不可见的 Host 业务依赖由作者显式提供，不要求重复声明可推导依赖。L3 从命中任务递归补齐已解析的前置实例、去重并重排序，按本轮结果放行，不复用历史通过结论。这不修改 Reaction 显式 Watch，也不建立前置结果 PubSub；计划需保留补全依据，补全不意味着立即发起外部请求。字段有效性的范围、跨 Scope 解析、Issue 规范化与 Web / Dart 兼容矩阵见 <a href="l3-validation.html#validation-layers" rel="noopener noreferrer">校验专题</a>。</p>
 <h3 id="prepared-machine-baseline">首期 Prepared 机器结构基线</h3>
-<p>2026-10-21 用户确认以准备后的有类型结构树执行，不首期建设字节码或自定义 VM。L2 已解析名称、函数身份和引用，L3 对准备树执行，不重解析原始声明或重分析依赖。Template 在编译时解析并展开，保留来源关系；递归引用及过度展开用编译检查和预算防护，运行时不再维护 L1 模板参数解释器。</p>
-<p>PreparedForm 组织为身份 / preparedFormatVersion、formPlan、viewPlan、dependencyPlan、capabilityLock、hostRequirements。formPlan 包含完整业务 Schema 资源、静态 Scope 模式、准备后的表达式 / 命令 / Reaction 与 Validation；viewPlan 携带当前 Profile 视图闭包；dependencyPlan 集中组织静态观察，消费者引用计划 ID。表达式来源与编译诊断的源位置保留，详细内部分析图留在 Compiler，不全部交付。</p>
-<p>引用保存已解析的根 / 静态 Scope Pattern 及路径；L3 才绑定实际 Scope ID。依赖计划不保存数组成员、实例数据、回调、组件、请求状态或 Issue。数组结构是 Data 的观察方面，不另建事实源；观察激活归属与 runOnActivate 不混用。</p>
-<p>不新增节点 / 属性更新分级，沿用已确认共用 Adapter 接入；此前内嵌依赖与节点 / 属性粒度仅为比较过的草案，不作为新增协议。内部去重 / 求值优化由实现处理。</p>
-<p>完整根业务 Schema 及必要引用资源闭包随制品携带，编译时固定资源，不在执行时联网补 $ref；不拆 Keyword 局部引擎，不携带 Ajv 生成 JS 校验函数。正式 TS 全量字段与正反例按本节一次整合，方向确认不等于 ABI 已生产验收。</p>
+<p>现行基线已由<a href="#compiler-io-contract" rel="noopener noreferrer">本轮确认输入输出</a>修订：保留 Definition 的领域树、词法名称、Pointer 和 op + args；Prepared 以 definition 加必要资源和锁定包装交付。Template 共享保留，动态 Props 按完整 $expr 携带 watch；规则 watch 和 requires 放在规则本身，不新增 preparation 包装或集中依赖 ID。</p>
+<p>此前 2026-10-21 首批方案采用有类型准备树、模板完全展开、Form / View / Dependency Plan 和不新增属性级准备信息；这些局部结构选择已被 <a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>明确修订，原理由与比较见<a href="design-history.html#compiler-io-confirmed" rel="noopener noreferrer">演进</a>。两份结构、唯一 Prepared 执行入口、JSON、精确格式匹配和 Error 无执行制品继续有效。</p>
+<p>静态观察不保存真实 Scope ID、成员数据、组件、回调、请求状态或 Issue；Runtime 才绑定实例并管理活跃订阅。完整业务 Schema 及必要引用闭包随制品交付，不联网补 $ref，不拆 Keyword 局部引擎，不携带 Ajv 生成 JS。表达式精确失效不要求各端具有相同的 DOM 更新机制，也不新增字段 Controller。</p>
+<p>现有 packages/protocol 的 Prepared 类型 / Schema 仍反映先前基线，本轮仅设计归档；后续类型迁移、Compiler / Runtime / Renderer 和契约测试必须同步后才能声称新结构已实现。</p>
 </section>
 <section class="section" id="l2-dependencies"><div class="section-head"><div class="kicker">13 · FORM ENGINE</div><div class="section-title"><h2>有类型的依赖关系与环检测</h2></div></div>
 
@@ -892,7 +1061,7 @@
 <p>Reaction 只使用显式 watch；when / then 的读取保留作求值与诊断，不自动追加。Internal Constraint 合并 when 与 assert；External Constraint 合并显式 watch 与 when 的读取，以决定旧结论失效，不决定请求时机。Issue / external target 只是定位。当前 External 没有 Payload 字段；不能根据来源稿的建议自行扩展协议。</p>
 <p>View Binding 与动态 Props 自动形成视图计划；Command Value 和事件 Payload 只在执行 / 事件时求值，不因其读取变化触发事件。ScopeBinder.from 保留结构性关系；Template 参数按已绑定 DataReference 解析，不形成独立可变状态域。</p>
 <h3 id="静态-dependency-plan-与-scope-模式">静态 Dependency Plan 与 Scope 模式</h3>
-<p>PreparedForm 携带可复用静态观察描述，信息包括 owner（Reaction / Constraint / View）、触发依赖、已解析引用与 Scope Pattern、由 Runtime 或 View 挂载负责激活。Prepared View 可引用计划 ID 或内嵌紧凑依赖集合；正式字段、条目存储和节点 / 属性粒度仍待固化，见 <a href="dependency-reactivity.html#dependency-plan" rel="noopener noreferrer">最小计划草图</a>。</p>
+<p>PreparedForm 在 Reaction / Constraint 和每个响应式 $expr 就地保存 watch，所属位置表达消费者身份，词法 Scope 关系保留；业务规则由 Runtime、呈现表达式由 Adapter 随挂载激活。当前不另设中央计划 ID；完整表达式级观察已确认，见<a href="#compiler-expression-watch" rel="noopener noreferrer">现行输出</a>。</p>
 <p>计划只保存静态关系与求值入口，不保存回调、组件、当前数组长度、实例 ID 或已执行纯函数结果。Validation / Field Meta 等运行时状态观察由 L3 接入契约描述，不扩展 L1 Reference.source；数组结构观察的编码方式尚未冻结。</p>
 <p>确认 L2 编译绝对 / Scope 相对引用与结构观察的规范化路径模板，由 L3 结合实际 Scope / 挂载订阅建立运行索引。Trie + Scope Slot 是推荐实现，不冻结为 Prepared ABI，更不能让编译器预先写死所有真实成员的实例 Trie。来源的通配路径、<code>./age</code>、<code>length</code> 索引节点均为示意，不新增 L1 Pointer 语法。候选定位与前后观察值比较分工见 <a href="l3-data-scope.html#l3-dependency-index" rel="noopener noreferrer">依赖索引</a>。</p>
 <p>首次执行策略显式可配置是已确认的 L1 / L2 契约：L2 校验策略并编译，L3 在实例激活时按计划入队。来源曾用 <code>runOnActivate</code> / <code>activation: run-on-activate</code> 示意；首批基线已采用 runOnActivate 可选布尔、默认 false；它与本篇 <code>activation: runtime / view-mounted</code> 表示的“谁管理观察生命周期”分别解释，不能混用一个候选字段偷换含义。编译时不执行初始 Reaction，不创建 Baseline，不自动重写 watch。</p>
@@ -919,7 +1088,7 @@
 <span class="syn-w">  </span><span class="syn-p">}</span>
 <span class="syn-p">}</span>
 </code></pre></div>
-<p>这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 分别携带 Form / View Plan、Scope / Reference 准备结果、锁定与 Host 要求；Runtime 的具体初始化 API 仍待 L3 固化。</p>
+<p>这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 按现行输入输出保留 definition、就地 watch / requires、资源、锁定与 Host 要求；旧 Form / View Plan 分层仅保留为历史逻辑分工，Runtime 的初始化 API 仍待固化。</p>
 </section>
 <section class="section" id="l2-acceptance"><div class="section-head"><div class="kicker">15 · FORM ENGINE</div><div class="section-title"><h2>失败路径、治理与验收</h2></div></div>
 
@@ -1035,8 +1204,8 @@
 </tr>
 <tr>
 <td>Dependency Plan</td>
-<td>owner、watch、Scope Pattern 与激活归属；与 Form / View Plan 关联</td>
-<td>序列化、状态引用、结构观察编码、节点粒度及格式迁移</td>
+<td>现行为规则 / 完整动态表达式上的统一 watch；词法 Scope 保留，按需激活</td>
+<td>输入输出已确认；后续实现分析、绑定、精确失效与格式迁移，不恢复集中计划 ID</td>
 </tr>
 <tr>
 <td>首次执行策略</td>
@@ -1044,9 +1213,9 @@
 <td>与观察生命周期归属分开；正式类型 / Schema 与候选样例迁移</td>
 </tr>
 <tr>
-<td>Material 的 Host Service</td>
-<td>Manifest 声明可观察依赖</td>
-<td>未声明依赖的发布限制或运行时报告</td>
+<td>Material 的 Host Request</td>
+<td>沿用 ADR-FE-016 的 requests 映射、确定契约及装配预检；services 已退出</td>
+<td>后续实现资源闭包、签名连接及缺失时局部错误，不恢复旧服务需求</td>
 </tr>
 </tbody>
 </table></div>
@@ -1172,7 +1341,7 @@
 <a href="#l2-decisions" data-to="l2-decisions" title="待固化接口与验收标准"><span class="nav-num">16</span><span>待固化接口与验收标准</span></a>
 <a href="#l2-delivery" data-to="l2-delivery" title="后续交付与来源"><span class="nav-num">17</span><span>后续交付与来源</span></a>
 <a href="#prepared-delivery" data-to="prepared-delivery" title="Prepared 交付与编译错误边界"><span class="nav-num">18</span><span>Prepared 交付与编译错误边界</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 6</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-protocol-source">SRC-PROTOCOL · 协议结构源与校验路线确认</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 24</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 7</summary><ul><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-protocol-source">SRC-PROTOCOL · 协议结构源与校验路线确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

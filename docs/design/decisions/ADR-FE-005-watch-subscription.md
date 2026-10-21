@@ -10,8 +10,10 @@ modules:
 - M14
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-017
 sources:
+- SRC-COMPILERIO
 - SRC-DEP
 - SRC-V05
 navigation:
@@ -46,3 +48,10 @@ L2 统一分析，L3 统一匹配，业务规则随 Form / Scope 激活，L4 只
 - 现行：[使用位置矩阵](../l1/03-expression-validation.md#expression)、[作者确认](../dependency-reactivity.md#dependency-watch-review)、[L4 三方案及生命周期](../dependency-reactivity.md#dependency-view)。
 - 演进：[依赖 V0.1 原件](../source-map.md#src-dependency)与 V0.5 D03 / D04 / D05 的[明确确认](../source-map.md#src-v05)。External dependsOn→watch 是确定字段迁移，正式版本工具仍未发布。
 - 关联：[ADR-FE-004](ADR-FE-004-prepared-entry.md)、[ADR-FE-006](ADR-FE-006-command-flush.md)、[OD-04 / OD-10](../governance.md#open-decisions)。
+
+
+### 2026-10-21：输入输出与精确表达式观察的局部修订
+
+[ADR-FE-017](ADR-FE-017-compiler-io.md)已确认保留 Definition 领域结构、词法引用和表达式语法，规则及完整响应式 $expr 使用就地 watch；模板保留共享，默认入口接受规范及简写，单视图无需额外 Profile / 平台参数。此前关于三类 Plan、模板全展开、集中计划 ID 以及不保留表达式级观察信息的局部选择退出现行方案；原段落留作追溯，不能再作为有效限制。
+
+本 ADR 的核心原则仍有效，未整体废止：唯一 Prepared 入口、静态模板 / 物料与 Runtime 分责、Read / Watch / Subscription 分离继续遵守。现行字段和默认规则以 [L2 确认协议](../l2-preparation.md#compiler-io-contract)为准；尚未同步生产类型与运行实现。

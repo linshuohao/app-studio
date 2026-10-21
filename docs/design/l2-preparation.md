@@ -10,10 +10,12 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-004
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
 - SRC-CONTRACTS
@@ -33,7 +35,7 @@ relocated_sections:
 
 # L2 预处理与编译
 
-L2 把声明式 Definition 与能力契约编译为 PreparedForm，供运行时消费。它负责规范化、静态检查与执行准备；平台资产管理、运行实例和 UI 各有独立责任。
+L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见[已确认协议](#compiler-io-contract)和 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)；本页旧接口草图仅追溯，不作为另一套有效 ABI。Compiler 功能清单、检查算法和 SDK 下一专题继续设计，现有生产类型尚未同步。
 
 ## L2 · Preparation：定义预处理层 {#preparation}
 
@@ -41,9 +43,11 @@ Preparation 将易编辑的定义安全、稳定地转成 Runtime 可消费的 P
 
 **当前已确认：**L2 是静态协议编译能力；平台另行管理 Form Registry、Capability Registry、代码构建与 Release Management。内置与注册纯计算能力统一称为 Pure Function，Host 在应用运行时注册实现。完整职责、契约草图、发布例子、决策及待固化项见 [L2 平台能力治理与编译发布](l2-preparation.md)。
 
-L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读取实例 Working Data，也不执行业务纯函数、Command 或 Reaction。平台先提供确定的 Material / Pure Function 契约快照、目标平台 / Profile 与格式要求；Host 静态契约可选，缺失时提取需求并说明无法证明的兼容性，不能据此认定运行时实现不存在。
+L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读取实例 Working Data，也不执行业务纯函数、Command 或 Reaction。调用上下文提供确定的 Material / Pure Function 契约快照，平台 / Profile / 格式按需显式选择或采用确定默认；Host 静态契约可选，缺失时提取需求并说明无法证明的兼容性，不能据此认定运行时实现不存在。
 
 ### 预处理流水线
+
+图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。整体功能清单与算法下一专题落实。
 
 ```diagram
 {
@@ -70,7 +74,7 @@ L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读�
 
 读取分析覆盖嵌套 ValueSpec、Named use 和全部可能分支，Literal 不参与。随后按 L1 使用位置解释：Internal Constraint 合并 when + assert；External 合并显式 watch 与 when；Reaction 不追加 when / then 读取；View Binding / 动态 Props 自动观察，事件 Payload 只在事件时求值。L2 不执行纯函数发现依赖；整对象输入与无法精确推导的 Schema 条件按子树保守覆盖。
 
-Dependency Plan 保存行为身份、触发引用、Scope Pattern、激活归属和 Prepared 求值关联，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载节点；View 可关联计划 ID 或内嵌静态依赖，正式 ABI 仍待固化。
+Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope 关系，现行就地交付，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载的表达式消费者；集中计划 ID 是已被修订的旧选择。
 
 配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。推荐编辑期增量检查、发布期完整编译，并用 Source Map 关联 L1 来源，详见 [编辑与编译闭环](l2-preparation.md#l2-authoring-diagnostics)。
 
@@ -99,11 +103,11 @@ Dependency Plan 保存行为身份、触发引用、Scope Pattern、激活归属
 | --- | --- | --- |
 | 已收敛 | Material / Pure Function / Host 三类职责；复杂同步校验复用纯函数；L2 静态编译；能力 Manifest 与发布锁定 | 后续设计基线 |
 | 已收敛 | 内置与注册纯函数共用调用协议，`core.*` 为保留命名空间；Host 运行时注册，静态契约可选 | 不再另建校验函数 DSL 或通用业务执行器 |
-| 结构方向已收敛 | PreparedForm、Diagnostics、能力依赖与 Host Requirements；推荐 Form Plan + View Plan 与可序列化交付 | 正式 TS / JSON 字段、兼容规则仍需固化 |
+| 已确认输入输出 | PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择 | 正式类型迁移、Compiler 功能 / 算法及各端消费仍待实现 |
 | 跨层设计基线 | Read / Watch / Subscription 分离；按使用位置编译 Dependency Plan；L3 统一匹配，L4 按挂载激活视图 | 计划是静态描述，不是已建立的观察者；完整接口与调度未冻结 |
 | 已确认 | L1 / PreparedForm 双结构；L3 不直接解释 L1；显式 watch 保留，编译提供建议，作者确认后回写再编译 | Prepared 执行依赖编译时确定，兼容失败不静默回退解释 L1 |
 | 推荐 | 编译 Source Map；编辑期增量分析、发布期全量检查 | 具体字段、增量算法与编辑交互仍待固化 |
-| 待固化 | 调用字段迁移、Host 缺失等级、Manifest 最小字段、摘要覆盖对象、Prepared Format / ABI 兼容规则 | 保留明确判定问题，不能标为已冻结 |
+| 待实施 / 继续设计 | 输入输出确认后同步旧类型；功能检查、类型连接 / 依赖算法、诊断 SDK 与装载联验继续 | 不把输出确认等同于模块完成或生产性能通过 |
 
 Pure Function 表示同步、确定性的受限纯计算；表达式调用节点仍采用 `op + args`，名称与协议字段不混为一项设计。
 
@@ -378,6 +382,121 @@ L2 只消费确定 Catalog Snapshot，不在线查询 latest。分别锁定增�
 
 ## 编译输入、输出与四项核心工作 {#l2-compile}
 
+### 已确认输入输出与默认使用方式 {#compiler-io-contract}
+
+2026-10-21 用户确认本节完整方案，并补充开箱即用要求。Canonical / Authoring 是同一协议的规范表示与简写，不要求使用者选择两种模式。公共入口默认接受支持的简写以及规范写法，再统一规范化；不要求 `source.syntax` 判别包装。内部可以保留两种 TS 类型用于检查 / 文档，不能因此要求调用者分流。简写与完整字段冲突仍须报错，不用默认优先级掩盖冲突。
+
+```typescript
+interface CompileInput {
+  definition: AuthoringFormDefinition; // 包含规范写法；无需 syntax 选择
+  catalog: CapabilityCatalogSnapshot;
+  target?: {
+    profile?: string;
+    platform?: string;
+    preparedFormatVersion?: string;
+  };
+  schemaResources?: Record<string, JsonSchema>;
+}
+
+interface PreparedForm {
+  preparedFormatVersion: string;
+  build: {
+    compilerVersion: string;
+    catalogSnapshotId: string;
+    profile: string;
+    platform?: string;
+  };
+  definition: PreparedDefinition;
+  resources: {
+    schemas: Record<string, JsonSchema>;
+    requestSchemas: Record<string, JsonSchema>;
+  };
+  capabilityLock: CapabilityLock;
+  hostRequirements: HostRequirements;
+}
+
+type CompileResult =
+  | { success: true; prepared: PreparedForm; diagnostics: Diagnostic[] }
+  | { success: false; diagnostics: Diagnostic[] };
+```
+
+这些是已确认设计的结构描述，引用类型及位置约束须在后续实现中整合，不表示当前 packages/protocol 的旧 Prepared 类型已经改好。Catalog 可由调用方或预先配置的编译上下文提供；不强制每次调用重复填写，也不凭空补出业务能力。默认格式由 Compiler 的确定支持配置提供；显式目标只作覆盖和匹配要求，不按时间变化的 latest 决定格式。
+
+| 选项 | 默认行为 | 需要显式选择的情况 |
+| --- | --- | --- |
+| 语法 | 同一入口接受规范及受支持简写，输出统一规范结构 | 不要求使用者判断 canonical / authoring；结构冲突给诊断 |
+| Profile | views 只有一个入口时自动选中，无需额外参数，也不强制入口名为 default | 多入口且调用上下文没有确定默认选择时显式指定；不得随字典顺序任取 |
+| 平台 | 无需为单一视图手写平台；消费已经确定的能力快照，能唯一确定交付时直接锁定 | 需要在多个目标实现中选择时由配置 / 显式目标消除歧义，不猜测 Web，也不删除实际制品的平台身份 |
+| Prepared 格式 | 当前 Compiler 的确定默认支持格式 | 调用方需要指定另一支持格式时；Runtime 仍精确匹配 |
+
+保留 `views: Record<string, ViewNode>` 扩展能力，单视图可写 `views: { default: node }`，其他唯一名称同样可用；不新增一份 view / views 双字段。Profile 表达场景选择，不等于平台。未明确指定全局平台时 build.platform 可以省略；每项已锁定 artifact 的实际平台、身份和摘要仍保留并在装载时核对。默认入口减少重复配置，不免除所需物料 / Pure Function 契约与运行时实现的提供。
+
+### Definition 保留范围与输出差异 {#compiler-io-differences}
+
+PreparedDefinition 保留 protocolVersion / id / version、data、expressions、constraints 数组、reactions 数组、views 字典、viewTemplates 字典、validationMessages 与 metadata。不全面改成 Form / View / Dependency Plan，不增加 preparation 包装，不强制名字编号化、路径拆段或表达式指令化。原始语义和分层不因准备而改变；L3 唯一消费 Prepared 的边界继续有效。
+
+| 位置 | 输出相对输入的必要变化 | 运行时直接使用的结果 |
+| --- | --- | --- |
+| Authoring 简写 | bind → bindings.value、children → slots.default、明确短函数别名 → Canonical ID；语义默认值归一 | 只处理规范写法，不建设双解释入口 |
+| Reference / Scope / Expression / Command | 保留 source / scope / JSON Pointer、Binder、op + args、use、ValueSpec 与命令语义 | Runtime 绑定真实 Scope、装配能力并求值；不生成正式代码 |
+| Reaction | 保留显式 watch / when / then；runOnActivate 默认 false | 不追加 when / then 读取，不另存重复依赖集合 |
+| Internal Constraint | 新增完整有效 watch，合并 when / assert 与必要前置读取 | 直接绑定观察，不重新发现依赖 |
+| External Constraint | 输出 watch 为显式输入、when 可见读取及前置传递依赖的有效集合 | 失效与请求时机分开；不保留第二份原始 watch 供执行端选择 |
+| requires | 沿用字段名；字段前置补充已解析的 constraintIds，规则前置保留确定 constraintId | Runtime 绑定实例、补齐并执行本轮前置，不重新推导相关规则集合 |
+| View 动态表达式 | 每个完整 $expr 包装增加自己的 watch，包含所有可能分支的静态读取 | 按表达式失效和复用结果，不按组件合并后全部重算 |
+| Binding | 保留明确引用，不重复复制 watch | 分别接入绑定值及既有校验状态观察 |
+| Template | 保留模板共享及参数绑定，模板体同样准备表达式 watch | 只做调用参数 / 实际 Scope 绑定与实例化，不重新分析模板表达式 |
+| Profile 与资源 | 选中一个视图入口、其模板传递闭包和所需能力；完整共享 Schema / Constraint / Reaction 保留 | 减少交付内容，不因不可见裁剪业务义务 |
+| Request | 原映射增加确定 concurrency 和物料 / 已知 Host 输入输出 Schema 资源引用 | 复用 requests 通道既有接入契约，Payload 仅调用时求值 |
+
+普通 Data watch 统一沿用 DataReference，可增加 `aspect?: 'value' | 'structure'`，缺省为 value；结构是 Data 的观察方面，不是另一份状态源。统一条目 / 字段命名不统一各消费者的激活、完成或调度行为。只读 Context、Data-only Reaction.watch、校验状态与 Event 边界不扩张；不因统一 watch 自动新增 Context 触发链或 L1 引用来源。
+
+### 表达式包装、递归与精确更新 {#compiler-expression-watch}
+
+```javascript
+// 输入：动态 Props
+props: {
+  disabled: { $expr: /* 读取 status、age 的完整表达式 */ },
+  label: { $expr: /* 读取 age 的完整表达式 */ }
+}
+
+// 输出：Prepared 专用表达式包装；表达式本体不改写
+props: {
+  disabled: {
+    $expr: /* 原表达式 */,
+    watch: [
+      { source: "data", path: "/status" },
+      { source: "data", path: "/age" }
+    ]
+  },
+  label: {
+    $expr: /* 原表达式 */,
+    watch: [{ source: "data", path: "/age" }]
+  }
+}
+```
+
+status 变化仅使 disabled 失效；age 变化使两者失效。Adapter 统一管理生命周期，但保留各完整表达式的依赖与结果关联，无关表达式的有效结果可复用。递归遍历完整表达式的 args / use 和合法嵌套 ValueSpec；不为内部每个运算子节点另建观察者。props.badge.visible.$expr 与 props.badge.text.$expr 是独立入口。静态依赖覆盖全部可能分支、Literal 不遍历、整对象参数保守覆盖，精确到表达式不等于运行时动态裁剪分支。表达式结果如何缓存、比较与接入各端框架在功能专题落实，协议不承诺某种 DOM 更新次数。
+
+`watch` 不是业务对象保留键。只有已识别为表达式包装的对象，其 watch 才是生成依赖；`props.watch` 可正常作为物料属性，甚至可写成 `{ $expr: expression, watch: dependencies }`。真实对象含 $expr 时沿用 $literal 转义；$literal / literal 内及表达式返回数据不再扫描为协议。输入 $expr 包装保持严格单字段，输出响应式包装允许且要求 $expr + watch，其他字段仍受严格结构约束。
+
+事件 / Request Payload、Command 值中的 $expr 按调用求值，不因出现 $expr 自动持续订阅；这些位置保留按需包装。全局 expressions.* 仅共享计算定义，本身不拥有订阅，读取归并到实际消费者。Constraint 的 when / assert 保留直接 AST，整条规则的有效观察放在规则 watch；本轮不建立通用表达式结果 DAG。
+
+### 交付资源、诊断和后续边界 {#compiler-io-delivery}
+
+根业务 Schema 保留在 definition.data.schema；resources.schemas 闭合必要外部引用并保留资源身份 / 引用基址。resources.requestSchemas 单独闭合请求契约；节点 requests 保存 payloadSchemaRef / resultSchemaRef，有 Host 静态契约时保存对应 Host 资源引用，沿用 ADR-FE-016，不靠能力摘要重建输入输出形状。静态节点身份可作为生成字段用于请求需求和来源关联，不取代真实 Scope ID。
+
+capabilityLock 保留能力 id / version / manifestDigest 和 artifact 的 id / platform / digest；HostRequirements 只沿用 validators / events / requests。能力代码在运行时装配，不把能力表编号误当成代码生成或既成性能收益。旧 services 候选不恢复。
+
+Diagnostic 包含 code、severity、message、sourcePointer 及可选 relatedLocations；位置相对本次源定义，成功可带 Warning，存在 Error 不产执行制品。详细来源映射可作独立调试附件，不交付完整分析图。Prepared 不包含实例数据、真实 Scope ID、函数、组件、当前 Issues、请求状态或已激活订阅。
+
+本期确认输入输出，不等于 Compiler 功能清单、检查分类、依赖 / 类型连接算法、首次读取交接、缓存和 SDK 已设计或实现。下一专题讨论这些功能；风险可视化 / 完整 read-write 影响图可按需工具化，不强制进入执行产物生成链。增量分析、模板特化、常量折叠、编号 / 紧凑编码和代码生成仍属后期可评估方向，需要具体收益证据。
+
+### 早期接口草图的追溯边界
+
+以下原有 TypeScript 与四项工作表保留原结构方向供追溯，已经由上方确认协议及 ADR-FE-017 修订。特别是必填 platform / profile、三类 Plan、独立准备树及集中依赖 ID 不再是现行输出要求；不能直接复制为新 SDK。Validate / Analyze / Transform / Package 仍是逻辑职责，具体本期功能下一专题确定。
+
+
 以下 TypeScript 是工程契约方向，引用的类型仍待正式定义，字段名不作为最终对外 API：
 
 ```typescript
@@ -430,21 +549,19 @@ PreparedForm 的实际执行观察计划必须在编译时确定；可同时携�
 
 选择完整 JSON Schema 根级校验域，不在 L2 自动拆分 Keyword / 局部 Schema。Prepared 交付可序列化 Schema 资源、引用与 Adapter 约定；Web 可缓存 Ajv 编译函数，Dart 由对应 Adapter 执行，不跨端传输生成的 JS 函数。业务 Constraint 仍复用 Pure Function / Host，不转换为 Ajv 自定义 Keyword ABI。
 
-PreparedValidation 是既有 Form Plan 内校验准备信息的概念名称，不预先新增一个最终顶层字段。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。requires / validationMessages 正式语法尚未冻结，不能直接宣称当前候选 Schema 已支持。
+PreparedValidation 是校验准备信息的概念名称；当前归属 definition.constraints 的规则 watch / requires 和完整业务 Schema，旧 Form Plan 位置不继续作为有效接口。方向为：规则 / 执行器引用、读取依赖与 Scope 模式、前置引用及消息计划；实际实例、Pending、代次和 Source Issues 归 L3。前置的字段 / 规则两种引用、Scope 实例唯一绑定及首期仅等待同步校验已明确；编译计划不得建立跨 External 的异步等待或集合 or / any。后续已确认字段前置明确为 Schema + 相关适用 Internal 的同步资格，不包含 External，也不当作完整通过证明。现行 requires 沿用字段名，字段前置补充已解析 constraintIds；新 Prepared 仍需同步正式类型 / Schema，候选验证器不作为实现证据。
 
 前置引用与静态非法配置应尽可能在 L2 诊断。L2 自动推导 Validation 可分析读取，并沿前置关系补全后置有效触发依赖；不可见的 Host 业务依赖由作者显式提供，不要求重复声明可推导依赖。L3 从命中任务递归补齐已解析的前置实例、去重并重排序，按本轮结果放行，不复用历史通过结论。这不修改 Reaction 显式 Watch，也不建立前置结果 PubSub；计划需保留补全依据，补全不意味着立即发起外部请求。字段有效性的范围、跨 Scope 解析、Issue 规范化与 Web / Dart 兼容矩阵见 [校验专题](l3-validation.md#validation-layers)。
 
 ### 首期 Prepared 机器结构基线 {#prepared-machine-baseline}
 
-2026-10-21 用户确认以准备后的有类型结构树执行，不首期建设字节码或自定义 VM。L2 已解析名称、函数身份和引用，L3 对准备树执行，不重解析原始声明或重分析依赖。Template 在编译时解析并展开，保留来源关系；递归引用及过度展开用编译检查和预算防护，运行时不再维护 L1 模板参数解释器。
+现行基线已由[本轮确认输入输出](#compiler-io-contract)修订：保留 Definition 的领域树、词法名称、Pointer 和 op + args；Prepared 以 definition 加必要资源和锁定包装交付。Template 共享保留，动态 Props 按完整 $expr 携带 watch；规则 watch 和 requires 放在规则本身，不新增 preparation 包装或集中依赖 ID。
 
-PreparedForm 组织为身份 / preparedFormatVersion、formPlan、viewPlan、dependencyPlan、capabilityLock、hostRequirements。formPlan 包含完整业务 Schema 资源、静态 Scope 模式、准备后的表达式 / 命令 / Reaction 与 Validation；viewPlan 携带当前 Profile 视图闭包；dependencyPlan 集中组织静态观察，消费者引用计划 ID。表达式来源与编译诊断的源位置保留，详细内部分析图留在 Compiler，不全部交付。
+此前 2026-10-21 首批方案采用有类型准备树、模板完全展开、Form / View / Dependency Plan 和不新增属性级准备信息；这些局部结构选择已被 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)明确修订，原理由与比较见[演进](design-history.md#compiler-io-confirmed)。两份结构、唯一 Prepared 执行入口、JSON、精确格式匹配和 Error 无执行制品继续有效。
 
-引用保存已解析的根 / 静态 Scope Pattern 及路径；L3 才绑定实际 Scope ID。依赖计划不保存数组成员、实例数据、回调、组件、请求状态或 Issue。数组结构是 Data 的观察方面，不另建事实源；观察激活归属与 runOnActivate 不混用。
+静态观察不保存真实 Scope ID、成员数据、组件、回调、请求状态或 Issue；Runtime 才绑定实例并管理活跃订阅。完整业务 Schema 及必要引用闭包随制品交付，不联网补 $ref，不拆 Keyword 局部引擎，不携带 Ajv 生成 JS。表达式精确失效不要求各端具有相同的 DOM 更新机制，也不新增字段 Controller。
 
-不新增节点 / 属性更新分级，沿用已确认共用 Adapter 接入；此前内嵌依赖与节点 / 属性粒度仅为比较过的草案，不作为新增协议。内部去重 / 求值优化由实现处理。
-
-完整根业务 Schema 及必要引用资源闭包随制品携带，编译时固定资源，不在执行时联网补 $ref；不拆 Keyword 局部引擎，不携带 Ajv 生成 JS 校验函数。正式 TS 全量字段与正反例按本节一次整合，方向确认不等于 ABI 已生产验收。
+现有 packages/protocol 的 Prepared 类型 / Schema 仍反映先前基线，本轮仅设计归档；后续类型迁移、Compiler / Runtime / Renderer 和契约测试必须同步后才能声称新结构已实现。
 
 ## 有类型的依赖关系与环检测 {#l2-dependencies}
 
@@ -491,7 +608,7 @@ View Binding 与动态 Props 自动形成视图计划；Command Value 和事件 
 
 ### 静态 Dependency Plan 与 Scope 模式
 
-PreparedForm 携带可复用静态观察描述，信息包括 owner（Reaction / Constraint / View）、触发依赖、已解析引用与 Scope Pattern、由 Runtime 或 View 挂载负责激活。Prepared View 可引用计划 ID 或内嵌紧凑依赖集合；正式字段、条目存储和节点 / 属性粒度仍待固化，见 [最小计划草图](dependency-reactivity.md#dependency-plan)。
+PreparedForm 在 Reaction / Constraint 和每个响应式 $expr 就地保存 watch，所属位置表达消费者身份，词法 Scope 关系保留；业务规则由 Runtime、呈现表达式由 Adapter 随挂载激活。当前不另设中央计划 ID；完整表达式级观察已确认，见[现行输出](#compiler-expression-watch)。
 
 计划只保存静态关系与求值入口，不保存回调、组件、当前数组长度、实例 ID 或已执行纯函数结果。Validation / Field Meta 等运行时状态观察由 L3 接入契约描述，不扩展 L1 Reference.source；数组结构观察的编码方式尚未冻结。
 
@@ -525,7 +642,7 @@ L2 知道 `insured(each).age → 该项 Constraint` 的模式；L3 将其绑定�
 }
 ```
 
-这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 分别携带 Form / View Plan、Scope / Reference 准备结果、锁定与 Host 要求；Runtime 的具体初始化 API 仍待 L3 固化。
+这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 按现行输入输出保留 definition、就地 watch / requires、资源、锁定与 Host 要求；旧 Form / View Plan 分层仅保留为历史逻辑分工，Runtime 的初始化 API 仍待固化。
 
 ## 失败路径、治理与验收 {#l2-acceptance}
 
@@ -557,9 +674,9 @@ L2 知道 `insured(each).age → 该项 Constraint` 的模式；L3 将其绑定�
 | Capability Release Lock | 分别锁 Manifest 内容摘要和实现制品字节摘要；按平台 / Profile 解析 | 固化实现及构建身份核对，不重开摘要对象选择 |
 | PreparedValidation | 完整 Schema 资源、规则引用 / 依赖 / 前置 / 消息计划 | 落实依赖推导 / 传递与前置共同入队，冻结引用语法及 Adapter 行为；不携带实例结果或跨端 JS 校验函数 |
 | Prepared ABI | JSON、独立格式版本、首阶段精确匹配已确认 | 完整字段、摘要、格式迁移与 SDK |
-| Dependency Plan | owner、watch、Scope Pattern 与激活归属；与 Form / View Plan 关联 | 序列化、状态引用、结构观察编码、节点粒度及格式迁移 |
+| Dependency Plan | 现行为规则 / 完整动态表达式上的统一 watch；词法 Scope 保留，按需激活 | 输入输出已确认；后续实现分析、绑定、精确失效与格式迁移，不恢复集中计划 ID |
 | 首次执行策略 | runOnActivate 可选且默认 false，L2 编译，L3 仅新实例首次安排 | 与观察生命周期归属分开；正式类型 / Schema 与候选样例迁移 |
-| Material 的 Host Service | Manifest 声明可观察依赖 | 未声明依赖的发布限制或运行时报告 |
+| Material 的 Host Request | 沿用 ADR-FE-016 的 requests 映射、确定契约及装配预检；services 已退出 | 后续实现资源闭包、签名连接及缺失时局部错误，不恢复旧服务需求 |
 
 这些是规范落地时的接口决策，不重新开放已经收敛的职责分工。
 

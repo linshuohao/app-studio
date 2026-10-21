@@ -11,10 +11,12 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-002
   - ADR-FE-005
   - ADR-FE-010
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
 - SRC-CONTRACTS
@@ -108,7 +110,9 @@ Expression 描述可能读取什么，本身没有订阅生命周期。L2 按类
 | `ScopeBinder.from` | 绑定及实例化 | 结构性关系，用于创建、删除、重排和改绑 |
 | Constraint `issue.target` / external `target` | Issue / 义务定位 | 目标本身不自动成为读取或触发依赖 |
 
-L2 保守覆盖短路计算的全部可能输入，Literal 内部不做表达式分析。对象作为纯函数参数时按对象子树观察；校验设计将完整 JSON Schema 保留为根级校验域，首版不自动拆分条件 / Keyword 局部单元。纯函数依赖只来自显式参数，不通过执行它推断输入。完整编译、Scope 与激活契约见 [跨层依赖与订阅](../dependency-reactivity.md)。
+L2 保守覆盖短路计算的全部可能输入，Literal 内部不做表达式分析。
+
+2026-10-21 已确认[输出表达式观察包装](../l2-preparation.md#compiler-expression-watch)：L1 输入语法不变；Prepared 在持续呈现的每个完整 $expr 旁加入统一 watch，按表达式精确失效 / 复用结果。内部递归节点不单独观察，按调用求值的位置不因此建立订阅。watch 不是业务对象保留键，$literal / literal 和返回值内不重新解释。对象作为纯函数参数时按对象子树观察；校验设计将完整 JSON Schema 保留为根级校验域，首版不自动拆分条件 / Keyword 局部单元。纯函数依赖只来自显式参数，不通过执行它推断输入。完整编译、Scope 与激活契约见 [跨层依赖与订阅](../dependency-reactivity.md)。
 
 > **求值失败的语义**
 > 

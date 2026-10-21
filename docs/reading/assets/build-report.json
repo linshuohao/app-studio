@@ -6,11 +6,11 @@
     "source_anchors_code_and_diagrams": "passed"
   },
   "counts": {
-    "html_files": 47,
-    "local_links_and_resources": 5865,
-    "markdown_documents": 45,
-    "source_entries": 398,
-    "typed_records": 89
+    "html_files": 48,
+    "local_links_and_resources": 6080,
+    "markdown_documents": 46,
+    "source_entries": 399,
+    "typed_records": 90
   },
   "generated_by": "tools/docs/build_docs.py",
   "id": "READER-BUILD-001",

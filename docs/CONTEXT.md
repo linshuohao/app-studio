@@ -36,7 +36,7 @@ _Avoid_：将原始定义当成 Runtime 的另一种直接执行入口，或把 
 **PreparedForm（编译后协议）**：L2 生成、供 L3 / L4 消费的确定执行产物，与 FormDefinition 具有不同的职责和版本契约。
 _Avoid_：原始 JSON 的另存副本、实例状态容器，或运行时自动补全 watch 的配置。
 
-**Prepared Source Map（编译来源映射）**：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；具体结构是推荐方向，尚未冻结。
+**Prepared Source Map（编译来源映射）**：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；详细结构和 SDK 随实现固化；不参与执行控制。
 _Avoid_：调度控制关系、Reaction 父子树，或可确定性重放的证明。
 
 **Read Dependency（读取依赖）**：某个表达式或取值过程可能使用的输入引用，不表示这些输入的变化必然触发业务行为。
@@ -45,8 +45,8 @@ _Avoid_：将所有读取自动视为 Reaction 的触发条件。
 **Watch Dependency（触发依赖）**：某个行为需要响应的状态变化范围，由使用位置的语义决定，显式 `watch` 是其中一种声明方式。
 _Avoid_：将 watch 解释为执行时机或回调调度策略。
 
-**Dependency Plan（依赖计划）**：描述行为、触发依赖、作用域模式和激活归属的静态观察计划；Observation Plan 是同一概念的说明性别称。
-_Avoid_：将计划当作已经激活的订阅，或另设一套平行的 Observation Plan 模型。
+**Dependency Plan（依赖计划）**：描述消费者、触发依赖和 Scope 关系的静态观察信息；现行 Prepared 以规则及完整动态表达式的 watch 就地表达，不强制集中表和计划 ID。Observation Plan 是说明性别称。
+_Avoid_：将静态 watch 当作已经激活的订阅、为内部每个运算子建观察者，或另设平行 Observation Plan 模型。
 
 **Dependency Index（运行时依赖索引）**：根据 Prepared 依赖计划与活跃订阅定位可能受某次修改影响的观察者的查找结构，命中后仍需比较观察值与处理实例生命周期。
 _Avoid_：把索引命中当成必然触发，或把具体 Trie 存储结构当成已经冻结的 Prepared ABI。
@@ -126,7 +126,7 @@ _Avoid_：以最新版本指针代替发布锁定。
 **Form Release**：绑定业务表单版本、编译产物、能力锁及 Host 依赖要求的不可变发布单元。
 _Avoid_：回滚时使用当前能力目录重新组装旧发布。
 
-**View Profile**：同一 FormDefinition 内按场景命名的视图，其值直接是一个 ViewNode。`default` 只是可选名称，不表示额外的协议层级。
+**View Profile**：同一 FormDefinition 内按场景命名的视图，其值直接是一个 ViewNode。`default` 只是可选名称，不表示额外协议层级；单入口自动选中，不强制显式 Profile / 平台选择。
 _Avoid_：Profile Entry 包装、固定 default 根。
 
 **Default Slot**：Material 的默认子节点组合位置，以 `slots.default` 表达，与 Profile 名称无关。

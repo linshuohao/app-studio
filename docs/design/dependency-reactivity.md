@@ -11,9 +11,11 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-004
   - ADR-FE-005
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-DEP
 - SRC-V05
@@ -30,6 +32,8 @@ reading_next: DESIGN-INTEGRATION
 本篇定义贯穿 L1 声明、L2 编译、L3 变化匹配与 L4 挂载的依赖契约。先区分读取、触发和活跃订阅，再看计划、身份、投递与生命周期。
 
 ## 范围、状态与三个概念 {#dependency-baseline}
+
+2026-10-21 用户已确认[保留领域结构的输入输出](l2-preparation.md#compiler-io-contract)：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式实现仍待迁移。
 
 本专题连接 [L1 表达式与约束](l1/03-expression-validation.md#expression)、[L2 静态编译](l2-preparation.md#l2-dependencies) 和 [Runtime](l3-reactive-engine.md#runtime) / [Renderer](l4-renderer.md)，解决各类消费者重复发现依赖的问题。各层完整职责、能力治理和发布机制仍在原主题维护。
 
@@ -72,7 +76,7 @@ reading_next: DESIGN-INTEGRATION
 
 唯一执行路径是 **L1 → L2 → PreparedForm → L3 → L4**。L2 可在编辑期、发布期、服务端或客户端加载时调用；客户端入口若接收原始定义，也必须先调用 L2，再把结果交给 L3，不能形成“解释原始 L1”和“消费 PreparedForm”的双轨运行语义。ABI 或能力兼容失败需要明确诊断，不静默退回原始配置解释器。
 
-L3 根据编译时已确定的 Dependency Plan 匹配实际 Change，不再次分析原始 AST 来补齐 Reaction.watch。它仍负责实际 Scope 实例、最新数据求值、Command 修改与运行保护；PreparedForm 可带 L1 身份及来源信息，但不持有用户数据或已激活观察者。正式 JSON / 二进制封装、字段与兼容矩阵由 [L2 ABI 契约](l2-preparation.md#l2-compile) 固化。
+L3 根据 Prepared 规则 / 表达式上的确定 watch 匹配实际 Change，不再次遍历原始表达式发现隐式依赖，也不补齐 Reaction.watch。它仍负责实际 Scope 实例、最新数据求值、Command 修改与运行保护；PreparedForm 可带 L1 身份及来源信息，但不持有用户数据或已激活观察者。正式 JSON / 二进制封装、字段与兼容矩阵由 [L2 ABI 契约](l2-preparation.md#l2-compile) 固化。
 
 ## 显式 Watch 与作者确认的编译建议 {#dependency-watch-review}
 
@@ -205,7 +209,7 @@ Constraint 的 `issue.target` / external `target` 是归属位置，不能充当
 
 ## L2 递归分析与使用位置编译 {#dependency-analysis}
 
-输入为 Definition、确定的能力契约与目标；输出为 Prepared Expression / ValueSpec、Dependency Plan 和 Diagnostics。逻辑步骤是类型引导的读取分析、使用位置解释、Scope / 模板绑定解析、检查及打包，可共享遍历，不强制分成多个服务。
+输入为 Definition、确定的能力契约与按需目标；输出保留原 Expression / ValueSpec 结构，以消费者就地 watch 表达必要观察，并返回 Diagnostics。逻辑步骤是类型引导的读取分析、使用位置解释、Scope / 模板绑定解析、检查及打包，可共享遍历，不强制分成多个服务。
 
 | 结构 | 分析要求 |
 | --- | --- |
@@ -255,7 +259,7 @@ interface PreparedDependency {
 | 行为身份、Prepared 求值引用、激活归属 | 回调、组件、DOM、宿主对象 |
 | View 与计划的关联 | 挂载状态、通知队列、框架优先级 |
 
-2026-10-21 首批基线选择集中 Dependency Plan、消费者引用计划 ID。内嵌集合与节点 / 属性拆分是旧候选比较，不建立新更新分级；仍沿用共用 Adapter 的已确认边界。正式字段及兼容验收按 [Prepared 基线](l2-preparation.md#prepared-machine-baseline)整合，不将方向确认等同于完成 ABI 发布。
+2026-10-21 首批曾选择集中计划 ID，后由 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)局部替代：输出规则 watch 和完整响应式 $expr 包装的 watch，统一 DataReference 及可选观察方面；不另设 preparation 包装。动态 Props 各表达式独立失效 / 复用结果，不以组件合并集合后的全部重算替代；内部运算子不拆成观察者。Binding 直接使用原引用，Payload / Command 值按调用求值。旧中央表和粒度比较在上方代码追溯保留，正式字段与实现按 [现行 Prepared 基线](l2-preparation.md#prepared-machine-baseline)迁移。
 
 ## Scope：静态模式、真实实例与视图实例 {#dependency-scope}
 
@@ -325,7 +329,7 @@ interface SubscribeOptions {
 
 External Constraint 要分开三件事：依赖变化立即使旧结论不再可信并可登记校验 Pending；blur、显式 validate、submit 或待固化的自动策略决定是否请求 Host；返回成功 / 异常都核对有效输入、请求代次与 Scope 实例，过期结果不得覆盖当前状态。请求、重试和取消仍归 Host。
 
-明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不新增结果反向 PubSub。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。来源的 requires / validationMessages / PreparedValidation 仍是待固化方向。
+明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不新增结果反向 PubSub。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 [L2](l2-preparation.md#compiler-io-differences)。
 
 初始化校验、主动校验、首次 View 读取和 Reaction 是否初始化执行都有独立入口。`subscribe` 本身不隐含“注册时必然执行一次”；初始数据已违反 Constraint 也必须能被初始化 / 主动校验发现。
 
@@ -345,7 +349,7 @@ External Constraint 要分开三件事：依赖变化立即使旧结论不再可
 | L4 自行解析 AST 并监听 Data | 框架可自主组织 | 重复 L2 分析，跨端语义容易漂移；不采用 |
 | L2 编译 + L4 挂载订阅 | 静态语义统一，按需激活 | 要求稳定 L3 订阅 / 读取契约；本次采用的方向 |
 
-例：insured 项的 Input Binding 读取 guardianName，动态 disabled 读取 age。L2 为其准备两条关系；L4 挂载时用当前 Scope 激活计划，随后经共享求值入口刷新。按节点合并或按 Binding / Props 拆分仍待测量。
+例：insured 项的 Input Binding 读取 guardianName，动态 disabled 读取 age。Binding 沿用自身引用，L2 在 disabled 的完整 $expr 包装内保存 watch；L4 挂载时分别绑定当前 Scope。guardianName 变化不要求重算 disabled。共用 Adapter 管理全部接入，但不把依赖合并后全部重算；静态依赖覆盖完整表达式所有可能分支，不为内部运算子建立独立观察者。
 
 ```json
 {
@@ -370,6 +374,8 @@ External Constraint 要分开三件事：依赖变化立即使旧结论不再可
 ```
 
 片段假设数组项字段及 text-input 的 disabled 契约已声明；它只展示 Scope / Binding / Props，业务 Constraint 仍在 Form 层独立声明。
+
+旧节点级生命周期代码保留说明挂载 / 清理的职责；其中整体刷新不替代当前按表达式失效和复用结果的要求。
 
 ```typescript
 // 生命周期示意，不是可直接替代框架 Store Adapter 的实现。
@@ -487,13 +493,13 @@ Reaction 仅承担协议内同步联动，不理解网络请求、取消、重�
 
 ### L4 组件 Adapter 的订阅边界
 
-L4 以物料组件及其 Adapter 为接入单位。Adapter 按 Prepared 配置与当前 Scope 订阅 Runtime 提供的相关状态变化通知，读取当前值、校验结果及动态配置并组装组件 Props；组件渲染与内部差异比较由平台框架处理，不在协议中另建整表 / 节点 / 属性 / 字段端口的更新分级。通知用于重新读取权威状态，不是要求 L4 重放事件以维护第二份业务数据。
+L4 以物料组件及其 Adapter 为接入单位。Adapter 按 Prepared 配置与当前 Scope 订阅 Runtime 提供的相关状态变化通知，读取当前值、校验结果及动态配置并组装组件 Props；完整动态表达式分别观察和失效，不按组件全部重算；组件渲染与内部差异比较仍由框架处理，不新增字段 Controller 或固定 DOM 更新分级。通知用于重新读取权威状态，不是要求 L4 重放事件以维护第二份业务数据。
 
 组件接收的表单业务数据与校验状态以 Runtime 为唯一权威来源；事件经 Adapter 转成既有 Command 调用 Runtime，数据更新再经订阅反馈到 Props。局部框架缓存只是当前 Props 的呈现，不是独立业务 Store。组件可持有焦点、输入法组合态、展开 / 收起等内部交互状态，其交付边界后续明确。Host 业务操作仍由既有 host.emit 路径交给 Host，不将所有事件一律变成数据 Command。
 
 保留既有 bindings 作为“组件使用哪些数据”的具名映射，不新增所谓字段端口、端口级 Controller 或独立匹配引擎。单字段或多字段控件都由 Adapter 将相关数据组织成实际组件 Props，并将组件事件映射为受控指令。Renderer 负责物料树的装配，Scope 关联与订阅释放等职责需要继续讨论，不强制拆出 View Controller / Binding Controller 类或固定包层次。
 
-此前节点 / 属性拆分与局部一致投影是候选比较，不是用户已接受的新更新体系。订阅与初次读取 / 改绑的安全交接仍需保证，但不因此增加字段端口或新的通知队列协议。
+此前节点 / 属性拆分曾为候选；现已由 ADR-FE-017 确认完整 $expr 各自携带 watch、精确失效 / 复用结果。Adapter 统一管理不代表组件全部重算；订阅与初次读取 / 改绑仍需安全交接，不因此增加字段端口或新的通知队列。
 
 ### 共用 Adapter 与物料内部行为
 

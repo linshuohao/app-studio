@@ -42,6 +42,11 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 ## 来源编号与精确定位 {#source-register}
 
+### SRC-COMPILERIO：编译输入输出、精确表达式观察及默认易用性 {#src-compiler-io}
+
+2026-10-21 当前对话用户重新审阅编译价值，明确保持输入输出领域结构，接受隐式依赖和校验前置准备，修订为完整动态表达式就地 watch、模板共享，并在完整结论后确认不显著区分 Canonical / Authoring、单视图无需额外 Profile / 平台配置。现行 [L2](l2-preparation.md#compiler-io-contract)、[ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)与[演进](design-history.md#compiler-io-confirmed)记录确认与替代范围。对话曾提供 HTML 草案用于审阅，旧草案中的 preparation / 组件合并不代表最终结论；不把下载文件作为权威来源，也不伪造逐字会话存档。本轮仅归档，旧 Prepared 类型 / Schema 待迁移，功能检查与算法为下一专题。
+
+
 ### SRC-EARLY：最初架构与抽象边界 {#src-early}
 
 [2026-10-14 目录](../history/2026-10-14/README.md)保存完整层级、模型、依赖、事务 / Host 交互和详细设计路线。[术语统一前原始来源包](../history/2026-10-17-decision-sources.zip)内 `before-pure-function-terminology/2026-10-14/` 保存原字节。现行[整体架构](architecture.md)及各层主题保留这些完整问题与图示，Resource / 通用执行器等旧候选的替代说明在[架构演进](design-history.md#decisions)。早期标题、原锚点和内容摘要身份见机器清单，不补造段落编号。

@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 45,
+    "current-markdown": 46,
     "documentation-tooling": 12,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 398,
-  "unique_byte_contents": 359,
+  "total_entries": 399,
+  "unique_byte_contents": 360,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10790,
-      "sha256": "53732579f30984f45cf696d4c5b1810213cef3ea32288ac2c46df510ff393655",
+      "bytes": 10984,
+      "sha256": "cbff77de148a12fb9814bb65ff8d4fa13a518dd3a5c775988979e182bb2a888b",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -271,8 +271,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 45237,
-      "sha256": "067fee0cee4915d9c7a78faeb8cc1ca4eb46af7b7f92e7580dbb62971545d4cb",
+      "bytes": 45639,
+      "sha256": "6bee0eeecd8144dc15e95586617f1fc1649b2db8e48be46e0eb60d6b78eb4b14",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -526,8 +526,8 @@
       "path": "docs/design/decisions/ADR-FE-003-view-material.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 7714,
-      "sha256": "f5e4a8378dba13b68b53f57f89e02508ee140f41490b3bf80a93dc4913da7ef1",
+      "bytes": 8588,
+      "sha256": "41664dd8d8fa8bd0dbb9c856a3473385af2a603a449a9baafa17260a70e7e5d2",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -574,6 +574,11 @@
           "level": 3,
           "title": "2026-10-21：物料请求决策修订",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：输入输出与精确表达式观察的局部修订",
+          "anchor": null
         }
       ]
     },
@@ -581,8 +586,8 @@
       "path": "docs/design/decisions/ADR-FE-004-prepared-entry.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5256,
-      "sha256": "7df717d4474f149becf3839566331d277ffdb79af9d269d2c3852ca162fee830",
+      "bytes": 6130,
+      "sha256": "2ad3dc4fce3dc04325b09bc56d1130b1864c7a133bee7eb83eb5dd657a2b98e1",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -619,6 +624,11 @@
           "level": 3,
           "title": "2026-10-21：Prepared 首批结构与装载",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：输入输出与精确表达式观察的局部修订",
+          "anchor": null
         }
       ]
     },
@@ -626,8 +636,8 @@
       "path": "docs/design/decisions/ADR-FE-005-watch-subscription.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 2680,
-      "sha256": "fa27fc9eaf13b13a789c792fcc9d989dc1fd1e852345325f5c6cb82faec73e09",
+      "bytes": 3554,
+      "sha256": "128b6655b8f8285182ec411c5461d2dd8cbd8a5c773a6918ef34f8c8b75bb586",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -654,6 +664,11 @@
           "level": 2,
           "title": "来源与关联",
           "anchor": "adr-005-sources"
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：输入输出与精确表达式观察的局部修订",
+          "anchor": null
         }
       ]
     },
@@ -1138,11 +1153,51 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-017-compiler-io.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 5236,
+      "sha256": "08781c31bd4d780c9cbd39f5deee22e04fc8e27eff7df8e64aa5e48607687f70",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-017：保留领域结构的编译输入输出与表达式级观察",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与实际比较",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决定",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "与既有决策的关系",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "收益、代价与状态",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "来源",
+          "anchor": null
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 42321,
-      "sha256": "2a31ef133c2b524c8a2299a9fbe4662b00c51ea01ca9aa167e31c7b10e316de4",
+      "bytes": 43545,
+      "sha256": "ab2245fbafe48968c972a139cfedb510746b6b97cc0c1067a6d3f282afb144d6",
       "mapping": "SRC-DEP / SRC-V05 / K10–K13",
       "sections": [
         {
@@ -1256,8 +1311,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 138210,
-      "sha256": "8ac0aa6eee2568ba365c02a4aaa76b6d3c5cebf5a6a79130fa1eb19baecc28fa",
+      "bytes": 140501,
+      "sha256": "7454a7f51707f5d7cc7273799176403f8ede716fb3e26556ef1ba31aa1d511f1",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1699,6 +1754,11 @@
           "level": 2,
           "title": "2026-10-21：请求类型贯通及缺失接入的明确错误",
           "anchor": "request-integration-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "编译输入输出与默认使用方式确认",
+          "anchor": "compiler-io-confirmed"
         }
       ]
     },
@@ -1981,8 +2041,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 34925,
-      "sha256": "a447d6974c3aa62cf7533ee9527feed53ff3cb5e5cb9308ba5c76ac33a60864c",
+      "bytes": 35639,
+      "sha256": "31bc22fa994f7e7a6aa2b147ab253fc06aefc718334ae5f0f3fef6c5f926f25f",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2161,8 +2221,8 @@
       "path": "docs/design/l1/03-expression-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 16410,
-      "sha256": "6dab38efb0790ea8fae14d2115d93b7b066cf90cb0b227fca537566c46aabe7b",
+      "bytes": 16852,
+      "sha256": "4479c675a33617d12f8ffe19fdbeb2e79eed0c3c7136ed0704b341dbcdc6cb0b",
       "mapping": "SRC-L1 / K05–K06 / K12 / K25–K28",
       "sections": [
         {
@@ -2246,8 +2306,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 21208,
-      "sha256": "733000ba8cc715582c493928d6e58ab1051988a15731a7f0a168a2280d2da83e",
+      "bytes": 21899,
+      "sha256": "a42399507b6b2efb7f17aae460f323b8924426c3dbb738478f9d50619d05194f",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2341,8 +2401,8 @@
       "path": "docs/design/l1/06-lifecycle-profiles.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4896,
-      "sha256": "d618a2d921a6daebdcb243ac3fb35e36cf62a12bea6d65678d3864e36ca2826c",
+      "bytes": 5234,
+      "sha256": "d429490807843cc353217ac4569d0344c5f2bd3d7d846f084f2e88f2c170bb5d",
       "mapping": "SRC-L1 / SRC-HOST / K20–K22 / K28",
       "sections": [
         {
@@ -2396,8 +2456,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17852,
-      "sha256": "91c434721cf2d77aa120d6b8da6be26877a8cd4794c34c4d6e63a27a8545b3b7",
+      "bytes": 18368,
+      "sha256": "371e6e44c3f60b95532aae4cd7e96ff9fd5c4f7f3cbcb512edbb351a1293ebfa",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2506,8 +2566,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 55311,
-      "sha256": "8be212923066f2c66d8074d08ec198d4064d0bf7725a8f4bcc8fda5299098111",
+      "bytes": 66388,
+      "sha256": "27c10bb9e883b6b642d0d64068fa31ba69a733b9013d3503092016de9adc0aa3",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -2599,6 +2659,31 @@
           "level": 2,
           "title": "编译输入、输出与四项核心工作",
           "anchor": "l2-compile"
+        },
+        {
+          "level": 3,
+          "title": "已确认输入输出与默认使用方式",
+          "anchor": "compiler-io-contract"
+        },
+        {
+          "level": 3,
+          "title": "Definition 保留范围与输出差异",
+          "anchor": "compiler-io-differences"
+        },
+        {
+          "level": 3,
+          "title": "表达式包装、递归与精确更新",
+          "anchor": "compiler-expression-watch"
+        },
+        {
+          "level": 3,
+          "title": "交付资源、诊断和后续边界",
+          "anchor": "compiler-io-delivery"
+        },
+        {
+          "level": 3,
+          "title": "早期接口草图的追溯边界",
+          "anchor": null
         },
         {
           "level": 3,
@@ -2896,8 +2981,8 @@
       "path": "docs/design/l3-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 37774,
-      "sha256": "dc16b8ad9924d3c856e31fdd1bce591984863dcbfa42de4ffd91bd45727f30e6",
+      "bytes": 38216,
+      "sha256": "9b30c38b25c0ca8c1633e269cb1243db66029f9d0baa465e5b1b808a78be4995",
       "mapping": "SRC-V07 / K25–K28",
       "sections": [
         {
@@ -3016,8 +3101,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 25854,
-      "sha256": "de714694f0aa7e325419798c06ed9ae4b1ef95e92838b11e442b9ef85c4df6c8",
+      "bytes": 26592,
+      "sha256": "dfd1a5fe44e74997e24be18ce0459e16c11bffdbf0cdbae10dd2cded650f8f23",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {

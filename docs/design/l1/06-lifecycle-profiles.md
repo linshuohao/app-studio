@@ -10,9 +10,11 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-008
   - ADR-FE-010
 sources:
+- SRC-COMPILERIO
 - SRC-L1
 - SRC-HOST
 navigation:
@@ -50,6 +52,8 @@ Host 如需初始联动完成后的业务快照，可观察相应完成结果后
 Reset 后 Watch 未变，已有 Reaction 就不新增入队，即使当前费率或期望计算结果不同。业务需通过正确 Watch 配置或明确数据修改表达目标；本次经用户确认保留现行 Context 契约，不新增 Context 写入命令或 Context Reaction.watch。例子与现行边界验收见 [Runtime / Host 四条原则](../l3-reactive-engine.md#l3-runtime-host-boundary)。异常 / 整体预算停止、Pending 再触发与 异常轮次与 Validation / Submit 的完成衔接仍见 [L3 契约](../l3-reactive-engine.md#l3-consumers)，不增加业务 Reset 执行模式。
 
 ## 多 Profile 与按需交付 {#profiles}
+
+多 Profile 是扩展能力，不是单视图调用的必填选项。单一 views 入口自动选中，无需指定平台；目标选择与资源锁定仍遵守[默认输入规则](../l2-preparation.md#compiler-io-contract)。表达式观察按当前挂载实例激活，切换 / 卸载释放旧接入。
 
 > 状态：已收敛
 

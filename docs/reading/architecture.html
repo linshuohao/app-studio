@@ -8,7 +8,7 @@
   <title>整体架构设计 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
+  <script src="assets/knowledge-index.js?v=bc4d4ce1f0b7" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -59,6 +59,7 @@
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
+<a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -685,7 +686,8 @@
 </table></div>
 <p><strong>状态归属只有一个权威源。</strong>每个 Form Instance 只有一份 Working Data。Renderer 不保存第二份权威业务数据，也不另行解释业务规则。</p>
 <p><strong>不要求交付多个独立引擎。</strong>不预建独立 View Engine、Workflow Engine 或复杂双向桥接平台。外部流程通过 Host 集成；内部纯计算通过受控 Pure Function 扩展。</p>
-<p><strong>两份结构，一条执行路径。</strong>FormDefinition 供业务作者编辑和审查，PreparedForm 是编译后的运行输入；Canonical / Authoring 仍属于 L1，不是第三套业务协议。L3 只消费兼容 PreparedForm，不在失败时退回直接解释 L1。编辑期调用 L2 给出建议，作者确认后修改定义再编译；Prepared 的执行依赖在编译时确定。完整对照见 <a href="dependency-reactivity.html#dependency-compiled-protocol" rel="noopener noreferrer">原始与编译后协议</a>。</p>
+<p><strong>两份结构，一条执行路径。</strong>FormDefinition 供业务作者编辑和审查，PreparedForm 是编译后的运行输入；Canonical / Authoring 仍属于 L1，不是第三套业务协议。</p>
+<p>2026-10-21 已确认<a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">默认编译入口与输出</a>：无需显著区分两种输入表示，单视图自动选择，平台按需指定。Prepared 保留领域结构，规则 / 完整呈现表达式就地 watch、模板共享，精确求值由统一 Runtime 能力和 Adapter 落实；不改变分层或生成平台执行代码。L3 只消费兼容 PreparedForm，不在失败时退回直接解释 L1。编辑期调用 L2 给出建议，作者确认后修改定义再编译；Prepared 的执行依赖在编译时确定。完整对照见 <a href="dependency-reactivity.html#dependency-compiled-protocol" rel="noopener noreferrer">原始与编译后协议</a>。</p>
 </section>
 <section class="section" id="boundary"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>产品能力边界</h2></div></div>
 
@@ -970,14 +972,14 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 <em>Avoid</em>：将原始定义当成 Runtime 的另一种直接执行入口，或把 Authoring / Canonical 算成两份独立业务协议。</p>
 <p><strong>PreparedForm（编译后协议）</strong>：L2 生成、供 L3 / L4 消费的确定执行产物，与 FormDefinition 具有不同的职责和版本契约。
 <em>Avoid</em>：原始 JSON 的另存副本、实例状态容器，或运行时自动补全 watch 的配置。</p>
-<p><strong>Prepared Source Map（编译来源映射）</strong>：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；具体结构是推荐方向，尚未冻结。
+<p><strong>Prepared Source Map（编译来源映射）</strong>：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；详细结构和 SDK 随实现固化；不参与执行控制。
 <em>Avoid</em>：调度控制关系、Reaction 父子树，或可确定性重放的证明。</p>
 <p><strong>Read Dependency（读取依赖）</strong>：某个表达式或取值过程可能使用的输入引用，不表示这些输入的变化必然触发业务行为。
 <em>Avoid</em>：将所有读取自动视为 Reaction 的触发条件。</p>
 <p><strong>Watch Dependency（触发依赖）</strong>：某个行为需要响应的状态变化范围，由使用位置的语义决定，显式 <code>watch</code> 是其中一种声明方式。
 <em>Avoid</em>：将 watch 解释为执行时机或回调调度策略。</p>
-<p><strong>Dependency Plan（依赖计划）</strong>：描述行为、触发依赖、作用域模式和激活归属的静态观察计划；Observation Plan 是同一概念的说明性别称。
-<em>Avoid</em>：将计划当作已经激活的订阅，或另设一套平行的 Observation Plan 模型。</p>
+<p><strong>Dependency Plan（依赖计划）</strong>：描述消费者、触发依赖和 Scope 关系的静态观察信息；现行 Prepared 以规则及完整动态表达式的 watch 就地表达，不强制集中表和计划 ID。Observation Plan 是说明性别称。
+<em>Avoid</em>：将静态 watch 当作已经激活的订阅、为内部每个运算子建观察者，或另设平行 Observation Plan 模型。</p>
 <p><strong>Dependency Index（运行时依赖索引）</strong>：根据 Prepared 依赖计划与活跃订阅定位可能受某次修改影响的观察者的查找结构，命中后仍需比较观察值与处理实例生命周期。
 <em>Avoid</em>：把索引命中当成必然触发，或把具体 Trie 存储结构当成已经冻结的 Prepared ABI。</p>
 <p><strong>Subscription（活跃订阅）</strong>：某个消费者在 FormRuntime 中已建立的观察关系，具有自身的激活与释放生命周期。
@@ -1030,7 +1032,7 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 <em>Avoid</em>：以最新版本指针代替发布锁定。</p>
 <p><strong>Form Release</strong>：绑定业务表单版本、编译产物、能力锁及 Host 依赖要求的不可变发布单元。
 <em>Avoid</em>：回滚时使用当前能力目录重新组装旧发布。</p>
-<p><strong>View Profile</strong>：同一 FormDefinition 内按场景命名的视图，其值直接是一个 ViewNode。<code>default</code> 只是可选名称，不表示额外的协议层级。
+<p><strong>View Profile</strong>：同一 FormDefinition 内按场景命名的视图，其值直接是一个 ViewNode。<code>default</code> 只是可选名称，不表示额外协议层级；单入口自动选中，不强制显式 Profile / 平台选择。
 <em>Avoid</em>：Profile Entry 包装、固定 default 根。</p>
 <p><strong>Default Slot</strong>：Material 的默认子节点组合位置，以 <code>slots.default</code> 表达，与 Profile 名称无关。
 <em>Avoid</em>：把默认插槽与默认视图混用。</p>
@@ -1054,7 +1056,7 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 <a href="#flow" data-to="flow" title="完整案例：保险投保表单的一次交互"><span class="nav-num">06</span><span>完整案例：保险投保表单的一次交互</span></a>
 <a href="#current-design-map" data-to="current-design-map" title="继续阅读：从全貌进入具体能力"><span class="nav-num">07</span><span>继续阅读：从全貌进入具体能力</span></a>
 <a href="#glossary" data-to="glossary" title="术语约定"><span class="nav-num">08</span><span>术语约定</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ARCH-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>分层与主体语义已确认，公开接口与生产实现未完成</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li></ul></details><details open><summary>关联 ADR · 13</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 15</summary><ul><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/07-examples.html#sample">完整示例与业务组合</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ARCH-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>分层与主体语义已确认，公开接口与生产实现未完成</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li></ul></details><details open><summary>关联 ADR · 14</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 16</summary><ul><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/07-examples.html#sample">完整示例与业务组合</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

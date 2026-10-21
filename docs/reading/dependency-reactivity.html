@@ -8,7 +8,7 @@
   <title>跨层依赖与订阅 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
+  <script src="assets/knowledge-index.js?v=bc4d4ce1f0b7" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -59,6 +59,7 @@
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
+<a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -78,6 +79,7 @@
         <hr class="hero-line">
         <section class="section" id="dependency-baseline"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>范围、状态与三个概念</h2></div></div>
 
+<p>2026-10-21 用户已确认<a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">保留领域结构的输入输出</a>：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式实现仍待迁移。</p>
 <p>本专题连接 <a href="l1/03-expression-validation.html#expression" rel="noopener noreferrer">L1 表达式与约束</a>、<a href="l2-preparation.html#l2-dependencies" rel="noopener noreferrer">L2 静态编译</a> 和 <a href="l3-reactive-engine.html#runtime" rel="noopener noreferrer">Runtime</a> / <a href="l4-renderer.html" rel="noopener noreferrer">Renderer</a>，解决各类消费者重复发现依赖的问题。各层完整职责、能力治理和发布机制仍在原主题维护。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -213,7 +215,7 @@
 </tbody>
 </table></div>
 <p>唯一执行路径是 <strong>L1 → L2 → PreparedForm → L3 → L4</strong>。L2 可在编辑期、发布期、服务端或客户端加载时调用；客户端入口若接收原始定义，也必须先调用 L2，再把结果交给 L3，不能形成“解释原始 L1”和“消费 PreparedForm”的双轨运行语义。ABI 或能力兼容失败需要明确诊断，不静默退回原始配置解释器。</p>
-<p>L3 根据编译时已确定的 Dependency Plan 匹配实际 Change，不再次分析原始 AST 来补齐 Reaction.watch。它仍负责实际 Scope 实例、最新数据求值、Command 修改与运行保护；PreparedForm 可带 L1 身份及来源信息，但不持有用户数据或已激活观察者。正式 JSON / 二进制封装、字段与兼容矩阵由 <a href="l2-preparation.html#l2-compile" rel="noopener noreferrer">L2 ABI 契约</a> 固化。</p>
+<p>L3 根据 Prepared 规则 / 表达式上的确定 watch 匹配实际 Change，不再次遍历原始表达式发现隐式依赖，也不补齐 Reaction.watch。它仍负责实际 Scope 实例、最新数据求值、Command 修改与运行保护；PreparedForm 可带 L1 身份及来源信息，但不持有用户数据或已激活观察者。正式 JSON / 二进制封装、字段与兼容矩阵由 <a href="l2-preparation.html#l2-compile" rel="noopener noreferrer">L2 ABI 契约</a> 固化。</p>
 </section>
 <section class="section" id="dependency-watch-review"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>显式 Watch 与作者确认的编译建议</h2></div></div>
 
@@ -419,7 +421,7 @@
 </section>
 <section class="section" id="dependency-analysis"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>L2 递归分析与使用位置编译</h2></div></div>
 
-<p>输入为 Definition、确定的能力契约与目标；输出为 Prepared Expression / ValueSpec、Dependency Plan 和 Diagnostics。逻辑步骤是类型引导的读取分析、使用位置解释、Scope / 模板绑定解析、检查及打包，可共享遍历，不强制分成多个服务。</p>
+<p>输入为 Definition、确定的能力契约与按需目标；输出保留原 Expression / ValueSpec 结构，以消费者就地 watch 表达必要观察，并返回 Diagnostics。逻辑步骤是类型引导的读取分析、使用位置解释、Scope / 模板绑定解析、检查及打包，可共享遍历，不强制分成多个服务。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -504,7 +506,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>2026-10-21 首批基线选择集中 Dependency Plan、消费者引用计划 ID。内嵌集合与节点 / 属性拆分是旧候选比较，不建立新更新分级；仍沿用共用 Adapter 的已确认边界。正式字段及兼容验收按 <a href="l2-preparation.html#prepared-machine-baseline" rel="noopener noreferrer">Prepared 基线</a>整合，不将方向确认等同于完成 ABI 发布。</p>
+<p>2026-10-21 首批曾选择集中计划 ID，后由 <a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>局部替代：输出规则 watch 和完整响应式 $expr 包装的 watch，统一 DataReference 及可选观察方面；不另设 preparation 包装。动态 Props 各表达式独立失效 / 复用结果，不以组件合并集合后的全部重算替代；内部运算子不拆成观察者。Binding 直接使用原引用，Payload / Command 值按调用求值。旧中央表和粒度比较在上方代码追溯保留，正式字段与实现按 <a href="l2-preparation.html#prepared-machine-baseline" rel="noopener noreferrer">现行 Prepared 基线</a>迁移。</p>
 </section>
 <section class="section" id="dependency-scope"><div class="section-head"><div class="kicker">08 · FORM ENGINE</div><div class="section-title"><h2>Scope：静态模式、真实实例与视图实例</h2></div></div>
 
@@ -605,7 +607,7 @@
 </figure>
 <p>只更新 Validation Issue 不应触发仅观察 Data 的 Reaction。Reaction 产生的新 Command 仍走统一数据入口，不能旁路写 Store。外部观察者收到的可以是“当前投影可能失效”信号，随后读取最新状态；Reaction 自身也已明确为状态收敛语义，同一 pending 实例多次失效可以合并，执行时读取最新值。显式 Command / Host 事件的次数不因此合并。</p>
 <p>External Constraint 要分开三件事：依赖变化立即使旧结论不再可信并可登记校验 Pending；blur、显式 validate、submit 或待固化的自动策略决定是否请求 Host；返回成功 / 异常都核对有效输入、请求代次与 Scope 实例，过期结果不得覆盖当前状态。请求、重试和取消仍归 Host。</p>
-<p>明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不新增结果反向 PubSub。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 <a href="l3-validation.html" rel="noopener noreferrer">校验链、结果与新鲜度</a> 不在本篇复制。来源的 requires / validationMessages / PreparedValidation 仍是待固化方向。</p>
+<p>明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不新增结果反向 PubSub。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 <a href="l3-validation.html" rel="noopener noreferrer">校验链、结果与新鲜度</a> 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 <a href="l2-preparation.html#compiler-io-differences" rel="noopener noreferrer">L2</a>。</p>
 <p>初始化校验、主动校验、首次 View 读取和 Reaction 是否初始化执行都有独立入口。<code>subscribe</code> 本身不隐含“注册时必然执行一次”；初始数据已违反 Constraint 也必须能被初始化 / 主动校验发现。</p>
 <p>常规 Reaction 的新增失效严格来自有效 Watch 变化；业务结果不符预期、Host Reset 意图或读取 snapshot 均不构成触发。runOnActivate 只在新实例首次建立时独立应用，既有实例不借它主动修复结果。Host 自选业务快照 / Dirty / 恢复 Command；snapshot 不隐式 Flush 或标 Clean，是否等待已有任务完成由 Host 所需场景及完成观察契约决定。详见 <a href="l3-reactive-engine.html#l3-runtime-host-boundary" rel="noopener noreferrer">四条职责原则</a>。</p>
 <p>用户已明确本次 Context 保持原有契约：L1 Command 只写 Data、Reaction.watch 只接受 DataReference，Context 对表达式只读。运行时订阅草图中的 Context / Field Meta 等候选状态类别不等于新增 L1 Watch；Field Meta 也不因此承诺核心 Dirty 或编辑来源分类。</p>
@@ -640,7 +642,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>例：insured 项的 Input Binding 读取 guardianName，动态 disabled 读取 age。L2 为其准备两条关系；L4 挂载时用当前 Scope 激活计划，随后经共享求值入口刷新。按节点合并或按 Binding / Props 拆分仍待测量。</p>
+<p>例：insured 项的 Input Binding 读取 guardianName，动态 disabled 读取 age。Binding 沿用自身引用，L2 在 disabled 的完整 $expr 包装内保存 watch；L4 挂载时分别绑定当前 Scope。guardianName 变化不要求重算 disabled。共用 Adapter 管理全部接入，但不把依赖合并后全部重算；静态依赖覆盖完整表达式所有可能分支，不为内部运算子建立独立观察者。</p>
 <div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-nt">"scope"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
 <span class="syn-w">    </span><span class="syn-nt">"from"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/insureds"</span><span class="syn-w"> </span><span class="syn-p">},</span>
@@ -662,6 +664,7 @@
 <span class="syn-p">}</span>
 </code></pre></div>
 <p>片段假设数组项字段及 text-input 的 disabled 契约已声明；它只展示 Scope / Binding / Props，业务 Constraint 仍在 Form 层独立声明。</p>
+<p>旧节点级生命周期代码保留说明挂载 / 清理的职责；其中整体刷新不替代当前按表达式失效和复用结果的要求。</p>
 <div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-c1">// 生命周期示意，不是可直接替代框架 Store Adapter 的实现。</span>
 <span class="syn-kd">function</span><span class="syn-w"> </span><span class="syn-nx">mountPreparedView</span><span class="syn-p">(</span><span class="syn-nx">runtime</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">node</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nx">scope</span><span class="syn-p">)</span><span class="syn-w"> </span><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-kd">const</span><span class="syn-w"> </span><span class="syn-nx">unsubscribe</span><span class="syn-w"> </span><span class="syn-o">=</span><span class="syn-w"> </span><span class="syn-nx">runtime</span><span class="syn-p">.</span><span class="syn-nx">subscribe</span><span class="syn-p">(</span>
@@ -981,10 +984,10 @@
 <p>Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。</p>
 <p>具体执行见 <a href="l3-reactive-engine.html#l3-reactions" rel="noopener noreferrer">Reaction 合并</a>，决策见 <a href="decisions/ADR-FE-006-command-flush.html" rel="noopener noreferrer">ADR-FE-006</a>。</p>
 <h3 id="l4-组件-adapter-的订阅边界">L4 组件 Adapter 的订阅边界</h3>
-<p>L4 以物料组件及其 Adapter 为接入单位。Adapter 按 Prepared 配置与当前 Scope 订阅 Runtime 提供的相关状态变化通知，读取当前值、校验结果及动态配置并组装组件 Props；组件渲染与内部差异比较由平台框架处理，不在协议中另建整表 / 节点 / 属性 / 字段端口的更新分级。通知用于重新读取权威状态，不是要求 L4 重放事件以维护第二份业务数据。</p>
+<p>L4 以物料组件及其 Adapter 为接入单位。Adapter 按 Prepared 配置与当前 Scope 订阅 Runtime 提供的相关状态变化通知，读取当前值、校验结果及动态配置并组装组件 Props；完整动态表达式分别观察和失效，不按组件全部重算；组件渲染与内部差异比较仍由框架处理，不新增字段 Controller 或固定 DOM 更新分级。通知用于重新读取权威状态，不是要求 L4 重放事件以维护第二份业务数据。</p>
 <p>组件接收的表单业务数据与校验状态以 Runtime 为唯一权威来源；事件经 Adapter 转成既有 Command 调用 Runtime，数据更新再经订阅反馈到 Props。局部框架缓存只是当前 Props 的呈现，不是独立业务 Store。组件可持有焦点、输入法组合态、展开 / 收起等内部交互状态，其交付边界后续明确。Host 业务操作仍由既有 host.emit 路径交给 Host，不将所有事件一律变成数据 Command。</p>
 <p>保留既有 bindings 作为“组件使用哪些数据”的具名映射，不新增所谓字段端口、端口级 Controller 或独立匹配引擎。单字段或多字段控件都由 Adapter 将相关数据组织成实际组件 Props，并将组件事件映射为受控指令。Renderer 负责物料树的装配，Scope 关联与订阅释放等职责需要继续讨论，不强制拆出 View Controller / Binding Controller 类或固定包层次。</p>
-<p>此前节点 / 属性拆分与局部一致投影是候选比较，不是用户已接受的新更新体系。订阅与初次读取 / 改绑的安全交接仍需保证，但不因此增加字段端口或新的通知队列协议。</p>
+<p>此前节点 / 属性拆分曾为候选；现已由 ADR-FE-017 确认完整 $expr 各自携带 watch、精确失效 / 复用结果。Adapter 统一管理不代表组件全部重算；订阅与初次读取 / 改绑仍需安全交接，不因此增加字段端口或新的通知队列。</p>
 <h3 id="共用-adapter-与物料内部行为">共用 Adapter 与物料内部行为</h3>
 <p>Adapter 是共用的引擎接入能力，不为每个物料编写独立数据 / 事件映射适配器。物料遵守统一的组件接入约定：共用 Adapter 按 Prepared 配置与当前 Scope 订阅 Runtime、读取相关状态传入 Props、提供既有指令调用能力，并管理订阅生命周期。姓名、日期范围等物料的输入事件、第三方组件库 Props 差异和临时交互在物料组件内部实现，不把这些差异注入共用 Adapter，也不另建可配置事件转换语言。具体统一 Props、绑定值和指令 API 尚待讨论，不将前轮“物料专属 Adapter 映射”当作已确认方案。</p>
 <h3 id="共用-adapter-的求值边界">共用 Adapter 的求值边界</h3>
@@ -1016,7 +1019,7 @@
 <a href="#dependency-scheduling" data-to="dependency-scheduling" title="执行时机：已确认基线与未决边界"><span class="nav-num">12</span><span>执行时机：已确认基线与未决边界</span></a>
 <a href="#dependency-acceptance" data-to="dependency-acceptance" title="贯穿四层的交互与验收"><span class="nav-num">13</span><span>贯穿四层的交互与验收</span></a>
 <a href="#dependency-v05-acceptance" data-to="dependency-v05-acceptance" title="跨层业务验收与后续衔接"><span class="nav-num">14</span><span>跨层业务验收与后续衔接</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-DEPENDENCY</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-DEPENDENCY</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
       </aside>
       </div>
     </div>

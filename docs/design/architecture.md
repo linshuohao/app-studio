@@ -9,6 +9,7 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-001
   - ADR-FE-002
   - ADR-FE-003
@@ -23,6 +24,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-EARLY
 - SRC-L1
@@ -436,7 +438,9 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 
 **不要求交付多个独立引擎。**不预建独立 View Engine、Workflow Engine 或复杂双向桥接平台。外部流程通过 Host 集成；内部纯计算通过受控 Pure Function 扩展。
 
-**两份结构，一条执行路径。**FormDefinition 供业务作者编辑和审查，PreparedForm 是编译后的运行输入；Canonical / Authoring 仍属于 L1，不是第三套业务协议。L3 只消费兼容 PreparedForm，不在失败时退回直接解释 L1。编辑期调用 L2 给出建议，作者确认后修改定义再编译；Prepared 的执行依赖在编译时确定。完整对照见 [原始与编译后协议](dependency-reactivity.md#dependency-compiled-protocol)。
+**两份结构，一条执行路径。**FormDefinition 供业务作者编辑和审查，PreparedForm 是编译后的运行输入；Canonical / Authoring 仍属于 L1，不是第三套业务协议。
+
+2026-10-21 已确认[默认编译入口与输出](l2-preparation.md#compiler-io-contract)：无需显著区分两种输入表示，单视图自动选择，平台按需指定。Prepared 保留领域结构，规则 / 完整呈现表达式就地 watch、模板共享，精确求值由统一 Runtime 能力和 Adapter 落实；不改变分层或生成平台执行代码。L3 只消费兼容 PreparedForm，不在失败时退回直接解释 L1。编辑期调用 L2 给出建议，作者确认后修改定义再编译；Prepared 的执行依赖在编译时确定。完整对照见 [原始与编译后协议](dependency-reactivity.md#dependency-compiled-protocol)。
 
 ## 产品能力边界 {#boundary}
 

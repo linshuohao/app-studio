@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
 - SRC-EARLY
@@ -1172,3 +1173,20 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 ## 2026-10-21：请求类型贯通及缺失接入的明确错误 {#request-integration-confirmed}
 
 用户要求 Host 开发者清楚请求输入输出，且漏注册必须在代码编写或运行页面明确报错，并确认补入实现目标。现行 [请求开发接入](l1/05-view-material-host.md#request-development-contract) 贯通公开类型、Host 实现 / 注册、页面映射、Compiler 和装配检查；静态可知缺注册由 TS 约束，动态配置由预检兜底。页面实际使用物料的所有声明请求必需，漏映射编译失败、漏实现装配时对应物料报错，替代此前可省略且等到调用才报错的规则。仅加载未用物料不要求接入，其他物料继续，调用保留 error 兜底；具体 API 和工具未冻结。修订 ADR-FE-016，不代表运行时已实现。
+
+
+## 编译输入输出与默认使用方式确认 {#compiler-io-confirmed}
+
+2026-10-21 当前对话中，用户要求从运行时效率重新审视编译，不为“更像编译产物”全面改写结构。Scope 编号仍需运行时绑定、能力表不等于生成代码、模板展开的体积代价成为真实反例。用户接受隐式依赖前移，随后纠正组件合并 / 全量重算建议，明确要求精确到完整表达式；又确认 $expr 内 watch 与真实物料属性不冲突。最后明确确认完整输入输出，并要求不显著区分 Canonical / Authoring、提供默认值、单视图不强制 Profile / 平台参数。
+
+| 比较过的方案 | 最终确认及原因 | 保留边界 |
+| --- | --- | --- |
+| 全面准备树、静态引用 / 能力编号 | 保留 Definition 组织与原语法，只补有消费者的准备信息 | 真实 Scope 和代码仍在运行时绑定；不声称已测性能 |
+| preparation 包装、中央依赖表 | 规则 / 完整动态表达式就地统一 watch | 统一观察基础设施，不统一业务调度 |
+| 组件合并后全部重算 | 完整表达式分别观察、失效与复用结果 | 共用 Adapter 统一生命周期；框架决定渲染 |
+| 模板完全展开 | 共享模板与参数绑定，模板体依赖只分析一次 | Runtime 实例化；资源 / 模板闭包确定 |
+| 强制 syntax / platform / profile | 单入口支持规范与简写；单视图自动选择，平台仅按需 | 歧义不任取默认，能力身份不省略 |
+
+新决定见 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)，完整字段见 [L2](l2-preparation.md#compiler-io-contract)。ADR-FE-003 / 004 / 005 的相关局部基线被修订，核心决策不整体废止；旧理由与代码留作追溯。TS 单源、JSON / 精确版本、Error 不产制品、完整 Schema、双摘要、只读 Context、同步前置与 ADR-FE-016 请求规则继续有效。
+
+本轮仅设计归档，无生产类型 / Schema 迁移或 Compiler / Runtime / Renderer 实现。下一专题统一讨论 Compiler 功能清单、校验分类、依赖与类型连接算法、缓存与接入；不把输入输出确认提高为编译模块设计完成。来源 SRC-COMPILERIO 为当前对话确认范围，未保存逐字会话快照。

@@ -12,8 +12,10 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-010
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
 - SRC-V07
@@ -29,6 +31,8 @@ reading_next: DESIGN-L3-DIAGNOSTICS
 校验读取当前数据并产生结果，正常联动后消费本轮任务。它复用运行时的数据与依赖匹配，不另建响应式系统，也不修改 Working Data。前置、完整结果及接口未闭环的部分明确保留待讨论状态。
 
 ## 目标、职责与当前状态 {#validation-baseline}
+
+L2 输入输出已确认 Constraint 就地 watch 和准备后的 requires：Internal 合并 when / assert，External 合并显式输入与 when，再传递前置输入；字段 requires 增加相关 Internal 的 constraintIds。实例绑定、本轮补齐与异步有效性仍由本层负责，不把输入输出确认当作校验算法实现。见[输出差异](l2-preparation.md#compiler-io-differences)。
 
 Validation 读取业务数据，产生结构化 Issue，供 View / Host 消费。它不修改 Working Data，不拦截业务不合法的输入，不回滚 Command，也不自动修复结果。Dirty / 业务 Baseline / Reset 仍归 Host，Touched 和错误显示时机归交互层。
 

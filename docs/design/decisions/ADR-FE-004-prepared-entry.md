@@ -8,8 +8,10 @@ modules:
 - M05
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-017
 sources:
+- SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-V05
 navigation:
@@ -61,3 +63,10 @@ C 端只消费检查通过且兼容的 Prepared，错误分析结果不能传给
 用户选择准备后的有类型结构树，Template 编译展开，依赖集中计划并以 ID 关联，业务 Schema 资源闭包随 JSON 制品携带；不新增字节码 VM、节点 / 属性更新分级或运行时联网补 Schema。静态模式不保存实际 Scope ID；真实实例仍归 Runtime。
 
 外部 JSON 在接收边界结构检查一次；同进程 Compiler 成功结果不重复全量校验，受控不可变产物可以复用检查结论，格式 / 目标 / 能力检查继续保留。具体 [Prepared 机器基线](../l2-preparation.md#prepared-machine-baseline)和[开发基线](../l1/08-decisions-release.md#protocol-development-baseline)指导正式类型整合，尚无生产验收证据。
+
+
+### 2026-10-21：输入输出与精确表达式观察的局部修订
+
+[ADR-FE-017](ADR-FE-017-compiler-io.md)已确认保留 Definition 领域结构、词法引用和表达式语法，规则及完整响应式 $expr 使用就地 watch；模板保留共享，默认入口接受规范及简写，单视图无需额外 Profile / 平台参数。此前关于三类 Plan、模板全展开、集中计划 ID 以及不保留表达式级观察信息的局部选择退出现行方案；原段落留作追溯，不能再作为有效限制。
+
+本 ADR 的核心原则仍有效，未整体废止：唯一 Prepared 入口、静态模板 / 物料与 Runtime 分责、Read / Watch / Subscription 分离继续遵守。现行字段和默认规则以 [L2 确认协议](../l2-preparation.md#compiler-io-contract)为准；尚未同步生产类型与运行实现。

@@ -11,9 +11,11 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-017
   - ADR-FE-003
   - ADR-FE-005
 sources:
+- SRC-COMPILERIO
 - SRC-CONTRACTS
 - SRC-L1
 navigation:
@@ -59,6 +61,8 @@ interface TemplateUse {
 
 View Profile 是不同场景的**入口选择**，不是不同业务数据源。PC 可以平铺编辑；移动端可以使用卡片和底部弹层。是否渲染列表，由 ScopeNode `mode: each` 决定，不额外声明 Repeat。
 
+2026-10-21 确认默认易用性：单视图沿用 views 字典且可用任意唯一名称，无需调用方再传 Profile 或平台参数。default 是便捷名称，不是强制根；只有多入口且上下文未确定选择时才须显式选择，不任取字典首项。Profile 与平台分开，平台仅在目标实现选择需要时指定；默认不绕过实际能力的目标限制。
+
 `$use` 是对命名视图结构的**静态复用**，不是 DOM 替换命令，不共享 UI 组件实例，更不是子表单。是否 Portal / Teleport、何时展开、动画如何实现均由容器 Material 自行决定。
 
 ## Binding：唯一 Canonical 是具名端口映射 {#binding}
@@ -81,7 +85,7 @@ Canonical 永远使用 `bindings: Record<PortName, DataReference>`。`bind: "/na
 
 具体端口名称和端口数量由物料注册的 Manifest 决定；统一 Binding 语义属于 Protocol，不允许各物料自行把 `bindings` 重新定义为初始化值或网络事件。
 
-Binding 与动态 Props 的依赖由 L2 静态编译；L4 以 Prepared View 计划和当前 Scope 通过 L3 subscribe 接入，挂载时订阅、改绑时更新、卸载时释放，不另做 AST 解析或变化匹配。Field State 与 Validation State 仍由 L3 提供，运行时状态观察不扩展 L1 Binding 的 DataReference 类型。动态表达式求值通过统一能力或共享适配契约完成。
+Binding 与动态 Props 的依赖由 L2 静态编译；L4 以 Prepared View 计划和当前 Scope 通过 L3 subscribe 接入，挂载时订阅、改绑时更新、卸载时释放，不另做 AST 解析或变化匹配。Field State 与 Validation State 仍由 L3 提供，运行时状态观察不扩展 L1 Binding 的 DataReference 类型。动态表达式求值通过统一能力或共享适配契约完成；每个完整 $expr 在 Prepared 中携带自己的 watch，Adapter 按表达式精确失效并复用其他有效结果，不合并为组件全部重算。
 
 条件渲染必须保留决定子树是否出现的父级观察者；未挂载子视图没有自身订阅，业务 Constraint 仍生效。虚拟列表可只订阅可见行。订阅与首次读取及 Scope 改绑之间不能漏变化；接口、快照一致性与节点 / 属性粒度见 [L4 生命周期](../dependency-reactivity.md#dependency-view)。
 
@@ -322,7 +326,7 @@ latest 以实际物料挂载实例 + 请求名称为范围，旧调用立即失�
 
 Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。页面所用物料缺少声明请求的映射时，Compiler 报 Error 并定位节点 / 请求名，不生成可执行 Prepared。Host 实现注册完整性在装配阶段核对，缺失时对应物料进入明确错误状态，不能等第一次调用才发现，也不默认停止其他物料。
 
-PreparedMaterialNode.requests 保存已解析映射及显式并发策略；PreparedViewPlan.requestSchemas 是独立闭合 Schema 资源表。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。
+PreparedMaterialNode.requests 保存已解析映射及显式并发策略；当前已确认的 PreparedForm.resources.requestSchemas 是独立闭合 Schema 资源表；此前 PreparedViewPlan.requestSchemas 是旧类型位置，后续实现须迁移。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。
 
 运行时只使用 Prepared。对物料输入、映射后的 Host 输入（有静态契约时）、Host 输出（有静态契约时）和物料期望结果进行小范围检查；校验器按契约预编译复用，不在每次调用重新编译，更不重复全量协议校验。这不禁止 Working Data 暂时无效，输入错误只影响本次请求。
 

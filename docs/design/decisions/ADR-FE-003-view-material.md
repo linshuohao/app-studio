@@ -9,8 +9,10 @@ modules:
 - M14
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-017
 sources:
+- SRC-COMPILERIO
 - SRC-CONTRACTS
 - SRC-L1
 navigation:
@@ -76,3 +78,10 @@ Profile 切换只替换视图订阅与局部状态，共享规则不能因不可
 ### 2026-10-21：物料请求决策修订
 
 [ADR-FE-016](ADR-FE-016-material-requests.md) 修订本 ADR 涉及的交互边界：通知 Event 仍无返回，新增独立 Request 输入输出通道；原物料 Host 服务声明退出协议，以页面映射解耦物料与 Host 名称。此前“不增加返回能力”及服务需求的记录保留为演进依据，不再限制独立 Request；其余视图 / 能力锁定决策继续有效。
+
+
+### 2026-10-21：输入输出与精确表达式观察的局部修订
+
+[ADR-FE-017](ADR-FE-017-compiler-io.md)已确认保留 Definition 领域结构、词法引用和表达式语法，规则及完整响应式 $expr 使用就地 watch；模板保留共享，默认入口接受规范及简写，单视图无需额外 Profile / 平台参数。此前关于三类 Plan、模板全展开、集中计划 ID 以及不保留表达式级观察信息的局部选择退出现行方案；原段落留作追溯，不能再作为有效限制。
+
+本 ADR 的核心原则仍有效，未整体废止：唯一 Prepared 入口、静态模板 / 物料与 Runtime 分责、Read / Watch / Subscription 分离继续遵守。现行字段和默认规则以 [L2 确认协议](../l2-preparation.md#compiler-io-contract)为准；尚未同步生产类型与运行实现。

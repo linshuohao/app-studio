@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=bc4d4ce1f0b7" defer></script>
+  <script src="assets/knowledge-index.js?v=3bad98a48c8f" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -126,6 +126,8 @@
 </section>
 <section class="section" id="source-register"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>来源编号与精确定位</h2></div></div>
 
+<h3 id="src-compiler-io-types">SRC-COMPILERIOTYPES：编译输入输出协议类型同步授权与实现</h3>
+<p>2026-10-21 用户在确认输入输出及默认易用性后，明确要求“先提交一下，然后把协议层相关的一些类型定义也调整一下”。设计提交为 bdec628；实际变更在 packages/protocol 的 definition / prepared 类型、自动派生 schemas、契约测试、公共消费和 README，记录见<a href="engineering.html#compiler-io-types" rel="noopener noreferrer">工程实施</a>。本轮无 Compiler / Runtime 实现、真实依赖分析结果或精准更新性能证据；不将手写 Prepared 夹具作为编译器产物，也不伪造逐字会话存档。</p>
 <h3 id="src-compiler-io">SRC-COMPILERIO：编译输入输出、精确表达式观察及默认易用性</h3>
 <p>2026-10-21 当前对话用户重新审阅编译价值，明确保持输入输出领域结构，接受隐式依赖和校验前置准备，修订为完整动态表达式就地 watch、模板共享，并在完整结论后确认不显著区分 Canonical / Authoring、单视图无需额外 Profile / 平台配置。现行 <a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">L2</a>、<a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>与<a href="design-history.html#compiler-io-confirmed" rel="noopener noreferrer">演进</a>记录确认与替代范围。对话曾提供 HTML 草案用于审阅，旧草案中的 preparation / 组件合并不代表最终结论；不把下载文件作为权威来源，也不伪造逐字会话存档。本轮仅归档，旧 Prepared 类型 / Schema 待迁移，功能检查与算法为下一专题。</p>
 <h3 id="src-early">SRC-EARLY：最初架构与抽象边界</h3>

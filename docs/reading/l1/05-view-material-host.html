@@ -8,7 +8,7 @@
   <title>视图、物料与宿主契约 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=bc4d4ce1f0b7" defer></script>
+  <script src="../assets/knowledge-index.js?v=3bad98a48c8f" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -354,7 +354,7 @@
 <p>桥接不推断 props 或请求参数背后的隐式依赖。国家变化后城市查询失效等行为，由物料通过公共取消接口或重新请求处理。具体取消句柄和调用签名在所属 Adapter / SDK 落实，不新增跨语言取消信号协议。该通道不纳入完整校验等待，不改变 Host Validator 的任务有效性规则。</p>
 <h3 id="编译prepared-与边界校验">编译、Prepared 与边界校验</h3>
 <p>Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。页面所用物料缺少声明请求的映射时，Compiler 报 Error 并定位节点 / 请求名，不生成可执行 Prepared。Host 实现注册完整性在装配阶段核对，缺失时对应物料进入明确错误状态，不能等第一次调用才发现，也不默认停止其他物料。</p>
-<p>PreparedMaterialNode.requests 保存已解析映射及显式并发策略；当前已确认的 PreparedForm.resources.requestSchemas 是独立闭合 Schema 资源表；此前 PreparedViewPlan.requestSchemas 是旧类型位置，后续实现须迁移。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。</p>
+<p>PreparedMaterialNode.requests 保存已解析映射及显式并发策略；PreparedForm.resources.requestSchemas 是独立闭合 Schema 资源表，协议类型与派生 Schema 已从旧 PreparedViewPlan 位置迁移。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。</p>
 <p>运行时只使用 Prepared。对物料输入、映射后的 Host 输入（有静态契约时）、Host 输出（有静态契约时）和物料期望结果进行小范围检查；校验器按契约预编译复用，不在每次调用重新编译，更不重复全量协议校验。这不禁止 Working Data 暂时无效，输入错误只影响本次请求。</p>
 <p>MaterialManifest.services、HostContract.services 及 Prepared HostRequirements.services 退出正式协议；Host 内部服务组织不受约束。已有通知不变；旧 services 配置须显式迁移到页面 requests 映射，不能按名称自动猜测。Prepared 新增必填空字典 / 数组须同步生产者消费者及格式兼容判断，不虚构已发布版本。</p>
 <p>实现验收覆盖名称解耦、显式与直通参数、Schema 错误、未绑定 / 未注册、同步异常、异步拒绝、latest 后发先至、parallel、卸载 / 改绑 / 数组移动删除及取消失败。当前协议类型与结构测试不证明桥接运行时已实现。</p>

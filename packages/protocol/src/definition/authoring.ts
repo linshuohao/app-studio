@@ -2,7 +2,7 @@ import type { FormDefinition } from './form.js';
 import type { JsonPointer } from './reference.js';
 import type { MaterialNode, ScopeNode, TemplateDataParam, TemplateUse } from './view.js';
 /**
- * 允许书写简写的物料输入。供未来 Compiler 规范化使用，本包不实现转换算法。
+ * 允许书写简写的物料输入。供 Compiler 默认入口规范化使用，本包不实现转换算法。
  * Canonical MaterialNode 不接收 bind / children；简写冲突须报错，不能靠字段优先级静默覆盖。
  */
 export interface AuthoringMaterialNode extends Omit<MaterialNode, 'slots'> {
@@ -28,3 +28,6 @@ export interface AuthoringFormDefinition extends Omit<FormDefinition, 'views' | 
   views: Record<string, AuthoringViewNode>;
   viewTemplates?: Record<string, AuthoringViewTemplate>;
 }
+
+/** Compiler 默认接收的定义；规范写法也满足该结构，不要求 syntax 或两条调用入口。 */
+export type CompilerInputDefinition = AuthoringFormDefinition;

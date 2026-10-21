@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
 - SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
@@ -1190,3 +1191,7 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 新决定见 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)，完整字段见 [L2](l2-preparation.md#compiler-io-contract)。ADR-FE-003 / 004 / 005 的相关局部基线被修订，核心决策不整体废止；旧理由与代码留作追溯。TS 单源、JSON / 精确版本、Error 不产制品、完整 Schema、双摘要、只读 Context、同步前置与 ADR-FE-016 请求规则继续有效。
 
 本轮仅设计归档，无生产类型 / Schema 迁移或 Compiler / Runtime / Renderer 实现。下一专题统一讨论 Compiler 功能清单、校验分类、依赖与类型连接算法、缓存与接入；不把输入输出确认提高为编译模块设计完成。来源 SRC-COMPILERIO 为当前对话确认范围，未保存逐字会话快照。
+
+### 后续授权与协议结构实施
+
+用户随后要求先提交设计再调整协议类型。设计提交 bdec628，Prepared 类型及派生 Schema 已按确认结构迁移；表达式包装的类型负例同时暴露并修复 TS 普通字典和结构赋值绕过 watch 边界的问题。模板共享、规则数组、词法 Scope 和资源位置保留，Scope mode 输出明确化，包消费和结构正反例同步。详细范围与本地证据见[工程实施](engineering.md#compiler-io-types)及 SRC-COMPILERIOTYPES；未实现 Compiler / Runtime，模块状态不提升。

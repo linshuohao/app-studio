@@ -15,6 +15,7 @@ related:
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
@@ -35,7 +36,7 @@ relocated_sections:
 
 # L2 预处理与编译
 
-L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见[已确认协议](#compiler-io-contract)和 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)；本页旧接口草图仅追溯，不作为另一套有效 ABI。Compiler 功能清单、检查算法和 SDK 下一专题继续设计，现有生产类型尚未同步。
+L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见[已确认协议](#compiler-io-contract)和 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)；本页旧接口草图仅追溯，不作为另一套有效 ABI。协议类型及派生 Schema 已按后续授权迁移，见[实施记录](engineering.md#compiler-io-types)。Compiler 功能清单、检查算法和 SDK 下一专题继续设计。
 
 ## L2 · Preparation：定义预处理层 {#preparation}
 
@@ -420,7 +421,7 @@ type CompileResult =
   | { success: false; diagnostics: Diagnostic[] };
 ```
 
-这些是已确认设计的结构描述，引用类型及位置约束须在后续实现中整合，不表示当前 packages/protocol 的旧 Prepared 类型已经改好。Catalog 可由调用方或预先配置的编译上下文提供；不强制每次调用重复填写，也不凭空补出业务能力。默认格式由 Compiler 的确定支持配置提供；显式目标只作覆盖和匹配要求，不按时间变化的 latest 决定格式。
+这些是已确认设计的结构描述；packages/protocol 已实现 PreparedForm / PreparedDefinition 等交换类型及位置约束。CompileInput / CompileResult / Diagnostic SDK 仍由后续 Compiler 提供，不因协议类型迁移新增空实现。Catalog 可由调用方或预先配置的编译上下文提供；不强制每次调用重复填写，也不凭空补出业务能力。默认格式由 Compiler 的确定支持配置提供；显式目标只作覆盖和匹配要求，不按时间变化的 latest 决定格式。
 
 | 选项 | 默认行为 | 需要显式选择的情况 |
 | --- | --- | --- |
@@ -561,7 +562,7 @@ PreparedValidation 是校验准备信息的概念名称；当前归属 definitio
 
 静态观察不保存真实 Scope ID、成员数据、组件、回调、请求状态或 Issue；Runtime 才绑定实例并管理活跃订阅。完整业务 Schema 及必要引用闭包随制品交付，不联网补 $ref，不拆 Keyword 局部引擎，不携带 Ajv 生成 JS。表达式精确失效不要求各端具有相同的 DOM 更新机制，也不新增字段 Controller。
 
-现有 packages/protocol 的 Prepared 类型 / Schema 仍反映先前基线，本轮仅设计归档；后续类型迁移、Compiler / Runtime / Renderer 和契约测试必须同步后才能声称新结构已实现。
+后续授权已将 packages/protocol 的 Prepared 类型、派生 Schema、契约夹具和包消费迁移到本基线；输入默认定义类型为 CompilerInputDefinition，规范写法同样可赋值。Scope Binder 保留原语法，仅把默认 one 在输出中显式化。Compiler / Runtime / Renderer 尚未实现，结构验收不证明依赖分析、精确更新或默认选择已运行。
 
 ## 有类型的依赖关系与环检测 {#l2-dependencies}
 

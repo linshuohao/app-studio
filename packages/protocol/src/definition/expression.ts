@@ -26,6 +26,8 @@ export type Expression =
 /** 在递归 ValueSpec 中显式进入表达式语法；不能和其他对象字段混用。 */
 export interface ExpressionValue {
   $expr: Expression;
+  /** 生成的响应式包装不能作为原始定义或调用时 Payload 复用。 */
+  watch?: never;
 }
 /** ValueSpec 位置的原样 JSON 包装；内部不递归解释，允许存放含保留键的真实业务数据。 */
 export interface LiteralValue {
@@ -35,8 +37,11 @@ export interface LiteralValue {
  * 属性值仍递归为 ValueSpec 的普通对象。保留键只能出现在相应的严格包装分支，不能降级为普通键。
  * @propertyNames {"not":{"enum":["$expr","$literal"]}}
  */
-export interface ValueObject {
+export type ValueObject = {
   [key: string]: ValueSpec;
-}
+} & {
+  $expr?: never;
+  $literal?: never;
+};
 /** Props、Command 值及 Host Payload 的递归配置；只在这些规定位置解析，不扫描 Working Data。 */
 export type ValueSpec = JsonPrimitive | ExpressionValue | LiteralValue | ValueSpec[] | ValueObject;

@@ -44,7 +44,7 @@ export interface ScopeNode {
   scope: ScopeBinder;
   node: ViewNode;
 }
-/** 编译期静态模板复用；不是动态组件实例查找或 DOM 替换。 */
+/** 静态模板复用；Prepared 保留共享结构与参数绑定，不是 DOM 替换。 */
 export interface TemplateUse {
   /** viewTemplates 中的名称，循环 / 缺失引用由 Compiler 诊断。 */
   $use: string;

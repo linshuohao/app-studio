@@ -215,7 +215,7 @@
     },
     "AuthoringMaterialNode": {
       "additionalProperties": false,
-      "description": "允许书写简写的物料输入。供未来 Compiler 规范化使用，本包不实现转换算法。 Canonical MaterialNode 不接收 bind / children；简写冲突须报错，不能靠字段优先级静默覆盖。",
+      "description": "允许书写简写的物料输入。供 Compiler 默认入口规范化使用，本包不实现转换算法。 Canonical MaterialNode 不接收 bind / children；简写冲突须报错，不能靠字段优先级静默覆盖。",
       "properties": {
         "bind": {
           "$ref": "#/$defs/JsonPointer",
@@ -1094,7 +1094,7 @@
     },
     "TemplateUse": {
       "additionalProperties": false,
-      "description": "编译期静态模板复用；不是动态组件实例查找或 DOM 替换。",
+      "description": "静态模板复用；Prepared 保留共享结构与参数绑定，不是 DOM 替换。",
       "properties": {
         "$use": {
           "description": "viewTemplates 中的名称，循环 / 缺失引用由 Compiler 诊断。",
@@ -1129,6 +1129,7 @@
         "$ref": "#/$defs/ValueSpec"
       },
       "description": "属性值仍递归为 ValueSpec 的普通对象。保留键只能出现在相应的严格包装分支，不能降级为普通键。",
+      "properties": {},
       "propertyNames": {
         "not": {
           "enum": [

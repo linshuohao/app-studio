@@ -326,7 +326,7 @@ latest 以实际物料挂载实例 + 请求名称为范围，旧调用立即失�
 
 Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。页面所用物料缺少声明请求的映射时，Compiler 报 Error 并定位节点 / 请求名，不生成可执行 Prepared。Host 实现注册完整性在装配阶段核对，缺失时对应物料进入明确错误状态，不能等第一次调用才发现，也不默认停止其他物料。
 
-PreparedMaterialNode.requests 保存已解析映射及显式并发策略；当前已确认的 PreparedForm.resources.requestSchemas 是独立闭合 Schema 资源表；此前 PreparedViewPlan.requestSchemas 是旧类型位置，后续实现须迁移。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。
+PreparedMaterialNode.requests 保存已解析映射及显式并发策略；PreparedForm.resources.requestSchemas 是独立闭合 Schema 资源表，协议类型与派生 Schema 已从旧 PreparedViewPlan 位置迁移。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。
 
 运行时只使用 Prepared。对物料输入、映射后的 Host 输入（有静态契约时）、Host 输出（有静态契约时）和物料期望结果进行小范围检查；校验器按契约预编译复用，不在每次调用重新编译，更不重复全量协议校验。这不禁止 Working Data 暂时无效，输入错误只影响本次请求。
 

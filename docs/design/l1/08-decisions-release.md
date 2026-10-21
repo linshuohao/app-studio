@@ -13,6 +13,7 @@ related:
   - ADR-FE-017
   - ADR-FE-015
 sources:
+- SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
 - SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
@@ -97,7 +98,7 @@ Runtime 不在每次表达式求值、命令执行或联动时重复整份协议
 | Authoring | 简写输入与 Canonical 类型分开，bind / children / 短函数名规范化 | Canonical 不接收旧 dependsOn 或双字段，历史候选不虚构发布版本 |
 | 校验前置 / 消息 | 同步字段资格与规则前置；消息配置独立于结论 | 见 [前置](../l3-validation.md#prerequisite-scope-contract)及[消息](../l3-validation.md#validation-message-contract) |
 | 类型连接 | 常用结构的可证明兼容，业务合法性与工作态独立 | 见[连接子集](#schema-connection-subset) |
-| 能力 / Prepared | 签名、有限短路、双摘要和资源闭包保留；后续确认改为保留领域结构、模板共享、规则 / 表达式 watch 和默认输入 | 见 [现行 L2 输入输出](../l2-preparation.md#compiler-io-contract)；旧 Prepared 类型待迁移 |
+| 能力 / Prepared | 签名、有限短路、双摘要和资源闭包保留；后续确认改为保留领域结构、模板共享、规则 / 表达式 watch 和默认输入 | 见 [现行 L2 输入输出](../l2-preparation.md#compiler-io-contract)；类型 / Schema 已迁移，算法与运行验证待实施 |
 | 装载 | 外部 JSON 一次结构检查；当前进程 Compiler 成功结果不重复全量校验 | 保留格式 / 目标 / 能力核对，不在交互高频路径重复 |
 
 旧类型汇编保留概念稿与追溯身份；其中占位、requiredForSubmit 等与后续确认不一致时，以本节及相应现行主题为准。本轮不修改候选验证源或宣称已发布协议；正式类型实施时统一迁移。
@@ -112,7 +113,7 @@ Runtime 不在每次表达式求值、命令执行或联动时重复整份协议
 
 ## 首批机器契约已落地 {#protocol-initial-implementation}
 
-后续 [ADR-FE-017](../decisions/ADR-FE-017-compiler-io.md)已确认调整编译输入输出：Definition 结构保留、模板共享、完整表达式级 watch 和可省略语法 / 单视图目标参数。本节的代码落地记录只证明当时结构已实现，当前 Prepared 类型 / Schema 尚未迁移，不可据旧包推断新结构已可执行。
+后续 [ADR-FE-017](../decisions/ADR-FE-017-compiler-io.md)已确认调整编译输入输出：Definition 结构保留、模板共享、完整表达式级 watch 和可省略语法 / 单视图目标参数。用户授权先提交设计 bdec628 再调整协议类型；当前 Prepared 类型 / Schema 已迁移，并补齐 TS 与 Schema 的严格表达式包装边界。见[实施记录](../engineering.md#compiler-io-types)；结构通过仍不等于 Compiler / Runtime 已执行。
 
 2026-10-21 已在 packages/protocol/src/definition、capability、prepared 实现三领域命名类型与公共入口，并提供 schemas 下 10 个自动生成的 2020-12 根 Schema。生成约束来源是 TS / JSDoc，正式结构以实际类型、派生物和契约测试共同验收；下方旧汇编仍为概念稿，不再作为复制发布的类型源。用法与命令见[工程实施](../engineering.md#protocol-implementation)。
 

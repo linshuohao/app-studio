@@ -506,6 +506,7 @@
         "$ref": "#/$defs/ValueSpec"
       },
       "description": "属性值仍递归为 ValueSpec 的普通对象。保留键只能出现在相应的严格包装分支，不能降级为普通键。",
+      "properties": {},
       "propertyNames": {
         "not": {
           "enum": [

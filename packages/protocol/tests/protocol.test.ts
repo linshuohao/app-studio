@@ -190,14 +190,12 @@ describe('Prepared interchange boundary', () => {
     expect(prepared(input), JSON.stringify(prepared.errors)).toBe(true);
     expect(input).toEqual(preparedForm);
   });
-  it('rejects instance data, pending state, TemplateUse and malformed locks', () => {
+  it('rejects instance data, pending state, legacy plans and malformed locks', () => {
     expect(prepared({ ...preparedForm, data: {} })).toBe(false);
-    expect(prepared({ ...preparedForm, formPlan: { ...preparedForm.formPlan, pending: [] } })).toBe(
-      false,
-    );
-    expect(prepared({ ...preparedForm, viewPlan: { root: { $use: 'runtime-template' } } })).toBe(
-      false,
-    );
+    expect(
+      prepared({ ...preparedForm, definition: { ...preparedForm.definition, pending: [] } }),
+    ).toBe(false);
+    expect(prepared({ ...preparedForm, formPlan: {} })).toBe(false);
     expect(
       prepared({
         ...preparedForm,
@@ -263,7 +261,7 @@ describe('material request contracts', () => {
       ).toBe(false);
   });
   it('requires explicit Prepared concurrency and request schema resources', () => {
-    const root = preparedForm.viewPlan.root;
+    const root = preparedForm.definition.views.desktop;
     const request = {
       ...mapping,
       concurrency: 'latest',
@@ -272,9 +270,13 @@ describe('material request contracts', () => {
     };
     const make = (entry: object) => ({
       ...preparedForm,
-      viewPlan: {
+      definition: {
+        ...preparedForm.definition,
+        views: { desktop: { ...root, requests: { search: entry } } },
+      },
+      resources: {
+        schemas: {},
         requestSchemas: { input: signature.payloadSchema, output: signature.resultSchema },
-        root: { ...root, requests: { search: entry } },
       },
       hostRequirements: {
         validators: [],
@@ -285,14 +287,18 @@ describe('material request contracts', () => {
     const valid = make(request);
     expect(prepared(valid)).toBe(true);
     expect(prepared(make({ ...request, concurrency: 'parallel' }))).toBe(true);
-    const { requestSchemas: missingResources, ...withoutResources } = valid.viewPlan;
+    const { requestSchemas: missingResources, ...withoutResources } = valid.resources;
     void missingResources;
-    expect(prepared({ ...valid, viewPlan: withoutResources })).toBe(false);
-    const { requests: missingMappings, ...withoutMappings } = valid.viewPlan.root;
+    expect(prepared({ ...valid, resources: withoutResources })).toBe(false);
+    const { requests: missingMappings, ...withoutMappings } = valid.definition.views.desktop;
     void missingMappings;
-    expect(prepared({ ...valid, viewPlan: { ...valid.viewPlan, root: withoutMappings } })).toBe(
-      false,
-    );
+    // Catalog-dependent required mappings remain a Compiler check, not a structural claim.
+    expect(
+      prepared({
+        ...valid,
+        definition: { ...valid.definition, views: { desktop: withoutMappings } },
+      }),
+    ).toBe(true);
     const { requests: missingRequirements, ...withoutRequirements } = valid.hostRequirements;
     void missingRequirements;
     expect(prepared({ ...valid, hostRequirements: withoutRequirements })).toBe(false);

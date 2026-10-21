@@ -20,12 +20,13 @@ related:
   - ADR-FE-015
   - ADR-FE-016
 sources:
+- SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
 navigation:
   group: 09 · 决策与追溯
   order: 127
 last_reviewed: '2026-10-21'
-status_note: 输入输出及默认易用性已确认；类型迁移、Compiler 功能 / 校验算法及各端执行尚未实现
+status_note: 输入输出及默认易用性已确认，协议类型 / Schema 已迁移；Compiler 功能 / 校验算法及各端执行尚未实现
 ---
 
 # ADR-FE-017：保留领域结构的编译输入输出与表达式级观察
@@ -60,6 +61,10 @@ status_note: 输入输出及默认易用性已确认；类型迁移、Compiler �
 收益为运行时不再发现隐式依赖或推导相关前置，精确复用无关表达式结果，模板结构共享，输入输出更易对照。代价为每个响应式表达式保留 watch 和运行时结果关联，Adapter 仍需参数 / Scope 绑定、首次读交接与清理；不声称已有基准证明或保证各端相同渲染次数。
 
 本轮仅归档设计，packages/protocol 的旧 Prepared 类型 / Schema 尚未迁移，不标记为新 ABI 实现。Compiler 功能清单、校验 / 类型连接 / 依赖算法、缓存与各端接入留给下一专题。增量分析、模板特化、常量折叠、编号编码、代码生成和可视化按真实收益后续评估。
+
+### 后续授权：协议类型同步
+
+用户随后明确要求先提交设计再调整协议类型。设计提交为 bdec628；packages/protocol 已迁移为 definition / build / resources，规则与完整响应式包装就地 watch、共享模板和准备后 requires，复用原引用 / 表达式 / Command 语法。TS 与 Schema 一起拒绝缺少 watch 的响应式包装以及将响应式包装复用为按调用 Payload；Scope mode 的缺省 one 在 Prepared 中显式保存。范围及验证见[实施记录](../engineering.md#compiler-io-types)。本次不实现 Compiler / Runtime，不改变上文的行为决定或发布 ABI 版本。
 
 ## 来源
 

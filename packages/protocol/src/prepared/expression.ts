@@ -1,29 +1,36 @@
-import type { JsonPrimitive, JsonValue } from '../common.js';
-import type { PreparedReference } from './reference.js';
+import type { JsonPrimitive } from '../common.js';
+import type { Expression, LiteralValue, ValueSpec } from '../definition/expression.js';
+import type { DataWatch } from './reference.js';
+
+/** 保留 op / args、ref、use 和 literal，不生成代码、能力编号或另一套求值指令。 */
+export type PreparedExpression = Expression;
+
 /**
- * 已解析身份和引用的执行树；与作者 Expression 分离，不在 Runtime 重新分析原始声明。
- * expressionId 指向 formPlan.expressions，functionId 指向已锁定的函数；局部实例由执行上下文绑定。
+ * 持续呈现的完整表达式及其静态依赖。空 watch 表示分析完成且没有 Data 观察项。
+ * 内部递归运算子不单独订阅；Adapter 绑定当前 Scope，并独立管理失效与有效结果。
+ * watch 仅在该严格包装内是编译信息，普通业务对象的同名属性不受限制。
  */
-export type PreparedExpression =
-  | { kind: 'constant'; value: JsonPrimitive }
-  | { kind: 'literal'; value: JsonValue }
-  | { kind: 'reference'; reference: PreparedReference }
-  | { kind: 'expression'; expressionId: string }
-  | { kind: 'call'; functionId: string; args: PreparedExpression[] };
-/**
- * 普通准备值对象，属性继续递归；保留键必须走严格包装，不允许通过字典分支接住非法包装。
- * @propertyNames {"not":{"enum":["$expr","$literal"]}}
- */
-export interface PreparedValueObject {
-  [key: string]: PreparedValueSpec;
+export interface PreparedExpressionValue {
+  $expr: PreparedExpression;
+  watch: DataWatch[];
 }
 /**
- * 编译后的递归 Props / 命令值 / Host Payload，保持原 Literal 原文，动态部分只保存 PreparedExpression。
- * 虽然包装与 ValueSpec 相近，内部执行引用已经不同，不复用同一作者侧类型或通用泛型树。
+ * 普通 Props 对象继续递归；$expr / $literal 必须使用严格包装，不能落入字典分支。
+ * @propertyNames {"not":{"enum":["$expr","$literal"]}}
  */
+export type PreparedValueObject = {
+  [key: string]: PreparedValueSpec;
+} & {
+  $expr?: never;
+  $literal?: never;
+};
+/** 动态 Props 的递归值；Literal 原样保留，求值结果不再作为协议解释。 */
 export type PreparedValueSpec =
   | JsonPrimitive
-  | { $expr: PreparedExpression }
-  | { $literal: JsonValue }
+  | PreparedExpressionValue
+  | LiteralValue
   | PreparedValueSpec[]
   | PreparedValueObject;
+
+/** 事件 / 请求 Payload 和 Command 值按调用求值，不附加持续观察 watch。 */
+export type PreparedOnDemandValueSpec = ValueSpec;

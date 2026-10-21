@@ -1,5 +1,23 @@
 {
   "$defs": {
+    "AfterPosition": {
+      "additionalProperties": false,
+      "description": "插入 / 移动到仍属于目标数组的指定稳定成员之后。",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "after",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
     "ArrayIndexPosition": {
       "additionalProperties": false,
       "description": "Definition 与 Prepared 语义完全相同的数字目的位置；锚点位置仍由各自领域声明。",
@@ -17,6 +35,96 @@
       "required": [
         "kind",
         "index"
+      ],
+      "type": "object"
+    },
+    "ArrayInsertCommand": {
+      "additionalProperties": false,
+      "description": "在指定数组位置插入一个求值后的成员；不以 maxItems 等业务约束阻止写入。",
+      "properties": {
+        "op": {
+          "const": "array.insert",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference",
+          "description": "实际值必须能执行数组操作，否则报告结构失败。"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "position",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ArrayMoveCommand": {
+      "additionalProperties": false,
+      "description": "移动后保留成员身份；校验目的位置失败不能留下已经移除的半完成状态。",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference",
+          "description": "被移动的成员；与 position 中的目的锚点分别解释。"
+        },
+        "op": {
+          "const": "array.move",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/ArrayPosition"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item",
+        "position"
+      ],
+      "type": "object"
+    },
+    "ArrayPosition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IndexPosition"
+        },
+        {
+          "$ref": "#/$defs/BeforePosition"
+        },
+        {
+          "$ref": "#/$defs/AfterPosition"
+        }
+      ],
+      "description": "执行时解析目的位置；锚点失效、越界或非整数须失败，不静默修正。"
+    },
+    "ArrayRemoveCommand": {
+      "additionalProperties": false,
+      "description": "按稳定成员身份删除；数组重排后不能误删原下标的新成员。",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "op": {
+          "const": "array.remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "item"
       ],
       "type": "object"
     },
@@ -44,6 +152,68 @@
       ],
       "type": "object"
     },
+    "BatchCommand": {
+      "additionalProperties": false,
+      "description": "顺序执行且默认非原子；后续失败不回滚先前成功修改，不是通用工作流。",
+      "properties": {
+        "commands": {
+          "description": "保留命令顺序与次数，不能仅因相同目标合并两次 insert 等显式行为。",
+          "items": {
+            "$ref": "#/$defs/Command"
+          },
+          "type": "array"
+        },
+        "op": {
+          "const": "batch",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "commands"
+      ],
+      "type": "object"
+    },
+    "BeforePosition": {
+      "additionalProperties": false,
+      "description": "插入 / 移动到仍属于目标数组的指定稳定成员之前。",
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/ScopeHandleReference"
+        },
+        "kind": {
+          "const": "before",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "item"
+      ],
+      "type": "object"
+    },
+    "CallExpression": {
+      "additionalProperties": false,
+      "description": "同步纯计算调用，不允许 I/O、写 Data 或任意脚本。",
+      "properties": {
+        "args": {
+          "description": "有序参数；签名及内置短路语义由 Compiler / 执行器落实。",
+          "items": {
+            "$ref": "#/$defs/Expression"
+          },
+          "type": "array"
+        },
+        "op": {
+          "description": "Canonical 使用确定的能力名，如 core.gte；Authoring 短名需先按白名单规范化。",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "args"
+      ],
+      "type": "object"
+    },
     "CapabilityLock": {
       "additionalProperties": false,
       "description": "当前平台 / Profile 的唯一能力集合，包含确定的 core.* 实现身份。",
@@ -67,26 +237,218 @@
       ],
       "type": "object"
     },
+    "Command": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SetCommand"
+        },
+        {
+          "$ref": "#/$defs/PatchCommand"
+        },
+        {
+          "$ref": "#/$defs/RemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayInsertCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayRemoveCommand"
+        },
+        {
+          "$ref": "#/$defs/ArrayMoveCommand"
+        },
+        {
+          "$ref": "#/$defs/BatchCommand"
+        }
+      ],
+      "description": "作者侧七类受控数据修改语言。网络 / 提交 / UI 动画由 Host 或物料负责。"
+    },
+    "CommandIntent": {
+      "additionalProperties": false,
+      "description": "在物料事件发生时执行数据命令，不因命令值读取变化而自动触发。",
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/Command"
+        },
+        "type": {
+          "const": "form.command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "command"
+      ],
+      "type": "object"
+    },
+    "ConstraintPrerequisite": {
+      "additionalProperties": false,
+      "description": "指定同步 Constraint 的本轮通过结论；External 目标、环和自包含由 Compiler 拒绝。",
+      "properties": {
+        "constraintId": {
+          "description": "声明 ID，由 Compiler 解析到唯一可绑定的 Scope 规则实例模式。",
+          "type": "string"
+        },
+        "kind": {
+          "const": "constraint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "constraintId"
+      ],
+      "type": "object"
+    },
     "ContentDigest": {
       "description": "含算法前缀的不可变内容摘要。十六进制长度由生成的 Schema 检查，TS 模板类型只约束前缀。",
       "pattern": "^sha256:[a-f0-9]{64}$",
       "type": "string"
     },
-    "DefinitionSourceLocation": {
+    "ContextReference": {
       "additionalProperties": false,
-      "description": "从准备实体回查原始声明的位置；不交付 Compiler 全量内部分析图。",
+      "description": "Host 提供的只读上下文引用，不是 Command 的可写目标，也不扩展 Data-only watch。",
       "properties": {
-        "documentId": {
-          "type": "string"
+        "path": {
+          "$ref": "#/$defs/JsonPointer",
+          "description": "相对 Host Context 根的 JSON Pointer。"
         },
-        "pointer": {
-          "description": "原定义文档内的 JSON Pointer，不是业务 Working Data 的位置。",
+        "source": {
+          "const": "context",
           "type": "string"
         }
       },
       "required": [
-        "documentId",
-        "pointer"
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "DataReference": {
+      "additionalProperties": false,
+      "description": "数据位置的声明；它不是读取结果，也不是数组成员的运行时身份。",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer",
+          "description": "无 scope 时相对表单数据根；有 scope 时相对该词法绑定的数据位置。"
+        },
+        "scope": {
+          "description": "可见的词法名称，例如 insured。省略表示根数据，不隐式捕获当前数组项。",
+          "type": "string"
+        },
+        "source": {
+          "const": "data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "DataWatch": {
+      "additionalProperties": false,
+      "description": "规则和完整呈现表达式共用的静态观察项；不是已激活订阅。 省略 aspect 等同 value，structure 只表示同一 Data 的集合结构观察。 不新增 Context / Event / 校验状态等 L1 Watch 来源。",
+      "properties": {
+        "aspect": {
+          "enum": [
+            "value",
+            "structure"
+          ],
+          "type": "string"
+        },
+        "path": {
+          "$ref": "#/$defs/JsonPointer",
+          "description": "无 scope 时相对表单数据根；有 scope 时相对该词法绑定的数据位置。"
+        },
+        "scope": {
+          "description": "可见的词法名称，例如 insured。省略表示根数据，不隐式捕获当前数组项。",
+          "type": "string"
+        },
+        "source": {
+          "const": "data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "source"
+      ],
+      "type": "object"
+    },
+    "EventReference": {
+      "additionalProperties": false,
+      "description": "仅在处理相应物料事件或请求时有效；不能从全局表达式或普通 Reaction 隐式取得 Payload。",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/JsonPointer",
+          "description": "相对本次 Payload 根；路径与值类型须能由对应 Event / Request 的 payloadSchema 证明。"
+        },
+        "source": {
+          "const": "event",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "path"
+      ],
+      "type": "object"
+    },
+    "Expression": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ReferenceExpression"
+        },
+        {
+          "$ref": "#/$defs/NamedExpression"
+        },
+        {
+          "$ref": "#/$defs/CallExpression"
+        },
+        {
+          "$ref": "#/$defs/LiteralExpression"
+        }
+      ],
+      "description": "作者侧计算树。求值失败不等同于返回 false；可能读取集合由使用位置决定如何参与依赖。"
+    },
+    "ExpressionValue": {
+      "additionalProperties": false,
+      "description": "在递归 ValueSpec 中显式进入表达式语法；不能和其他对象字段混用。",
+      "properties": {
+        "$expr": {
+          "$ref": "#/$defs/Expression"
+        }
+      },
+      "required": [
+        "$expr"
+      ],
+      "type": "object"
+    },
+    "HostEventIntent": {
+      "additionalProperties": false,
+      "description": "将业务意图交给 Host；不描述网络或等待 Host 返回值的编排。",
+      "properties": {
+        "event": {
+          "description": "Host 业务事件名称，区别于 MaterialNode.on 字典中的物料事件名称。",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ValueSpec",
+          "description": "事件发生时求值；可读取当次允许的 Event Reference。"
+        },
+        "type": {
+          "const": "host.emit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "event"
       ],
       "type": "object"
     },
@@ -187,12 +549,55 @@
       ],
       "type": "object"
     },
+    "IndexPosition": {
+      "$ref": "#/$defs/ArrayIndexPosition",
+      "description": "作者侧数字目的位置，复用与 Prepared 完全相同的下标语义和生成约束。"
+    },
+    "InteractionIntent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CommandIntent"
+        },
+        {
+          "$ref": "#/$defs/HostEventIntent"
+        }
+      ],
+      "description": "对配置开放的两类事件响应；物料内部 Binding 写入不必重复映射成 on.change。"
+    },
+    "IssueDefinition": {
+      "additionalProperties": false,
+      "description": "内部业务断言失败时产生的 Issue 声明，不在此存放当前校验结果。",
+      "properties": {
+        "code": {
+          "description": "稳定业务错误码，独立于展示语言和执行异常诊断。",
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/MessageSpec",
+          "description": "专属文案覆盖；省略时由默认消息体系处理。"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference",
+          "description": "错误归属位置；该目标本身不自动成为规则的读取依赖。"
+        }
+      },
+      "required": [
+        "target",
+        "code"
+      ],
+      "type": "object"
+    },
     "JsonObject": {
       "additionalProperties": {
         "$ref": "#/$defs/JsonValue"
       },
       "description": "允许任意业务属性名的 JSON 对象，不适用协议节点的未知字段拒绝规则。",
       "type": "object"
+    },
+    "JsonPointer": {
+      "description": "作者侧 JSON Pointer。空串引用根值，'/' 引用空字符串属性；~0 / ~1 分别转义 ~ / /。 不使用 './age' 等额外语法；路径能否在相应数据模型上成立由 Compiler 检查。",
+      "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
+      "type": "string"
     },
     "JsonPrimitive": {
       "description": "可交换的 JSON 基础值。Missing 不属于 JSON，不能以 undefined / NaN 代替。",
@@ -222,6 +627,32 @@
         }
       ],
       "description": "原样业务 JSON；其中恰好出现 $expr 等键，也不会自动成为表达式。"
+    },
+    "LiteralExpression": {
+      "additionalProperties": false,
+      "description": "AST 位置的原样 JSON 值；内部对象不再按 ref / use / op 等字段解析。",
+      "properties": {
+        "literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "literal"
+      ],
+      "type": "object"
+    },
+    "LiteralValue": {
+      "additionalProperties": false,
+      "description": "ValueSpec 位置的原样 JSON 包装；内部不递归解释，允许存放含保留键的真实业务数据。",
+      "properties": {
+        "$literal": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "$literal"
+      ],
+      "type": "object"
     },
     "LockedCapability": {
       "additionalProperties": false,
@@ -279,626 +710,318 @@
       ],
       "description": "展示文案或由 Host 解析的资源键；消息缺失不能吞掉错误，消息覆盖不能改变校验结论。"
     },
-    "PreparedArrayPosition": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PreparedIndexPosition"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "item": {
-              "$ref": "#/$defs/PreparedScopeHandle"
-            },
-            "kind": {
-              "const": "before",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "item"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "item": {
-              "$ref": "#/$defs/PreparedScopeHandle"
-            },
-            "kind": {
-              "const": "after",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "item"
-          ],
-          "type": "object"
+    "NamedExpression": {
+      "additionalProperties": false,
+      "description": "复用 FormDefinition.expressions 中的具名表达式；Compiler 检查引用与循环。",
+      "properties": {
+        "use": {
+          "description": "定义内名称；被引用表达式不能隐式捕获调用者局部 Scope。",
+          "type": "string"
         }
+      },
+      "required": [
+        "use"
       ],
-      "description": "静态解析后的目的位置；before / after 的锚点通过模式绑定真实成员，不是写死的当前 Scope ID。"
+      "type": "object"
     },
-    "PreparedCommand": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "set",
-              "type": "string"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference",
-              "description": "已解析的可写位置。"
-            },
-            "value": {
-              "$ref": "#/$defs/PreparedValueSpec",
-              "description": "实际执行时才求值，不保存某次运行的结果。"
-            }
-          },
-          "required": [
-            "op",
-            "target",
-            "value"
-          ],
-          "type": "object"
+    "PatchCommand": {
+      "additionalProperties": false,
+      "description": "浅层更新对象字段，不递归深合并。",
+      "properties": {
+        "op": {
+          "const": "patch",
+          "type": "string"
         },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "patch",
-              "type": "string"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            },
-            "value": {
-              "additionalProperties": {
-                "$ref": "#/$defs/PreparedValueSpec"
-              },
-              "description": "浅层字段更新，不递归深合并。",
-              "type": "object"
-            }
-          },
-          "required": [
-            "op",
-            "target",
-            "value"
-          ],
-          "type": "object"
+        "target": {
+          "$ref": "#/$defs/DataReference"
         },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "remove",
-              "type": "string"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            }
+        "value": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueSpec"
           },
-          "required": [
-            "op",
-            "target"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "array.insert",
-              "type": "string"
-            },
-            "position": {
-              "$ref": "#/$defs/PreparedArrayPosition"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            },
-            "value": {
-              "$ref": "#/$defs/PreparedValueSpec"
-            }
-          },
-          "required": [
-            "op",
-            "target",
-            "position",
-            "value"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "item": {
-              "$ref": "#/$defs/PreparedScopeHandle",
-              "description": "由当前执行 Scope 解析稳定成员，不按旧下标定位。"
-            },
-            "op": {
-              "const": "array.remove",
-              "type": "string"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            }
-          },
-          "required": [
-            "op",
-            "target",
-            "item"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "item": {
-              "$ref": "#/$defs/PreparedScopeHandle"
-            },
-            "op": {
-              "const": "array.move",
-              "type": "string"
-            },
-            "position": {
-              "$ref": "#/$defs/PreparedArrayPosition",
-              "description": "校验失败不得留下半完成移除；成功移动保留成员身份。"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            }
-          },
-          "required": [
-            "op",
-            "target",
-            "item",
-            "position"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "commands": {
-              "description": "有序、非原子；不回滚前序成功操作，也不合并命令次数。",
-              "items": {
-                "$ref": "#/$defs/PreparedCommand"
-              },
-              "type": "array"
-            },
-            "op": {
-              "const": "batch",
-              "type": "string"
-            }
-          },
-          "required": [
-            "op",
-            "commands"
-          ],
+          "description": "待写字段字典，键为业务字段名，各值按 ValueSpec 求值。",
           "type": "object"
         }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
       ],
-      "description": "七类命令的执行输入。目标 / 值 / 成员身份引用已准备，保留与 Definition 相同的修改语义。 不复用 Command<T...> 泛型框架，避免作者引用混入运行端；业务 Schema 不拦截非法工作态。"
+      "type": "object"
+    },
+    "PreparedBuild": {
+      "additionalProperties": false,
+      "description": "构建追踪信息；不重复 Definition 身份，也不替代各能力的实际目标平台。",
+      "properties": {
+        "catalogSnapshotId": {
+          "type": "string"
+        },
+        "compilerVersion": {
+          "type": "string"
+        },
+        "platform": {
+          "description": "无显式全局目标时可省略；能力 artifact 的实际平台身份仍须保留和核对。",
+          "type": "string"
+        },
+        "profile": {
+          "description": "最终选择的视图名，与 definition.views 的唯一键一致性由 Compiler 检查。",
+          "type": "string"
+        }
+      },
+      "required": [
+        "compilerVersion",
+        "catalogSnapshotId",
+        "profile"
+      ],
+      "type": "object"
     },
     "PreparedConstraint": {
-      "additionalProperties": false,
-      "description": "静态业务规则准备信息；不包含当前结果、请求代次、Pending 或 cancel 回调。",
-      "properties": {
-        "executor": {
-          "$ref": "#/$defs/PreparedConstraintExecutor"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreparedInternalConstraint"
         },
+        {
+          "$ref": "#/$defs/PreparedExternalConstraint"
+        }
+      ],
+      "description": "仍按原 Constraint Union / 数组交付，不转换成 executor 或规则索引表。"
+    },
+    "PreparedConstraintPrerequisite": {
+      "$ref": "#/$defs/ConstraintPrerequisite",
+      "description": "已解析的同步规则前置；Runtime 结合当前 Scope 绑定唯一实例。"
+    },
+    "PreparedDefinition": {
+      "additionalProperties": false,
+      "description": "保留原 Definition 的领域结构；不携带实例业务值、Issues 或任务状态。",
+      "properties": {
+        "constraints": {
+          "items": {
+            "$ref": "#/$defs/PreparedConstraint"
+          },
+          "type": "array"
+        },
+        "data": {
+          "additionalProperties": false,
+          "description": "完整业务数据模型；当前 Working Data 不保存在 Definition 中。",
+          "properties": {
+            "schema": {
+              "$ref": "#/$defs/JsonSchema"
+            }
+          },
+          "required": [
+            "schema"
+          ],
+          "type": "object"
+        },
+        "expressions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Expression"
+          },
+          "description": "按名称复用的纯表达式；不隐式捕获调用方局部 Scope。",
+          "type": "object"
+        },
+        "id": {
+          "description": "业务表单身份，不是某次运行实例 ID。",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "description": "非执行性元数据，允许任意业务 JSON 键，不在其中识别表达式。",
+          "type": "object"
+        },
+        "protocolVersion": {
+          "description": "L1 语法 / 语义格式身份，独立于包版本和 Prepared 格式版本。",
+          "type": "string"
+        },
+        "reactions": {
+          "items": {
+            "$ref": "#/$defs/PreparedReaction"
+          },
+          "type": "array"
+        },
+        "validationMessages": {
+          "description": "按业务 Schema 声明位置和关键字覆盖文案，不新增校验规则。",
+          "items": {
+            "$ref": "#/$defs/SchemaMessageOverride"
+          },
+          "type": "array"
+        },
+        "version": {
+          "description": "该业务定义的修订身份；不用于推断引擎或能力兼容性。",
+          "type": "string"
+        },
+        "viewTemplates": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedViewTemplate"
+          },
+          "type": "object"
+        },
+        "views": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedViewNode"
+          },
+          "description": "当前选定的唯一视图；单视图自动选中，名称不要求为 default。",
+          "maxProperties": 1,
+          "minProperties": 1,
+          "type": "object"
+        }
+      },
+      "required": [
+        "data",
+        "id",
+        "protocolVersion",
+        "version",
+        "views"
+      ],
+      "type": "object"
+    },
+    "PreparedExpression": {
+      "$ref": "#/$defs/Expression",
+      "description": "保留 op / args、ref、use 和 literal，不生成代码、能力编号或另一套求值指令。"
+    },
+    "PreparedExpressionValue": {
+      "additionalProperties": false,
+      "description": "持续呈现的完整表达式及其静态依赖。空 watch 表示分析完成且没有 Data 观察项。 内部递归运算子不单独订阅；Adapter 绑定当前 Scope，并独立管理失效与有效结果。 watch 仅在该严格包装内是编译信息，普通业务对象的同名属性不受限制。",
+      "properties": {
+        "$expr": {
+          "$ref": "#/$defs/PreparedExpression"
+        },
+        "watch": {
+          "items": {
+            "$ref": "#/$defs/DataWatch"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "$expr",
+        "watch"
+      ],
+      "type": "object"
+    },
+    "PreparedExternalConstraint": {
+      "additionalProperties": false,
+      "description": "保留 validator / target / when / scope；输出 watch 已是有效失效集合。",
+      "properties": {
         "id": {
           "type": "string"
         },
-        "observationId": {
-          "description": "对应 dependencyPlan 中的失效观察，含编译可推导的前置依赖补全。",
+        "kind": {
+          "const": "external",
           "type": "string"
         },
-        "prerequisites": {
-          "description": "必须使用本轮同步结论；禁止自包含 / 环和跨 External 等待由 Compiler 检查。",
+        "requires": {
           "items": {
             "$ref": "#/$defs/PreparedPrerequisite"
           },
           "type": "array"
         },
-        "scopePatternId": {
-          "type": "string"
+        "scope": {
+          "$ref": "#/$defs/PreparedScopeDeclaration"
         },
         "target": {
-          "$ref": "#/$defs/PreparedDataReference",
-          "description": "Issue / 校验义务归属位置，不自动等于规则全部输入。"
+          "$ref": "#/$defs/DataReference",
+          "description": "义务和结果的归属字段，不把它误认为唯一输入。"
+        },
+        "validator": {
+          "description": "独立能力名，不按规则 id 猜实现；不同规则可以引用同一能力。",
+          "type": "string"
+        },
+        "watch": {
+          "description": "合并作者 watch、when 和前置依赖；失效不等于立即发起请求。",
+          "items": {
+            "$ref": "#/$defs/DataWatch"
+          },
+          "type": "array"
         },
         "when": {
-          "$ref": "#/$defs/PreparedExpression",
-          "description": "准备后的适用条件；省略表示没有额外条件，不能把求值异常视为 false。"
+          "$ref": "#/$defs/Expression"
         }
       },
       "required": [
         "id",
+        "kind",
         "target",
-        "executor",
-        "prerequisites",
-        "observationId"
+        "validator",
+        "watch"
       ],
       "type": "object"
     },
-    "PreparedConstraintExecutor": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "assert": {
-              "$ref": "#/$defs/PreparedExpression"
-            },
-            "code": {
-              "type": "string"
-            },
-            "kind": {
-              "const": "internal",
-              "type": "string"
-            },
-            "message": {
-              "$ref": "#/$defs/MessageSpec"
-            }
-          },
-          "required": [
-            "kind",
-            "assert",
-            "code"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "external",
-              "type": "string"
-            },
-            "validator": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "validator"
-          ],
-          "type": "object"
-        }
-      ],
-      "description": "规则执行方式；Internal assert 产生 boolean，External 只引用 Host 能力，不序列化其函数。"
-    },
-    "PreparedDataReference": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "base": {
-              "const": "root",
-              "type": "string"
-            },
-            "path": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "source": {
-              "const": "data",
-              "type": "string"
-            }
-          },
-          "required": [
-            "source",
-            "base",
-            "path"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "base": {
-              "const": "scope",
-              "type": "string"
-            },
-            "path": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "scopePatternId": {
-              "$ref": "#/$defs/ScopePatternId"
-            },
-            "source": {
-              "const": "data",
-              "type": "string"
-            }
-          },
-          "required": [
-            "source",
-            "base",
-            "scopePatternId",
-            "path"
-          ],
-          "type": "object"
-        }
-      ],
-      "description": "已解析的数据位置。path 是已解码 Pointer 分段，例如 /a~1b 对应 ['a/b']，不再重新解释词法别名。 root 从业务数据根读取；scope 由 Runtime 把静态模式绑定到当前具体成员，再按相对分段读取。"
-    },
-    "PreparedDependency": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "aspect": {
-              "enum": [
-                "value",
-                "structure"
-              ],
-              "type": "string"
-            },
-            "reference": {
-              "$ref": "#/$defs/PreparedDataReference"
-            },
-            "source": {
-              "const": "data",
-              "type": "string"
-            }
-          },
-          "required": [
-            "source",
-            "reference",
-            "aspect"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "reference": {
-              "$ref": "#/$defs/PreparedDataReference"
-            },
-            "source": {
-              "const": "validation",
-              "type": "string"
-            }
-          },
-          "required": [
-            "source",
-            "reference"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "reference": {
-              "$ref": "#/$defs/PreparedDataReference"
-            },
-            "source": {
-              "const": "field-meta",
-              "type": "string"
-            }
-          },
-          "required": [
-            "source",
-            "reference"
-          ],
-          "type": "object"
-        }
-      ],
-      "description": "准备后的可观察依赖，不扩展 L1 Reference.source。 Data 的结构观察仍属于同一数据源；校验 / 字段元状态由 Runtime 接口消费，不写回业务 Data。"
-    },
-    "PreparedDependencyPlan": {
+    "PreparedFieldPrerequisite": {
       "additionalProperties": false,
-      "description": "集中交付静态观察，由规则 / 视图引用条目 ID，不新增节点 / 属性更新分级。",
+      "description": "字段同步资格仍依赖 Schema 和相关适用 Internal，不含 External。",
       "properties": {
-        "observations": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedObservation"
+        "constraintIds": {
+          "description": "已分析出的相关 Internal 声明 ID；存在性、环和唯一实例绑定由 Compiler 检查。",
+          "items": {
+            "type": "string"
           },
-          "type": "object"
+          "type": "array"
+        },
+        "kind": {
+          "const": "field",
+          "type": "string"
+        },
+        "phase": {
+          "const": "sync",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference",
+          "description": "当前唯一 Scope 实例下的字段位置；不聚合其他成员的同名字段。"
         }
       },
       "required": [
-        "observations"
+        "constraintIds",
+        "kind",
+        "phase",
+        "target"
       ],
       "type": "object"
     },
-    "PreparedExpression": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "constant",
-              "type": "string"
-            },
-            "value": {
-              "$ref": "#/$defs/JsonPrimitive"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "literal",
-              "type": "string"
-            },
-            "value": {
-              "$ref": "#/$defs/JsonValue"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "reference",
-              "type": "string"
-            },
-            "reference": {
-              "$ref": "#/$defs/PreparedReference"
-            }
-          },
-          "required": [
-            "kind",
-            "reference"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "expressionId": {
-              "type": "string"
-            },
-            "kind": {
-              "const": "expression",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "expressionId"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "args": {
-              "items": {
-                "$ref": "#/$defs/PreparedExpression"
-              },
-              "type": "array"
-            },
-            "functionId": {
-              "type": "string"
-            },
-            "kind": {
-              "const": "call",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "functionId",
-            "args"
-          ],
-          "type": "object"
-        }
-      ],
-      "description": "已解析身份和引用的执行树；与作者 Expression 分离，不在 Runtime 重新分析原始声明。 expressionId 指向 formPlan.expressions，functionId 指向已锁定的函数；局部实例由执行上下文绑定。"
-    },
     "PreparedForm": {
       "additionalProperties": false,
-      "description": "可序列化、不可变且可跨实例复用的运行输入；不能回退成直接执行原始 Definition。",
+      "description": "确定、可序列化且可跨实例复用的运行输入；Runtime 不回退执行原始 Definition。",
       "properties": {
+        "build": {
+          "$ref": "#/$defs/PreparedBuild"
+        },
         "capabilityLock": {
           "$ref": "#/$defs/CapabilityLock"
         },
-        "dependencyPlan": {
-          "$ref": "#/$defs/PreparedDependencyPlan"
-        },
-        "formPlan": {
-          "$ref": "#/$defs/PreparedFormPlan"
+        "definition": {
+          "$ref": "#/$defs/PreparedDefinition"
         },
         "hostRequirements": {
           "$ref": "#/$defs/HostRequirements"
         },
-        "identity": {
-          "$ref": "#/$defs/PreparedIdentity"
-        },
         "preparedFormatVersion": {
-          "description": "Runtime 首期只接受其明确支持的精确格式，与 L1 protocolVersion 独立。",
+          "description": "Runtime 精确匹配支持的格式；独立于 L1 和 Compiler 实现版本。",
           "type": "string"
         },
-        "sources": {
-          "additionalProperties": {
-            "items": {
-              "$ref": "#/$defs/DefinitionSourceLocation"
-            },
-            "type": "array"
-          },
-          "description": "准备实体 ID 到一个或多个原始声明位置；省略只减少追溯信息，不改变执行语义。",
-          "type": "object"
-        },
-        "viewPlan": {
-          "$ref": "#/$defs/PreparedViewPlan"
+        "resources": {
+          "$ref": "#/$defs/PreparedResources"
         }
       },
       "required": [
         "preparedFormatVersion",
-        "identity",
-        "formPlan",
-        "viewPlan",
-        "dependencyPlan",
+        "build",
+        "definition",
+        "resources",
         "capabilityLock",
         "hostRequirements"
       ],
       "type": "object"
     },
-    "PreparedFormPlan": {
-      "additionalProperties": false,
-      "description": "Profile 间共享的静态业务计划，与实例当前 Data / Issues / 任务分离。",
-      "properties": {
-        "expressions": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedExpression"
-          },
-          "description": "已解析的具名表达式表，PreparedExpression.expressionId 引用此处。",
-          "type": "object"
-        },
-        "reactions": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedReaction"
-          },
-          "type": "object"
-        },
-        "scopes": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedScopePattern"
-          },
-          "description": "静态模式表，不是所有真实成员的 Scope 注册表或实例 Trie。",
-          "type": "object"
-        },
-        "validation": {
-          "$ref": "#/$defs/PreparedValidationPlan"
-        }
-      },
-      "required": [
-        "scopes",
-        "expressions",
-        "reactions",
-        "validation"
-      ],
-      "type": "object"
-    },
     "PreparedHostRequestIntent": {
       "additionalProperties": false,
-      "description": "已解析的一次请求；所有 Schema 引用均指向本 View Plan 的 requestSchemas。",
+      "description": "请求映射只增加执行所需的确定策略和契约引用，不改变 Host 调用语义。",
       "properties": {
         "concurrency": {
-          "description": "Compiler 将物料声明的默认 latest 显式化。",
+          "description": "来自物料声明，缺省策略 latest 在输出中明确保存。",
           "enum": [
             "latest",
             "parallel"
@@ -906,21 +1029,22 @@
           "type": "string"
         },
         "hostPayloadSchemaRef": {
-          "description": "仅提供了 Host 静态契约时记录；有值时必须能在资源表中解析。",
+          "description": "仅在提供 Host 静态契约时保存，引用存在性由 Compiler 检查。",
           "type": "string"
         },
         "hostResultSchemaRef": {
           "type": "string"
         },
         "payload": {
-          "$ref": "#/$defs/PreparedValueSpec",
-          "description": "省略时原样转发物料 Payload，不沿用 host.emit 的省略语义。"
+          "$ref": "#/$defs/ValueSpec",
+          "description": "本次调用时求值，可读取 event Payload；省略时原样转发物料 Payload。"
         },
         "payloadSchemaRef": {
-          "description": "物料输入 / 期望结果的契约资源 ID，不是业务数据 Pointer。",
+          "description": "指向 PreparedForm.resources.requestSchemas，而不是业务数据 Pointer。",
           "type": "string"
         },
         "request": {
+          "description": "Host 注册名称，不要求与物料请求名一致。",
           "type": "string"
         },
         "resultSchemaRef": {
@@ -932,143 +1056,101 @@
         }
       },
       "required": [
-        "type",
-        "request",
         "concurrency",
         "payloadSchemaRef",
-        "resultSchemaRef"
+        "request",
+        "resultSchemaRef",
+        "type"
       ],
       "type": "object"
     },
-    "PreparedIdentity": {
+    "PreparedInternalConstraint": {
       "additionalProperties": false,
-      "description": "原定义、编译上下文和目标的追溯信息；各版本维度不能互相替代。",
+      "description": "保留 when / assert / issue / scope，补全规则级有效观察。",
       "properties": {
-        "catalogSnapshotId": {
+        "assert": {
+          "$ref": "#/$defs/Expression",
+          "description": "必须返回 boolean；求值异常不是业务 false，也不执行 Command。"
+        },
+        "id": {
           "type": "string"
         },
-        "compilerVersion": {
-          "description": "编译器实现身份用于追踪 / 缓存，不要求与 Runtime 版本字符串相等。",
+        "issue": {
+          "$ref": "#/$defs/IssueDefinition"
+        },
+        "kind": {
+          "const": "internal",
           "type": "string"
         },
-        "definitionId": {
-          "type": "string"
+        "requires": {
+          "description": "省略表示没有显式前置；执行使用本轮结论，不复用历史通过结果。",
+          "items": {
+            "$ref": "#/$defs/PreparedPrerequisite"
+          },
+          "type": "array"
         },
-        "definitionVersion": {
-          "type": "string"
+        "scope": {
+          "$ref": "#/$defs/PreparedScopeDeclaration"
         },
-        "platform": {
-          "type": "string"
+        "watch": {
+          "description": "when + assert 的可能读取及必要前置传递依赖；不是 Issue target 的复制。",
+          "items": {
+            "$ref": "#/$defs/DataWatch"
+          },
+          "type": "array"
         },
-        "profile": {
-          "description": "已选择的 View Profile 名称。",
-          "type": "string"
-        },
-        "protocolVersion": {
-          "type": "string"
+        "when": {
+          "$ref": "#/$defs/Expression",
+          "description": "适用条件；不再适用时该规则的旧 Issue 不应保留为当前结果。"
         }
       },
       "required": [
-        "definitionId",
-        "definitionVersion",
-        "protocolVersion",
-        "compilerVersion",
-        "catalogSnapshotId",
-        "profile",
-        "platform"
+        "assert",
+        "id",
+        "issue",
+        "kind",
+        "watch"
       ],
       "type": "object"
     },
-    "PreparedIndexPosition": {
-      "$ref": "#/$defs/ArrayIndexPosition",
-      "description": "数字位置在编译前后语义相同；保留公开名称，复用共同定义，实际数组边界仍在执行时检查。"
-    },
-    "PreparedInteractionIntent": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "command": {
-              "$ref": "#/$defs/PreparedCommand"
-            },
-            "type": {
-              "const": "form.command",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "command"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "event": {
-              "type": "string"
-            },
-            "payload": {
-              "$ref": "#/$defs/PreparedValueSpec"
-            },
-            "type": {
-              "const": "host.emit",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "event"
-          ],
-          "type": "object"
-        }
-      ],
-      "description": "事件发生后执行的准备好意图；读取 Payload 不会把数据变化转换成事件触发。"
-    },
     "PreparedMaterialNode": {
       "additionalProperties": false,
-      "description": "供共用 Adapter 装配的静态物料节点，不包含组件对象、DOM 或局部 UI 状态。",
+      "description": "保留 material、bindings、slots、on 和 requests 的领域形状。",
       "properties": {
         "bindings": {
           "additionalProperties": {
-            "$ref": "#/$defs/PreparedDataReference"
+            "$ref": "#/$defs/DataReference"
           },
+          "description": "物料声明的具名数据位置，可单字段或多字段；不声明读写权限。",
           "type": "object"
         },
         "id": {
-          "description": "准备后的节点身份，用于观察及来源定位；不是框架组件实例 ID。",
+          "description": "静态节点身份，用于请求需求与来源关联；不是组件实例或 Runtime Scope ID。",
           "type": "string"
         },
-        "kind": {
-          "const": "material",
-          "type": "string"
-        },
-        "materialId": {
-          "description": "能力锁中的物料逻辑 ID，由装配层关联目标实现。",
-          "type": "string"
-        },
-        "observationId": {
-          "description": "挂载时关联的静态观察；省略表示本节点没有关联条目，不隐含首次执行行为。",
+        "material": {
+          "description": "逻辑物料 ID；版本与目标实现由确定 Catalog / 能力锁解析。",
           "type": "string"
         },
         "on": {
           "additionalProperties": {
-            "$ref": "#/$defs/PreparedInteractionIntent"
+            "$ref": "#/$defs/InteractionIntent"
           },
+          "description": "物料语义事件名到响应；Payload 形状来自该物料的 EventContract。",
           "type": "object"
         },
         "props": {
           "additionalProperties": {
             "$ref": "#/$defs/PreparedValueSpec"
           },
-          "description": "尚待 Runtime 按当前输入求值的配置，不是预先计算的某个用户值。",
+          "description": "每个完整 $expr 带独立 watch，不使用节点合并后全量重算。",
           "type": "object"
         },
         "requests": {
           "additionalProperties": {
             "$ref": "#/$defs/PreparedHostRequestIntent"
           },
-          "description": "未配置的请求映射归一化为空字典。",
+          "description": "无请求物料可省略；所用物料的必需映射完整性由 Compiler 检查。",
           "type": "object"
         },
         "slots": {
@@ -1078,367 +1160,162 @@
             },
             "type": "array"
           },
-          "description": "槽位仍为具名数组；未配置的集合在准备后显式为空字典。",
           "type": "object"
         }
       },
       "required": [
-        "kind",
         "id",
-        "materialId",
-        "props",
-        "bindings",
-        "slots",
-        "on",
-        "requests"
-      ],
-      "type": "object"
-    },
-    "PreparedObservation": {
-      "additionalProperties": false,
-      "description": "确定的静态观察条目；Runtime 只匹配实际变化，不据原始 AST 再补 watch。",
-      "properties": {
-        "activationOwner": {
-          "description": "谁管理观察生命周期；它不是优先级，也不代表 runOnActivate 首次执行策略。",
-          "enum": [
-            "runtime",
-            "view-mounted"
-          ],
-          "type": "string"
-        },
-        "dependencies": {
-          "description": "已按使用位置确定的依赖，不能把 when 的读取自动改成 Reaction 触发来源。",
-          "items": {
-            "$ref": "#/$defs/PreparedDependency"
-          },
-          "type": "array"
-        },
-        "id": {
-          "type": "string"
-        },
-        "owner": {
-          "additionalProperties": false,
-          "description": "指向已准备的规则或视图实体，用于激活、关联与诊断。",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "kind": {
-              "enum": [
-                "reaction",
-                "constraint",
-                "view"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "id"
-          ],
-          "type": "object"
-        },
-        "scopePatternId": {
-          "$ref": "#/$defs/ScopePatternId",
-          "description": "该观察绑定的静态上下文；具体活跃 Scope 在 Runtime 建立。"
-        }
-      },
-      "required": [
-        "id",
-        "owner",
-        "dependencies",
-        "activationOwner"
+        "material"
       ],
       "type": "object"
     },
     "PreparedPrerequisite": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "constraintId": {
-              "type": "string"
-            },
-            "kind": {
-              "const": "constraint",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "constraintId"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/PreparedConstraintPrerequisite"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "constraintIds": {
-              "description": "编译解析出的相关 Internal 集合，不包含 External；必须结合字段 Schema 结论判断资格。",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "kind": {
-              "const": "field",
-              "type": "string"
-            },
-            "phase": {
-              "const": "sync",
-              "type": "string"
-            },
-            "target": {
-              "$ref": "#/$defs/PreparedDataReference"
-            }
-          },
-          "required": [
-            "kind",
-            "target",
-            "phase",
-            "constraintIds"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/PreparedFieldPrerequisite"
         }
       ],
-      "description": "编译解析后的同步资格依赖。constraintId / constraintIds 指向本计划的 Constraint 声明， Runtime 再结合当前 Scope 绑定唯一规则实例；根 Schema 检查不按每条前置重复补入。"
+      "description": "仍用 requires 字段表达前置，不增加 preparation / prerequisites 包装。"
     },
     "PreparedReaction": {
       "additionalProperties": false,
-      "description": "已准备的联动，不保留原始 watch 以供 Runtime 二次推导；实例按 Scope 模式建立。",
+      "description": "显式 watch 保留，when / then 不参与自动触发依赖补全。",
       "properties": {
         "id": {
-          "type": "string"
-        },
-        "observationId": {
-          "description": "dependencyPlan 中已按 Reaction 显式 watch 语义确定的观察条目。",
+          "description": "定义内规则身份，区别于每个 Scope 的实际运行实例身份。",
           "type": "string"
         },
         "runOnActivate": {
-          "description": "编译后明确保存的首次激活值；不是观察生命周期归属或重算 / Reset 开关。",
+          "description": "缺省 false 在输出中明确保存；只控制新实例首次激活。",
           "type": "boolean"
         },
-        "scopePatternId": {
-          "type": "string"
+        "scope": {
+          "$ref": "#/$defs/PreparedScopeDeclaration"
         },
         "then": {
-          "description": "执行时按当前输入求值，有序且默认不整体回滚。",
+          "description": "按序执行的受控命令；当前数据可立即读取，默认不整体回滚。",
           "items": {
-            "$ref": "#/$defs/PreparedCommand"
+            "$ref": "#/$defs/Command"
+          },
+          "type": "array"
+        },
+        "watch": {
+          "items": {
+            "$ref": "#/$defs/DataWatch"
           },
           "type": "array"
         },
         "when": {
-          "$ref": "#/$defs/PreparedExpression"
+          "$ref": "#/$defs/Expression",
+          "description": "被触发后才检查的适用条件；省略时无额外条件。"
         }
       },
       "required": [
         "id",
-        "observationId",
         "runOnActivate",
-        "then"
+        "then",
+        "watch"
       ],
       "type": "object"
     },
-    "PreparedReference": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PreparedDataReference"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "path": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "source": {
-              "const": "context",
-              "type": "string"
-            }
+    "PreparedResources": {
+      "additionalProperties": false,
+      "description": "闭合的静态 Schema 资源，不包含 Ajv 生成函数，也不在运行时联网补引用。",
+      "properties": {
+        "requestSchemas": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonSchema"
           },
-          "required": [
-            "source",
-            "path"
-          ],
+          "description": "请求契约独立资源表，不加入业务字段校验或 Validator Pending。",
           "type": "object"
         },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "path": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "source": {
-              "const": "event",
-              "type": "string"
-            }
+        "schemas": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonSchema"
           },
-          "required": [
-            "source",
-            "path"
-          ],
+          "description": "必要外部业务资源；根 Schema 仍在 definition.data.schema。",
           "type": "object"
         }
-      ],
-      "description": "准备后的读取位置；Context / Event 仍只读，Event 仅在对应事件执行上下文有效。"
-    },
-    "PreparedSchemaMessage": {
-      "additionalProperties": false,
-      "description": "已定位到具体 Schema 资源的消息覆盖；不参与校验真假判断。",
-      "properties": {
-        "keyword": {
-          "type": "string"
-        },
-        "message": {
-          "$ref": "#/$defs/MessageSpec"
-        },
-        "resourceId": {
-          "type": "string"
-        },
-        "schemaPath": {
-          "description": "Schema 声明位置，不是当前成员的数据下标路径。",
-          "type": "string"
-        }
       },
       "required": [
-        "resourceId",
-        "schemaPath",
-        "keyword",
-        "message"
+        "schemas",
+        "requestSchemas"
       ],
       "type": "object"
     },
-    "PreparedSchemaResource": {
+    "PreparedScopeBinder": {
       "additionalProperties": false,
-      "description": "随制品交付的不可变 Schema 资源。资源表应闭合所有必要引用，不在执行时联网补资源。",
+      "description": "保留 Binder 原结构，仅将缺省 one 显式化；没有静态编号或真实成员身份。",
       "properties": {
-        "schema": {
-          "$ref": "#/$defs/JsonSchema",
-          "description": "标准 Schema 原文，不携带 Ajv 生成函数，也不拆成 Keyword 局部执行器。"
-        }
-      },
-      "required": [
-        "schema"
-      ],
-      "type": "object"
-    },
-    "PreparedScopeHandle": {
-      "additionalProperties": false,
-      "description": "已解析成员身份引用；执行时沿当前上下文绑定具体 Scope 身份，而非序列化某个当前成员。",
-      "properties": {
-        "scopePatternId": {
-          "$ref": "#/$defs/ScopePatternId"
-        }
-      },
-      "required": [
-        "scopePatternId"
-      ],
-      "type": "object"
-    },
-    "PreparedScopeNode": {
-      "additionalProperties": false,
-      "description": "将子树关联到静态 Scope 模式，实际成员及挂载生命周期由 Runtime / Adapter 承接。",
-      "properties": {
-        "id": {
+        "as": {
+          "description": "后续词法上下文使用的名称；可见性及禁止遮蔽规则由 Compiler 检查。",
           "type": "string"
         },
-        "kind": {
-          "const": "scope",
-          "type": "string"
-        },
-        "node": {
-          "$ref": "#/$defs/PreparedViewNode"
-        },
-        "scopePatternId": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "kind",
-        "id",
-        "scopePatternId",
-        "node"
-      ],
-      "type": "object"
-    },
-    "PreparedScopePattern": {
-      "additionalProperties": false,
-      "description": "可由多个实例复用的 Scope 建立模式，不含真实成员数量、数据或活跃订阅。",
-      "properties": {
         "from": {
-          "$ref": "#/$defs/PreparedDataReference",
-          "description": "已解析的绑定来源；模式依赖及引用合法性须在编译期检查。"
-        },
-        "id": {
-          "$ref": "#/$defs/ScopePatternId"
+          "$ref": "#/$defs/DataReference",
+          "description": "绑定的数据位置，只能为静态 Data Reference，不能用表达式动态拼接位置。"
         },
         "mode": {
-          "description": "规范化后的显式绑定模式；each 的实际成员在运行时展开。",
+          "description": "one 绑定单个位置，each 按数组成员建立上下文；Prepared 保存规范化后的显式模式。",
           "enum": [
             "one",
             "each"
           ],
           "type": "string"
-        },
-        "parentId": {
-          "$ref": "#/$defs/ScopePatternId",
-          "description": "静态父模式引用；省略表示没有额外的父 Scope Pattern。"
         }
       },
       "required": [
-        "id",
+        "as",
         "from",
         "mode"
       ],
       "type": "object"
     },
-    "PreparedValidationPlan": {
-      "additionalProperties": false,
-      "description": "完整根 Schema 与 Constraint 计划；业务数据和聚合 Issues 留在每个 Runtime 实例内。",
-      "properties": {
-        "constraints": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedConstraint"
-          },
-          "type": "object"
+    "PreparedScopeDeclaration": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PreparedScopeBinder"
         },
-        "messages": {
+        {
           "items": {
-            "$ref": "#/$defs/PreparedSchemaMessage"
+            "$ref": "#/$defs/PreparedScopeBinder"
           },
+          "minItems": 1,
           "type": "array"
+        }
+      ],
+      "description": "单 Binder 或非空有序链，后项可引用前项的词法别名。"
+    },
+    "PreparedScopeNode": {
+      "additionalProperties": false,
+      "description": "Binder 和别名保留，each 真实成员由 Runtime 管理。",
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/PreparedViewNode"
         },
-        "rootSchemaResourceId": {
-          "description": "schemaResources 中本表单业务根 Schema 的键。",
-          "type": "string"
-        },
-        "schemaResources": {
-          "additionalProperties": {
-            "$ref": "#/$defs/PreparedSchemaResource"
-          },
-          "description": "固定的本地资源闭包；引用存在性和闭合性不是简单结构校验能证明的。",
-          "type": "object"
+        "scope": {
+          "$ref": "#/$defs/PreparedScopeBinder"
         }
       },
       "required": [
-        "rootSchemaResourceId",
-        "schemaResources",
-        "constraints",
-        "messages"
+        "scope",
+        "node"
       ],
       "type": "object"
+    },
+    "PreparedTemplateUse": {
+      "$ref": "#/$defs/TemplateUse",
+      "description": "保留静态模板调用及参数，Renderer 只做参数 / Scope 绑定与实例化。"
     },
     "PreparedValueObject": {
       "additionalProperties": {
         "$ref": "#/$defs/PreparedValueSpec"
       },
-      "description": "普通准备值对象，属性继续递归；保留键必须走严格包装，不允许通过字典分支接住非法包装。",
+      "description": "普通 Props 对象继续递归；$expr / $literal 必须使用严格包装，不能落入字典分支。",
+      "properties": {},
       "propertyNames": {
         "not": {
           "enum": [
@@ -1455,28 +1332,10 @@
           "$ref": "#/$defs/JsonPrimitive"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "$expr": {
-              "$ref": "#/$defs/PreparedExpression"
-            }
-          },
-          "required": [
-            "$expr"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/PreparedExpressionValue"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "$literal": {
-              "$ref": "#/$defs/JsonValue"
-            }
-          },
-          "required": [
-            "$literal"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/LiteralValue"
         },
         {
           "items": {
@@ -1488,7 +1347,7 @@
           "$ref": "#/$defs/PreparedValueObject"
         }
       ],
-      "description": "编译后的递归 Props / 命令值 / Host Payload，保持原 Literal 原文，动态部分只保存 PreparedExpression。 虽然包装与 ValueSpec 相近，内部执行引用已经不同，不复用同一作者侧类型或通用泛型树。"
+      "description": "动态 Props 的递归值；Literal 原样保留，求值结果不再作为协议解释。"
     },
     "PreparedViewNode": {
       "anyOf": [
@@ -1497,34 +1356,210 @@
         },
         {
           "$ref": "#/$defs/PreparedScopeNode"
-        }
-      ],
-      "description": "编译已展开模板，只剩物料与 Scope 包装，不让 Renderer 再解释 TemplateUse。"
-    },
-    "PreparedViewPlan": {
-      "additionalProperties": false,
-      "description": "当前 Profile 的准备视图闭包；Profile 选择不裁剪共享业务约束与数据模型。",
-      "properties": {
-        "requestSchemas": {
-          "additionalProperties": {
-            "$ref": "#/$defs/JsonSchema"
-          },
-          "description": "请求边界使用的闭合 Schema 资源，不进入字段校验计划及 Pending。",
-          "type": "object"
         },
-        "root": {
+        {
+          "$ref": "#/$defs/PreparedTemplateUse"
+        }
+      ]
+    },
+    "PreparedViewTemplate": {
+      "additionalProperties": false,
+      "description": "共享模板只交付一份，内部响应式表达式依赖可以引用已声明参数。",
+      "properties": {
+        "node": {
           "$ref": "#/$defs/PreparedViewNode"
+        },
+        "params": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplateDataParam"
+          },
+          "type": "object"
         }
       },
       "required": [
-        "requestSchemas",
-        "root"
+        "node"
       ],
       "type": "object"
     },
-    "ScopePatternId": {
-      "description": "编译期 Scope 模式的 ID；同一模式可对应多个运行时成员，绝不能当作 Runtime Scope ID。",
-      "type": "string"
+    "Reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataReference"
+        },
+        {
+          "$ref": "#/$defs/ContextReference"
+        },
+        {
+          "$ref": "#/$defs/EventReference"
+        }
+      ],
+      "description": "读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。"
+    },
+    "ReferenceExpression": {
+      "additionalProperties": false,
+      "description": "读取声明位置的当前值；读取本身不建立订阅。",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/Reference"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "type": "object"
+    },
+    "RemoveCommand": {
+      "additionalProperties": false,
+      "description": "删除目标属性，区别于把属性设置为 null；数组成员删除使用 array.remove。",
+      "properties": {
+        "op": {
+          "const": "remove",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference"
+        }
+      },
+      "required": [
+        "op",
+        "target"
+      ],
+      "type": "object"
+    },
+    "SchemaMessageOverride": {
+      "additionalProperties": false,
+      "description": "覆盖 Schema 某项检查的展示消息；动态数组成员复用同一声明，不按可变下标配置。",
+      "properties": {
+        "keyword": {
+          "description": "对应校验关键字，例如 minimum；资源和关键字的关联由 Compiler 检查。",
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/MessageSpec"
+        },
+        "schemaRef": {
+          "description": "相对根 data.schema 的声明引用，例如 #/properties/age。",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaRef",
+        "keyword",
+        "message"
+      ],
+      "type": "object"
+    },
+    "ScopeHandleReference": {
+      "additionalProperties": false,
+      "description": "按词法名称取得当前成员的稳定身份，供删除 / 移动使用；不能当作普通业务值读取。",
+      "properties": {
+        "$scope": {
+          "description": "指向可见的成员上下文，不是固定数组下标，也不是可持久化的 Runtime Scope ID。",
+          "type": "string"
+        }
+      },
+      "required": [
+        "$scope"
+      ],
+      "type": "object"
+    },
+    "SetCommand": {
+      "additionalProperties": false,
+      "description": "替换目标位置的值；写入结构可执行即可，业务 Schema 不作为写入门禁。",
+      "properties": {
+        "op": {
+          "const": "set",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/DataReference",
+          "description": "可写 Data 位置，不能是 Context / Event / 组件 Props。"
+        },
+        "value": {
+          "$ref": "#/$defs/ValueSpec",
+          "description": "执行时按当前输入求值；不因值读取其他字段而自行建立订阅。"
+        }
+      },
+      "required": [
+        "op",
+        "target",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TemplateDataParam": {
+      "additionalProperties": false,
+      "description": "模板参数只引入可定位的数据位置，其类型复用业务 data.schema。",
+      "properties": {
+        "schemaRef": {
+          "description": "相对根 data.schema 的声明引用，例如 #/$defs/Insured。",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaRef"
+      ],
+      "type": "object"
+    },
+    "TemplateUse": {
+      "additionalProperties": false,
+      "description": "静态模板复用；Prepared 保留共享结构与参数绑定，不是 DOM 替换。",
+      "properties": {
+        "$use": {
+          "description": "viewTemplates 中的名称，循环 / 缺失引用由 Compiler 诊断。",
+          "type": "string"
+        },
+        "with": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DataReference"
+          },
+          "description": "模板形参到调用方可见 Data Reference 的映射，不隐式捕获其他 Scope。",
+          "type": "object"
+        }
+      },
+      "required": [
+        "$use"
+      ],
+      "type": "object"
+    },
+    "ValueObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ValueSpec"
+      },
+      "description": "属性值仍递归为 ValueSpec 的普通对象。保留键只能出现在相应的严格包装分支，不能降级为普通键。",
+      "properties": {},
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "$expr",
+            "$literal"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ValueSpec": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JsonPrimitive"
+        },
+        {
+          "$ref": "#/$defs/ExpressionValue"
+        },
+        {
+          "$ref": "#/$defs/LiteralValue"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/ValueSpec"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/ValueObject"
+        }
+      ],
+      "description": "Props、Command 值及 Host Payload 的递归配置；只在这些规定位置解析，不扫描 Working Data。"
     }
   },
   "$id": "https://form-engine.invalid/schemas/prepared-form.schema.json",

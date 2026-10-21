@@ -34,9 +34,9 @@ export interface FormDefinition {
   /** 当前表单全部业务约束；缺省表示未额外声明 Constraint。 */
   constraints?: Constraint[];
   reactions?: Reaction[];
-  /** Profile 名到入口节点，如 desktop / mobile；它们共用同一业务数据模型。 */
+  /** 视图名到入口节点；单入口自动选中，不强制 default 名称或显式 Profile / 平台选择。 */
   views: Record<string, ViewNode>;
-  /** 静态视图模板；编译后展开，不产生独立子表单或共享 UI 实例。 */
+  /** 共享静态模板；编译准备内部依赖，运行时绑定参数并实例化，不复制业务数据。 */
   viewTemplates?: Record<string, ViewTemplate>;
   /** 按业务 Schema 声明位置和关键字覆盖文案，不新增校验规则。 */
   validationMessages?: SchemaMessageOverride[];

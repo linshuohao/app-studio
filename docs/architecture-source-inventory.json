@@ -1156,8 +1156,8 @@
       "path": "docs/design/decisions/ADR-FE-017-compiler-io.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5236,
-      "sha256": "08781c31bd4d780c9cbd39f5deee22e04fc8e27eff7df8e64aa5e48607687f70",
+      "bytes": 5927,
+      "sha256": "28dfb22a52757571c76394e5af706fe1423f9bb499781d37ce7468d414c054f4",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1183,6 +1183,11 @@
         {
           "level": 2,
           "title": "收益、代价与状态",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "后续授权：协议类型同步",
           "anchor": null
         },
         {
@@ -1311,8 +1316,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 140501,
-      "sha256": "7454a7f51707f5d7cc7273799176403f8ede716fb3e26556ef1ba31aa1d511f1",
+      "bytes": 141107,
+      "sha256": "47ee86834ef6baf73d44ec17a0d2730a7f93a79f5f3c570db3a4bb7e25e0cc02",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1759,6 +1764,11 @@
           "level": 2,
           "title": "编译输入输出与默认使用方式确认",
           "anchor": "compiler-io-confirmed"
+        },
+        {
+          "level": 3,
+          "title": "后续授权与协议结构实施",
+          "anchor": null
         }
       ]
     },
@@ -1851,8 +1861,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 38406,
-      "sha256": "b363d1fe0a85f9d67f907c51dbbcecd0f78beeee5b6b2827a04218fcb0df6d0f",
+      "bytes": 41007,
+      "sha256": "ef1cf56bd42658032a5cf4848ae6225bc315d3d8890a18e12e911bfa18f744db",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1969,6 +1979,11 @@
           "level": 2,
           "title": "Protocol 首批实现与本地交付证据",
           "anchor": "protocol-implementation"
+        },
+        {
+          "level": 3,
+          "title": "编译输入输出的协议类型迁移",
+          "anchor": "compiler-io-types"
         }
       ]
     },
@@ -2041,8 +2056,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35639,
-      "sha256": "31bc22fa994f7e7a6aa2b147ab253fc06aefc718334ae5f0f3fef6c5f926f25f",
+      "bytes": 35800,
+      "sha256": "d80ab5566a97223998f6e45833730c168a36907be9d3331e81666dcde743f843",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2306,8 +2321,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 21899,
-      "sha256": "a42399507b6b2efb7f17aae460f323b8924426c3dbb738478f9d50619d05194f",
+      "bytes": 21867,
+      "sha256": "6b875bf479cc8375071a5be0651f76b2b2cbe48ec149abeafd5414b8281be29b",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2456,8 +2471,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18368,
-      "sha256": "371e6e44c3f60b95532aae4cd7e96ff9fd5c4f7f3cbcb512edbb351a1293ebfa",
+      "bytes": 18542,
+      "sha256": "3e4460c8d779f8eaa77586f0ce8b292bf81daa9a5bce6d34d3126b4537270dc6",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2566,8 +2581,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 66388,
-      "sha256": "27c10bb9e883b6b642d0d64068fa31ba69a733b9013d3503092016de9adc0aa3",
+      "bytes": 66753,
+      "sha256": "52bfd115ea74dffbb59addaad651b55cdcd391e646d352b9512cd57072c42201",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {

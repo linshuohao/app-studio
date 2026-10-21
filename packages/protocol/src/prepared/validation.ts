@@ -1,56 +1,38 @@
-import type { JsonSchema, MessageSpec } from '../common.js';
-import type { PreparedExpression } from './expression.js';
-import type { PreparedDataReference } from './reference.js';
-/** 随制品交付的不可变 Schema 资源。资源表应闭合所有必要引用，不在执行时联网补资源。 */
-export interface PreparedSchemaResource {
-  /** 标准 Schema 原文，不携带 Ajv 生成函数，也不拆成 Keyword 局部执行器。 */
-  schema: JsonSchema;
+import type {
+  ConstraintPrerequisite,
+  ExternalConstraint,
+  FieldPrerequisite,
+  InternalConstraint,
+} from '../definition/validation.js';
+import type { DataWatch, PreparedScopeDeclaration } from './reference.js';
+
+/** 已解析的同步规则前置；Runtime 结合当前 Scope 绑定唯一实例。 */
+export type PreparedConstraintPrerequisite = ConstraintPrerequisite;
+/** 字段同步资格仍依赖 Schema 和相关适用 Internal，不含 External。 */
+export interface PreparedFieldPrerequisite extends FieldPrerequisite {
+  /** 已分析出的相关 Internal 声明 ID；存在性、环和唯一实例绑定由 Compiler 检查。 */
+  constraintIds: string[];
 }
-/**
- * 编译解析后的同步资格依赖。constraintId / constraintIds 指向本计划的 Constraint 声明，
- * Runtime 再结合当前 Scope 绑定唯一规则实例；根 Schema 检查不按每条前置重复补入。
- */
-export type PreparedPrerequisite =
-  | { kind: 'constraint'; constraintId: string }
-  | {
-      kind: 'field';
-      target: PreparedDataReference;
-      phase: 'sync';
-      /** 编译解析出的相关 Internal 集合，不包含 External；必须结合字段 Schema 结论判断资格。 */
-      constraintIds: string[];
-    };
-/** 规则执行方式；Internal assert 产生 boolean，External 只引用 Host 能力，不序列化其函数。 */
-export type PreparedConstraintExecutor =
-  | { kind: 'internal'; assert: PreparedExpression; code: string; message?: MessageSpec }
-  | { kind: 'external'; validator: string };
-/** 静态业务规则准备信息；不包含当前结果、请求代次、Pending 或 cancel 回调。 */
-export interface PreparedConstraint {
-  id: string;
-  scopePatternId?: string;
-  /** 准备后的适用条件；省略表示没有额外条件，不能把求值异常视为 false。 */
-  when?: PreparedExpression;
-  /** Issue / 校验义务归属位置，不自动等于规则全部输入。 */
-  target: PreparedDataReference;
-  executor: PreparedConstraintExecutor;
-  /** 必须使用本轮同步结论；禁止自包含 / 环和跨 External 等待由 Compiler 检查。 */
-  prerequisites: PreparedPrerequisite[];
-  /** 对应 dependencyPlan 中的失效观察，含编译可推导的前置依赖补全。 */
-  observationId: string;
+/** 仍用 requires 字段表达前置，不增加 preparation / prerequisites 包装。 */
+export type PreparedPrerequisite = PreparedConstraintPrerequisite | PreparedFieldPrerequisite;
+
+/** 保留 when / assert / issue / scope，补全规则级有效观察。 */
+export interface PreparedInternalConstraint extends Omit<InternalConstraint, 'requires' | 'scope'> {
+  scope?: PreparedScopeDeclaration;
+  /** when + assert 的可能读取及必要前置传递依赖；不是 Issue target 的复制。 */
+  watch: DataWatch[];
+  /** 省略表示没有显式前置；执行使用本轮结论，不复用历史通过结果。 */
+  requires?: PreparedPrerequisite[];
 }
-/** 已定位到具体 Schema 资源的消息覆盖；不参与校验真假判断。 */
-export interface PreparedSchemaMessage {
-  resourceId: string;
-  /** Schema 声明位置，不是当前成员的数据下标路径。 */
-  schemaPath: string;
-  keyword: string;
-  message: MessageSpec;
+/** 保留 validator / target / when / scope；输出 watch 已是有效失效集合。 */
+export interface PreparedExternalConstraint extends Omit<
+  ExternalConstraint,
+  'watch' | 'requires' | 'scope'
+> {
+  scope?: PreparedScopeDeclaration;
+  /** 合并作者 watch、when 和前置依赖；失效不等于立即发起请求。 */
+  watch: DataWatch[];
+  requires?: PreparedPrerequisite[];
 }
-/** 完整根 Schema 与 Constraint 计划；业务数据和聚合 Issues 留在每个 Runtime 实例内。 */
-export interface PreparedValidationPlan {
-  /** schemaResources 中本表单业务根 Schema 的键。 */
-  rootSchemaResourceId: string;
-  /** 固定的本地资源闭包；引用存在性和闭合性不是简单结构校验能证明的。 */
-  schemaResources: Record<string, PreparedSchemaResource>;
-  constraints: Record<string, PreparedConstraint>;
-  messages: PreparedSchemaMessage[];
-}
+/** 仍按原 Constraint Union / 数组交付，不转换成 executor 或规则索引表。 */
+export type PreparedConstraint = PreparedInternalConstraint | PreparedExternalConstraint;

@@ -12,6 +12,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-COMPILERIOTYPES
 - SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
 - SRC-ENGINEERING
@@ -374,3 +375,15 @@ pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / �
 完整字段的交叉引用、Scope 绑定、签名兼容、规则前置、计划 ID / 资源闭包、锁与格式装载检查属于 Compiler / Runtime 后续消费验证；结构测试通过不证明这些算法已实现。Prepared 测试对象是手写夹具，不是 Compiler 生成结果。本次首次实施及范围见 [SRC-PROTOCOLIMPLEMENTATION](source-map.md#src-protocolimplementation)。
 
 提交前审查复现并修复两项问题：Authoring bind 改为复用 JsonPointer 约束，拒绝 name / 非法 ~ 转义，注释明确规范化尚未实现；完整检查在构建前拦截失步 Schema。实际临时改动生成文件后验证 pnpm check 提前失败且不重写文件，再恢复原文。Protocol 的 28 个用例通过，最终全仓检查随提交前复验。
+
+### 编译输入输出的协议类型迁移 {#compiler-io-types}
+
+2026-10-21 用户明确要求先提交已确认设计，再调整协议类型；设计提交 bdec628。依据 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)，PreparedForm 改为 build / definition / resources 与能力锁 / Host 需求；移除三类顶层 Plan、静态 Scope 编号、路径分段和另一套执行 AST。原引用、Expression、Command 语法复用，规则数组和共享模板保留；字段前置沿用 requires 并携带已解析 constraintIds。
+
+每个持续呈现的完整 $expr 包装必带 watch，事件 / Request Payload 及 Command 值仍按调用求值，不允许响应式包装混入。CompilerInputDefinition 公开默认定义输入，规范写法与简写共用该类型；真正的 compile SDK 和默认目标选择未实现。Prepared 每次交付一个视图，build.platform 可省略，Scope mode 默认 one 在输出中显式保存。业务对象仍可用 watch，Literal 内不解释；普通对象在 TS 和生成 Schema 中均排除 $expr / $literal 保留键。
+
+生成器未新建手写 Schema 或校验关键字，仍从 TS / JSDoc 派生 10 个 2020-12 根资源。结构夹具、public exports / 独立打包消费与类型负例同步。新增测试先在旧 Schema 上因缺少 identity 的旧包装失败，再通过新结构；审查复现并修复 TS 字典放过缺失 watch、响应式变量被当成按调用 Payload 的结构赋值，以及 Prepared Scope 缺失 mode 的问题。包内类型检查和 48 个结构 / 方言用例已通过；这些结果不证明 Compiler、Runtime、依赖推导、实际精准更新或浏览器渲染已实现。
+
+后续工作是编译功能清单与校验 / 依赖算法、SDK 和真实消费者接入。此次为未发布协议的结构替换，不虚构兼容版本或自动迁移旧 Prepared。来源为当前用户授权和本地代码 / 验证，见 [SRC-COMPILERIOTYPES](source-map.md#src-compiler-io-types)。
+
+迁移完成后全仓 pnpm check 已通过：10 个 Schema 确定性检查、格式 / Lint / 依赖边界、八包构建和类型检查、包内与跨包测试、HTTP 集成、六包隔离打包的生产 / development 条件与声明消费，以及文档构建同步。HTTP 测试最初因沙箱禁止本机监听失败，允许本机端口后通过；打包检查最初缺少已安装 React 依赖的离线元数据，在临时目录补齐相同版本缓存后通过，未修改项目清单或锁文件。独立审查复验无剩余问题。此次没有 UI 改动，未运行浏览器 E2E。

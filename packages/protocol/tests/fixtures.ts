@@ -120,58 +120,27 @@ export const capabilityCatalog: CapabilityCatalogSnapshot = {
   },
 };
 /** Hand-built contract fixture, not a Compiler implementation or proof of execution. */
-export const preparedForm: PreparedForm = {
+export const preparedForm = {
   preparedFormatVersion: 'test-prepared',
-  identity: {
-    definitionId: 'enrollment',
-    definitionVersion: 'draft',
-    protocolVersion: 'test-protocol',
+  build: {
     compilerVersion: 'test-compiler',
     catalogSnapshotId: 'test-catalog',
-    platform: 'web',
     profile: 'desktop',
   },
-  formPlan: {
-    scopes: {},
-    expressions: {},
-    reactions: {},
-    validation: {
-      rootSchemaResourceId: 'data',
-      schemaResources: { data: { schema: simpleDefinition.data.schema } },
-      constraints: {},
-      messages: [],
-    },
-  },
-  viewPlan: {
-    requestSchemas: {},
-    root: {
-      kind: 'material',
-      id: 'name-input',
-      materialId: 'text-input',
-      bindings: { value: { source: 'data', base: 'root', path: ['name'] } },
-      props: {},
-      slots: {},
-      on: {},
-      requests: {},
-      observationId: 'name-observation',
-    },
-  },
-  dependencyPlan: {
-    observations: {
-      'name-observation': {
-        id: 'name-observation',
-        owner: { kind: 'view', id: 'name-input' },
-        dependencies: [
-          {
-            source: 'data',
-            reference: { source: 'data', base: 'root', path: ['name'] },
-            aspect: 'value',
-          },
-        ],
-        activationOwner: 'view-mounted',
+  definition: {
+    protocolVersion: simpleDefinition.protocolVersion,
+    id: simpleDefinition.id,
+    version: simpleDefinition.version,
+    data: simpleDefinition.data,
+    views: {
+      desktop: {
+        id: 'name-input',
+        material: 'text-input',
+        bindings: { value: { source: 'data', path: '/name' } },
       },
     },
   },
+  resources: { schemas: {}, requestSchemas: {} },
   capabilityLock: {
     materials: {
       'text-input': {
@@ -184,5 +153,4 @@ export const preparedForm: PreparedForm = {
     pureFunctions: {},
   },
   hostRequirements: { validators: [], events: [], requests: [] },
-  sources: { 'name-input': [{ documentId: 'enrollment', pointer: '/views/desktop' }] },
-};
+} satisfies PreparedForm;

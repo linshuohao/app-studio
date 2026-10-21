@@ -8,7 +8,7 @@
   <title>设计决策与讨论演进 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
+  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -2227,7 +2227,11 @@ Host        → 核对当前输出、完整校验与业务条件（不以 Reacti
 </div>
 </div>
 <p class="caption arch-note">这是职责关系图，不是逐跳调用顺序。平台管理资产与不可变发布，L2 消费契约，L3/L4 绑定已锁定实现；Host 管外部请求，需改数据时显式提交 Command。</p>
-</figure></section>
+</figure>
+</section>
+<section class="section" id="request-integration-confirmed"><div class="section-head"><div class="kicker">58 · FORM ENGINE</div><div class="section-title"><h2>2026-10-21：请求类型贯通及缺失接入的明确错误</h2></div></div>
+
+<p>用户要求 Host 开发者清楚请求输入输出，且漏注册必须在代码编写或运行页面明确报错，并确认补入实现目标。现行 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">请求开发接入</a> 贯通公开类型、Host 实现 / 注册、页面映射、Compiler 和装配检查；静态可知缺注册由 TS 约束，动态配置由预检兜底。页面实际使用物料的所有声明请求必需，漏映射编译失败、漏实现装配时对应物料报错，替代此前可省略且等到调用才报错的规则。仅加载未用物料不要求接入，其他物料继续，调用保留 error 兜底；具体 API 和工具未冻结。修订 ADR-FE-016，不代表运行时已实现。</p></section>
         
         
         
@@ -2292,7 +2296,8 @@ Host        → 核对当前输出、完整校验与业务条件（不以 Reacti
 <a href="#prerequisite-scope-confirmed" data-to="prerequisite-scope-confirmed" title="2026-10-21：前置唯一实例与同步等待范围确认"><span class="nav-num">54</span><span>2026-10-21：前置唯一实例与同步等待范围确认</span></a>
 <a href="#protocol-baseline-confirmed" data-to="protocol-baseline-confirmed" title="2026-10-21：协议包完整基线收敛并转入开发准备"><span class="nav-num">55</span><span>2026-10-21：协议包完整基线收敛并转入开发准备</span></a>
 <a href="#protocol-contracts-implemented" data-to="protocol-contracts-implemented" title="2026-10-21：Protocol 三领域类型与 Schema 首批实施"><span class="nav-num">56</span><span>2026-10-21：Protocol 三领域类型与 Schema 首批实施</span></a>
-<a href="#material-requests-confirmed" data-to="material-requests-confirmed" title="2026-10-21：物料请求与 Host 解耦确认"><span class="nav-num">57</span><span>2026-10-21：物料请求与 Host 解耦确认</span></a></nav>
+<a href="#material-requests-confirmed" data-to="material-requests-confirmed" title="2026-10-21：物料请求与 Host 解耦确认"><span class="nav-num">57</span><span>2026-10-21：物料请求与 Host 解耦确认</span></a>
+<a href="#request-integration-confirmed" data-to="request-integration-confirmed" title="2026-10-21：请求类型贯通及缺失接入的明确错误"><span class="nav-num">58</span><span>2026-10-21：请求类型贯通及缺失接入的明确错误</span></a></nav>
         <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>HISTORY-DESIGN</dd><dt>所属层级</dt><dd>追溯</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>相关正文与历史 · 36</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 11</summary><ul><li><a href="source-map.html#src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION · Protocol 首批代码与本地验收</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
       </aside>
       </div>

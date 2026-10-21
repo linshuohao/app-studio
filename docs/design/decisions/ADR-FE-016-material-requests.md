@@ -49,3 +49,10 @@ Prepared View 保存已解析映射及独立 Schema 闭包，Host Requirements �
 - [完整请求契约](../l1/05-view-material-host.md#material-requests)
 - [用户确认与演进](../design-history.md#material-requests-confirmed)
 - [来源](../source-map.md)
+
+
+## 后续确认：类型贯通与必需接入
+
+用户确认补齐 [请求开发接入目标](../l1/05-view-material-host.md#request-development-contract)：物料公开输入输出类型，Host 可关联契约获得参数 / 返回值检查；静态已知注册集合约束必需请求名，动态配置由编译 / 装配兜底。具体类型生成方式及 SDK 函数名未冻结。
+
+修订此前允许页面省略映射的规则：页面实际使用的物料所声明请求首期全部必需，不设 optional；仅加载物料包不触发要求。漏映射是 Compiler Error，缺实际 Host 注册须在装配时让对应物料明确报错、不可交互，而非等第一次调用。开发页面提供具体名称和来源，生产局部提示不暴露内部细节，其他物料继续。Host 静态声明可选、Validator 义务和通知可选性不变。这是本 ADR 的增量修订，不另建平行契约。

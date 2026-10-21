@@ -90,7 +90,7 @@
           "additionalProperties": {
             "$ref": "#/$defs/RequestContract"
           },
-          "description": "可由页面映射到 Host 的请求；声明本身不强制每个页面都配置映射。",
+          "description": "页面实际使用物料时，声明的请求必须全部映射；仅加载未使用物料不要求接入。",
           "type": "object"
         },
         "slots": {

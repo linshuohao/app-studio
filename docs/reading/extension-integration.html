@@ -8,7 +8,7 @@
   <title>物料扩展与 Host 集成 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
+  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -317,7 +317,9 @@
 <p>确认与取舍见 <a href="decisions/ADR-FE-012-host-output.html" rel="noopener noreferrer">ADR-FE-012</a>。</p>
 <h3 id="material-request-bridge">已确认的物料请求桥接</h3>
 <p>物料请求是 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">L1 请求契约</a> 的一次输入输出交互，由共用 Adapter 连接 Host；不要求逐物料工厂。Host 业务函数返回 JSON 结果，候选项等由物料消费，选中值仍通过 Binding / Command 写入。共用桥接管理挂载身份、latest / parallel、discarded、可选取消与输入输出检查；具体网络及授权留给 Host。它只承担本通道交付有效性，不接管 Host 观察数据后主动执行的其他业务任务，也不进入校验 Pending。</p>
-<p>上方 Host 业务请求图仍描述 Host 自主管理的业务操作；物料 Request 另走“物料 → 已准备映射 → 共用 Adapter → Host 函数 → 有效性检查 → 物料”。旧 Material.services / Host.services 静态需求被该通道替代，Host 内部实现可继续使用 service，不再暴露为协议要求。</p></section>
+<p>上方 Host 业务请求图仍描述 Host 自主管理的业务操作；物料 Request 另走“物料 → 已准备映射 → 共用 Adapter → Host 函数 → 有效性检查 → 物料”。旧 Material.services / Host.services 静态需求被该通道替代，Host 内部实现可继续使用 service，不再暴露为协议要求。</p>
+<h3 id="请求类型贯通与接入完整性">请求类型贯通与接入完整性</h3>
+<p>物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">L1 请求开发接入</a>。</p></section>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="platform-studio.html">下一步 · Platform 与 Studio：范围及待设计工作</a></nav>
         

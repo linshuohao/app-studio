@@ -8,7 +8,7 @@
   <title>视图、物料与宿主契约 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
+  <script src="../assets/knowledge-index.js?v=ba6f212715f1" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -335,7 +335,7 @@
 
 <p>2026-10-21 用户确认：物料发起需要结果的交互，经页面映射到 Host，由公共 Adapter 桥接结果；不要求逐物料工厂或包装。Event / on 仍是无返回通知，可执行已有 Command 或 host.emit；Request / requests 是一次调用、一次结果的独立通道。请求不进入 Reaction 或 Validator Pending，不增加网络 Command、异步 Pure Function、自动回填或通用 Workflow。</p>
 <h3 id="声明与页面映射">声明与页面映射</h3>
-<p>MaterialManifest.requests 是物料请求名到 RequestContract 的字典，每项包含 payloadSchema、resultSchema 和可选 concurrency（latest / parallel，默认 latest）。输入输出都是 JSON；没有输入可声明 null。Schema 只描述业务值，不包含调用状态包装。物料名称与 Host 名称独立；声明不强制所有页面配置映射。</p>
+<p>MaterialManifest.requests 是物料请求名到 RequestContract 的字典，每项包含 payloadSchema、resultSchema 和可选 concurrency（latest / parallel，默认 latest）。输入输出都是 JSON；没有输入可声明 null。Schema 只描述业务值，不包含调用状态包装。物料名称与 Host 名称独立；页面实际使用物料时，其声明的所有请求必须配置映射，首期不设 optional。仅向 Registry 注册或加载物料包不触发请求接入要求。</p>
 <p>MaterialNode.requests 把物料请求名映射为 <code>{ type: 'host.request', request: string, payload?: ValueSpec }</code>。省略 payload 时原样转发物料输入；显式配置时仅在调用发生时求值，复用 event 引用读取本次物料输入，也可组合当前 data / context。不自动建立观察，不因引用数据变化重发请求。首期不增加响应转换表达式，Host 返回物料要求的结构。</p>
 <div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"address-picker"</span><span class="syn-p">,</span>
@@ -345,17 +345,56 @@
 </code></pre></div>
 <p>HostContract.requests 声明 Host 请求名及 payloadSchema / resultSchema；实际函数在 Host SDK 注册，接收输入并返回值 / Promise。Host 只处理业务调用与结果转换，不必了解物料实例、Binding 或表单写入。网络鉴权、缓存、重试、防抖仍归具体实现。File、DOM 对象等不直接作为跨平台 JSON 参数，文件传输留给平台实现。</p>
 <h3 id="结果与写入职责">结果与写入职责</h3>
-<p>公共桥接返回 success（value 为业务结果）、error（error.code 与可选 message）或 discarded。未绑定、未注册、输入输出不满足契约、业务调用失败均为局部 error；被替代或实例失效为 discarded。Host 同步异常 / Promise 拒绝统一进入错误处理，用户端不暴露堆栈等技术细节。函数、Promise、取消句柄及桥接调用状态是运行时 SDK 对象，不进入可序列化协议。</p>
+<p>公共桥接返回 success（value 为业务结果）、error（error.code 与可选 message）或 discarded。未绑定 / 未注册须提前在编译或装配阶段报错；若仍发生调用，返回明确局部 error。输入输出不满足契约、业务调用失败同样为局部 error；被替代或实例失效为 discarded。Host 同步异常 / Promise 拒绝统一进入错误处理，用户端不暴露堆栈等技术细节。函数、Promise、取消句柄及桥接调用状态是运行时 SDK 对象，不进入可序列化协议。</p>
 <p>搜索候选项保留在物料局部 UI 状态，用户选中后经既有 Binding / Command 写入 Runtime。返回值不会自动写表单；需要写入时由物料消费结果并使用已有受控写入能力。不得绕过 Store 权威入口，也不增加“请求完成执行 Command 列表”的编排。</p>
 <h3 id="并发有效性与生命周期">并发、有效性与生命周期</h3>
 <p>latest 以实际物料挂载实例 + 请求名称为范围，旧调用立即失去交付资格并结算 discarded；parallel 各调用独立交付。不同物料实例互不取消。卸载、改绑、数组成员删除或实例替换使旧调用失效；数组移动且身份保持时保留归属。桥接交付成功或失败前核对有效性；可选取消仅为资源优化，取消异常不恢复旧调用资格。底层无法取消也不能交付迟到结果，失效调用不得悬挂等待网络。</p>
 <p>桥接不推断 props 或请求参数背后的隐式依赖。国家变化后城市查询失效等行为，由物料通过公共取消接口或重新请求处理。具体取消句柄和调用签名在所属 Adapter / SDK 落实，不新增跨语言取消信号协议。该通道不纳入完整校验等待，不改变 Host Validator 的任务有效性规则。</p>
 <h3 id="编译prepared-与边界校验">编译、Prepared 与边界校验</h3>
-<p>Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。未映射请求调用时局部报错，不默认阻断整表。</p>
+<p>Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。页面所用物料缺少声明请求的映射时，Compiler 报 Error 并定位节点 / 请求名，不生成可执行 Prepared。Host 实现注册完整性在装配阶段核对，缺失时对应物料进入明确错误状态，不能等第一次调用才发现，也不默认停止其他物料。</p>
 <p>PreparedMaterialNode.requests 保存已解析映射及显式并发策略；PreparedViewPlan.requestSchemas 是独立闭合 Schema 资源表。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。</p>
 <p>运行时只使用 Prepared。对物料输入、映射后的 Host 输入（有静态契约时）、Host 输出（有静态契约时）和物料期望结果进行小范围检查；校验器按契约预编译复用，不在每次调用重新编译，更不重复全量协议校验。这不禁止 Working Data 暂时无效，输入错误只影响本次请求。</p>
 <p>MaterialManifest.services、HostContract.services 及 Prepared HostRequirements.services 退出正式协议；Host 内部服务组织不受约束。已有通知不变；旧 services 配置须显式迁移到页面 requests 映射，不能按名称自动猜测。Prepared 新增必填空字典 / 数组须同步生产者消费者及格式兼容判断，不虚构已发布版本。</p>
-<p>实现验收覆盖名称解耦、显式与直通参数、Schema 错误、未绑定 / 未注册、同步异常、异步拒绝、latest 后发先至、parallel、卸载 / 改绑 / 数组移动删除及取消失败。当前协议类型与结构测试不证明桥接运行时已实现。</p></section>
+<p>实现验收覆盖名称解耦、显式与直通参数、Schema 错误、未绑定 / 未注册、同步异常、异步拒绝、latest 后发先至、parallel、卸载 / 改绑 / 数组移动删除及取消失败。当前协议类型与结构测试不证明桥接运行时已实现。</p>
+<h3 id="request-development-contract">请求开发接入与缺失诊断验收</h3>
+<p>2026-10-21 用户进一步确认：交付目标必须贯通“物料公开请求类型 → Host 实现 → 注册 → 页面映射 → 编译 / 装配核对”。仅提供 Manifest Schema 或各端各自声明类型不足以证明完整接入。以下为实现目标，尚未实现对应 SDK 或 Compiler。</p>
+<p>物料公开每个请求的输入输出类型及可关联的契约；物料侧桥接以该契约约束请求名、输入和成功结果。Host 编写处理函数时可直接引用物料请求契约，自动得到参数提示与返回类型检查，不要求重抄签名或逐物料包装。直接转发时复用物料契约；页面转换输入时 Host 使用自己的明确输入契约，Compiler 检查映射结果到 Host 输入、Host 输出到物料结果的有限结构连接。首期没有结果转换 DSL。TS 类型与 Schema 保持同源；自动推导或公开显式类型的工具方式留给实现选择，公共辅助函数名称尚未冻结。</p>
+<p>静态已知页面与注册集合的装配接口应提供必需请求名的类型约束，缺少处理函数、输入或返回类型不匹配时给 TS 编译错误。动态加载 JSON 无法由 TS 提前推导全部请求，因此必须提供编译 / 装配检查，不用泛型断言伪造保证。HostContract 可选并不使实际实现注册变成可选。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>检查点</th>
+<th>实现目标与验收</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开发类型</td>
+<td>可发现请求名及输入输出；错误参数、错误返回值，以及静态可知的缺失注册产生类型错误</td>
+</tr>
+<tr>
+<td>页面编译</td>
+<td>实际使用物料时，声明请求全部必须映射；漏项产生 Compiler Error，包含节点 / 请求名 / 来源位置，不生成执行制品</td>
+</tr>
+<tr>
+<td>页面装配</td>
+<td>按所选 Prepared 的 HostRequirements.requests 在交互可用前核对实际处理函数；缺失时对应物料不可交互并展示错误，开发环境指出物料、请求名、Host 注册名及配置位置</td>
+</tr>
+<tr>
+<td>调用兜底</td>
+<td>绕过预检或运行期间实现失效仍返回 error，不回传空结果或假成功；不拖到调用时才做首次完整性检查</td>
+</tr>
+<tr>
+<td>隔离范围</td>
+<td>仅加载 / 注册但页面未使用的物料不要求 Host 接入；已进入 Prepared 的物料请求不因暂时隐藏、未挂载或未点击而免检</td>
+</tr>
+<tr>
+<td>错误展示</td>
+<td>开发者在页面与诊断中明确发现遗漏；生产端展示局部不可用的业务提示，不暴露内部名称 / 堆栈；其他可用物料继续工作</td>
+</tr>
+</tbody>
+</table></div>
+<p>以上替代此前“声明不强制页面映射、未绑定等到调用时报错”的规则。MaterialNode.requests 仍为可选字段，因为无请求物料可省略，通用 JSON Schema 也不能独立获知外部物料声明；完整性由拥有 Catalog 的 Compiler 检查，不以结构校验通过代表接入完成。</p></section>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="06-lifecycle-profiles.html#lifecycle">下一步 · 生命周期与多视图交付</a></nav>
         

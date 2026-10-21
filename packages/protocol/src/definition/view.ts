@@ -36,7 +36,7 @@ export interface MaterialNode {
   slots?: Record<string, ViewNode[]>;
   /** 物料语义事件名到响应；Payload 形状来自该物料的 EventContract。 */
   on?: Record<string, InteractionIntent>;
-  /** 物料请求名到 Host 映射；未绑定时调用返回局部错误，不阻断整表。 */
+  /** 物料请求名到 Host 映射；声明请求漏映射由 Compiler 报错，无请求物料可省略。 */
   requests?: Record<string, HostRequestIntent>;
 }
 /** 显式建立视图词法上下文；each 模式重复实例化子视图，不另加 repeat。 */

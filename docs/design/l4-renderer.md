@@ -261,3 +261,8 @@ L4 行为专题已收敛，不再按已确认原则或常规框架实现逐项�
 ### 物料请求接入 {#renderer-requests}
 
 共用 Adapter 根据 PreparedMaterialNode.requests 处理物料请求，不要求逐物料工厂，亦不解析原始 Definition。桥接管理实际挂载实例 + 请求名的 latest / parallel、success / error / discarded、卸载 / 改绑及数组身份有效性，并按 PreparedViewPlan.requestSchemas 检查输入输出。Host 只接收业务输入并返回 JSON 结果，结果不自动写入表单。完整语义及验收见 [L1 请求契约](l1/05-view-material-host.md#material-requests)；运行时接口及测试仍待实现，不由协议结构测试替代。
+
+
+### 请求接入预检与页面错误
+
+按所选 Prepared 的请求需求在页面装配时检查实际 Host 注册，不能推迟到用户点击或条件子树首次挂载；缺失项关联物料显示局部配置错误并停止相应交互。开发页面明确标出物料、请求名、Host 名及来源位置；生产以业务提示呈现局部不可用，其他可用物料继续。调用层仍保留 error 兜底。物料请求类型、Host 处理函数和静态注册约束共同构成开发接入验收，见 [完整目标](l1/05-view-material-host.md#request-development-contract)；本轮不宣称已实现 SDK 或页面错误组件。

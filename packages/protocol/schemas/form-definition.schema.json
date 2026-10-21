@@ -742,7 +742,7 @@
           "additionalProperties": {
             "$ref": "#/$defs/HostRequestIntent"
           },
-          "description": "物料请求名到 Host 映射；未绑定时调用返回局部错误，不阻断整表。",
+          "description": "物料请求名到 Host 映射；声明请求漏映射由 Compiler 报错，无请求物料可省略。",
           "type": "object"
         },
         "slots": {

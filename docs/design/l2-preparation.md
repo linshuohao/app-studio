@@ -643,3 +643,10 @@ createFormRuntime({
   }
 });
 ```
+
+
+### 请求映射完整性与实际注册边界
+
+页面实际使用的物料声明的 requests 首期全部必需，Compiler 按确定 Catalog 检查是否逐项映射；漏项产生 Error 并定位物料节点 / 请求名 / 配置位置，不生成可执行 Prepared。MaterialNode.requests 在结构上可省略不意味着语义可漏项；无请求物料允许省略。仅 Registry 中未使用物料不产生此义务。
+
+HostContract 可选只影响静态兼容证明，不豁免运行时注册。所选 Prepared 的 HostRequirements.requests 在页面装配、交互可用前核对实际函数，条件隐藏或尚未挂载不豁免；缺失项对应物料进入明确错误状态，其他可用物料继续。开发类型约束及详细验收见 [请求开发接入](l1/05-view-material-host.md#request-development-contract)。

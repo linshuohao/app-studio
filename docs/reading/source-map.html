@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
+  <script src="assets/knowledge-index.js?v=ba6f212715f1" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -557,7 +557,9 @@
 <h3 id="2026-10-20工程初始化实施证据">2026-10-20：工程初始化实施证据</h3>
 <p>用户授权按已归档方案执行，并明确允许 peer 冲突项由脚本选择最新兼容稳定版。实际生成清单、根锁、配置、测试和公开产物由本轮命令验证；<a href="engineering.html#engineering-implementation" rel="noopener noreferrer">工程主题</a>维护版本、命令和结果，<a href="design-history.html#engineering-initialized" rel="noopener noreferrer">演进</a>记录授权与问题处理。源码 / 锁是工程复现依据，不建立另一套规范或报告页；生产协议与 Runtime 不从工程 smoke 结果推导完成。</p>
 <h3 id="2026-10-21物料-request-完整方案确认">2026-10-21：物料 Request 完整方案确认</h3>
-<p>用户明确“我认可这个改动方案”，确认范围为输入输出 Schema、页面到 Host 映射、公共桥接、并发及生命周期、Prepared 交付和移除 services；讨论缘由见 <a href="design-history.html#material-requests-confirmed" rel="noopener noreferrer">演进</a>，现行见 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">L1</a>及 <a href="decisions/ADR-FE-016-material-requests.html" rel="noopener noreferrer">ADR-FE-016</a>。该确认不证明 Compiler / Adapter / SDK 已实现。</p></section>
+<p>用户明确“我认可这个改动方案”，确认范围为输入输出 Schema、页面到 Host 映射、公共桥接、并发及生命周期、Prepared 交付和移除 services；讨论缘由见 <a href="design-history.html#material-requests-confirmed" rel="noopener noreferrer">演进</a>，现行见 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">L1</a>及 <a href="decisions/ADR-FE-016-material-requests.html" rel="noopener noreferrer">ADR-FE-016</a>。该确认不证明 Compiler / Adapter / SDK 已实现。</p>
+<h3 id="2026-10-21请求开发接入与遗漏报错目标">2026-10-21：请求开发接入与遗漏报错目标</h3>
+<p>用户要求梳理物料到 Host 的输入输出开发流程、明确缺失注册错误，并以“这一块要把它加进来，至少我们在实现的时候，得知道我们的实现目标是什么”确认归档。范围见 <a href="design-history.html#request-integration-confirmed" rel="noopener noreferrer">演进</a>、<a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">现行验收</a>及 ADR-FE-016 的增量修订；未冻结 SDK 函数名、生成工具或宣称生产实现完成。</p></section>
         
         
         

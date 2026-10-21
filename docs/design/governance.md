@@ -281,3 +281,8 @@ Protocol 首批三领域类型及 10 个 Schema 根的结构 / 打包验收已�
 ### 物料 Request 已确认增量
 
 [物料 Request](l1/05-view-material-host.md#material-requests) 与 [ADR-FE-016](decisions/ADR-FE-016-material-requests.md) 已确认，替代原物料服务需求；T03 同步三领域类型 / 生成 Schema / 结构正反例。T06 仍需覆盖 Compiler 名称及类型连接、Prepared 引用闭包和 Adapter 并发 / 生命周期实际验收。现有 M04 / M06 / M14 状态不因此提升，不重开已定并发或要求额外物料工厂；无新增架构阻塞。
+
+
+### 请求开发接入的实现目标补齐
+
+T03 / T06 及 L4 接入验收须覆盖 [请求类型贯通和完整性](l1/05-view-material-host.md#request-development-contract)：物料公开请求输入输出、Host 关联契约和类型约束、必需映射 Compiler Error、实际注册装配预检及页面错误隔离。请求首期不设 optional，仅加载未使用物料不要求注册。已确认规则替代等到调用才报告未绑定；具体 SDK 辅助 API 与推导工具为实现细化。Compiler / Runtime / Renderer 仍待实现，模块完成状态不提升，无新增架构阻塞。

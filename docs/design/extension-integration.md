@@ -162,3 +162,8 @@ Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端
 物料请求是 [L1 请求契约](l1/05-view-material-host.md#material-requests) 的一次输入输出交互，由共用 Adapter 连接 Host；不要求逐物料工厂。Host 业务函数返回 JSON 结果，候选项等由物料消费，选中值仍通过 Binding / Command 写入。共用桥接管理挂载身份、latest / parallel、discarded、可选取消与输入输出检查；具体网络及授权留给 Host。它只承担本通道交付有效性，不接管 Host 观察数据后主动执行的其他业务任务，也不进入校验 Pending。
 
 上方 Host 业务请求图仍描述 Host 自主管理的业务操作；物料 Request 另走“物料 → 已准备映射 → 共用 Adapter → Host 函数 → 有效性检查 → 物料”。旧 Material.services / Host.services 静态需求被该通道替代，Host 内部实现可继续使用 service，不再暴露为协议要求。
+
+
+### 请求类型贯通与接入完整性
+
+物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 [L1 请求开发接入](l1/05-view-material-host.md#request-development-contract)。

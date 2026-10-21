@@ -35,6 +35,6 @@ export interface MaterialManifest {
   slots?: string[];
   /** 配置 on 映射可以使用的语义事件，不登记组件内部全部回调或指令调用。 */
   events?: Record<string, EventContract>;
-  /** 可由页面映射到 Host 的请求；声明本身不强制每个页面都配置映射。 */
+  /** 页面实际使用物料时，声明的请求必须全部映射；仅加载未使用物料不要求接入。 */
   requests?: Record<string, RequestContract>;
 }

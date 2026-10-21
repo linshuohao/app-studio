@@ -335,3 +335,8 @@ flowchart LR
 ### 2026-10-21：物料 Request 完整方案确认
 
 用户明确“我认可这个改动方案”，确认范围为输入输出 Schema、页面到 Host 映射、公共桥接、并发及生命周期、Prepared 交付和移除 services；讨论缘由见 [演进](design-history.md#material-requests-confirmed)，现行见 [L1](l1/05-view-material-host.md#material-requests)及 [ADR-FE-016](decisions/ADR-FE-016-material-requests.md)。该确认不证明 Compiler / Adapter / SDK 已实现。
+
+
+### 2026-10-21：请求开发接入与遗漏报错目标
+
+用户要求梳理物料到 Host 的输入输出开发流程、明确缺失注册错误，并以“这一块要把它加进来，至少我们在实现的时候，得知道我们的实现目标是什么”确认归档。范围见 [演进](design-history.md#request-integration-confirmed)、[现行验收](l1/05-view-material-host.md#request-development-contract)及 ADR-FE-016 的增量修订；未冻结 SDK 函数名、生成工具或宣称生产实现完成。

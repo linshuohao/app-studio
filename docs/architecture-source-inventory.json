@@ -1101,8 +1101,8 @@
       "path": "docs/design/decisions/ADR-FE-016-material-requests.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3069,
-      "sha256": "d270fb3ddc3f597b93aa285ab8555f595e36d96dc6ce4eeda80a8cb6379bbd4d",
+      "bytes": 3989,
+      "sha256": "3b31a99ebd6f5b6825ce3c586d9b35bccf4b9d8d982f0774aacbaac155c54604",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1128,6 +1128,11 @@
         {
           "level": 2,
           "title": "现行正文与来源",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "后续确认：类型贯通与必需接入",
           "anchor": null
         }
       ]
@@ -1251,8 +1256,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 137378,
-      "sha256": "d92dc409dd58f6dd2f64dacb6b14db3e40e225f50f03c78f87d9b151f7a28852",
+      "bytes": 138210,
+      "sha256": "8ac0aa6eee2568ba365c02a4aaa76b6d3c5cebf5a6a79130fa1eb19baecc28fa",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1689,6 +1694,11 @@
           "level": 3,
           "title": "Request 确认前的全局横向图（已替代）",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：请求类型贯通及缺失接入的明确错误",
+          "anchor": "request-integration-confirmed"
         }
       ]
     },
@@ -1906,8 +1916,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13351,
-      "sha256": "967279d8f0f9538346add2e4efd570784031e3d9306edb659bd9dfdd1472ab5b",
+      "bytes": 13939,
+      "sha256": "a30df2df84ff0bf65ee00f6af81fb8bdffa3bf4f7649bd7f96f07496d9a7d53a",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -1959,6 +1969,11 @@
           "level": 3,
           "title": "已确认的物料请求桥接",
           "anchor": "material-request-bridge"
+        },
+        {
+          "level": 3,
+          "title": "请求类型贯通与接入完整性",
+          "anchor": null
         }
       ]
     },
@@ -1966,8 +1981,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 34319,
-      "sha256": "50132eb42fd8eed6ab3e0047cb1a9f767eb1a755802d86cbe7bd0eb0be1ed6ee",
+      "bytes": 34925,
+      "sha256": "a447d6974c3aa62cf7533ee9527feed53ff3cb5e5cb9308ba5c76ac33a60864c",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2033,6 +2048,11 @@
         {
           "level": 3,
           "title": "物料 Request 已确认增量",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "请求开发接入的实现目标补齐",
           "anchor": null
         }
       ]
@@ -2226,8 +2246,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17912,
-      "sha256": "6580b2bd6cdd07284ffb07939b1b561948fed40db81f80ff60d1c68d0a96f56f",
+      "bytes": 21208,
+      "sha256": "733000ba8cc715582c493928d6e58ab1051988a15731a7f0a168a2280d2da83e",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2309,6 +2329,11 @@
           "level": 3,
           "title": "编译、Prepared 与边界校验",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "请求开发接入与缺失诊断验收",
+          "anchor": "request-development-contract"
         }
       ]
     },
@@ -2481,8 +2506,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 54474,
-      "sha256": "9ff81da03f3f75b5cc806b69b540648cc7e999a3db0940236b0d3cc156ef48fd",
+      "bytes": 55311,
+      "sha256": "8be212923066f2c66d8074d08ec198d4064d0bf7725a8f4bcc8fda5299098111",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -2638,6 +2663,11 @@
         {
           "level": 3,
           "title": "旧 Host 服务候选的追溯保留",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "请求映射完整性与实际注册边界",
           "anchor": null
         }
       ]
@@ -2986,8 +3016,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 25206,
-      "sha256": "8356cdd603b991e86c776d40487488e8c6126ae6e647b0d84be2aecc80cb4268",
+      "bytes": 25854,
+      "sha256": "de714694f0aa7e325419798c06ed9ae4b1ef95e92838b11e442b9ef85c4df6c8",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {
@@ -3119,6 +3149,11 @@
           "level": 3,
           "title": "物料请求接入",
           "anchor": "renderer-requests"
+        },
+        {
+          "level": 3,
+          "title": "请求接入预检与页面错误",
+          "anchor": null
         }
       ]
     },

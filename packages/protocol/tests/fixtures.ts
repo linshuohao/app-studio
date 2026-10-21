@@ -143,6 +143,7 @@ export const preparedForm: PreparedForm = {
     },
   },
   viewPlan: {
+    requestSchemas: {},
     root: {
       kind: 'material',
       id: 'name-input',
@@ -151,6 +152,7 @@ export const preparedForm: PreparedForm = {
       props: {},
       slots: {},
       on: {},
+      requests: {},
       observationId: 'name-observation',
     },
   },
@@ -181,6 +183,6 @@ export const preparedForm: PreparedForm = {
     },
     pureFunctions: {},
   },
-  hostRequirements: { validators: [], events: [], services: [] },
+  hostRequirements: { validators: [], events: [], requests: [] },
   sources: { 'name-input': [{ documentId: 'enrollment', pointer: '/views/desktop' }] },
 };

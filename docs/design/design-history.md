@@ -1140,3 +1140,30 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 提交前 review 发现 Authoring bind 未复用 Pointer 约束与构建先行掩盖 Schema 失步两项实现问题，补齐结构反例与构建前门禁；未改变设计语义或新增抽象。
 
 全仓 pnpm check 及隔离消费者通过；实际范围与未执行检查见[工程记录](engineering.md#protocol-implementation)。包仍 private，手写 Prepared 夹具不是 Compiler 产物，未发布版本或证明执行 / 跨端完成。来源见 [SRC-PROTOCOLIMPLEMENTATION](source-map.md#src-protocolimplementation)。
+
+
+## 2026-10-21：物料请求与 Host 解耦确认 {#material-requests-confirmed}
+
+用户指出物料无法预知不同 Host 的服务名称，逐物料工厂增加包装负担，且 Host 处理业务结果回写会混合职责。讨论后明确确认完整修改方案：独立 requests 输入输出通道、页面映射、公共 Adapter 桥接、latest / parallel 和失效结果丢弃；通知不返回，请求结果由物料消费，业务值仍经 Binding / Command 写入。移除 Material / Host / Prepared services 声明，不增加响应 DSL、自动回填或异步工作流。见 [L1 正文](l1/05-view-material-host.md#material-requests)及 [ADR-FE-016](decisions/ADR-FE-016-material-requests.md)。正式结构可同步修订，公共桥接运行时和 Compiler 语义验收仍待所属包实施。
+
+### Request 确认前的全局横向图（已替代）
+
+保留原图用于来源核对；其中注入物料服务的通道由 ADR-FE-016 替代，现行图见整体架构。
+
+```diagram
+{
+  "id": "figure-architecture",
+  "title": "图 1 · Logical Architecture：四层核心与横向协作",
+  "rows": [
+    [{"title":"Tooling / Form Studio / Platform","body":"配置编辑 · 预览 · Diagnostics · Devtools · Form / Capability Registry · 发布治理"}],
+    [{"title":"L1 · Definition / 表单定义","body":"Data Schema · Reference / Scope · Expression · Constraint · Command / Reaction · Views / Templates"}],
+    [{"title":"L2 · Preparation / 静态协议编译","body":"原始 Definition + 契约快照 + Target → PreparedForm / 确定依赖与执行计划"}],
+    [{"title":"L3 · Form Runtime / 表单运行时","body":"唯一不可变 Working Data · 即时 Command · 统一观察与最新状态 Flush；对外 read / snapshot / dispatch / subscribe","major":true,"items":["Data / Field State","Scope / Relative Position","Expression Evaluation","Dependency Matching / Flush","Command / Reaction","Validation / Readiness","Flush Outcome / Diagnostics","Instance Lifecycle"]}],
+    [{"title":"L4 · Renderer / Material Adapter","body":"Web / Flutter · Material 实例 · Binding 连接 · 挂载 / 改绑 / 卸载订阅 · 局部 UI State"}],
+    [{"title":"Material Registry","body":"Props、Binding Ports、Slots、Events 的 Manifest 与平台实现"},{"title":"Pure Function Catalog","body":"内置与注册的同步纯函数、签名、版本与跨端实现"},{"title":"Host Integration","body":"外部校验执行 · host.emit · 注入的物料服务"}],
+    [{"title":"Host Application / Backend","body":"异步加载 · 业务 Baseline / Dirty / Reset · 保存 / 提交 · 权限 / 外部业务"}]
+  ],
+  "arrows":["↓","↓","↓","↕","↕","↕"],
+  "note":"这是职责关系图，不是逐跳调用顺序。平台管理资产与不可变发布，L2 消费契约，L3/L4 绑定已锁定实现；Host 管外部请求，需改数据时显式提交 Command。"
+}
+```

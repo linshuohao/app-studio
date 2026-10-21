@@ -134,3 +134,8 @@ _Avoid_：把默认插槽与默认视图混用。
 
 **定义信息**：文档中对协议标识、版本和非执行性 metadata 的阅读分组；它不是新的协议字段或嵌套对象。
 _Avoid_：basicInfo 协议域。
+
+
+## Request（物料请求）
+
+物料声明 JSON 输入输出，通过页面 requests 映射到 Host 函数的有返回交互；区别于无返回 Event。公共 Adapter 管调用交付有效性，物料消费结果，业务写入沿用 Binding / Command；不等同 Host Validator 或 Reaction。见 [现行契约](design/l1/05-view-material-host.md#material-requests)。

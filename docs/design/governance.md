@@ -259,7 +259,7 @@ T01 / T02 阻塞相关公共行为冻结，不阻止 T03 的独立规范工作�
 
 ### 协议包讨论收敛，转入完整类型实施
 
-2026-10-21 用户确认先按[完整开发基线](l1/08-decisions-release.md#protocol-development-baseline)推进，消费者遇真实问题再迭代，不继续逐字段讨论。已确认三领域公共类型、同步字段资格、结构兼容子集、函数签名 / 有限短路、消息、服务身份、双摘要、Prepared 结构树 / 资源闭包和装载检查。T03 可以按全量类型 + Schema + 正反例实施，T06 按相同基线联验；命名 / 容器 / 工具配置不再列为架构阻塞。
+2026-10-21 用户确认先按[完整开发基线](l1/08-decisions-release.md#protocol-development-baseline)推进，消费者遇真实问题再迭代，不继续逐字段讨论。已确认三领域公共类型、同步字段资格、结构兼容子集、函数签名 / 有限短路、消息、能力身份、双摘要、Prepared 结构树 / 资源闭包和装载检查。T03 可以按全量类型 + Schema + 正反例实施，T06 按相同基线联验；命名 / 容器 / 工具配置不再列为架构阻塞。
 
 Protocol 首批三领域类型及 10 个 Schema 根的结构 / 打包验收已完成，见[实施记录](engineering.md#protocol-implementation)。M02–M06 仍不视为全链路生产验收完成；Runtime 的快照、Issue / 完整结果、任务与恢复 API 仍归各自包，不以协议讨论收敛宣称全引擎 SDK 就绪。真实行为冲突才重开设计，Platform / Studio 与 Dart 不作为本期前置。
 
@@ -276,3 +276,8 @@ Protocol 首批三领域类型及 10 个 Schema 根的结构 / 打包验收已�
 按用户清单补齐 [Agent L1–L8 逐项排查](platform-studio.md#agent-eight-layers)，每层给出表单赋能、落点 / 边界与产物验收；该 Agent 分层不是表单 L1–L4。规划为未来候选，HTML 从正文生成，不新增 Agent 当前实现任务或将框架 / 训练方法标为已选定。
 
 2026-10-20 用户确认将[运行保障与问题治理](architecture.md#blueprint-operations)纳入完整蓝图，覆盖可观测性、监控告警、问题处理与 Agent 辅助；实现可后置，不成为核心纵切前置。M16 的既有诊断 / Trace 契约继续固化，M18 / M19 仍待设计；完整监控与处置及自动操作权限随后续 T09 / T10 和 Agent 场景设计展开，不关闭 OD-12 或改变 T01–T08 的已有要求。
+
+
+### 物料 Request 已确认增量
+
+[物料 Request](l1/05-view-material-host.md#material-requests) 与 [ADR-FE-016](decisions/ADR-FE-016-material-requests.md) 已确认，替代原物料服务需求；T03 同步三领域类型 / 生成 Schema / 结构正反例。T06 仍需覆盖 Compiler 名称及类型连接、Prepared 引用闭包和 Adapter 并发 / 生命周期实际验收。现有 M04 / M06 / M14 状态不因此提升，不重开已定并发或要求额外物料工厂；无新增架构阻塞。

@@ -216,3 +216,92 @@ describe('Prepared interchange boundary', () => {
     ).toBe(false);
   });
 });
+
+describe('material request contracts', () => {
+  const signature = { payloadSchema: { type: 'string' }, resultSchema: { type: 'array' } };
+  const mapping = { type: 'host.request', request: 'address.lookup' };
+  it('accepts independent material and Host signatures and Definition parameter mapping', () => {
+    expect(material({ ...materialManifest, requests: { search: signature } })).toBe(true);
+    expect(host({ requests: { 'address.lookup': signature } })).toBe(true);
+    expect(
+      definition({
+        ...simpleDefinition,
+        views: {
+          desktop: {
+            material: 'address-picker',
+            requests: {
+              search: {
+                ...mapping,
+                payload: { keyword: { $expr: { ref: { source: 'event', path: '' } } } },
+              },
+            },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+  it('rejects incomplete signatures, unknown concurrency and the removed service registry', () => {
+    for (const request of [
+      { payloadSchema: true },
+      { resultSchema: true },
+      { ...signature, concurrency: 'queue' },
+      { ...signature, resultSchema: { type: 'unknown' } },
+    ])
+      expect(material({ ...materialManifest, requests: { search: request } })).toBe(false);
+    expect(material({ ...materialManifest, services: {} })).toBe(false);
+    expect(host({ services: {} })).toBe(false);
+    expect(host({ requests: { search: { ...signature, concurrency: 'latest' } } })).toBe(false);
+  });
+  it('keeps requests separate from notification intents and rejects malformed mappings', () => {
+    for (const node of [
+      { on: { search: mapping } },
+      { requests: { search: { type: 'host.emit', event: 'search' } } },
+      { requests: { search: { type: 'host.request' } } },
+    ])
+      expect(
+        definition({ ...simpleDefinition, views: { desktop: { material: 'picker', ...node } } }),
+      ).toBe(false);
+  });
+  it('requires explicit Prepared concurrency and request schema resources', () => {
+    const root = preparedForm.viewPlan.root;
+    const request = {
+      ...mapping,
+      concurrency: 'latest',
+      payloadSchemaRef: 'input',
+      resultSchemaRef: 'output',
+    };
+    const make = (entry: object) => ({
+      ...preparedForm,
+      viewPlan: {
+        requestSchemas: { input: signature.payloadSchema, output: signature.resultSchema },
+        root: { ...root, requests: { search: entry } },
+      },
+      hostRequirements: {
+        validators: [],
+        events: [],
+        requests: [{ name: 'address.lookup', nodeIds: ['name-input'] }],
+      },
+    });
+    const valid = make(request);
+    expect(prepared(valid)).toBe(true);
+    expect(prepared(make({ ...request, concurrency: 'parallel' }))).toBe(true);
+    const { requestSchemas: missingResources, ...withoutResources } = valid.viewPlan;
+    void missingResources;
+    expect(prepared({ ...valid, viewPlan: withoutResources })).toBe(false);
+    const { requests: missingMappings, ...withoutMappings } = valid.viewPlan.root;
+    void missingMappings;
+    expect(prepared({ ...valid, viewPlan: { ...valid.viewPlan, root: withoutMappings } })).toBe(
+      false,
+    );
+    const { requests: missingRequirements, ...withoutRequirements } = valid.hostRequirements;
+    void missingRequirements;
+    expect(prepared({ ...valid, hostRequirements: withoutRequirements })).toBe(false);
+    expect(prepared(make({ ...request, concurrency: 'queue' }))).toBe(false);
+    const { concurrency: omitted, ...incomplete } = request;
+    void omitted;
+    expect(prepared(make(incomplete))).toBe(false);
+    expect(
+      prepared({ ...preparedForm, hostRequirements: { validators: [], events: [], services: [] } }),
+    ).toBe(false);
+  });
+});

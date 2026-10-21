@@ -58,7 +58,7 @@ interface MaterialManifest {
 }
 ```
 
-平台组件实现、编辑器属性面板与发布加载信息归注册/工具体系，不因可复用就都加入 FormDefinition。Capability Registry 可以共同治理 Material 与 Pure Function 资产，但二者保留不同契约与执行职责；Host Services 在应用中注入，不强制托管到平台，也不合并成通用 UI Material。
+平台组件实现、编辑器属性面板与发布加载信息归注册/工具体系，不因可复用就都加入 FormDefinition。Capability Registry 可以共同治理 Material 与 Pure Function 资产，但二者保留不同契约与执行职责；Host 内部服务在应用中组织，不进入物料协议，不强制托管到平台，也不合并成通用 UI Material。
 
 纯函数不承担物料 UI 或校验状态；复杂同步判断可由 Constraint 调用领域 Pure Function，网络与副作用留给 Host。Manifest 只能声明契约，纯净性、端口行为与跨端语义仍需代码审查、契约测试和必要防护。
 
@@ -67,7 +67,7 @@ interface MaterialManifest {
 | Props | Props Schema、递归 ValueSpec、输入限制与业务校验的区别 |
 | Binding Ports | 已确认名称与数据 Schema、单 / 多字段映射；不声明读写权限，不依据端口 Schema 拦截非法工作值；受控修改与错误传播仍由接入契约固化 |
 | Slots | 已确认首期只声明可接受名称，不加通用数量限制；节点组合、默认插槽简写及平台兼容 |
-| Event Ports | 名称；有数据事件声明 Payload Schema，无数据通知只需名称；检查 Event Reference 与类型连接，不新增返回值 / 异步编排 |
+| Event Ports | 名称；有数据事件声明 Payload Schema，无数据通知只需名称；检查 Event Reference 与类型连接，通知无返回；有返回交互使用独立 Request，不增加异步编排 |
 | Field State 消费 | 沿既有 Binding 展示字段、对象摘要、数组项 Issues，不建立独立校验 DSL |
 | Version / Platform | 确定性版本锁定、平台实现匹配、缺失能力诊断与升级规则 |
 
@@ -78,7 +78,7 @@ interface MaterialManifest {
 | 能否访问 Runtime 内部 | 不可以，通过受控接口协作 |
 | 是否支持复杂领域组件 | 支持，但要求明确 Props / Binding / Slot / Event 契约 |
 | 是否建设完整插件生命周期 | 按真实接入需求设计最小生命周期 |
-| 物料内部远程需求 | 注入 Host Services，Host 管请求与授权 |
+| 物料远程请求 | requests 映射到 Host 输入输出函数，公共 Adapter 交付结果，Host 管网络与授权 |
 | 是否默认全动态加载 | 根据发布模式决定，不预设为默认 |
 | 是否建设独立物料市场 | 第一阶段不作为前置条件 |
 
@@ -112,9 +112,9 @@ Reaction 仅承担协议内同步联动，不理解网络请求、取消、重�
 | --- | --- | --- |
 | 外部 Constraint | 声明义务、依赖、目标与提交必需性 | 注册校验器、请求、上报结果与状态 |
 | 用户触发业务 | Material Event → `host.emit` | 业务流程、权限、持久化与提交 |
-| 物料内部服务 | Binding / Props + 外部服务契约 | 远端选项、文件上传等私有需求 |
+| 物料请求 | Material requests + 页面映射 + Host 请求签名 | JSON 候选项、详情；文件传输归平台实现 |
 
-Host 实现一般在运行时注册。L2 从外部 Constraint、`host.emit` 和 Material Manifest 声明的服务提取 Requirements；HostContract 可选，用于提前检查名称与 Payload。必需外部校验器未就绪时不能绕过提交义务；一般事件缺失的阻断时机和可选性继续固化。物料未声明的内部服务依赖无法由 L2 静态发现，见 [Host 注册与依赖边界](l2-preparation.md#l2-host)。
+Host 实现一般在运行时注册。L2 从外部 Constraint、`host.emit` 和页面 `host.request` 映射提取 Requirements；HostContract 可选，用于提前检查名称与 Payload。必需外部校验器未就绪时不能绕过提交义务；一般事件缺失的阻断时机和可选性继续固化。Host 内部服务实现不由 L2 推断，见 [Host 注册与依赖边界](l2-preparation.md#l2-host)。
 
 | 能力 | 典型场景 | 责任交接 |
 | --- | --- | --- |
@@ -128,7 +128,7 @@ Host 实现一般在运行时注册。L2 从外部 Constraint、`host.emit` 和 
 
 分步填写、局部弹层与异步查询不需要完整工作流引擎。审批、核保和支付等长流程由 Host 集成外部 Workflow Service，不能为此向 L1 增加通用请求/工作流 DSL。
 
-**本层交付物与验收：**Validator / Event / Host Services 契约、上下文与授权约束、回写和过期结果规则、错误恢复及提交一致性测试；覆盖后发先至、销毁后响应、数组项替换、同值往返和服务失败。
+**本层交付物与验收：**Validator / Event / Request 契约、上下文与授权约束、回写和过期结果规则、错误恢复及提交一致性测试；覆盖后发先至、销毁后响应、数组项替换、同值往返和服务失败。
 
 ### 外部校验执行器的取消接入
 
@@ -155,3 +155,10 @@ Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端
 引擎完整校验只证明对应 Working Data 满足表单声明的全部适用校验，并向 Host 交付对应数据快照与结果身份；不负责构造或验证另一个业务请求输出。Host 自行转换、组装业务请求及执行所需输出检查，转换失败属于 Host 业务交付错误，不回写或改写引擎已完成的表单校验结论。表单业务本身需要正确的数据应在配置的数据模型、Binding、同步联动和约束中表达，不依赖提交时隐式修正。Normalized Output 如保留该术语，仅表示 Host 构造的业务提交数据，不是 Runtime 的第二份核心状态或新的通用输出 DSL。
 
 确认与取舍见 [ADR-FE-012](decisions/ADR-FE-012-host-output.md)。
+
+
+### 已确认的物料请求桥接 {#material-request-bridge}
+
+物料请求是 [L1 请求契约](l1/05-view-material-host.md#material-requests) 的一次输入输出交互，由共用 Adapter 连接 Host；不要求逐物料工厂。Host 业务函数返回 JSON 结果，候选项等由物料消费，选中值仍通过 Binding / Command 写入。共用桥接管理挂载身份、latest / parallel、discarded、可选取消与输入输出检查；具体网络及授权留给 Host。它只承担本通道交付有效性，不接管 Host 观察数据后主动执行的其他业务任务，也不进入校验 Pending。
+
+上方 Host 业务请求图仍描述 Host 自主管理的业务操作；物料 Request 另走“物料 → 已准备映射 → 共用 Adapter → Host 函数 → 有效性检查 → 物料”。旧 Material.services / Host.services 静态需求被该通道替代，Host 内部实现可继续使用 service，不再暴露为协议要求。

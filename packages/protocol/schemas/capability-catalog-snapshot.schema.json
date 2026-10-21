@@ -2,14 +2,18 @@
   "$defs": {
     "ArtifactIdentity": {
       "additionalProperties": false,
+      "description": "确定的实现制品身份，可被多个能力共用；下载地址不替代该身份。",
       "properties": {
         "digest": {
-          "$ref": "#/$defs/ContentDigest"
+          "$ref": "#/$defs/ContentDigest",
+          "description": "实际交付制品字节的摘要；不等同于 Manifest 的契约摘要。"
         },
         "id": {
+          "description": "制品或不可变应用构建的身份，不是 Material / Pure Function 的逻辑 ID。",
           "type": "string"
         },
         "platform": {
+          "description": "该实现适用的平台，由装载边界与编译目标核对。",
           "type": "string"
         }
       },
@@ -22,7 +26,7 @@
     },
     "BindingContract": {
       "additionalProperties": false,
-      "description": "A static model compatibility contract, never a Runtime write permission/gate.",
+      "description": "某个具名 Binding 预期的数据形状；用于静态连接检查，不是 Runtime 写入权限或业务合法性门禁。",
       "properties": {
         "schema": {
           "$ref": "#/$defs/JsonSchema"
@@ -35,18 +39,21 @@
     },
     "CapabilityCatalogSnapshot": {
       "additionalProperties": false,
-      "description": "Deterministically resolved input, not a registry/search API or mutable 'latest' catalog.",
+      "description": "Compiler 接收的确定快照，不是 Registry 搜索 API，也不表示运行时可变的 latest 集合。",
       "properties": {
         "host": {
-          "$ref": "#/$defs/HostContract"
+          "$ref": "#/$defs/HostContract",
+          "description": "省略时 Compiler 仍提取明确需求，由运行时核对，不伪造静态兼容保证。"
         },
         "id": {
+          "description": "已解析快照身份，进入 Prepared 的追溯 / 缓存依据。",
           "type": "string"
         },
         "materials": {
           "additionalProperties": {
             "$ref": "#/$defs/MaterialCatalogEntry"
           },
+          "description": "键与对应 Manifest id 应一致；唯一解析和制品关联由编译 / 构建边界检查。",
           "type": "object"
         },
         "pureFunctions": {
@@ -64,27 +71,31 @@
       "type": "object"
     },
     "ContentDigest": {
-      "description": "Digest of immutable content, including the algorithm identifier.",
+      "description": "含算法前缀的不可变内容摘要。十六进制长度由生成的 Schema 检查，TS 模板类型只约束前缀。",
       "pattern": "^sha256:[a-f0-9]{64}$",
       "type": "string"
     },
     "EventContract": {
       "additionalProperties": false,
-      "description": "Omitted schema means a notification with no configuration-readable payload.",
+      "description": "物料对配置暴露的事件数据契约；不描述处理结果返回值或异步调用链。",
       "properties": {
         "payloadSchema": {
-          "$ref": "#/$defs/JsonSchema"
+          "$ref": "#/$defs/JsonSchema",
+          "description": "省略表示无配置可读 Payload 的通知；存在时供 Compiler 检查 Event Reference 路径及类型。"
         }
       },
       "type": "object"
     },
     "FunctionParameter": {
       "additionalProperties": false,
+      "description": "纯函数的单个值参数。签名是数据契约，不允许注册函数接收 AST / 求值器。",
       "properties": {
         "name": {
+          "description": "说明用参数名；调用仍采用有序 args，不引入命名实参语法。",
           "type": "string"
         },
         "optional": {
+          "description": "固定参数的可选项只能位于尾部，顺序合法性由 Compiler 检查。",
           "type": "boolean"
         },
         "schema": {
@@ -99,23 +110,27 @@
     },
     "HostContract": {
       "additionalProperties": false,
+      "description": "可选的宿主静态声明，用于增强编译检查；没有它不等于运行时实现必然缺失。",
       "properties": {
         "events": {
           "additionalProperties": {
             "$ref": "#/$defs/HostEventContract"
           },
+          "description": "按 host.emit 的业务事件名登记，与物料发出的事件名区分。",
           "type": "object"
         },
-        "services": {
+        "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/HostServiceContract"
+            "$ref": "#/$defs/HostRequestContract"
           },
+          "description": "页面 host.request 所引用的应用能力；可由不同 Host 自行命名。",
           "type": "object"
         },
         "validators": {
           "additionalProperties": {
             "$ref": "#/$defs/HostValidatorContract"
           },
+          "description": "按独立校验能力名登记契约，不按某个 Constraint id 绑定。",
           "type": "object"
         }
       },
@@ -123,47 +138,39 @@
     },
     "HostEventContract": {
       "additionalProperties": false,
+      "description": "Host 接受的业务事件；Payload 契约复用事件数据结构，不表达等待返回。",
       "properties": {
         "optional": {
+          "description": "true 仅用于明确可跳过的事件，如遥测；缺省不授权静默忽略。",
           "type": "boolean"
         },
         "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "省略表示无配置可读 Payload 的通知；存在时供 Compiler 检查 Event Reference 路径及类型。"
+        }
+      },
+      "type": "object"
+    },
+    "HostRequestContract": {
+      "additionalProperties": false,
+      "description": "Host 请求的静态输入输出签名；不包含网络配置、注册函数或取消句柄。",
+      "properties": {
+        "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema"
+        },
+        "resultSchema": {
           "$ref": "#/$defs/JsonSchema"
         }
       },
-      "type": "object"
-    },
-    "HostServiceContract": {
-      "additionalProperties": false,
-      "description": "Method signatures live in the actual service's own SDK.",
-      "properties": {
-        "contractVersion": {
-          "type": "string"
-        }
-      },
       "required": [
-        "contractVersion"
-      ],
-      "type": "object"
-    },
-    "HostServiceRequirement": {
-      "additionalProperties": false,
-      "properties": {
-        "contractVersion": {
-          "type": "string"
-        },
-        "optional": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "contractVersion"
+        "payloadSchema",
+        "resultSchema"
       ],
       "type": "object"
     },
     "HostValidatorContract": {
       "additionalProperties": false,
-      "description": "Snapshot/Scope invocation contract version, not a named argument mapping.",
+      "description": "Host Validator 调用快照 / Scope 接入版本，不包含命名参数映射、网络配置或实现函数。",
       "properties": {
         "contractVersion": {
           "type": "string"
@@ -178,10 +185,11 @@
       "additionalProperties": {
         "$ref": "#/$defs/JsonValue"
       },
+      "description": "允许任意业务属性名的 JSON 对象，不适用协议节点的未知字段拒绝规则。",
       "type": "object"
     },
     "JsonPrimitive": {
-      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "description": "可交换的 JSON 基础值。Missing 不属于 JSON，不能以 undefined / NaN 代替。",
       "type": [
         "string",
         "number",
@@ -206,10 +214,12 @@
         {
           "$ref": "#/$defs/JsonObject"
         }
-      ]
+      ],
+      "description": "原样业务 JSON；其中恰好出现 $expr 等键，也不会自动成为表达式。"
     },
     "MaterialCatalogEntry": {
       "additionalProperties": false,
+      "description": "已选择的物料契约与目标实现；Compiler 不在该条目中运行组件代码。",
       "properties": {
         "artifact": {
           "$ref": "#/$defs/ArtifactIdentity"
@@ -226,33 +236,39 @@
     },
     "MaterialManifest": {
       "additionalProperties": false,
+      "description": "物料的可序列化声明。Compiler 只读契约，不加载 UI 实现来推断能力。",
       "properties": {
         "bindings": {
           "additionalProperties": {
             "$ref": "#/$defs/BindingContract"
           },
+          "description": "物料接受的 Binding 名及数据形状，不区分 read / write。",
           "type": "object"
         },
         "events": {
           "additionalProperties": {
             "$ref": "#/$defs/EventContract"
           },
+          "description": "配置 on 映射可以使用的语义事件，不登记组件内部全部回调或指令调用。",
           "type": "object"
         },
         "id": {
+          "description": "稳定逻辑物料名，与视图中的 material 对应。",
           "type": "string"
         },
         "propsSchema": {
-          "$ref": "#/$defs/JsonSchema"
+          "$ref": "#/$defs/JsonSchema",
+          "description": "求值后的 Props 应满足的模型；不包含 Binding、Slots 或当前组件状态。"
         },
-        "services": {
+        "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/HostServiceRequirement"
+            "$ref": "#/$defs/RequestContract"
           },
+          "description": "可由页面映射到 Host 的请求；声明本身不强制每个页面都配置映射。",
           "type": "object"
         },
         "slots": {
-          "description": "Accepted slot names; no cardinality policy. Default slot is named 'default'.",
+          "description": "允许的槽位名称；默认槽位使用 default，只限制名称，不设置通用节点数量规则。",
           "items": {
             "type": "string"
           },
@@ -260,6 +276,7 @@
           "uniqueItems": true
         },
         "version": {
+          "description": "物料语义 / 契约版本，实际平台实现另由制品身份锁定。",
           "type": "string"
         }
       },
@@ -271,6 +288,7 @@
     },
     "PureFunctionCatalogEntry": {
       "additionalProperties": false,
+      "description": "已选择的纯函数契约与目标实现；编译只检查签名，不执行该函数。",
       "properties": {
         "artifact": {
           "$ref": "#/$defs/ArtifactIdentity"
@@ -287,21 +305,26 @@
     },
     "PureFunctionManifest": {
       "additionalProperties": false,
+      "description": "同步、确定性且无 I/O / 写 Data 副作用的计算契约；实际纯净性仍须实现审查和行为测试。",
       "properties": {
         "id": {
+          "description": "Canonical 能力名；core.* 保留给内置集合，禁止业务覆盖或静默查找回退。",
           "type": "string"
         },
         "parameters": {
+          "description": "固定位置参数，按声明顺序匹配 args。",
           "items": {
             "$ref": "#/$defs/FunctionParameter"
           },
           "type": "array"
         },
         "restParameter": {
-          "$ref": "#/$defs/FunctionParameter"
+          "$ref": "#/$defs/FunctionParameter",
+          "description": "可选的变长尾参数；省略表示不接受超出固定签名的额外实参。"
         },
         "returns": {
-          "$ref": "#/$defs/JsonSchema"
+          "$ref": "#/$defs/JsonSchema",
+          "description": "结果的值类型；不把求值异常或 Missing 当成一个合法返回值。"
         },
         "version": {
           "type": "string"
@@ -312,6 +335,33 @@
         "version",
         "parameters",
         "returns"
+      ],
+      "type": "object"
+    },
+    "RequestContract": {
+      "additionalProperties": false,
+      "description": "有返回值的物料交互契约；名称属于物料，与 Host 实现名称无关。",
+      "properties": {
+        "concurrency": {
+          "description": "同一挂载实例、同一请求名的并发策略；默认 latest，parallel 各次独立交付。",
+          "enum": [
+            "latest",
+            "parallel"
+          ],
+          "type": "string"
+        },
+        "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "物料发起请求提供的 JSON 数据；没有输入时可声明 null。"
+        },
+        "resultSchema": {
+          "$ref": "#/$defs/JsonSchema",
+          "description": "物料消费的 JSON 业务结果，不包含桥接层的 success / error / discarded 包装。"
+        }
+      },
+      "required": [
+        "payloadSchema",
+        "resultSchema"
       ],
       "type": "object"
     }

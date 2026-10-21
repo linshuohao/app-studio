@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 44,
+    "current-markdown": 45,
     "documentation-tooling": 12,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 397,
-  "unique_byte_contents": 358,
+  "total_entries": 398,
+  "unique_byte_contents": 359,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10416,
-      "sha256": "2dc637241501eb3c6ba633554260d476076018ae71bdb12545266d438dff2072",
+      "bytes": 10790,
+      "sha256": "53732579f30984f45cf696d4c5b1810213cef3ea32288ac2c46df510ff393655",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -259,6 +259,11 @@
           "level": 2,
           "title": "Language",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "Request（物料请求）",
+          "anchor": null
         }
       ]
     },
@@ -266,8 +271,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 45192,
-      "sha256": "f93b477dc71c8d75d8437be7dd5d08846e40eda0a075519cd71bf4dd2493ed0b",
+      "bytes": 45237,
+      "sha256": "067fee0cee4915d9c7a78faeb8cc1ca4eb46af7b7f92e7580dbb62971545d4cb",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -521,8 +526,8 @@
       "path": "docs/design/decisions/ADR-FE-003-view-material.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 7269,
-      "sha256": "573065e842c27bbee514d28d58f7c967ec9e044362fb06c28c34ee55681b22c1",
+      "bytes": 7714,
+      "sha256": "f5e4a8378dba13b68b53f57f89e02508ee140f41490b3bf80a93dc4913da7ef1",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -563,6 +568,11 @@
         {
           "level": 3,
           "title": "2026-10-20：Adapter 生命周期与物料错误隔离",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：物料请求决策修订",
           "anchor": null
         }
       ]
@@ -891,8 +901,8 @@
       "path": "docs/design/decisions/ADR-FE-011-release-lock.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4225,
-      "sha256": "9e1b90eacddeb59e19a233ce3f105926ef6805208458c07d31d1904bdc040396",
+      "bytes": 4670,
+      "sha256": "6e6d2761c2bd416c4e298bff3e4aea22626bdd34199d8b04ab41c4f241a48fbe",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -928,6 +938,11 @@
         {
           "level": 3,
           "title": "2026-10-21：能力签名与摘要对象确认",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-21：物料请求决策修订",
           "anchor": null
         }
       ]
@@ -1083,6 +1098,41 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-016-material-requests.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 3069,
+      "sha256": "d270fb3ddc3f597b93aa285ab8555f595e36d96dc6ce4eeda80a8cb6379bbd4d",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-016：物料请求与 Host 输入输出解耦",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与比较",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决策",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "修订关系与代价",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "现行正文与来源",
+          "anchor": null
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
@@ -1201,8 +1251,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 134458,
-      "sha256": "47ad5e3e8807b758fea0a375dc550e3725de472adaa96bce6b4ae4bbf604280a",
+      "bytes": 137378,
+      "sha256": "d92dc409dd58f6dd2f64dacb6b14db3e40e225f50f03c78f87d9b151f7a28852",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1629,6 +1679,16 @@
           "level": 2,
           "title": "2026-10-21：Protocol 三领域类型与 Schema 首批实施",
           "anchor": "protocol-contracts-implemented"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-21：物料请求与 Host 解耦确认",
+          "anchor": "material-requests-confirmed"
+        },
+        {
+          "level": 3,
+          "title": "Request 确认前的全局横向图（已替代）",
+          "anchor": null
         }
       ]
     },
@@ -1846,8 +1906,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 12287,
-      "sha256": "3249e69b0675021885505e0d86c8818ff4975a68115120a0aada52afd817f372",
+      "bytes": 13351,
+      "sha256": "967279d8f0f9538346add2e4efd570784031e3d9306edb659bd9dfdd1472ab5b",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -1894,6 +1954,11 @@
           "level": 3,
           "title": "Host 接入与业务输出的已确认契约",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "已确认的物料请求桥接",
+          "anchor": "material-request-bridge"
         }
       ]
     },
@@ -1901,8 +1966,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 33811,
-      "sha256": "0bcbc4cfc7c99c452ab1d2d477cc1f20d25fb5f135c7afe5e47976d93ae68913",
+      "bytes": 34319,
+      "sha256": "50132eb42fd8eed6ab3e0047cb1a9f767eb1a755802d86cbe7bd0eb0be1ed6ee",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -1963,6 +2028,11 @@
         {
           "level": 3,
           "title": "Agent 八层覆盖与阅读呈现",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "物料 Request 已确认增量",
           "anchor": null
         }
       ]
@@ -2156,8 +2226,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 12194,
-      "sha256": "4f1242123391bdbfa3c884eb446011680c60c01f0fa64642b2863e77eb2e6806",
+      "bytes": 17912,
+      "sha256": "6580b2bd6cdd07284ffb07939b1b561948fed40db81f80ff60d1c68d0a96f56f",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2197,7 +2267,7 @@
         },
         {
           "level": 2,
-          "title": "Interaction：只保留数据命令和宿主事件",
+          "title": "Interaction：通知命令、宿主事件与独立请求",
           "anchor": "interaction"
         },
         {
@@ -2213,6 +2283,31 @@
         {
           "level": 3,
           "title": "bindings 与组件 Adapter 的关系",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "物料请求与 Host 输入输出",
+          "anchor": "material-requests"
+        },
+        {
+          "level": 3,
+          "title": "声明与页面映射",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "结果与写入职责",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "并发、有效性与生命周期",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "编译、Prepared 与边界校验",
           "anchor": null
         }
       ]
@@ -2276,8 +2371,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17393,
-      "sha256": "414c2acb4849c67de3f1f0b413def35fe7ab297de03f265d8daa7a0db1d001d4",
+      "bytes": 17852,
+      "sha256": "91c434721cf2d77aa120d6b8da6be26877a8cd4794c34c4d6e63a27a8545b3b7",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2324,6 +2419,11 @@
           "level": 2,
           "title": "严格协议与可证明连接",
           "anchor": "strict-contract"
+        },
+        {
+          "level": 3,
+          "title": "物料 Request 协议增量",
+          "anchor": null
         }
       ]
     },
@@ -2381,8 +2481,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 52428,
-      "sha256": "0045c015d24613c61cf5eac24fe7e15dbb91d5dfd3c6e514312b09b7a6d3494d",
+      "bytes": 54474,
+      "sha256": "9ff81da03f3f75b5cc806b69b540648cc7e999a3db0940236b0d3cc156ef48fd",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -2447,7 +2547,7 @@
         },
         {
           "level": 3,
-          "title": "首期签名结构与 Host 服务声明",
+          "title": "首期签名结构与 Host 请求声明",
           "anchor": null
         },
         {
@@ -2534,6 +2634,11 @@
           "level": 2,
           "title": "Prepared 交付与编译错误边界",
           "anchor": "prepared-delivery"
+        },
+        {
+          "level": 3,
+          "title": "旧 Host 服务候选的追溯保留",
+          "anchor": null
         }
       ]
     },
@@ -2881,8 +2986,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 24584,
-      "sha256": "0fe5278745b90732dff52b455e0253365e72ffe031f86966e67df0129f4efad4",
+      "bytes": 25206,
+      "sha256": "8356cdd603b991e86c776d40487488e8c6126ae6e647b0d84be2aecc80cb4268",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {
@@ -3009,6 +3114,11 @@
           "level": 2,
           "title": "设计收尾与卸载流程",
           "anchor": "l4-design-closure"
+        },
+        {
+          "level": 3,
+          "title": "物料请求接入",
+          "anchor": "renderer-requests"
         }
       ]
     },
@@ -3186,8 +3296,8 @@
       "path": "docs/design/usage-guide.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 20574,
-      "sha256": "7c671be6586af59050ce362984d768aa9ab9fbe0dec031672ed357b78ebea52f",
+      "bytes": 20620,
+      "sha256": "3db1ab2a8c7e43253a4ff9b9171ef12fbfbffadcff7d0c08cba7b9667deecc21",
       "mapping": "SRC-L1 / SRC-V05 / SRC-HOST / SRC-V07",
       "sections": [
         {

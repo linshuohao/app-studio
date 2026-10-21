@@ -8,7 +8,7 @@
   <title>ADR-FE-003：静态视图复用与容器物料呈现 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
   
-  <script src="../assets/knowledge-index.js?v=abd35af6baae" defer></script>
+  <script src="../assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -58,6 +58,7 @@
 <a href="ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
+<a href="ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -108,7 +109,9 @@
 <p>共用 Adapter 统一管理组件侧生命周期、当前 Scope 关联、订阅 / 监听与回调释放，以及 Runtime 数组成员移动、删除、整体替换在视图侧的对应处理。实际数组 Command、Data 与 Scope Identity 的一致修改仍归 Runtime；不把数据操作实现搬到 L4。成员移动保持原 Scope 关联，删除 / 整替换使旧关联失效，Profile 切换只替换视图接入。</p>
 <p>卸载或改绑时，Adapter 释放旧监听、订阅与可解绑回调，不要求每个物料重复处理共性生命周期。正确清理后旧回调通常不再触发；已经被排入外部队列或不能物理撤回的调用仍可能迟到，必须按旧组件 / Scope / 关联身份拒绝，不得使用新的绑定上下文写入其他成员。该检查属于 Adapter 实现保护，不建立新的运行时任务队列或要求用户配置。首次订阅读取与改绑交接应不漏更新，具体平台实现由契约测试验证。</p>
 <p>单个物料的运行错误在对应物料边界隔离，保留其他可用物料及 Runtime 数据，不因一个物料报错默认停止整表。失败位置须有降级展示，同时提供错误上报与告警接入，报告关联物料 / 配置位置 / Scope 等必要定位信息，用户端不暴露堆栈等技术错误。降级不能静默继续显示旧数据并伪装正常交互；失败物料的不可用交互停止，其他物料继续。错误边界、展示与上报的共性机制由 L4 平台实现 / 共用接入落实，不要求物料自行捕获所有错误；具体展示样式与监控服务由平台 / Host 接入。</p>
-<p>用户明确由共用 Adapter 负责，选择过期调用拒绝、对应物料隔离 / 降级 / 上报 / 告警，不采用整表默认失败或旧 Props 静默回退。记录见 <a href="../design-history.html#l4-lifecycle-error-update" rel="noopener noreferrer">生命周期确认</a>。</p></section>
+<p>用户明确由共用 Adapter 负责，选择过期调用拒绝、对应物料隔离 / 降级 / 上报 / 告警，不采用整表默认失败或旧 Props 静默回退。记录见 <a href="../design-history.html#l4-lifecycle-error-update" rel="noopener noreferrer">生命周期确认</a>。</p>
+<h3 id="2026-10-21物料请求决策修订">2026-10-21：物料请求决策修订</h3>
+<p><a href="ADR-FE-016-material-requests.html" rel="noopener noreferrer">ADR-FE-016</a> 修订本 ADR 涉及的交互边界：通知 Event 仍无返回，新增独立 Request 输入输出通道；原物料 Host 服务声明退出协议，以页面映射解耦物料与 Host 名称。此前“不增加返回能力”及服务需求的记录保留为演进依据，不再限制独立 Request；其余视图 / 能力锁定决策继续有效。</p></section>
         <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，端口子类型与适配 API 待固化</p><nav class="decision-path"><a href="#adr-003-context">背景与约束</a><span>→</span><a href="#adr-003-decision">已确认选择与取舍</a><span>→</span><a href="#adr-003-consequences">影响与状态</a><span>→</span><a href="#adr-003-sources">来源、替代与关联</a></nav></section>
         
         
@@ -121,7 +124,7 @@
 <a href="#adr-003-decision" data-to="adr-003-decision" title="已确认选择与取舍"><span class="nav-num">02</span><span>已确认选择与取舍</span></a>
 <a href="#adr-003-consequences" data-to="adr-003-consequences" title="影响与状态"><span class="nav-num">03</span><span>影响与状态</span></a>
 <a href="#adr-003-sources" data-to="adr-003-sources" title="来源、替代与关联"><span class="nav-num">04</span><span>来源、替代与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-003</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，端口子类型与适配 API 待固化</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details><summary>相关正文与历史 · 8</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-003</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，端口子类型与适配 API 待固化</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

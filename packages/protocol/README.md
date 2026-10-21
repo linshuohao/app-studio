@@ -15,6 +15,8 @@ import type { PreparedForm } from '@form-engine/protocol/prepared';
 
 AuthoringMaterialNode / AuthoringFormDefinition 是供未来 Compiler 接收 bind / children 等简写的输入类型；当前仅有类型、Schema 与测试，本包不实现简写规范化。bind 仍须为合法 JSON Pointer。
 
+公共类型及关键字段使用 JSDoc 说明阶段职责、引用目标、默认 / 省略语义和检查边界，说明随声明产物与 Schema 生成。Definition 与 Prepared 保持独立；只有数字数组目的位置复用 ArrayIndexPosition，原 IndexPosition / PreparedIndexPosition 名称保留，不引入泛型 Command / AST 框架。
+
 根入口只导出公共基础类型；跨包不导入 src。开发条件使用源码，打包消费使用 dist；JSON Schema 使用相同已生成资源。
 
 ## 生成与验收
@@ -36,3 +38,9 @@ pnpm --filter @form-engine/protocol build
 Binding 的 Schema 是静态模型接入契约，不在写入时禁止非法工作值。Slot 只声明名称；有数据事件声明 Payload Schema。External 使用 validator 名称与 watch，不提供参数映射；requires 的字段分支明确 phase: sync。完整校验仍须覆盖全部适用同步 / 异步任务。
 
 Prepared 夹具是手写契约样本，不是编译器产物或执行通过证明。测试使用 test-* 身份，不定义实际发布版本。现行语义见仓库 docs/design/l1/08-decisions-release.md、l2-preparation.md 与 l3-validation.md。
+
+物料有返回值的交互通过 `MaterialManifest.requests` 声明输入输出，由
+`MaterialNode.requests` 映射到 `HostContract.requests`。`on` 仍仅支持无返回通知和命令。
+原 `services` 声明已移除；Prepared 显式包含请求映射、`requestSchemas` 和 Host 请求需求。
+Schema 引用闭包、名称 / 类型连接由 Compiler 检查；生成 Schema 只验证结构。
+公共 Adapter 的请求桥接、并发、取消及失效结果处理尚未在本包实现。

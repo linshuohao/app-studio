@@ -413,7 +413,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
     [{"title":"L2 · Preparation / 静态协议编译","body":"原始 Definition + 契约快照 + Target → PreparedForm / 确定依赖与执行计划"}],
     [{"title":"L3 · Form Runtime / 表单运行时","body":"唯一不可变 Working Data · 即时 Command · 统一观察与最新状态 Flush；对外 read / snapshot / dispatch / subscribe","major":true,"items":["Data / Field State","Scope / Relative Position","Expression Evaluation","Dependency Matching / Flush","Command / Reaction","Validation / Readiness","Flush Outcome / Diagnostics","Instance Lifecycle"]}],
     [{"title":"L4 · Renderer / Material Adapter","body":"Web / Flutter · Material 实例 · Binding 连接 · 挂载 / 改绑 / 卸载订阅 · 局部 UI State"}],
-    [{"title":"Material Registry","body":"Props、Binding Ports、Slots、Events 的 Manifest 与平台实现"},{"title":"Pure Function Catalog","body":"内置与注册的同步纯函数、签名、版本与跨端实现"},{"title":"Host Integration","body":"外部校验执行 · host.emit · 注入的物料服务"}],
+    [{"title":"Material Registry","body":"Props、Bindings、Slots、Events、Requests 的 Manifest 与平台实现"},{"title":"Pure Function Catalog","body":"内置与注册的同步纯函数、签名、版本与跨端实现"},{"title":"Host Integration","body":"外部校验执行 · host.emit · host.request 输入输出"}],
     [{"title":"Host Application / Backend","body":"异步加载 · 业务 Baseline / Dirty / Reset · 保存 / 提交 · 权限 / 外部业务"}]
   ],
   "arrows":["↓","↓","↓","↕","↕","↕"],
@@ -449,7 +449,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 | 跨字段计算、动态校验、同步联动 | 核心原生 | 纯计算不写数据；实际修改通过 Command / Reaction |
 | 嵌套对象、动态数组、重复区块 | 核心原生 | 需要统一寻址、词法作用域和稳定实例身份 |
 | 数据加载、实例装载、批量赋值与业务恢复 | Host 编排 + L3 初始输入 / Command | Host 管业务 Baseline / Dirty / Reset；L3 管实际数据变化和新实例激活 |
-| 异步选项、远程查询、外部业务校验 | Host / 物料服务 | Host 管请求、缓存与重试；Runtime 接收有效校验事实 |
+| 异步选项、远程查询、外部业务校验 | Host / 共用 Adapter | 物料 Request 由桥接交付，Host 管网络、缓存与重试；Runtime 接收有效校验事实 |
 | 分步骤表单 | View 容器 + Host / 生命周期 API | 不等于核心内置工作流，切换步骤不自动删除共享规则 |
 | 自定义复杂业务字段 | Material 扩展 | 隔离领域交互，但最终业务值必须通过 Binding / Command 交付 |
 | 报价、核保、审批、支付、生成保单 | 宿主业务服务 | 保留服务端权威状态，不放入核心同步调度 |

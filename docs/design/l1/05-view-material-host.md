@@ -224,9 +224,9 @@ Slot 首期仅声明接受的名称，不引入通用数量限制；原“Manife
 
 Event 声明事件名称；无业务数据的通知事件只需名称，有业务数据供配置读取的事件声明 Payload Schema。Event Reference 相对该次事件的 Payload 根解析，Compiler 检查引用路径和后续可证明的类型连接；缺少 Payload 契约不能静默当作任意可读事件数据。事件只在事件发生时求值，不隐式建立数据观察或触发规则。
 
-物料内部通过现有受控接口执行数组 Command 或取得已有能力，无须重复登记为一份“数组 / 纯函数能力事件目录”；组件内部实现与对配置暴露事件分开。普通 Binding 修改不要求额外发事件重复写入。首期不新增事件处理返回值、等待返回或异步业务编排协议；Payload 是物料发出的数据，也是配置处理逻辑收到的输入。
+物料内部通过现有受控接口执行数组 Command 或取得已有能力，无须重复登记为一份“数组 / 纯函数能力事件目录”；组件内部实现与对配置暴露事件分开。普通 Binding 修改不要求额外发事件重复写入。Event 保持无返回通知；需要返回值时使用独立 Request 通道，见[物料请求](#material-requests)。不增加异步业务编排协议；Payload 是物料发出的数据，也是配置处理逻辑收到的输入。
 
-## Interaction：只保留数据命令和宿主事件 {#interaction}
+## Interaction：通知命令、宿主事件与独立请求 {#interaction}
 
 > 状态：已收敛
 
@@ -273,7 +273,7 @@ type InteractionIntent =
 | --- | --- | --- |
 | 外部 Constraint | `kind: external` + watch + requiredForSubmit | 注册校验器、请求、上报状态与当前结果 |
 | 用户触发外部业务 | `on → host.emit` | 根据事件契约执行业务流程 |
-| 自定义物料服务 | Material Binding/Props 和外部注入服务契约 | 远端选项、文件上传等私有物料服务 |
+| 物料 Request | Material 请求声明、页面映射与 Host 输入输出签名 | JSON 候选项、详情；具体文件传输归平台实现 |
 
 Host 异步响应后如果需要改变表单数据，应该调用 Runtime 的受控 Command API；Definition 不需要表达异步 Promise 链、请求重试或服务编排。授权与最终数据安全仍由 Host/服务端负责，不能因为表单本身有前端校验就直接信任提交结果。
 
@@ -284,3 +284,48 @@ Template 参数 / Binding Port 的连接必须在已支持的可判定子集中�
 ### bindings 与组件 Adapter 的关系
 
 bindings 是组件使用数据位置的具名配置映射，不是一个新增运行时“字段端口”层。Adapter 订阅 Runtime、读取相关状态组装组件 Props，并按配置将组件事件转换为既有指令；框架负责组件更新与内部比对。现行具名映射形状保持不变，后续如有协议变更需另行确认，不因术语澄清删除既有字段。
+
+
+## 物料请求与 Host 输入输出 {#material-requests}
+
+2026-10-21 用户确认：物料发起需要结果的交互，经页面映射到 Host，由公共 Adapter 桥接结果；不要求逐物料工厂或包装。Event / on 仍是无返回通知，可执行已有 Command 或 host.emit；Request / requests 是一次调用、一次结果的独立通道。请求不进入 Reaction 或 Validator Pending，不增加网络 Command、异步 Pure Function、自动回填或通用 Workflow。
+
+### 声明与页面映射
+
+MaterialManifest.requests 是物料请求名到 RequestContract 的字典，每项包含 payloadSchema、resultSchema 和可选 concurrency（latest / parallel，默认 latest）。输入输出都是 JSON；没有输入可声明 null。Schema 只描述业务值，不包含调用状态包装。物料名称与 Host 名称独立；声明不强制所有页面配置映射。
+
+MaterialNode.requests 把物料请求名映射为 `{ type: 'host.request', request: string, payload?: ValueSpec }`。省略 payload 时原样转发物料输入；显式配置时仅在调用发生时求值，复用 event 引用读取本次物料输入，也可组合当前 data / context。不自动建立观察，不因引用数据变化重发请求。首期不增加响应转换表达式，Host 返回物料要求的结构。
+
+```json
+{
+  "material": "address-picker",
+  "bindings": { "value": { "source": "data", "path": "/address" } },
+  "requests": { "search": { "type": "host.request", "request": "searchAddress" } }
+}
+```
+
+HostContract.requests 声明 Host 请求名及 payloadSchema / resultSchema；实际函数在 Host SDK 注册，接收输入并返回值 / Promise。Host 只处理业务调用与结果转换，不必了解物料实例、Binding 或表单写入。网络鉴权、缓存、重试、防抖仍归具体实现。File、DOM 对象等不直接作为跨平台 JSON 参数，文件传输留给平台实现。
+
+### 结果与写入职责
+
+公共桥接返回 success（value 为业务结果）、error（error.code 与可选 message）或 discarded。未绑定、未注册、输入输出不满足契约、业务调用失败均为局部 error；被替代或实例失效为 discarded。Host 同步异常 / Promise 拒绝统一进入错误处理，用户端不暴露堆栈等技术细节。函数、Promise、取消句柄及桥接调用状态是运行时 SDK 对象，不进入可序列化协议。
+
+搜索候选项保留在物料局部 UI 状态，用户选中后经既有 Binding / Command 写入 Runtime。返回值不会自动写表单；需要写入时由物料消费结果并使用已有受控写入能力。不得绕过 Store 权威入口，也不增加“请求完成执行 Command 列表”的编排。
+
+### 并发、有效性与生命周期
+
+latest 以实际物料挂载实例 + 请求名称为范围，旧调用立即失去交付资格并结算 discarded；parallel 各调用独立交付。不同物料实例互不取消。卸载、改绑、数组成员删除或实例替换使旧调用失效；数组移动且身份保持时保留归属。桥接交付成功或失败前核对有效性；可选取消仅为资源优化，取消异常不恢复旧调用资格。底层无法取消也不能交付迟到结果，失效调用不得悬挂等待网络。
+
+桥接不推断 props 或请求参数背后的隐式依赖。国家变化后城市查询失效等行为，由物料通过公共取消接口或重新请求处理。具体取消句柄和调用签名在所属 Adapter / SDK 落实，不新增跨语言取消信号协议。该通道不纳入完整校验等待，不改变 Host Validator 的任务有效性规则。
+
+### 编译、Prepared 与边界校验
+
+Compiler 检查请求名、引用和有限结构类型连接；方向是物料输入经映射后满足 Host 输入，Host 结果满足物料结果。无法证明时给诊断，不声称已实现任意 Schema 包含证明。无 HostContract 时仍提取 Requirements 并报告无法证明的兼容性，不认定实现必然缺失。未映射请求调用时局部报错，不默认阻断整表。
+
+PreparedMaterialNode.requests 保存已解析映射及显式并发策略；PreparedViewPlan.requestSchemas 是独立闭合 Schema 资源表。映射中的 payloadSchemaRef / resultSchemaRef 指向物料输入及结果契约，hostPayloadSchemaRef / hostResultSchemaRef 仅在有 Host 静态契约时存在；引用是资源 ID，不是数据 Pointer。HostRequirements.requests 按 Host 名称聚合 nodeIds，节点关联具体签名。Compiler 必须验证资源和节点引用闭包，结构 Schema 本身不证明引用存在。
+
+运行时只使用 Prepared。对物料输入、映射后的 Host 输入（有静态契约时）、Host 输出（有静态契约时）和物料期望结果进行小范围检查；校验器按契约预编译复用，不在每次调用重新编译，更不重复全量协议校验。这不禁止 Working Data 暂时无效，输入错误只影响本次请求。
+
+MaterialManifest.services、HostContract.services 及 Prepared HostRequirements.services 退出正式协议；Host 内部服务组织不受约束。已有通知不变；旧 services 配置须显式迁移到页面 requests 映射，不能按名称自动猜测。Prepared 新增必填空字典 / 数组须同步生产者消费者及格式兼容判断，不虚构已发布版本。
+
+实现验收覆盖名称解耦、显式与直通参数、Schema 错误、未绑定 / 未注册、同步异常、异步拒绝、latest 后发先至、parallel、卸载 / 改绑 / 数组移动删除及取消失败。当前协议类型与结构测试不证明桥接运行时已实现。

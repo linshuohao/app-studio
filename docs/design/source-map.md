@@ -330,3 +330,8 @@ flowchart LR
 ### 2026-10-20：工程初始化实施证据
 
 用户授权按已归档方案执行，并明确允许 peer 冲突项由脚本选择最新兼容稳定版。实际生成清单、根锁、配置、测试和公开产物由本轮命令验证；[工程主题](engineering.md#engineering-implementation)维护版本、命令和结果，[演进](design-history.md#engineering-initialized)记录授权与问题处理。源码 / 锁是工程复现依据，不建立另一套规范或报告页；生产协议与 Runtime 不从工程 smoke 结果推导完成。
+
+
+### 2026-10-21：物料 Request 完整方案确认
+
+用户明确“我认可这个改动方案”，确认范围为输入输出 Schema、页面到 Host 映射、公共桥接、并发及生命周期、Prepared 交付和移除 services；讨论缘由见 [演进](design-history.md#material-requests-confirmed)，现行见 [L1](l1/05-view-material-host.md#material-requests)及 [ADR-FE-016](decisions/ADR-FE-016-material-requests.md)。该确认不证明 Compiler / Adapter / SDK 已实现。

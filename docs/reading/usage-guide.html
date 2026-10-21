@@ -8,7 +8,7 @@
   <title>使用与开发指南 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=abd35af6baae" defer></script>
+  <script src="assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -58,6 +58,7 @@
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
+<a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group" open><summary>10 · 使用与例证</summary><div><a class="active" aria-current="page" href="usage-guide.html">使用与开发指南</a>
@@ -223,9 +224,9 @@ B 的校验、订阅与 Trace 不能变成 A 的状态。
 <td>Material 语义事件交给 Host</td>
 </tr>
 <tr>
-<td>注入物料服务</td>
-<td>城市搜索、上传、复杂候选选择</td>
-<td>Host 管请求与缓存；物料管理局部交互，选定业务值经 Binding / Command 写入</td>
+<td>配置物料请求</td>
+<td>城市搜索、详情、复杂候选选择</td>
+<td>requests 映射到 Host 输入输出函数；公共 Adapter 交付结果，选定值经 Binding / Command 写入；文件传输归平台实现</td>
 </tr>
 </tbody>
 </table></div>

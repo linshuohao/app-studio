@@ -135,7 +135,7 @@ Host 的三条接入路径分别服务不同任务：
 | --- | --- | --- |
 | External Constraint | 证件核验、资格检查 | L1 声明义务与 watch；Host 执行，Runtime 检查报告有效性 |
 | host.emit | 保存意图、点击报价或触发业务流程 | Material 语义事件交给 Host |
-| 注入物料服务 | 城市搜索、上传、复杂候选选择 | Host 管请求与缓存；物料管理局部交互，选定业务值经 Binding / Command 写入 |
+| 配置物料请求 | 城市搜索、详情、复杂候选选择 | requests 映射到 Host 输入输出函数；公共 Adapter 交付结果，选定值经 Binding / Command 写入；文件传输归平台实现 |
 
 例如城市查询 A 尚未返回，用户已经改选目的地并发起 B。A 晚到不能覆盖 B；外部校验还需核对 Scope、请求和输入新鲜度。External watch 变化使旧结果失效，不必立即发送请求，请求可以由 blur、validate 或 submit 等策略决定。
 

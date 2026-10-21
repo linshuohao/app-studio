@@ -6,10 +6,10 @@
     "source_anchors_code_and_diagrams": "passed"
   },
   "counts": {
-    "html_files": 46,
-    "local_links_and_resources": 5652,
-    "markdown_documents": 44,
-    "source_entries": 397,
+    "html_files": 47,
+    "local_links_and_resources": 5844,
+    "markdown_documents": 45,
+    "source_entries": 398,
     "typed_records": 89
   },
   "generated_by": "tools/docs/build_docs.py",

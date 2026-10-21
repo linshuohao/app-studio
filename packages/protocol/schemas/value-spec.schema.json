@@ -2,14 +2,17 @@
   "$defs": {
     "CallExpression": {
       "additionalProperties": false,
+      "description": "同步纯计算调用，不允许 I/O、写 Data 或任意脚本。",
       "properties": {
         "args": {
+          "description": "有序参数；签名及内置短路语义由 Compiler / 执行器落实。",
           "items": {
             "$ref": "#/$defs/Expression"
           },
           "type": "array"
         },
         "op": {
+          "description": "Canonical 使用确定的能力名，如 core.gte；Authoring 短名需先按白名单规范化。",
           "type": "string"
         }
       },
@@ -21,9 +24,11 @@
     },
     "ContextReference": {
       "additionalProperties": false,
+      "description": "Host 提供的只读上下文引用，不是 Command 的可写目标，也不扩展 Data-only watch。",
       "properties": {
         "path": {
-          "$ref": "#/$defs/JsonPointer"
+          "$ref": "#/$defs/JsonPointer",
+          "description": "相对 Host Context 根的 JSON Pointer。"
         },
         "source": {
           "const": "context",
@@ -38,12 +43,14 @@
     },
     "DataReference": {
       "additionalProperties": false,
-      "description": "A lexical data location, not a snapshot value or runtime member identity.",
+      "description": "数据位置的声明；它不是读取结果，也不是数组成员的运行时身份。",
       "properties": {
         "path": {
-          "$ref": "#/$defs/JsonPointer"
+          "$ref": "#/$defs/JsonPointer",
+          "description": "无 scope 时相对表单数据根；有 scope 时相对该词法绑定的数据位置。"
         },
         "scope": {
+          "description": "可见的词法名称，例如 insured。省略表示根数据，不隐式捕获当前数组项。",
           "type": "string"
         },
         "source": {
@@ -59,10 +66,11 @@
     },
     "EventReference": {
       "additionalProperties": false,
-      "description": "Only valid while processing the material event that supplied this payload.",
+      "description": "仅在处理相应物料事件或请求时有效；不能从全局表达式或普通 Reaction 隐式取得 Payload。",
       "properties": {
         "path": {
-          "$ref": "#/$defs/JsonPointer"
+          "$ref": "#/$defs/JsonPointer",
+          "description": "相对本次 Payload 根；路径与值类型须能由对应 Event / Request 的 payloadSchema 证明。"
         },
         "source": {
           "const": "event",
@@ -92,10 +100,12 @@
         {
           "$ref": "#/$defs/LiteralExpression"
         }
-      ]
+      ],
+      "description": "作者侧计算树。求值失败不等同于返回 false；可能读取集合由使用位置决定如何参与依赖。"
     },
     "ExpressionValue": {
       "additionalProperties": false,
+      "description": "在递归 ValueSpec 中显式进入表达式语法；不能和其他对象字段混用。",
       "properties": {
         "$expr": {
           "$ref": "#/$defs/Expression"
@@ -110,15 +120,16 @@
       "additionalProperties": {
         "$ref": "#/$defs/JsonValue"
       },
+      "description": "允许任意业务属性名的 JSON 对象，不适用协议节点的未知字段拒绝规则。",
       "type": "object"
     },
     "JsonPointer": {
-      "description": "JSON Pointer: empty string is the root; '/' addresses an empty property name.",
+      "description": "作者侧 JSON Pointer。空串引用根值，'/' 引用空字符串属性；~0 / ~1 分别转义 ~ / /。 不使用 './age' 等额外语法；路径能否在相应数据模型上成立由 Compiler 检查。",
       "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
       "type": "string"
     },
     "JsonPrimitive": {
-      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "description": "可交换的 JSON 基础值。Missing 不属于 JSON，不能以 undefined / NaN 代替。",
       "type": [
         "string",
         "number",
@@ -140,10 +151,12 @@
         {
           "$ref": "#/$defs/JsonObject"
         }
-      ]
+      ],
+      "description": "原样业务 JSON；其中恰好出现 $expr 等键，也不会自动成为表达式。"
     },
     "LiteralExpression": {
       "additionalProperties": false,
+      "description": "AST 位置的原样 JSON 值；内部对象不再按 ref / use / op 等字段解析。",
       "properties": {
         "literal": {
           "$ref": "#/$defs/JsonValue"
@@ -156,7 +169,7 @@
     },
     "LiteralValue": {
       "additionalProperties": false,
-      "description": "The enclosed JSON is not recursively interpreted as ValueSpec.",
+      "description": "ValueSpec 位置的原样 JSON 包装；内部不递归解释，允许存放含保留键的真实业务数据。",
       "properties": {
         "$literal": {
           "$ref": "#/$defs/JsonValue"
@@ -169,8 +182,10 @@
     },
     "NamedExpression": {
       "additionalProperties": false,
+      "description": "复用 FormDefinition.expressions 中的具名表达式；Compiler 检查引用与循环。",
       "properties": {
         "use": {
+          "description": "定义内名称；被引用表达式不能隐式捕获调用者局部 Scope。",
           "type": "string"
         }
       },
@@ -190,10 +205,12 @@
         {
           "$ref": "#/$defs/EventReference"
         }
-      ]
+      ],
+      "description": "读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。"
     },
     "ReferenceExpression": {
       "additionalProperties": false,
+      "description": "读取声明位置的当前值；读取本身不建立订阅。",
       "properties": {
         "ref": {
           "$ref": "#/$defs/Reference"
@@ -208,7 +225,7 @@
       "additionalProperties": {
         "$ref": "#/$defs/ValueSpec"
       },
-      "description": "Ordinary object keys exclude the two protocol wrappers.",
+      "description": "属性值仍递归为 ValueSpec 的普通对象。保留键只能出现在相应的严格包装分支，不能降级为普通键。",
       "propertyNames": {
         "not": {
           "enum": [
@@ -239,7 +256,8 @@
         {
           "$ref": "#/$defs/ValueObject"
         }
-      ]
+      ],
+      "description": "Props、Command 值及 Host Payload 的递归配置；只在这些规定位置解析，不扫描 Working Data。"
     }
   },
   "$id": "https://form-engine.invalid/schemas/value-spec.schema.json",

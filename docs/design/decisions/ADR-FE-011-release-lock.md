@@ -58,3 +58,8 @@ Manifest 最小字段、TypeSignature、内置别名与 core.* 映射、摘要�
 用户确认 Pure Function 参数 / 返回复用 JSON Schema；物料 Host 服务仅声明名称 / 契约版本 / 可选性，不展开通用 RPC 方法系统。能力分别锁 Manifest 确定性内容摘要与实际实现制品字节摘要，多个能力可共用包制品；内置实现也绑定不可变构建身份，地址不替代身份。
 
 这收敛此前摘要对象的未决范围，仍需正式字段、实现核对及跨端验收。详见 [双摘要](../l2-preparation.md#capability-digest-contract)及[首期签名与服务](../l2-preparation.md#l2-manifests)。
+
+
+### 2026-10-21：物料请求决策修订
+
+[ADR-FE-016](ADR-FE-016-material-requests.md) 修订本 ADR 涉及的交互边界：通知 Event 仍无返回，新增独立 Request 输入输出通道；原物料 Host 服务声明退出协议，以页面映射解耦物料与 Host 名称。此前“不增加返回能力”及服务需求的记录保留为演进依据，不再限制独立 Request；其余视图 / 能力锁定决策继续有效。

@@ -2,23 +2,27 @@
   "$defs": {
     "HostContract": {
       "additionalProperties": false,
+      "description": "可选的宿主静态声明，用于增强编译检查；没有它不等于运行时实现必然缺失。",
       "properties": {
         "events": {
           "additionalProperties": {
             "$ref": "#/$defs/HostEventContract"
           },
+          "description": "按 host.emit 的业务事件名登记，与物料发出的事件名区分。",
           "type": "object"
         },
-        "services": {
+        "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/HostServiceContract"
+            "$ref": "#/$defs/HostRequestContract"
           },
+          "description": "页面 host.request 所引用的应用能力；可由不同 Host 自行命名。",
           "type": "object"
         },
         "validators": {
           "additionalProperties": {
             "$ref": "#/$defs/HostValidatorContract"
           },
+          "description": "按独立校验能力名登记契约，不按某个 Constraint id 绑定。",
           "type": "object"
         }
       },
@@ -26,32 +30,39 @@
     },
     "HostEventContract": {
       "additionalProperties": false,
+      "description": "Host 接受的业务事件；Payload 契约复用事件数据结构，不表达等待返回。",
       "properties": {
         "optional": {
+          "description": "true 仅用于明确可跳过的事件，如遥测；缺省不授权静默忽略。",
           "type": "boolean"
         },
         "payloadSchema": {
-          "$ref": "#/$defs/JsonSchema"
+          "$ref": "#/$defs/JsonSchema",
+          "description": "省略表示无配置可读 Payload 的通知；存在时供 Compiler 检查 Event Reference 路径及类型。"
         }
       },
       "type": "object"
     },
-    "HostServiceContract": {
+    "HostRequestContract": {
       "additionalProperties": false,
-      "description": "Method signatures live in the actual service's own SDK.",
+      "description": "Host 请求的静态输入输出签名；不包含网络配置、注册函数或取消句柄。",
       "properties": {
-        "contractVersion": {
-          "type": "string"
+        "payloadSchema": {
+          "$ref": "#/$defs/JsonSchema"
+        },
+        "resultSchema": {
+          "$ref": "#/$defs/JsonSchema"
         }
       },
       "required": [
-        "contractVersion"
+        "payloadSchema",
+        "resultSchema"
       ],
       "type": "object"
     },
     "HostValidatorContract": {
       "additionalProperties": false,
-      "description": "Snapshot/Scope invocation contract version, not a named argument mapping.",
+      "description": "Host Validator 调用快照 / Scope 接入版本，不包含命名参数映射、网络配置或实现函数。",
       "properties": {
         "contractVersion": {
           "type": "string"
@@ -66,10 +77,11 @@
       "additionalProperties": {
         "$ref": "#/$defs/JsonValue"
       },
+      "description": "允许任意业务属性名的 JSON 对象，不适用协议节点的未知字段拒绝规则。",
       "type": "object"
     },
     "JsonPrimitive": {
-      "description": "Values that can cross the JSON protocol boundary. Missing is never serialized.",
+      "description": "可交换的 JSON 基础值。Missing 不属于 JSON，不能以 undefined / NaN 代替。",
       "type": [
         "string",
         "number",
@@ -94,7 +106,8 @@
         {
           "$ref": "#/$defs/JsonObject"
         }
-      ]
+      ],
+      "description": "原样业务 JSON；其中恰好出现 $expr 等键，也不会自动成为表达式。"
     }
   },
   "$id": "https://form-engine.invalid/schemas/host-contract.schema.json",

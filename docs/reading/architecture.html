@@ -8,7 +8,7 @@
   <title>整体架构设计 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=abd35af6baae" defer></script>
+  <script src="assets/knowledge-index.js?v=3d47cf1b9842" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -58,6 +58,7 @@
 <a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a>
 <a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a>
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
+<a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -611,7 +612,7 @@
 <div class="arch-row">
 <div class="arch-node">
 <h4>Material Registry</h4>
-<p>Props、Binding Ports、Slots、Events 的 Manifest 与平台实现</p>
+<p>Props、Bindings、Slots、Events、Requests 的 Manifest 与平台实现</p>
 </div>
 <div class="arch-node">
 <h4>Pure Function Catalog</h4>
@@ -619,7 +620,7 @@
 </div>
 <div class="arch-node">
 <h4>Host Integration</h4>
-<p>外部校验执行 · host.emit · 注入的物料服务</p>
+<p>外部校验执行 · host.emit · host.request 输入输出</p>
 </div>
 </div>
 <div class="arch-connector">↕</div>
@@ -725,8 +726,8 @@
 </tr>
 <tr>
 <td>异步选项、远程查询、外部业务校验</td>
-<td>Host / 物料服务</td>
-<td>Host 管请求、缓存与重试；Runtime 接收有效校验事实</td>
+<td>Host / 共用 Adapter</td>
+<td>物料 Request 由桥接交付，Host 管网络、缓存与重试；Runtime 接收有效校验事实</td>
 </tr>
 <tr>
 <td>分步骤表单</td>
@@ -1034,10 +1035,12 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 <p><strong>Default Slot</strong>：Material 的默认子节点组合位置，以 <code>slots.default</code> 表达，与 Profile 名称无关。
 <em>Avoid</em>：把默认插槽与默认视图混用。</p>
 <p><strong>定义信息</strong>：文档中对协议标识、版本和非执行性 metadata 的阅读分组；它不是新的协议字段或嵌套对象。
-<em>Avoid</em>：basicInfo 协议域。</p></details>
+<em>Avoid</em>：basicInfo 协议域。</p>
+<h2 id="request物料请求">Request（物料请求）</h2>
+<p>物料声明 JSON 输入输出，通过页面 requests 映射到 Host 函数的有返回交互；区别于无返回 Event。公共 Adapter 管调用交付有效性，物料消费结果，业务写入沿用 Binding / Command；不等同 Host Validator 或 Reaction。见 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">现行契约</a>。</p></details>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="capability-map.html">下一步 · 纵向与横向能力图谱</a></nav>
-        <span hidden id="mapping"></span><span hidden id="decisions"></span><span hidden id="figure-roadmap"></span><span hidden id="roadmap"></span><span hidden id="materials"></span><span hidden id="capabilities"></span><span hidden id="figure-host"></span><span hidden id="host-input-contract"></span><span hidden id="definition"></span><span hidden id="figure-definition"></span><span hidden id="figure-preparation"></span><span hidden id="preparation"></span><span hidden id="figure-dependency"></span><span hidden id="figure-transaction"></span><span hidden id="runtime"></span><span hidden id="validation"></span><span hidden id="renderer"></span><span hidden id="tooling"></span>
+        <span hidden id="mapping"></span><span hidden id="decisions"></span><span hidden id="figure-roadmap"></span><span hidden id="roadmap"></span><span hidden id="materials"></span><span hidden id="capabilities"></span><span hidden id="figure-host"></span><span hidden id="host-input-contract"></span><span hidden id="material-request-bridge"></span><span hidden id="definition"></span><span hidden id="figure-definition"></span><span hidden id="figure-preparation"></span><span hidden id="preparation"></span><span hidden id="figure-dependency"></span><span hidden id="figure-transaction"></span><span hidden id="runtime"></span><span hidden id="validation"></span><span hidden id="renderer"></span><span hidden id="tooling"></span>
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">

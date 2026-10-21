@@ -46,7 +46,7 @@ reading_next: DESIGN-L2
 | Scope 与观察粒度 | 父级相对位置；候选定位后比较逻辑观察值 | Object.is / 存在性、位置观察编码、数组整体替换重建已确认；具体实现与跨端验收 |
 | JSON Schema 兼容性 | Typed Params 引用 schemaRef | 已确认不兼容 / 无法证明均拒绝连接；固化可判定子集和分类诊断 |
 | Material / Pure Function Version Resolution | 确定 Catalog Snapshot，Release 锁定版本及制品身份 | 固化锁字段、摘要对象、升级与 Runtime 兼容检查 |
-| Interaction Event Context | Event Reference 仅在有效上下文；有数据事件声明 Payload Schema、无数据通知只需名称已确认 | 固化正式类型及路径 / 类型连接诊断，不增加返回值 / 异步编排 |
+| Interaction Event Context | Event Reference 仅在有效上下文；有数据事件声明 Payload Schema、无数据通知只需名称已确认 | 固化路径 / 类型连接；通知无返回，需要结果使用独立 requests，不增加异步编排 |
 | Material Binding / Slot | Binding 声明数据 Schema、不区分读写；Slot 首期只声明名称已确认 | 正式 Manifest 子类型与兼容检查验收 |
 | Host Validator 输入 | 本次调用快照 + Scope + 显式 watch 已确认，不新增参数映射 | 快照 SDK、依赖完整性与异步有效性验收 |
 | External watch 迁移 | 当前草案使用 watch；合并 when 读取，失效与请求分离 | 正式版本识别、dependsOn → watch 的迁移规则与双字段拒绝 |
@@ -251,3 +251,8 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 跨 Template 参数、Binding Port、函数参数等类型连接，仅接受明确可判定且能证明兼容的结构；已知不兼容与无法证明兼容均拒绝编译，但诊断码 / 原因应区分。不用运行时兜底、作者强制断言或静默降级绕过连接检查。受限的是静态连接兼容检查能力，不将业务数据根 Schema 改成局部 Schema，也不声称任意 JSON Schema 包含关系均可判定。可判定子集、Union 完整形状、签名与正反例仍需正式固化。
 
 本轮只确认检查策略；候选类型汇编 / Schema 尚未迁移，不能将本节或附录视为正式发布包。
+
+
+### 物料 Request 协议增量
+
+2026-10-21 确认独立 requests 通道、输入输出 Schema、公共桥接及结果由物料消费；移除物料 / Host / Prepared 的 services 声明。正式定义及兼容影响见 [物料请求](05-view-material-host.md#material-requests)，决策见 [ADR-FE-016](../decisions/ADR-FE-016-material-requests.md)。它扩展交互能力，不修改通知、Binding、Command 或 Validator 语义。

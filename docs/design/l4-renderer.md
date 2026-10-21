@@ -256,3 +256,8 @@ L4 不将物料错误伪造为业务 Constraint Issue，也不自动宣告整表
 L4 行为专题已收敛，不再按已确认原则或常规框架实现逐项重开讨论。共用 Adapter 的流程明确包含挂载、更新 / 改绑和卸载；卸载先使旧接入失效，解绑订阅 / 监听 / 回调，释放组件侧资源，拒绝不能撤回的迟到调用。不删除 Runtime 数据、Scope 或共享业务规则；实际成员删除仍由 Runtime 数据命令执行。单物料错误继续按局部隔离、降级、上报 / 告警处理。
 
 剩余为统一 SDK 类型、Prepared 与 Runtime 消费接口联验、平台生命周期实现、错误捕获覆盖与端到端验收，不增加新的原则性问题。行为设计收尾不等于正式 SDK 或实现已完成。
+
+
+### 物料请求接入 {#renderer-requests}
+
+共用 Adapter 根据 PreparedMaterialNode.requests 处理物料请求，不要求逐物料工厂，亦不解析原始 Definition。桥接管理实际挂载实例 + 请求名的 latest / parallel、success / error / discarded、卸载 / 改绑及数组身份有效性，并按 PreparedViewPlan.requestSchemas 检查输入输出。Host 只接收业务输入并返回 JSON 结果，结果不自动写入表单。完整语义及验收见 [L1 请求契约](l1/05-view-material-host.md#material-requests)；运行时接口及测试仍待实现，不由协议结构测试替代。

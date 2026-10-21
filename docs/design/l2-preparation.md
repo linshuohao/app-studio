@@ -117,14 +117,14 @@ Pure Function 表示同步、确定性的受限纯计算；表达式调用节点
 
 ```diagram
 {
-  "id":"figure-l2-platform",
+  "id":"figure-l2-platform-requests",
   "title":"平台治理、静态编译与运行时绑定",
   "rows":[
     [{"title":"Form Registry","body":"Definition、草稿、版本、发布审批"},{"title":"Capability Registry","body":"Material / Pure Function 的 Manifest、制品索引与版本"}],
     [{"title":"Release 构建上下文","body":"Definition + 确定 Catalog Snapshot + Build Target + 目标格式要求"}],
     [{"title":"L2 Protocol Compiler","body":"Validate / Analyze / Transform / Package","major":true}],
     [{"title":"Release Management / Artifact Distribution","body":"登记 PreparedForm、Capability Lock、Host Requirements；摘要、审核、发布、回滚与分发"}],
-    [{"title":"L3 Runtime + L4 Renderer","body":"只加载兼容 PreparedForm；能力预检查、实例数据与规则、物料；不回退直接解释 L1"},{"title":"Host Runtime","body":"validators / events / services 在应用运行时注册"}]
+    [{"title":"L3 Runtime + L4 Renderer","body":"只加载兼容 PreparedForm；能力预检查、实例数据与规则、物料；不回退直接解释 L1"},{"title":"Host Runtime","body":"validators / events / requests 在应用运行时注册"}]
   ],
   "arrows":["↓","↓","↓","↓"],
   "note":"Form Registry 管表单资产，Capability Registry 管能力资产，Compiler 管静态转换，Release Management 管不可变发布。执行代码在运行时绑定，Host 代码不强制进入平台注册。"
@@ -174,9 +174,9 @@ L2 不读取某个实例的具体 Working Data，不执行业务纯函数，不�
 | 算术、日期差、年龄判断、证件校验、纯保费计算 | Pure Function | 同步、确定性输入输出，无 I/O 和写入副作用 |
 | 用户名唯一性、远程承保资格 | Host Validator | 依赖外部系统，按外部义务报告结果 |
 | 远程价格重算、订单提交、埋点 | Host Event Handler | 业务流程与副作用 |
-| 上传、地址检索、远程选项查询 | Host Service | Material 管 UI，Host 注入网络服务 |
+| 地址检索、远程选项查询 | Host Request | Material 经页面映射请求，公共 Adapter 交付 JSON 结果；文件传输归平台实现 |
 
-Host 可以分为 validators / events / services，但不因此新增通用 Action、Workflow 或异步计算扩展类别。纯计算价格属于 Pure Function；远程重算价格属于 Host。依赖网络、当前时间或外部可变状态的实现不满足纯函数要求；所需日期、地区与策略应作为显式输入。
+Host 可以分为 validators / events / requests，但不因此新增通用 Action、Workflow 或异步计算扩展类别。纯计算价格属于 Pure Function；远程重算价格属于 Host。依赖网络、当前时间或外部可变状态的实现不满足纯函数要求；所需日期、地区与策略应作为显式输入。
 
 复杂同步逻辑可以封装在版本化纯函数代码中，由 AST 表达一次调用，无需将算法展开成庞大 AST，也无需建立第二套同步 Validator 注册体系。
 
@@ -260,11 +260,11 @@ MaterialManifest 沿用 `propsSchema / bindings / slots / events`。同一语义
 
 Manifest 可检查签名与目标端可用性，不能自动证明实现没有副作用，也不能证明物料遵守事件语义；仍需代码审查、契约测试、执行环境限制与必要的运行时防护。不可信第三方扩展另需可信来源、完整性校验、签名 / 审核及隔离 / 权限策略。
 
-### 首期签名结构与 Host 服务声明
+### 首期签名结构与 Host 请求声明
 
 2026-10-21 完整草案确认：PureFunctionManifest 的参数 / 返回结构复用 JSON Schema，原 TypeSignature 是概念占位；固定参数有 name / schema / optional，末尾可选与独立 restParameter，业务函数不接管 AST，有限内置短路见 [L1](l1/03-expression-validation.md#function-evaluation-contract)。
 
-物料所需 Host 服务只声明名称、契约版本与是否可缺失。方法 / 参数 / 返回值归具体服务接入契约，不在 Protocol 展开为通用 RPC 描述；必要服务缺失提供诊断与局部降级，不默认停止整表。此可选性不能让 Validator 绕过完整校验。Host 静态契约可选的边界保持。
+物料请求声明 payloadSchema / resultSchema 及并发策略，页面 requests 映射到 Host 名称，Host 静态契约声明输入输出。移除物料服务需求，不展开服务方法系统；详见 [完整请求契约](l1/05-view-material-host.md#material-requests)。Host 静态契约可选、局部缺失不默认停止整表且 Validator 不得绕过完整校验的边界保持。
 
 ## Host 运行时注册与依赖要求 {#l2-host}
 
@@ -274,7 +274,7 @@ Manifest 可检查签名与目标端可用性，不能自动证明实现没有�
 interface FormHost {
   validators?: Record<string, HostValidator>;
   events?: Record<string, HostEventHandler>;
-  services?: Record<string, HostService>;
+  requests?: Record<string, HostRequestHandler>;
 }
 
 createFormRuntime({
@@ -289,7 +289,7 @@ createFormRuntime({
 });
 ```
 
-L2 从 External Constraint、`host.emit` 与 Material Manifest 声明的服务依赖提取 Host Requirements。以下为交付摘要示意，不是 L1 新顶层字段，也不冻结 Host 注册 API：
+L2 从 External Constraint、`host.emit` 与页面 `host.request` 映射提取 Host Requirements。以下为交付摘要示意，不是 L1 新顶层字段，也不冻结 Host 注册 API：
 
 ```json
 {
@@ -309,7 +309,7 @@ L2 从 External Constraint、`host.emit` 与 Material Manifest 声明的服务�
 
 完整校验不以候选 requiredForSubmit 字段豁免适用规则。Host 能力缺失按用途降级，开发端诊断、用户端不暴露技术错误；缺校验器记未完成，不绕过校验。具体诊断码、事件可选性和 SDK 继续固化。
 
-Material 内部动态使用且从未声明的 Host Service 无法被 L2 发现。发布规范需要求声明可观察服务需求；未声明依赖如何禁止发布或由运行时检测报告，仍待固化。
+L2 不推断 Host 内部服务。请求需解析本次输入映射、生成独立 View 请求 Schema 闭包并收集 Host 名称 / nodeIds；输入输出的有限连接与运行时小范围校验见 [请求契约](l1/05-view-material-host.md#material-requests)。
 
 ## 两条构建链与发布锁定 {#l2-release}
 
@@ -603,3 +603,43 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 C 端只消费检查通过且兼容的 Prepared，错误分析结果不能传给 Runtime 继续执行。运行时仍核对格式、目标与能力，保留输入校验、任务有效性和熔断等保护；静态编译不保证网络、Host 实现或业务输入永不出错，Host 能力缺失仍按 ADR-FE-012 的用途降级，不能伪造校验通过。
 
 验收覆盖：Error 时无执行制品但有可定位诊断；Warning 可生成合法制品；格式不匹配拒绝装载；能力缺失按用途处理；相同锁定输入生成结果可复现。均为待实现验收，不是现有候选探针通过证据。
+
+
+### 旧 Host 服务候选的追溯保留
+
+以下图与注册草图仅保留原讨论来源，已经由 ADR-FE-016 的 requests 通道替代，不是现行注册接口。当前 validators / events / requests 及输入输出规则以上文和 L1 请求契约为准。
+
+```diagram
+{
+  "id":"figure-l2-platform",
+  "title":"平台治理、静态编译与运行时绑定",
+  "rows":[
+    [{"title":"Form Registry","body":"Definition、草稿、版本、发布审批"},{"title":"Capability Registry","body":"Material / Pure Function 的 Manifest、制品索引与版本"}],
+    [{"title":"Release 构建上下文","body":"Definition + 确定 Catalog Snapshot + Build Target + 目标格式要求"}],
+    [{"title":"L2 Protocol Compiler","body":"Validate / Analyze / Transform / Package","major":true}],
+    [{"title":"Release Management / Artifact Distribution","body":"登记 PreparedForm、Capability Lock、Host Requirements；摘要、审核、发布、回滚与分发"}],
+    [{"title":"L3 Runtime + L4 Renderer","body":"只加载兼容 PreparedForm；能力预检查、实例数据与规则、物料；不回退直接解释 L1"},{"title":"Host Runtime","body":"validators / events / services 在应用运行时注册"}]
+  ],
+  "arrows":["↓","↓","↓","↓"],
+  "note":"Form Registry 管表单资产，Capability Registry 管能力资产，Compiler 管静态转换，Release Management 管不可变发布。执行代码在运行时绑定，Host 代码不强制进入平台注册。"
+}
+```
+
+```typescript
+interface FormHost {
+  validators?: Record<string, HostValidator>;
+  events?: Record<string, HostEventHandler>;
+  services?: Record<string, HostService>;
+}
+
+createFormRuntime({
+  preparedForm,
+  host: {
+    validators: { 'insurance.eligibility': checkEligibility },
+    events: {
+      'quote.recalculate': recalculateQuote,
+      'insurance.submit': submitInsurance
+    }
+  }
+});
+```

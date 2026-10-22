@@ -4,42 +4,56 @@ import type {
   PreparedValueSpec,
   PreparedViewNode,
 } from '@form-engine/protocol/prepared';
-import type { createMaterialCatalog } from '../capability/catalog.js';
+import type { CapabilityCatalog } from '../capability/catalog.js';
 import type { SchemaModel } from '../analysis/schema/model.js';
+import type { LexicalEnvironment } from '../analysis/reference/environment.js';
+import { ValueCompiler } from '../analysis/value/compile.js';
 import { Diagnostics } from '../diagnostics/collector.js';
 import { at } from '../common/pointer.js';
 import { own } from '../common/object.js';
-import { compileStaticValue } from './value.js';
+import type { TemplateCompiler } from './templates.js';
+import type { InteractionCompiler } from './interactions.js';
 
 interface ViewCompileContext {
   definitionId: string;
   catalogSnapshotId: string;
   models: SchemaModel;
   diagnostics: Diagnostics;
-  material: ReturnType<typeof createMaterialCatalog>['material'];
+  material: CapabilityCatalog['material'];
+  values: ValueCompiler;
+  env: LexicalEnvironment;
+  templates: TemplateCompiler;
+  interactions: InteractionCompiler;
   source: (pointer: string) => string;
-  unsupported: (pointer: string, description: string) => void;
 }
 
 /**
- * 逐物料节点检查静态 Props、根数据 Binding 和 Slot，并保留原树形结构。
- * Scope / 模板 / 事件 / 请求映射还未编译；这里的拒绝检查不代表这些功能已实现。
+ * 保留物料 / Scope 原结构；每个完整 Props 表达式独立附加 watch，内部运算节点不订阅。
+ * 表达式、Binding 与规则共用词法引用分析；模板 / 事件 / 请求映射仍单独处理。
  */
 export function compileView(
   node: ViewNode,
   pointer: string,
   context: ViewCompileContext,
 ): PreparedViewNode | undefined {
-  const { definitionId, catalogSnapshotId, models, diagnostics, material, source, unsupported } =
-    context;
+  const {
+    definitionId,
+    catalogSnapshotId,
+    models,
+    diagnostics,
+    material,
+    source,
+    values,
+    env,
+    templates,
+    interactions,
+  } = context;
   if ('scope' in node) {
-    unsupported(at(pointer, 'scope'), 'Scope views');
-    return undefined;
+    const bound = values.expressions.references.bind(node.scope, env, at(pointer, 'scope'));
+    const child = compileView(node.node, at(pointer, 'node'), { ...context, env: bound.env });
+    return child && { scope: { ...node.scope, mode: node.scope.mode ?? 'one' }, node: child };
   }
-  if ('$use' in node) {
-    unsupported(at(pointer, '$use'), 'Template use');
-    return undefined;
-  }
+  if ('$use' in node) return templates.use(node, env, pointer);
   const manifest = material(node.material, pointer);
   if (!manifest) return undefined;
   const result: PreparedMaterialNode = {
@@ -48,17 +62,17 @@ export function compileView(
     ...(node.bindings ? { bindings: node.bindings } : {}),
     ...(node.on ? { on: node.on } : {}),
   };
-  const props = compileStaticValue(node.props ?? {}, at(pointer, 'props'), unsupported);
-  if (props.supported) {
-    // 已确认没有 $expr。产物保留 ValueSpec（含 $literal），只用解包后的值检查 Props。
-    if (node.props !== undefined) result.props = node.props as Record<string, PreparedValueSpec>;
+  const props = values.compile(node.props ?? {}, env, at(pointer, 'props'), true);
+  if (props.node) {
+    if (node.props !== undefined)
+      result.props = props.prepared as Record<string, PreparedValueSpec>;
     const schema = models.addRoot(
       manifest.propsSchema ?? true,
       `https://form-engine.invalid/material/${encodeURIComponent(node.material)}/props`,
       source(at(pointer, 'props')),
     );
     models.scan(schema);
-    models.validateValue(schema, props.value, source(at(pointer, 'props')));
+    values.expect(props, schema, at(pointer, 'props'), 'PROPS');
   }
   for (const [port, reference] of Object.entries(node.bindings ?? {})) {
     const location = source(at(at(pointer, 'bindings'), port));
@@ -70,12 +84,12 @@ export function compileView(
       );
       continue;
     }
-    if (reference.scope !== undefined) {
-      diagnostics.error('SCOPE_NOT_VISIBLE', location, `No visible Scope ${reference.scope}.`);
-      continue;
-    }
     // 例如 /name:string → 物料 value:string：检查结构连接，不读取真实字段值。
-    const from = models.dataReference(reference.path, location);
+    const from = values.expressions.references.resolve(
+      reference,
+      env,
+      at(at(pointer, 'bindings'), port),
+    );
     const to = models.addRoot(
       manifest.bindings[port]!.schema,
       `https://form-engine.invalid/material/${encodeURIComponent(node.material)}/binding/${encodeURIComponent(port)}`,
@@ -113,32 +127,5 @@ export function compileView(
         return [slot, compiled.filter((child): child is PreparedViewNode => child !== undefined)];
       }),
     );
-  for (const [event] of Object.entries(node.on ?? {})) {
-    if (!manifest.events || !own(manifest.events, event))
-      diagnostics.error(
-        'EVENT_NOT_DECLARED',
-        source(at(at(pointer, 'on'), event)),
-        `Material ${node.material} has no event ${event}.`,
-      );
-    else unsupported(at(at(pointer, 'on'), event), 'Event mappings');
-  }
-  for (const name of Object.keys(manifest.requests ?? {}))
-    if (!node.requests || !own(node.requests, name))
-      diagnostics.error(
-        'REQUEST_MAPPING_MISSING',
-        source(at(pointer, 'requests')),
-        `Material ${node.material} requires request mapping ${name}.`,
-      );
-  for (const name of Object.keys(node.requests ?? {})) {
-    if (!manifest.requests || !own(manifest.requests, name))
-      diagnostics.error(
-        'REQUEST_NOT_DECLARED',
-        source(at(at(pointer, 'requests'), name)),
-        `Material ${node.material} has no request ${name}.`,
-      );
-    else unsupported(at(at(pointer, 'requests'), name), 'Request mappings');
-  }
-  // 请求尚无 Prepared 契约编译，不能把原始映射直接复制成貌似可执行的结果。
-  delete result.requests;
-  return result;
+  return { ...result, ...interactions.compile(node, manifest, env, pointer, result.id) };
 }

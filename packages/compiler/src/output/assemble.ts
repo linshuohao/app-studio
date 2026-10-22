@@ -1,7 +1,13 @@
 import type { JsonSchema } from '@form-engine/protocol';
 import type { FormDefinition } from '@form-engine/protocol/definition';
 import type {
-  LockedCapability,
+  CapabilityLock,
+  HostValidatorRequirement,
+  PreparedConstraint,
+  PreparedReaction,
+  PreparedViewTemplate,
+  HostEventRequirement,
+  HostRequestRequirement,
   PreparedDefinition,
   PreparedForm,
   PreparedViewNode,
@@ -18,12 +24,21 @@ interface OutputInput {
   catalogSnapshotId: string;
   view: PreparedViewNode;
   schemas: Record<string, JsonSchema>;
-  materials: Record<string, LockedCapability>;
+  capabilityLock: CapabilityLock;
+  constraints: PreparedConstraint[];
+  reactions: PreparedReaction[];
+  validators: HostValidatorRequirement[];
+  templates: Record<string, PreparedViewTemplate>;
+  interactions: {
+    events: HostEventRequirement[];
+    requests: HostRequestRequirement[];
+    schemas: Record<string, JsonSchema>;
+  };
 }
 
 /** 装配已检查的静态片段并做 Prepared 结构自检；失败仍由入口统一阻止交付。 */
 export function assemblePrepared(input: OutputInput, diagnostics: Diagnostics): PreparedForm {
-  // 入口 / 视图模块已拒绝未实现语义。模板使用尚不支持，未使用模板不进入产物。
+  // 共享声明保留原结构，模板只交付所选视图的传递闭包，不展开复制到各调用点。
   const shared = { ...input.definition };
   delete shared.viewTemplates;
   const prepared = {
@@ -36,15 +51,18 @@ export function assemblePrepared(input: OutputInput, diagnostics: Diagnostics): 
     },
     definition: {
       ...shared,
+      ...(input.definition.constraints !== undefined ? { constraints: input.constraints } : {}),
+      ...(input.definition.reactions !== undefined ? { reactions: input.reactions } : {}),
+      ...(Object.keys(input.templates).length ? { viewTemplates: input.templates } : {}),
       views: Object.fromEntries([[input.profile, input.view]]),
     } as PreparedDefinition,
-    // 固定协议要求这些字段；空集合表示本批次没有对应使用，不是占位执行计划。
-    resources: { schemas: input.schemas, requestSchemas: {} },
-    capabilityLock: {
-      materials: input.materials,
-      pureFunctions: {},
+    resources: { schemas: input.schemas, requestSchemas: input.interactions.schemas },
+    capabilityLock: input.capabilityLock,
+    hostRequirements: {
+      validators: input.validators,
+      events: input.interactions.events,
+      requests: input.interactions.requests,
     },
-    hostRequirements: { validators: [], events: [], requests: [] },
   };
   // 输入检查报告作者配置问题；这里报告编译器内部装配错误。
   for (const error of structuralErrors(structure.prepared, prepared))

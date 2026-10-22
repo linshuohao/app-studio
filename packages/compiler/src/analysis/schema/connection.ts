@@ -7,6 +7,7 @@ import type { SchemaNode, Connection } from './types.js';
 interface SchemaConnectionContext {
   dereference: (node: SchemaNode) => SchemaNode | undefined;
   child: (node: SchemaNode, key: string, schema: JsonSchema) => SchemaNode;
+  proof?: { operations: number; active: Set<string>; memo: Map<string, Connection> };
 }
 
 /**
@@ -19,6 +20,37 @@ export function connectSchemas(
   targetInput: SchemaNode,
   context: SchemaConnectionContext,
   depth = 0,
+): Connection {
+  const proof = context.proof ?? {
+    operations: 0,
+    active: new Set<string>(),
+    memo: new Map<string, Connection>(),
+  };
+  if (++proof.operations > 20_000)
+    return { kind: 'unproven', reason: 'Type proof operation budget exceeded.' };
+  const key = JSON.stringify([
+    sourceInput.document.uri,
+    sourceInput.pointer,
+    targetInput.document.uri,
+    targetInput.pointer,
+  ]);
+  const cached = proof.memo.get(key);
+  if (cached) return cached;
+  if (proof.active.has(key))
+    return { kind: 'unproven', reason: 'Recursive type relationship cannot be proven.' };
+  proof.active.add(key);
+  const result = proveSchemas(sourceInput, targetInput, { ...context, proof }, depth);
+  proof.active.delete(key);
+  proof.memo.set(key, result);
+  return result;
+}
+
+/** 相同 Schema 对只证明一次；正在分析的递归对不能靠无限展开变成兼容。 */
+function proveSchemas(
+  sourceInput: SchemaNode,
+  targetInput: SchemaNode,
+  context: SchemaConnectionContext,
+  depth: number,
 ): Connection {
   const result = (kind: Connection['kind'], reason: string): Connection => ({ kind, reason });
   if (depth > 64) return result('unproven', 'Type proof depth exceeded.');
@@ -37,8 +69,52 @@ export function connectSchemas(
   const a = source.schema,
     b = target.schema;
   if (b === true) return result('compatible', 'Unconstrained destination.');
-  if (a === false || b === false || a === true)
-    return result('unproven', 'No provable value shape.');
+  if (a === false) return result('compatible', 'Empty source accepts no values.');
+  if (b === false || a === true) return result('unproven', 'No provable value shape.');
+  // 简单联合只在没有其他断言时拆分；不能丢弃与 anyOf / oneOf 并列的约束。
+  const simpleUnion = (node: SchemaNode, keyword: 'anyOf' | 'oneOf'): SchemaNode[] | undefined => {
+    const schema = node.schema;
+    if (
+      typeof schema !== 'object' ||
+      !Array.isArray(schema[keyword]) ||
+      Object.keys(schema).some(
+        (key) =>
+          ![
+            keyword,
+            '$id',
+            '$schema',
+            '$comment',
+            'title',
+            'description',
+            '$defs',
+            'definitions',
+          ].includes(key),
+      )
+    )
+      return undefined;
+    return schema[keyword].map((child, index) => ({
+      schema: child as JsonSchema,
+      document: node.document,
+      pointer: at(at(node.pointer, keyword), index),
+    }));
+  };
+  const sourceUnion = simpleUnion(source, 'anyOf') ?? simpleUnion(source, 'oneOf');
+  if (sourceUnion) {
+    const proofs = sourceUnion.map((branch) => connectSchemas(branch, target, context, depth + 1));
+    return (
+      proofs.find((proof) => proof.kind === 'incompatible') ??
+      proofs.find((proof) => proof.kind === 'unproven') ??
+      result('compatible', 'Every source union branch is accepted.')
+    );
+  }
+  const targetUnion = simpleUnion(target, 'anyOf');
+  if (targetUnion) {
+    const proofs = targetUnion.map((branch) => connectSchemas(source, branch, context, depth + 1));
+    return (
+      proofs.find((proof) => proof.kind === 'compatible') ??
+      result('unproven', 'No single destination union branch provably accepts the source.')
+    );
+  }
   if (
     [
       'allOf',

@@ -1876,8 +1876,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 46668,
-      "sha256": "33ad08e634eb9355351ec870134326722d578072b116e3b7715d7f5c5036f532",
+      "bytes": 49803,
+      "sha256": "e4e2fa6c264e6d732c564c0f08949a66ae69976de368f258f6808d48f1e21dbb",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2014,6 +2014,11 @@
           "level": 2,
           "title": "Compiler I01：真实静态编译入口",
           "anchor": "compiler-i01"
+        },
+        {
+          "level": 2,
+          "title": "Compiler：共享分析与运行准备",
+          "anchor": "compiler-static-analysis"
         }
       ]
     },
@@ -2086,8 +2091,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35869,
-      "sha256": "ca165f0b5326be108833a2f9d329678dcd2281e90c5ca20aeb257d85230baa39",
+      "bytes": 35922,
+      "sha256": "3a3844e6bccebd5f2c969715a21f82e6be8dbc3a1fd195b64298c1991e698975",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2611,8 +2616,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 94945,
-      "sha256": "eb35d03885e7439438bd6f782cb9231a3f5553398c9013041a640fe4d61bd32d",
+      "bytes": 95978,
+      "sha256": "8d5c1cdf6fdd3f438beca116e795419911074eb0ec362b9be38c820322c430df",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {

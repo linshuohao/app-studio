@@ -1,6 +1,6 @@
 # Compiler
 
-本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前完成 I01 静态视图纵切，保持 private / 0.0.0；完整表达式、规则与交互编译尚未交付。
+本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前已实现 I01–I04 的编译主链，包括表达式依赖和 watch 准备；保持 private / 0.0.0，稳定性 / 性能基准及 Runtime / Adapter 联验仍待完成。
 
 目录遵循[全仓包组织约定](../../docs/design/engineering.md#package-source-layout)：
 
@@ -12,7 +12,11 @@ src/
   input/                    # 接收、规范化、原始位置映射
   capability/               # Catalog 查询、Manifest 自检与锁收集
   analysis/schema/          # 资源模型、连接证明、静态值校验
-  view/                     # 视图检查与静态 ValueSpec 遍历
+  analysis/reference/       # 词法 Scope、引用解析、统一 watch 合并
+  analysis/expression/      # 结果模型与可能读取的共享分析
+  analysis/value/           # 递归 ValueSpec、动态形状和响应式包装
+  rules/                    # Constraint / requires、Reaction / Command、消息
+  view/                     # 物料 / Scope、共享模板与事件 / 请求映射
   output/assemble.ts        # Prepared 装配与自检
   diagnostics/              # 诊断收集
   validation/               # 协议结构校验
@@ -20,14 +24,17 @@ src/
 tests/
   pipeline/compile.test.ts
   capability/validation.test.ts
+  analysis/dependencies.test.ts
+  rules/compile.test.ts
+  view/compile.test.ts
   fixtures.ts
 ```
 
 入口只组织流程；分析与编译模块各自负责其领域，公共导出保持集中。测试独立于 src，生产与测试分别进行类型检查；已有 engineering 入口保留在 src 根用于工程联验。
 
-阅读实现时先看 pipeline/compile.ts，再沿 input → capability / analysis/schema / view → output 阅读。当前体量主要来自校验，尤其是 Schema 的资源身份、引用解析、结构连接和静态 Props 值校验；这些是静态视图闭环已使用的基础能力，也会被后续表达式 / 完整视图批次复用。外部资源别名、嵌套 $id 等是现有引用支持的边界处理，不代表已建设平台分析功能。
+阅读实现时先看 pipeline/compile.ts，再沿 input → capability / analysis → rules / view → output 阅读。ExpressionAnalyzer 一次返回结果模型、可能读取和已知静态值；ReferenceAnalyzer 统一解析根 / Scope / Event；ValueCompiler 负责递归值形状与逐表达式包装。规则和视图使用相同事实；Catalog 也已统一物料与纯函数的自检、缓存、平台核对及双摘要锁。
 
-I01 尚未实现表达式依赖分析、watch 生成和规则编译，也没有平台分析报告、可视化、增量编译或代码生成。当前校验闭环不等于已证明运行时优化收益；后续须由真实依赖分析及 Runtime / Adapter 消费验证。
+表达式依赖分析和 watch 生成属于本期，已经实际接入。平台分析报告、可视化、增量编译和代码生成仍是后期内容。静态准备已经让运行端能直接取得观察项，但实际运行耗时收益仍须 Runtime / Adapter 消费验证。
 
 ```typescript
 import { compile } from '@form-engine/compiler';
@@ -79,16 +86,23 @@ if (result.success) {
 
 - 严格 Definition / Catalog 结构检查、纯 JSON 快照、有限节点 / 深度预算；不修改调用者输入。
 - 单视图自动选择或明确 profile；平台按需检查；`bind` / `children` 规范化与原始位置映射。
-- 静态物料、静态嵌套 Props、`$literal`、根数据 Binding、Slot 检查；Props 用 Manifest Schema 验证。
+- 物料、递归 Props、`$literal`、根 / Scope Binding、Slot；静态值按 Schema 校验，动态形状用共享连接证明。
+- 命名表达式前向引用 / 环、纯函数签名 / 参数数 / optional / rest / 返回模型；保守合并短路全部分支，不执行函数。
+- 每个完整 Props `$expr` 独立生成 `watch`，静态表达式为 `watch: []`；普通 `props.watch` 不受影响。
+- Constraint 合并 when / assert / 显式 watch 与 requires 的传递输入；字段前置写入 constraintIds，局部断言观察目标字段，无法局部证明的 Schema 影响覆盖根域；Reaction 保留原显式触发集合。
+- one / each 词法 Binder 与成员句柄、七类 Command、模板参数及共享闭包；Scope 身份仍由运行时生成。
+- 物料事件与 Host 事件 / 请求契约匹配、请求并发默认值 / 资源引用与需求；调用时 Payload 不附加持续 watch。
 - 固定 Schema 资源闭包、JSON Pointer `$ref`、嵌套 `$id`、资源检索别名与相对引用；不联网补资源。
-- 基础类型、简单对象及同构数组的保守结构连接；已知不兼容与无法证明分别拒绝，不将业务数值 / 长度限制变成写入门禁。
+- 基础类型、简单对象、同构数组及可判定的简单联合的保守结构连接；已知不兼容与无法证明分别拒绝，不将业务数值 / 长度限制变成写入门禁。
 - 使用能力的 Manifest SHA-256 和输入制品摘要分别锁定，确定静态节点 ID，产物经过 Prepared Schema 自检。
 
 当前 `PREPARED_FORMAT_VERSION` 为 `form-engine.prepared/1`，只是未发布交换格式身份；Runtime 尚未实现，不代表已有兼容运行端。
 
-命名表达式、响应式 `$expr`、Constraint、Reaction、Scope 视图、模板使用、Event / Request 映射和校验消息编译返回 `FEATURE_NOT_IMPLEMENTED`，不产生部分 Prepared。页面缺少必需请求映射会得到具体诊断。未选视图不要求其目标物料存在；未使用模板只做输入结构和简写冲突检查，不进入产物闭包。
+例如输入 `label: { $expr: { ref: { source: 'data', path: '/name' } } }`，输出在同一包装中加入 `watch: [{ source: 'data', path: '/name' }]`；内部 AST 不变。相同表达式出现在 Command / Payload 时只检查，不附加 watch。Issue target 不自动成为 Constraint 输入，Reaction 的 when / then 读取不变成触发来源。
 
-Schema 静态证明仍是首批子集。复杂组合、条件依赖、Tuple 及无法确定的形状拒绝连接；命名锚点与动态 Schema 引用尚不支持。Schema 的 default / examples、`$literal` 与 metadata 不作为表达式或依赖递归解析。
+未选视图不要求其目标物料存在；未使用模板只做输入结构和简写冲突检查，不进入产物闭包。所有保留的全局命名表达式 / 规则均会分析，不因当前视图没引用就遗漏能力锁。
+
+Schema 静态证明仍是有限子集。复杂组合、条件依赖、Tuple、联合对象路径投影及无法确定的形状拒绝连接；命名锚点与动态 Schema 引用尚不支持。Context 没有额外类型证据时，要求确定类型的连接报告 unproven；不新增 Context watch。Schema 的 default / examples、`$literal` 与 metadata 不作为表达式或依赖递归解析。核心函数只读确定 Catalog，未引入内置实现、别名猜测或常量折叠。
 
 元信息可独立检查，无需表单：
 
@@ -106,4 +120,4 @@ const functionCheck = validatePureFunctionManifest({
 
 这两个入口目前检查结构、嵌入 Schema 语法和固定参数可选顺序；不证明实现符合声明，也不独立完成外部 Schema 资源闭包检查。Compiler 使用点另行处理相关资源、平台与模型连接。后续契约资源自检和能力开发工具沿同一规则演进。
 
-验证命令：`pnpm --filter @form-engine/compiler test`、`typecheck`、`lint`、`build`。隔离打包消费者由根 `pnpm packages:check` 验证，根 `pnpm check` 串联工程门禁。I02–I06 的交付与 Runtime / Adapter 联验仍待完成。
+验证命令：`pnpm --filter @form-engine/compiler test`、`typecheck`、`lint`、`build`。隔离打包消费者由根 `pnpm packages:check` 验证，根 `pnpm check` 串联工程门禁。I05 的完整基准与浏览器消费、I06 的 Runtime / Adapter 联验仍待完成。

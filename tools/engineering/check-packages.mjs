@@ -59,13 +59,17 @@ try {
     assert.equal(validateMaterialManifest(material).valid, true);
     const compiled = compile({
       definition: { protocolVersion: 'consumer-test', id: 'compiled', version: 'draft',
-        data: { schema: { type: 'object' } }, views: { only: { material: 'display' } } },
+        data: { schema: { type: 'object', properties: { name: { type: 'string' } } } },
+        constraints: [{ id: 'name-check', kind: 'internal', assert: true, issue: { target: { source: 'data', path: '/name' }, code: 'NAME' } }],
+        views: { only: { material: 'display', props: { label: { $expr: { ref: { source: 'data', path: '/name' } } } } } } },
       catalog: { id: 'consumer-catalog', materials: { display: { manifest: material,
         artifact: { id: 'consumer-build', platform: 'web', digest: 'sha256:' + '1'.repeat(64) } } }, pureFunctions: {} },
     });
     assert.equal(compiled.success, true, JSON.stringify(compiled.diagnostics));
     assert.equal(compiled.prepared.build.profile, 'only');
     assert.equal(compiled.prepared.definition.views.only.material, 'display');
+    assert.deepEqual(compiled.prepared.definition.views.only.props.label.watch, [{ source: 'data', path: '/name' }]);
+    assert.deepEqual(compiled.prepared.definition.constraints[0].watch, []);
     assert.deepEqual(JSON.parse(JSON.stringify(compiled.prepared)), compiled.prepared);
     assert.match(compiled.prepared.capabilityLock.materials.display.manifestDigest, /^sha256:[a-f0-9]{64}$/);
     assert.match(getEngineeringLabel(), /form-engine-workspace/);

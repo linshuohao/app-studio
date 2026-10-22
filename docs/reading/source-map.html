@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=c615b4b0f87e" defer></script>
+  <script src="assets/knowledge-index.js?v=ebd62dccbb1f" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -127,8 +127,8 @@
 </section>
 <section class="section" id="source-register"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>来源编号与精确定位</h2></div></div>
 
-<h3 id="src-compiler-implementation">SRC-COMPILERIMPLEMENTATION：Compiler I01 源码与真实编译验收</h3>
-<p>2026-10-22 按用户“归档和 git 提交，然后开始实现”的授权，先提交完整设计 6a0d97b，再实现 packages/compiler 的 I01 静态视图纵切与独立元信息结构 / 参数顺序自检。真实 compile 与生产 ESM 入口、确定资源 / 摘要、原位置、Error 无产物有实际用例；独立审查的资源基址、嵌套 ID、检索别名 / fragment 与结构证明问题补回归并修正。完整表达式 / 规则 / 交互、Standalone 外部资源自检、Runtime / Adapter、平台可视化仍未完成。证据与门禁详见 <a href="engineering.html#compiler-i01" rel="noopener noreferrer">工程记录</a>，不将工程样例或手写 Prepared 当作全量编译实现。</p>
+<h3 id="src-compiler-implementation">SRC-COMPILERIMPLEMENTATION：Compiler 源码与真实编译验收</h3>
+<p>2026-10-22 按用户“归档和 git 提交，然后开始实现”的授权，先提交完整设计 6a0d97b，再实现 packages/compiler 的 I01 静态视图纵切与独立元信息结构 / 参数顺序自检。真实 compile 与生产 ESM 入口、确定资源 / 摘要、原位置、Error 无产物有实际用例；独立审查的资源基址、嵌套 ID、检索别名 / fragment 与结构证明问题补回归并修正，见<a href="engineering.html#compiler-i01" rel="noopener noreferrer">初始工程记录</a>。随后补齐同一期的共享表达式 / 依赖 / watch、规则前置、模板和交互编译，见<a href="engineering.html#compiler-static-analysis" rel="noopener noreferrer">运行准备实施</a>；不把拆批视作推迟本期核心范围。Standalone 外部资源自检、完整性能基准 / 浏览器消费、Runtime / Adapter 与平台可视化仍未完成；工程样例或手写 Prepared 不替代真实编译 / 运行证据。</p>
 <h3 id="src-compiler-design">SRC-COMPILERDESIGN：Compiler 本期完整设计确认与实施授权</h3>
 <p>2026-10-22 用户审阅完整 Compiler HTML（需求、架构、模块、平台蓝图及实施情况），明确“我认可这一期的内容，我们可以去做归档和 git 提交。然后开始实现”。本期确认检查 / 静态准备、四职责组、六阶段、确定内存 compile、错误累计、范围与模块设计；后期独立分析报告、可视化及能力开发 / Registry 工具保留建设方向。现行 <a href="compiler.html" rel="noopener noreferrer">Compiler 主题</a>与 <a href="l2-preparation.html" rel="noopener noreferrer">L2 总览</a>为权威；下载文件不充当长期规范。不将平台报告公共格式、Context Schema 新输入或生产 Runtime 实现写成已完成。</p>
 <h3 id="src-compiler-io-types">SRC-COMPILERIOTYPES：编译输入输出协议类型同步授权与实现</h3>

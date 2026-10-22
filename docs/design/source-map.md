@@ -42,9 +42,9 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 ## 来源编号与精确定位 {#source-register}
 
-### SRC-COMPILERIMPLEMENTATION：Compiler I01 源码与真实编译验收 {#src-compiler-implementation}
+### SRC-COMPILERIMPLEMENTATION：Compiler 源码与真实编译验收 {#src-compiler-implementation}
 
-2026-10-22 按用户“归档和 git 提交，然后开始实现”的授权，先提交完整设计 6a0d97b，再实现 packages/compiler 的 I01 静态视图纵切与独立元信息结构 / 参数顺序自检。真实 compile 与生产 ESM 入口、确定资源 / 摘要、原位置、Error 无产物有实际用例；独立审查的资源基址、嵌套 ID、检索别名 / fragment 与结构证明问题补回归并修正。完整表达式 / 规则 / 交互、Standalone 外部资源自检、Runtime / Adapter、平台可视化仍未完成。证据与门禁详见 [工程记录](engineering.md#compiler-i01)，不将工程样例或手写 Prepared 当作全量编译实现。
+2026-10-22 按用户“归档和 git 提交，然后开始实现”的授权，先提交完整设计 6a0d97b，再实现 packages/compiler 的 I01 静态视图纵切与独立元信息结构 / 参数顺序自检。真实 compile 与生产 ESM 入口、确定资源 / 摘要、原位置、Error 无产物有实际用例；独立审查的资源基址、嵌套 ID、检索别名 / fragment 与结构证明问题补回归并修正，见[初始工程记录](engineering.md#compiler-i01)。随后补齐同一期的共享表达式 / 依赖 / watch、规则前置、模板和交互编译，见[运行准备实施](engineering.md#compiler-static-analysis)；不把拆批视作推迟本期核心范围。Standalone 外部资源自检、完整性能基准 / 浏览器消费、Runtime / Adapter 与平台可视化仍未完成；工程样例或手写 Prepared 不替代真实编译 / 运行证据。
 
 ### SRC-COMPILERDESIGN：Compiler 本期完整设计确认与实施授权 {#src-compiler-design}
 

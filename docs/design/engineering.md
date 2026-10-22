@@ -21,7 +21,7 @@ navigation:
   group: 01 · 架构全貌
   order: 30
 last_reviewed: '2026-10-22'
-status_note: 工程 / Protocol 已有本地证据；Compiler I01 静态纵切已实现，完整语义、Runtime 与远端 CI 未完成
+status_note: 工程 / Protocol 已有本地证据；Compiler 已接入表达式依赖与运行准备，性能 / 消费联验、Runtime 与远端 CI 未完成
 ---
 
 # 工程工具链与初始化方案
@@ -262,10 +262,12 @@ src 不混放测试文件；Vitest 从 tests 发现包内测试。测试可以�
 | input | 输入快照 / 结构接收、简写规范化与来源映射 |
 | capability | 确定 Catalog 查询、Manifest 自检、能力锁收集 |
 | analysis/schema | Schema 资源 / 引用模型、结构连接证明、静态值校验；三者分文件 |
-| view | 物料 / Binding / Slot 检查、静态 ValueSpec 遍历 |
+| analysis/reference / expression / value | 词法环境与引用、结果模型与读取的共享分析、递归值及逐表达式 watch |
+| rules | Constraint / requires 与依赖传递、Reaction / Command 检查、Schema 消息定位 |
+| view | 物料 / Binding / Slot、共享模板闭包、Event / Request 契约与需求 |
 | output | Prepared 装配与输出自检 |
 | diagnostics / validation / common | 统一诊断收集、协议结构校验、JSON / 对象 / Pointer 基础操作 |
-| tests/pipeline / tests/capability | 真实编译行为与独立契约自检；共享夹具位于 tests/fixtures.ts |
+| tests/pipeline / capability / analysis / rules / view | 真实编译、自检、依赖、规则与模板 / 交互用例；共享夹具位于 tests/fixtures.ts |
 
 这次目录调整只拆职责和移动既有测试，公共 exports、编译输入输出及 I01 支持范围不变；后续表达式、规则等按真实实现增加模块，不以目录存在作为能力完成依据。
 
@@ -434,12 +436,24 @@ pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / �
 
 ## Compiler I01：真实静态编译入口 {#compiler-i01}
 
-2026-10-22 用户确认本期完整设计并要求先归档 / Git 提交再开始实现，设计提交为 6a0d97b。[Compiler 主题](l2/compiler.md#implementation-status)维护整体进展；当前只交付 I01 静态视图纵切，不将后续批次或 Runtime 更新性能写成完成。
+2026-10-22 用户确认本期完整设计并要求先归档 / Git 提交再开始实现，设计提交为 6a0d97b。[Compiler 主题](l2/compiler.md#implementation-status)维护整体进展；初次交付为 I01 静态视图纵切，后续实现见下节，不将批次完成等同 Runtime 更新性能通过。
 
-packages/compiler 已提供真实 compile、SDK 结果 / 诊断类型及独立 validateMaterialManifest / validatePureFunctionManifest。支持确定输入快照、目标默认、Authoring 简写与位置映射、静态物料 / Props / Binding / Slot、最小 Schema 结构连接与完整根资源引用扫描、能力锁和 Prepared 输出自检。非空规则 / 命名表达式、动态 $expr、Scope / 模板、事件 / 请求和校验消息仍明确报未实现，无 Error 才返回产物。
+I01 初次提供真实 compile、SDK 结果 / 诊断类型及独立 validateMaterialManifest / validatePureFunctionManifest，支持确定输入快照、目标默认、Authoring 简写与位置映射、静态物料 / Props / Binding / Slot、最小 Schema 结构连接与完整根资源引用扫描、能力锁和 Prepared 输出自检。当时对规则 / 命名表达式、动态 $expr、Scope / 模板、事件 / 请求和校验消息明确报未实现；这些拒绝分支已在下节实现中替换为真实分析。Error 无产物的边界保持。
 
 清单增加与仓库已装版本一致的 Ajv 8.20.0、@noble/hashes 1.8.0；脱离平台可同步运行，不导入组件 / Runtime 或执行业务函数。Schema 从 protocol 公共 JSON 入口导入，带 ESM JSON import 属性；标准 URL 用于 URI 解析，DOM lib 仅提供其跨环境类型，不建立 UI 依赖。包保持 private / 0.0.0，格式标识 form-engine.prepared/1 未发布；节点身份由定义与源位置确定，双摘要对象不混用。
 
 首批 28 个用例先在缺少真实入口时失败。后续补 Schema 检索别名、嵌套 ID / 前向引用、开放对象 / 条件依赖证明与简写来源的回归，共 41 个用例；独立审查发现的问题已复现并修正。测试检查真实输出，非手写 Prepared 代替算法。生产包已单独导入；统一隔离打包检查新增真实编译、JSON 往返、元信息自检与 SDK 类型消费。单独元信息自检目前不完成外部资源闭包检查，实际资源连接仍由使用点处理。
 
 当前包命令为 pnpm --filter @form-engine/compiler test / typecheck / lint / build；已取消 passWithNoTests，类型检查同时覆盖测试。最终全仓 pnpm check 已通过：10 个 Schema 确定性、格式 / Lint / 依赖边界、八包构建 / 类型、Compiler 41 个真实用例与 Protocol 48 个结构 / 方言用例、包内与跨包测试、HTTP 集成、六包隔离打包的生产 / development JS 与声明消费、47 个阅读页同步及 6356 个本地链接 / 资源检查。第一次全仓执行在 HTTP 集成遇到沙箱 listen EPERM；允许 127.0.0.1 监听后完整重跑通过。最终 Schema 回归修复后又重新执行全套，仍通过。独立审查复验最后的嵌套资源 / 别名 / Pointer 组合，无剩余重要问题；未执行的浏览器视觉、Runtime / Adapter 或更新性能联验不计为通过。
+
+## Compiler：共享分析与运行准备 {#compiler-static-analysis}
+
+表达式依赖分析和 watch 生成一直属于本期；I01–I04 是同一期的实施拆批，不能把 I01 的完成当成本期交付结束。当前补齐共享分析及规则 / 视图调用链，未新增协议字段、公共 SDK 入口或后期平台功能，也没有新增 ADR。
+
+ReferenceAnalyzer 统一根 / Scope / Event 引用与 Binder 环境；ExpressionAnalyzer 一次递归同时产出结果模型、可能 Data 读取和已知值；ValueCompiler 统一递归 ValueSpec 与动态形状，按位置决定是否生成响应式包装。SchemaModel 的资源 / 连接 / 值校验继续共用；Catalog 的物料 / 纯函数共享查询、自检、缓存和双摘要锁，不再分别维护相同逻辑。
+
+Props 的每个完整 $expr 有独立 watch，内部递归节点不生成订阅。Constraint 合并 when / assert / 显式输入及 requires 传递；字段前置补齐 constraintIds，Schema 全为已知局部断言时观察目标字段，条件 / 集合等无法精确证明的影响保守覆盖根域，不拆分根校验器。Reaction 仍用作者显式 watch；Command / Event / Request Payload 仅按调用分析，不因读取建立自动触发。模板只输出所选视图的共享闭包，保留参数别名，Scope ID 留给运行时；Request 增加默认并发策略、具有显式基址的资源引用和 Host 需求。
+
+真实编译用例覆盖命名表达式前向引用 / 环、optional / rest 签名、短路全分支、Literal 边界、动态 Props、Scope 链 / 句柄、前置传递 / 自环 / External / 唯一绑定、模板共享 / 参数 / 环、Event Payload、请求双向契约与资源、消息定位及长链预算。隔离打包消费者新增真实依赖生成与空依赖断言，不能仅凭工作区源码测试判定 SDK 可用。Schema 复杂组合、Context 缺少类型证据、命名锚点和动态 Schema 引用仍保持可解释的拒绝边界；性能基准、浏览器消费和 Runtime / Adapter 实际更新收益尚未验收。
+
+本次最终 pnpm check 已通过：Compiler 78 个用例、Protocol 48 个用例、八包构建 / 类型、格式 / Lint / 边界、HTTP 集成、六包生产 / development 隔离打包消费和文档同步。新补长 Schema 引用链预算、递归联合证明去重与预算，避免有限输入引发深递归或重复展开。另从 Compiler 正文提取完整保险 Definition / Catalog，使用 dist 的真实 compile 编译，逐项核对所有表达式 / 规则 watch 与人工契约样本一致、共享模板仅一份及 JSON 往返通过；不修改人工样本迁就实现。此结果不替代浏览器渲染或 Runtime / Adapter 性能验收。

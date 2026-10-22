@@ -28,6 +28,7 @@ export class SchemaModel {
   // 只记录扫描实际引用到的外部资源，输出时不复制整个输入资源字典。
   private readonly usedResources = new Map<string, JsonSchema>();
   private operations = 0;
+  private localFieldChecks?: boolean;
   readonly root: SchemaNode;
 
   constructor(
@@ -244,8 +245,8 @@ export class SchemaModel {
     return this.enter(target);
   }
   /** 检查引用完整性并收集外部资源闭包；允许递归资源，用身份去重避免无限展开。 */
-  scan(input: SchemaNode): void {
-    if (++this.operations > 20_000) {
+  scan(input: SchemaNode, depth = 0): void {
+    if (++this.operations > 20_000 || depth > 128) {
       this.diagnostics.error(
         'SCHEMA_BUDGET_EXCEEDED',
         this.location(input),
@@ -266,9 +267,9 @@ export class SchemaModel {
       );
     if (typeof node.schema.$ref === 'string') {
       const next = this.resolveRef(node, node.schema.$ref);
-      if (next) this.scan(next);
+      if (next) this.scan(next, depth + 1);
     }
-    for (const child of this.children(node)) this.scan(child);
+    for (const child of this.children(node)) this.scan(child, depth + 1);
   }
   /** 为形状分析跟随纯引用；递归链或带兄弟断言的组合返回无法证明。 */
   dereference(input: SchemaNode): SchemaNode | undefined {
@@ -311,7 +312,11 @@ export class SchemaModel {
    * 这里只投影声明形状，不读取运行时数据、不把数组索引绑定成真实 Scope ID。
    */
   dataReference(path: string, location: string): SchemaNode | undefined {
-    let node: SchemaNode | undefined = this.root;
+    return this.project(this.root, path, location);
+  }
+  /** 在任意声明模型上复用同一条路径投影逻辑，供 Scope、Event 和根数据共用。 */
+  project(root: SchemaNode, path: string, location: string): SchemaNode | undefined {
+    let node: SchemaNode | undefined = root;
     for (const part of path.split('/').slice(1)) {
       node = this.dereference(node);
       if (!node || !record(node.schema)) {
@@ -376,6 +381,95 @@ export class SchemaModel {
     }
     return node;
   }
+  /** 模板 schemaRef 指向声明模型，不是运行时数据路径。 */
+  schemaReference(reference: string, location: string): SchemaNode | undefined {
+    const node = this.resolveRef(this.root, reference);
+    if (!node)
+      this.diagnostics.error(
+        'SCHEMA_REFERENCE_NOT_FOUND',
+        location,
+        `Unknown schema ${reference}.`,
+      );
+    return node;
+  }
+  arrayItem(input: SchemaNode, location: string): SchemaNode | undefined {
+    const node = this.dereference(input);
+    if (!node || !record(node.schema) || node.schema.type !== 'array' || node.schema.prefixItems) {
+      this.diagnostics.error(
+        'ARRAY_MODEL_UNPROVEN',
+        location,
+        'Expected a definite homogeneous array model.',
+      );
+      return undefined;
+    }
+    return this.child(node, 'items', (node.schema.items ?? true) as JsonSchema);
+  }
+  /** 组合模型引用原资源位置，保留相对 $ref 的原基址，不复制未知模型内容。 */
+  referenceSchema(node: SchemaNode): JsonSchema {
+    return { $ref: node.document.uri + (node.pointer ? '#' + node.pointer : '') };
+  }
+  /**
+   * 仅在根模型全部为字段局部断言时缩小字段资格的观察范围。
+   * 条件 / 组合 / 集合数量等无法局部证明的规则保守回退根域，不拆分根 Schema 校验器。
+   */
+  fieldChecksAreLocal(): boolean {
+    if (this.localFieldChecks !== undefined) return this.localFieldChecks;
+    const seen = new Set<string>();
+    const local = new Set([
+      '$id',
+      '$ref',
+      '$schema',
+      '$comment',
+      '$defs',
+      'definitions',
+      'title',
+      'description',
+      'default',
+      'examples',
+      'deprecated',
+      'readOnly',
+      'writeOnly',
+      'type',
+      'properties',
+      'required',
+      'additionalProperties',
+      'items',
+      'minimum',
+      'maximum',
+      'exclusiveMinimum',
+      'exclusiveMaximum',
+      'multipleOf',
+      'minLength',
+      'maxLength',
+      'pattern',
+      'format',
+      'const',
+      'enum',
+    ]);
+    const visit = (input: SchemaNode, depth = 0): boolean => {
+      if (depth > 128) return false;
+      const node = this.enter(input);
+      const key = node.document.uri + '#' + node.pointer;
+      if (seen.has(key)) return true;
+      seen.add(key);
+      if (!record(node.schema)) return true;
+      if (Object.keys(node.schema).some((keyword) => !local.has(keyword))) return false;
+      const constants = Object.prototype.hasOwnProperty.call(node.schema, 'const')
+        ? [node.schema.const]
+        : node.schema.enum;
+      if (
+        Array.isArray(constants) &&
+        constants.some((value) => value !== null && typeof value === 'object')
+      )
+        return false;
+      if (typeof node.schema.$ref === 'string') {
+        const target = this.resolveRef(node, node.schema.$ref);
+        if (!target || !visit(target, depth + 1)) return false;
+      }
+      return this.children(node).every((child) => visit(child, depth + 1));
+    };
+    return (this.localFieldChecks = visit(this.root));
+  }
   /** 检查来源形状能否连接到目标端口；不是检查某次输入值是否满足业务规则。 */
   connection(source: SchemaNode, target: SchemaNode, depth = 0): Connection {
     return connectSchemas(
@@ -389,7 +483,12 @@ export class SchemaModel {
     );
   }
   /** 已知静态 Props 有具体值，可直接按 Manifest Schema 和当前 Ajv 配置做值校验。 */
-  validateValue(node: SchemaNode, value: JsonValue, location: string): boolean {
+  validateValue(
+    node: SchemaNode,
+    value: JsonValue,
+    location: string,
+    code = 'PROPS_INVALID',
+  ): boolean {
     return validateStaticValue(
       node,
       value,
@@ -400,6 +499,7 @@ export class SchemaModel {
         child: (node, key, schema) => this.child(node, key, schema),
       },
       this.diagnostics,
+      code,
     );
   }
   /** 稳定输出已引用外部资源；根数据 Schema 和物料声明仍保留各自原有归属。 */

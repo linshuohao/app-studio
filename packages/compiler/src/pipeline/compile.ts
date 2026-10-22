@@ -5,14 +5,21 @@ import { at } from '../common/pointer.js';
 import { own } from '../common/object.js';
 import { receive } from '../input/receive.js';
 import { normalize } from '../input/normalize.js';
-import { createMaterialCatalog } from '../capability/catalog.js';
+import { createCapabilityCatalog } from '../capability/catalog.js';
 import { SchemaModel } from '../analysis/schema/model.js';
+import { ReferenceAnalyzer, rootEnvironment } from '../analysis/reference/environment.js';
+import { ExpressionAnalyzer } from '../analysis/expression/analyze.js';
+import { ValueCompiler } from '../analysis/value/compile.js';
+import { compileRules } from '../rules/compile.js';
+import { checkMessages } from '../rules/messages.js';
 import { compileView } from '../view/compile.js';
+import { TemplateCompiler } from '../view/templates.js';
+import { InteractionCompiler } from '../view/interactions.js';
 import { assemblePrepared } from '../output/assemble.js';
 
 /**
- * 当前只编译 I01 静态视图：输入检查 → 规范化 → 物料 / Schema 检查 → Prepared 装配。
- * 表达式依赖、watch、规则和模板编译尚未接入；遇到这些语义会明确失败。
+ * 输入检查 → 规范化 → 共享引用 / 表达式分析 → 规则与视图准备 → Prepared 装配。
+ * 规则和动态 Props 共用分析事实；订阅、求值和真实 Scope 身份留在运行端。
  * 任一阶段有错误都不交付 Prepared，避免运行端消费缺少语义的半成品。
  */
 export function compile(input: CompileInput): CompileResult {
@@ -44,31 +51,45 @@ export function compile(input: CompileInput): CompileResult {
       `Only ${PREPARED_FORMAT_VERSION} is supported.`,
     );
   if (diagnostics.failed || profile === undefined) return fail();
-  // 这是当前批次的拒绝边界，并非已经实现的表达式 / 规则分析器。
-  const unsupported = (pointer: string, description: string) =>
-    diagnostics.error(
-      'FEATURE_NOT_IMPLEMENTED',
-      source(pointer),
-      `${description} is not implemented in the current compiler slice.`,
-    );
-  for (const key of ['expressions', 'constraints', 'reactions', 'validationMessages'] as const)
-    if (definition[key] && Object.keys(definition[key]).length) unsupported(at('', key), key);
-
   // Schema 模型供静态 Props 校验和 Binding 类型连接共用，不绑定运行时 Scope。
   const models = new SchemaModel(
     definition.data.schema,
     received.schemaResources ?? {},
     diagnostics,
   );
-  const materials = createMaterialCatalog(catalog, target, diagnostics, source);
-  const view = compileView(definition.views[profile]!, at('/views', profile), {
+  const capabilities = createCapabilityCatalog(catalog, target, diagnostics, source);
+  const references = new ReferenceAnalyzer(models, diagnostics, source);
+  const expressions = new ExpressionAnalyzer(
+    references,
+    definition.expressions ?? {},
+    capabilities,
+    diagnostics,
+    source,
+  );
+  const values = new ValueCompiler(expressions);
+  expressions.checkDeclarations();
+  const rules = compileRules(definition, values, catalog.host);
+  checkMessages(definition.validationMessages ?? [], expressions);
+  const interactions = new InteractionCompiler(values, catalog.host);
+  const context = {
     definitionId: definition.id,
     catalogSnapshotId: catalog.id,
     models,
     diagnostics,
-    material: materials.material,
+    material: capabilities.material,
+    values,
     source,
-    unsupported,
+    interactions,
+  };
+  const templates: TemplateCompiler = new TemplateCompiler(
+    definition.viewTemplates ?? {},
+    expressions,
+    (node, pointer, env) => compileView(node, pointer, { ...context, env, templates }),
+  );
+  const view = compileView(definition.views[profile]!, at('/views', profile), {
+    ...context,
+    templates,
+    env: rootEnvironment(),
   });
   if (diagnostics.failed || !view) return fail();
   // 只在所选视图检查通过后组装产物，携带实际引用的资源和能力锁。
@@ -80,7 +101,12 @@ export function compile(input: CompileInput): CompileResult {
       catalogSnapshotId: catalog.id,
       view,
       schemas: models.resources(),
-      materials: materials.locks(),
+      capabilityLock: capabilities.locks(),
+      constraints: rules.constraints,
+      reactions: rules.reactions,
+      validators: rules.validators,
+      templates: templates.result(),
+      interactions: interactions.result(),
     },
     diagnostics,
   );

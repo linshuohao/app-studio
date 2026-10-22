@@ -8,7 +8,7 @@
   <title>Compiler 详细设计与实施 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=c615b4b0f87e" defer></script>
+  <script src="assets/knowledge-index.js?v=ebd62dccbb1f" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -76,7 +76,7 @@
       </header>
       <div class="reading-layout">
       <main class="content" id="top">
-        <header class="hero"><div class="eyebrow">FORM ENGINE · COMPILER · DETAILED DESIGN</div><h1>Compiler 详细设计与实施</h1><div class="desc"><strong>本期方案已确认 · 2026-10-22。</strong> 本文整合整体蓝图、本期范围、需求、架构、模块详细设计、流程、诊断、验收与后续实施步骤。平台可视化与能力自校验按本轮补充纳入；平台报告的具体公共格式仍属后期设计。已确认并实现的是协议层输入表示与 Prepared 交换类型；用户已确认本期模块方案、检查策略和接口安排，并授权归档、提交及开始实现；归档时 Compiler 算法尚未实现；随后已按授权完成 I01 静态视图纵切，当前进展见实施现状。示例 Prepared 是预期契约样本，不是编译执行结果。</div></header>
+        <header class="hero"><div class="eyebrow">FORM ENGINE · COMPILER · DETAILED DESIGN</div><h1>Compiler 详细设计与实施</h1><div class="desc"><strong>本期方案已确认 · 2026-10-22。</strong> 本文整合整体蓝图、本期范围、需求、架构、模块详细设计、流程、诊断、验收与后续实施步骤。平台可视化与能力自校验按本轮补充纳入；平台报告的具体公共格式仍属后期设计。协议输入与 Prepared 类型已实现；用户确认本期模块方案后授权归档、提交及实施。归档时算法尚未实现，随后完成 I01，并补齐 I02–I04 的表达式依赖、规则与视图准备；稳定性 / 消费验收见实施现状。下方长篇 Prepared 仍是预期契约样本，真实产物证据来自代码测试，二者分开。</div></header>
         <hr class="hero-line">
         <section class="section" id="blueprint"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>整体蓝图：从本地编译到平台分析</h2></div></div>
 
@@ -457,7 +457,7 @@
 </tr>
 <tr>
 <td>部分实现</td>
-<td>I01 静态视图编译 / 契约自检已实现；完整表达式 / 规则 / 交互、Runtime、Adapter 与生产性能待完成</td>
+<td>I01–I04 编译主链 / 契约自检、表达式依赖、规则与模板 / 交互已实现；完整基准、浏览器消费、Runtime / Adapter 待完成</td>
 <td>仅以真实 compile 和消费测试证明对应范围</td>
 </tr>
 </tbody>
@@ -478,7 +478,7 @@
 <section class="section" id="public-contract"><div class="section-head"><div class="kicker">05 · FORM ENGINE</div><div class="section-title"><h2>输入输出与公共入口</h2></div></div>
 
 <h3 id="接口草案">接口草案</h3>
-<p>以下是本期 Compiler SDK 的目标契约，归档后 I01 已导出该入口，但仅支持实施现状所列静态子集；相关交换类型已经在 protocol 的三个领域中实现。</p>
+<p>以下是本期 Compiler SDK 契约，当前真实入口已接入共享分析和运行准备；具体支持与拒绝边界以实施现状为准。交换类型已在 protocol 的三个领域中实现。</p>
 <div class="code-box"><div class="code-head"><span>TYPESCRIPT</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-kd">interface</span><span class="syn-w"> </span><span class="syn-nx">CompileInput</span><span class="syn-w"> </span><span class="syn-p">{</span>
 <span class="syn-w">  </span><span class="syn-nx">definition</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">CompilerInputDefinition</span><span class="syn-p">;</span>
 <span class="syn-w">  </span><span class="syn-nx">catalog</span><span class="syn-o">:</span><span class="syn-w"> </span><span class="syn-kt">CapabilityCatalogSnapshot</span><span class="syn-p">;</span>
@@ -694,8 +694,8 @@
 </table></div>
 <p>包依赖仍为 compiler → protocol；不导入 runtime、renderer、React 组件或实际业务纯函数。Schema 结构检查沿用已确认 Ajv 路线，算法实现保持当前 TS / 浏览器可消费边界，不以 Node-only 全局状态作为隐式前提。</p>
 <h3 id="source-layout">当前实现的物理目录</h3>
-<p>遵循<a href="engineering.html#package-source-layout" rel="noopener noreferrer">统一包目录约定</a>，生产代码放在 src，测试放在独立 tests 目录。当前 I01 的入口编排位于 pipeline；输入接收和规范化在 input；Catalog 读取、自检与锁收集在 capability；Schema 资源模型、连接证明和静态值校验在 analysis/schema，分别独立文件；物料节点与静态值遍历在 view；Prepared 装配在 output。diagnostics、validation、common 提供贯穿支撑。</p>
-<p>src/index.ts 维持公共导出，公共 SDK 类型保留在 src/types.ts；内部文件移动不新增公共子入口。tests/pipeline 覆盖真实 compile 行为，tests/capability 覆盖独立元信息自检，共享夹具单独维护。此次拆分不改变公共行为，也不提前建立尚未实现的表达式 / 规则模块。完整文件定位见包 README，统一约定与各职责说明以工程主题为准。</p>
+<p>遵循<a href="engineering.html#package-source-layout" rel="noopener noreferrer">统一包目录约定</a>，生产代码放在 src，测试放在独立 tests 目录。入口编排位于 pipeline；输入接收和规范化在 input；Catalog 读取、自检与锁收集在 capability；analysis/schema 分开资源模型、连接证明和值校验；analysis/reference 处理词法环境 / 引用 / watch 合并；analysis/expression 同时分析结果模型与读取；analysis/value 递归准备 ValueSpec。rules 负责规则 / 前置 / 命令，view 负责物料、共享模板与交互；output 装配 Prepared，diagnostics、validation、common 提供贯穿支撑。</p>
+<p>src/index.ts 维持公共导出，公共 SDK 类型保留在 src/types.ts；内部拆分不新增公共子入口。tests/pipeline、capability、analysis、rules、view 分别覆盖编译、自检、依赖、规则与视图交互，共享夹具单独维护。表达式与规则目录对应真实实现，不以目录存在作为完成依据。完整文件定位见包 README，统一约定与各职责说明以工程主题为准。</p>
 </section>
 <section class="section" id="pipeline"><div class="section-head"><div class="kicker">07 · FORM ENGINE</div><div class="section-title"><h2>六阶段主流程与失败路径</h2></div></div>
 
@@ -2530,7 +2530,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 </section>
 <section class="section" id="implementation-status"><div class="section-head"><div class="kicker">22 · FORM ENGINE</div><div class="section-title"><h2>实施现状与证据边界</h2></div></div>
 
-<p><strong>核对日期：2026-10-22。</strong> 本期设计提交 6a0d97b 后已实施 I01；下表是实际状态，后续批次仍未完成。</p>
+<p><strong>核对日期：2026-10-22。</strong> 本期设计提交 6a0d97b 后先实施 I01，现已接入同一期 I02–I04 的共享分析和运行准备。拆批不改变本期范围，表达式依赖和 watch 生成不是后期平台功能。下表是实际状态，不把代码主链实现等同性能 / 运行端已验收。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2558,7 +2558,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <tr>
 <td>I01 静态视图</td>
 <td>简写 / 默认目标、原位置、静态 Props / Literal、根 Binding、Slot、资源、锁与输出自检</td>
-<td>41 个真实编译 / 元信息用例通过；含已复现的 Schema 基址与前向 ID 回归</td>
+<td>初次 41 个用例保留并更新已支持语义的预期，纳入当前回归</td>
 </tr>
 <tr>
 <td>能力自校验</td>
@@ -2566,14 +2566,24 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <td>不执行实现；独立自检尚不处理外部资源闭包；Registry / CLI 未建设</td>
 </tr>
 <tr>
-<td>Schema 最小模型</td>
-<td>本期 I01 已用基础 / 简单对象 / 数组连接、局部 / 外部引用、资源基址与闭包</td>
-<td>完整 I02 子集、词法 Scope、表达式分析未交付；无法证明不放行</td>
+<td>Schema 模型</td>
+<td>基础 / 简单对象 / 数组 / 简单联合连接、局部 / 外部引用、资源基址与闭包</td>
+<td>复杂组合、联合对象路径投影、Tuple、命名锚点 / 动态引用不放行；Context 缺少类型证据按 unproven 处理</td>
 </tr>
 <tr>
-<td>后续语义</td>
-<td>命名 / 动态表达式、Constraint、Reaction、Scope / Template、Event / Request、消息编译未实现</td>
-<td>相关使用明确 FEATURE_NOT_IMPLEMENTED；必需请求漏映射有具体错误，不生成残缺产物</td>
+<td>共享表达式分析</td>
+<td>命名引用 / 环、参数数 / optional / rest / 返回形状、全部可能读取、Literal 边界</td>
+<td>ReferenceAnalyzer / ExpressionAnalyzer / ValueCompiler 共用，无纯函数执行或结果缓存</td>
+</tr>
+<tr>
+<td>规则与 watch</td>
+<td>逐完整 Props $expr 独立 watch；Constraint 合并及 requires 传递；Reaction 仅保留显式触发</td>
+<td>前置唯一 Scope 绑定、field.constraintIds、环 / External 拒绝、根 Schema 保守失效与命令检查已有用例</td>
+</tr>
+<tr>
+<td>视图与交互</td>
+<td>Scope / 模板参数 / 共享闭包、Event / Request Payload、双向契约、并发默认、资源 / Host 需求与消息定位</td>
+<td>调用时值不生成 watch；模板不展开；请求 Schema 根基址显式化；Runtime 实例 / 并发不在编译时运行</td>
 </tr>
 <tr>
 <td>生产消费</td>
@@ -2593,7 +2603,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 </tbody>
 </table></div>
 <p>实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/1 为未发布交换格式，不代表 Runtime 已支持。</p>
-<p>最终全仓 pnpm check 已通过，含 Compiler 41 个用例、协议 48 个用例、HTTP 集成、生产 / development 隔离打包 JS / 类型消费及文档同步；详细命令、环境限制与证据边界统一记录于 <a href="engineering.html#compiler-i01" rel="noopener noreferrer">工程实施</a>。曾发现并修正 Node ESM JSON import 属性、Schema 嵌套 ID 重复注册 / 前向索引、外部检索别名基址、开放对象连接和 children 原位置映射；对应行为有回归测试。完整编译收益、精确失效和性能仍须后续消费者与基准证据。</p>
+<p>初次 I01 的全仓检查及资源 / 来源回归记录见<a href="engineering.html#compiler-i01" rel="noopener noreferrer">基础工程实施</a>。当前共享分析与运行准备的用例、打包消费和门禁证据见<a href="engineering.html#compiler-static-analysis" rel="noopener noreferrer">工程实施</a>。复杂度 / 体积基准、浏览器消费、精确失效和实际性能仍须后续证据，不因产物已有 watch 就宣称运行收益已通过。</p>
 <p>文档 / 附件的示例、锚点、资源和脚本检查不能代替浏览器视觉检查；此前本地文件导航被安全策略拒绝，未取得浏览器视觉证据。</p>
 </section>
 <section class="section" id="tradeoffs"><div class="section-head"><div class="kicker">23 · FORM ENGINE</div><div class="section-title"><h2>取舍与后期扩展</h2></div></div>
@@ -2693,25 +2703,25 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <td>I02 共享分析</td>
 <td>声明、Scope、引用、Schema 资源与连接、Expression / ValueSpec 分析、Props watch</td>
 <td>同一内核完成类型 / 读取；递归、Literal、命名环、模板参数环境正反例；保留必要来源</td>
-<td>未开始</td>
+<td>主链已实现；有限 Schema 证明边界保留</td>
 </tr>
 <tr>
 <td>I03 规则</td>
 <td>Reaction / Command、Internal / External、requires、依赖传递</td>
 <td>Reaction 不补触发；约束失效覆盖前置输入；Scope 唯一绑定；环与缺契约失败</td>
-<td>未开始</td>
+<td>主链已实现；持续纳入全量回归</td>
 </tr>
 <tr>
 <td>I04 完整视图与交付</td>
 <td>模板共享闭包、Binding / Slot / Event / Request、资源 / 双摘要锁 / Host 需求、输出自检</td>
 <td>实际编译贯穿样例，与手写预期独立比较；无关能力不进入锁；请求契约与闭包完整</td>
-<td>未开始</td>
+<td>主链已实现；消费者实测仍由 I06 提供</td>
 </tr>
 <tr>
 <td>I05 稳定性与消费准备</td>
 <td>正反例回归、确定性、复杂度 / 体积基准、exports 与浏览器消费</td>
 <td>生产 SDK 类型导出、语义测试、标准门禁通过；性能给出实际测量而非估计</td>
-<td>未开始</td>
+<td>已有语义回归与产物消费；完整基准 / 浏览器消费待完成</td>
 </tr>
 <tr>
 <td>I06 消费联验</td>
@@ -2860,7 +2870,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <tr>
 <td>Compiler 现状</td>
 <td>packages/compiler/src/index.ts；packages/compiler/README.md</td>
-<td>I01 真实 compile 已导出，完整语义与各端联验未完成</td>
+<td>I01–I04 主链与逐表达式 watch 已接入，完整基准 / 浏览器消费及各端联验未完成</td>
 </tr>
 <tr>
 <td>平台与静态 / 动态展示边界</td>
@@ -2914,7 +2924,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <a href="#implementation-plan" data-to="implementation-plan" title="实施步骤、依赖与完成条件"><span class="nav-num">24</span><span>实施步骤、依赖与完成条件</span></a>
 <a href="#review-decisions" data-to="review-decisions" title="本期确认结论与后期接缝"><span class="nav-num">25</span><span>本期确认结论与后期接缝</span></a>
 <a href="#sources" data-to="sources" title="依据与当前代码状态"><span class="nav-num">26</span><span>依据与当前代码状态</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-COMPILER</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>本期设计已确认；I01 静态编译纵切已实现，完整表达式 / 规则 / 交互及各端联验待完成</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 6</summary><ul><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler I01 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-design">SRC-COMPILERDESIGN · Compiler 本期完整设计确认与实施授权</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-COMPILER</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>本期设计已确认；I01–I04 编译主链与表达式 watch 已实现，完整基准 / 浏览器消费及 Runtime / Adapter 联验待完成</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 6</summary><ul><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-design">SRC-COMPILERDESIGN · Compiler 本期完整设计确认与实施授权</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li></ul></details></section>
       </aside>
       </div>
     </div>

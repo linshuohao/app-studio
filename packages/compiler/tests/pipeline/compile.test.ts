@@ -474,12 +474,10 @@ describe('compile: first executable slice', () => {
         node: { material: 'input' },
       };
     },
-  ])('fails closed for not-yet-implemented semantics', (mutate) => {
+  ])('compiles expressions, rules and Scope through the shared analysis layer', (mutate) => {
     const source = input();
     mutate(source);
-    expect(errors(compiler.compile(source))).toContainEqual(
-      expect.objectContaining({ code: 'FEATURE_NOT_IMPLEMENTED' }),
-    );
+    expect(compiler.compile(source).success).toBe(true);
   });
 
   it('rejects missing required request mappings before allowing a used material', () => {

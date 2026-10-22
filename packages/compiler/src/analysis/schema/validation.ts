@@ -23,6 +23,7 @@ export function validateStaticValue(
   location: string,
   context: SchemaValidationContext,
   diagnostics: Diagnostics,
+  code = 'PROPS_INVALID',
 ): boolean {
   // 每个规范资源位置只复制一次，内联资源和单独注册的资源复用同一对象身份。
   function validatorSchema(
@@ -99,7 +100,7 @@ export function validateStaticValue(
     const validator = ajv.getSchema(node.document.uri + (node.pointer ? '#' + node.pointer : ''));
     if (!validator) throw new Error('Schema validator not found.');
     if (!validator(value)) {
-      diagnostics.error('PROPS_INVALID', location, ajv.errorsText(validator.errors));
+      diagnostics.error(code, location, ajv.errorsText(validator.errors));
       return false;
     }
     return true;

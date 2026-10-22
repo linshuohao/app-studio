@@ -21,6 +21,10 @@ interface ViewCompileContext {
   unsupported: (pointer: string, description: string) => void;
 }
 
+/**
+ * 逐物料节点检查静态 Props、根数据 Binding 和 Slot，并保留原树形结构。
+ * Scope / 模板 / 事件 / 请求映射还未编译；这里的拒绝检查不代表这些功能已实现。
+ */
 export function compileView(
   node: ViewNode,
   pointer: string,
@@ -46,7 +50,7 @@ export function compileView(
   };
   const props = compileStaticValue(node.props ?? {}, at(pointer, 'props'), unsupported);
   if (props.supported) {
-    // Recursive inspection proved there are no reactive wrappers in this slice.
+    // 已确认没有 $expr。产物保留 ValueSpec（含 $literal），只用解包后的值检查 Props。
     if (node.props !== undefined) result.props = node.props as Record<string, PreparedValueSpec>;
     const schema = models.addRoot(
       manifest.propsSchema ?? true,
@@ -70,6 +74,7 @@ export function compileView(
       diagnostics.error('SCOPE_NOT_VISIBLE', location, `No visible Scope ${reference.scope}.`);
       continue;
     }
+    // 例如 /name:string → 物料 value:string：检查结构连接，不读取真实字段值。
     const from = models.dataReference(reference.path, location);
     const to = models.addRoot(
       manifest.bindings[port]!.schema,
@@ -133,7 +138,7 @@ export function compileView(
       );
     else unsupported(at(at(pointer, 'requests'), name), 'Request mappings');
   }
-  // Request mappings require prepared contracts; never accidentally copy authoring mappings.
+  // 请求尚无 Prepared 契约编译，不能把原始映射直接复制成貌似可执行的结果。
   delete result.requests;
   return result;
 }

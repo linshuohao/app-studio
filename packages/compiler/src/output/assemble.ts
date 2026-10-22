@@ -21,8 +21,9 @@ interface OutputInput {
   materials: Record<string, LockedCapability>;
 }
 
+/** 装配已检查的静态片段并做 Prepared 结构自检；失败仍由入口统一阻止交付。 */
 export function assemblePrepared(input: OutputInput, diagnostics: Diagnostics): PreparedForm {
-  // Nonempty rules/expressions were rejected above. Shared unused templates are intentionally omitted.
+  // 入口 / 视图模块已拒绝未实现语义。模板使用尚不支持，未使用模板不进入产物。
   const shared = { ...input.definition };
   delete shared.viewTemplates;
   const prepared = {
@@ -37,6 +38,7 @@ export function assemblePrepared(input: OutputInput, diagnostics: Diagnostics): 
       ...shared,
       views: Object.fromEntries([[input.profile, input.view]]),
     } as PreparedDefinition,
+    // 固定协议要求这些字段；空集合表示本批次没有对应使用，不是占位执行计划。
     resources: { schemas: input.schemas, requestSchemas: {} },
     capabilityLock: {
       materials: input.materials,
@@ -44,6 +46,7 @@ export function assemblePrepared(input: OutputInput, diagnostics: Diagnostics): 
     },
     hostRequirements: { validators: [], events: [], requests: [] },
   };
+  // 输入检查报告作者配置问题；这里报告编译器内部装配错误。
   for (const error of structuralErrors(structure.prepared, prepared))
     diagnostics.error(
       'COMPILER_OUTPUT_INVALID',

@@ -4,9 +4,10 @@ import { own, record } from '../common/object.js';
 import { JsonInputError, snapshot } from '../common/json.js';
 import { createAjv, structuralErrors, structure } from '../validation/structure.js';
 
+/** 接收 SDK 输入：复制纯 JSON、检查外层选项及协议结构；不解析业务引用。 */
 export function receive(input: CompileInput, diagnostics: Diagnostics): CompileInput | undefined {
   try {
-    // Optional SDK arguments may be omitted or explicitly undefined; protocol values may not.
+    // SDK 可选参数允许显式 undefined；协议内部仍严格要求 JSON，不能统一滤掉 undefined。
     const descriptors = Object.getOwnPropertyDescriptors(input);
     for (const key of ['target', 'schemaResources'])
       if (descriptors[key] && 'value' in descriptors[key] && descriptors[key].value === undefined)
@@ -58,6 +59,7 @@ export function receive(input: CompileInput, diagnostics: Diagnostics): CompileI
             [{ sourceId: `schemaResources:${name}`, pointer: '' }],
           );
     }
+    // 表单位置直接指向 Definition；Catalog 错误另外保留快照身份，避免混淆来源。
     for (const error of structuralErrors(structure.definition, json.definition))
       diagnostics.error(
         'DEFINITION_INVALID',

@@ -3,6 +3,11 @@ import type { ValueSpec } from '@form-engine/protocol/definition';
 import { at } from '../common/pointer.js';
 import { own } from '../common/object.js';
 
+/**
+ * 遍历静态 ValueSpec，得到用于 Props Schema 检查的值；不改变最终产物结构。
+ * $literal 是递归边界（内部 $expr 也只是普通数据）；真正的 $expr 当前明确拒绝。
+ * 尚未做表达式解析、依赖收集或 watch 生成。
+ */
 export function compileStaticValue(
   value: ValueSpec,
   pointer: string,

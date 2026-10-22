@@ -1,5 +1,6 @@
 import type { Diagnostic } from '../types.js';
 
+/** 本次调用的错误收集器：限制数量、去重并稳定排序；不构建平台错误链路图。 */
 export class Diagnostics {
   private readonly entries: Diagnostic[] = [];
   error(

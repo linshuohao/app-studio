@@ -5,7 +5,7 @@ import { snapshot, JsonInputError } from '../common/json.js';
 import { structure, structuralErrors } from '../validation/structure.js';
 import type { ContractValidationResult } from '../types.js';
 
-/** Standalone declaration checks; never imports or invokes an implementation. */
+/** 共享 Manifest 自检：结构 / 嵌入 Schema 语法与固定参数顺序；不导入或执行实现。 */
 function validate(value: unknown, kind: 'material' | 'pureFunction'): ContractValidationResult {
   const diagnostics = new Diagnostics();
   try {
@@ -35,7 +35,9 @@ function validate(value: unknown, kind: 'material' | 'pureFunction'): ContractVa
   }
   return { valid: !diagnostics.failed, diagnostics: diagnostics.list() };
 }
+/** 单物料声明可独立自检；外部 Schema 引用的资源闭包仍由实际使用点检查。 */
 export const validateMaterialManifest = (manifest: unknown): ContractValidationResult =>
   validate(manifest, 'material');
+/** 仅检查函数声明，不代表已经实现表单表达式编译或证明函数行为 / 纯净性。 */
 export const validatePureFunctionManifest = (manifest: unknown): ContractValidationResult =>
   validate(manifest, 'pureFunction');

@@ -8,15 +8,24 @@ import { mapKeywords, arrayKeywords, singleKeywords } from './keywords.js';
 import { connectSchemas } from './connection.js';
 import { validateStaticValue } from './validation.js';
 
+// 无 $id 的根模型也需要稳定基址解析相对引用；这个 URI 仅作身份，绝不发起请求。
 const virtualRoot = 'https://form-engine.invalid/schema/root';
 const supportedPointer = /^(?:\/(?:[^~/]|~[01])*)*$/;
 
+/**
+ * 单次编译的 Schema 资源 / 引用环境，供 Binding 连接和静态 Props 校验共用。
+ * 这里处理的是 JSON Schema 的 $ref，不是运行时数据订阅或 Scope 实例绑定。
+ * 资源索引、形状证明和 Ajv 值校验分别负责不同问题，后两者委托独立模块。
+ */
 export class SchemaModel {
+  // 检索 URI 与声明 $id 可指向同一资源；不能将同一资源误当成两份注册。
   private readonly documents = new Map<string, Document>();
+  // 声明索引与引用扫描分开去重：先让前向 $id 可见，再沿 $ref 检查完整性。
   private readonly indexed = new Set<string>();
   private readonly schemaLocations = new Set<string>();
   private readonly resourceAliases = new Map<string, { key: string; schema: JsonSchema }>();
   private readonly visited = new Set<string>();
+  // 只记录扫描实际引用到的外部资源，输出时不复制整个输入资源字典。
   private readonly usedResources = new Map<string, JsonSchema>();
   private operations = 0;
   readonly root: SchemaNode;
@@ -58,6 +67,7 @@ export class SchemaModel {
       return undefined;
     }
   }
+  /** 同一 URI 可重复声明相同内容；内容冲突必须报告，不能按遍历顺序覆盖。 */
   private register(
     schema: JsonSchema,
     uri: string,
@@ -79,6 +89,7 @@ export class SchemaModel {
     this.documents.set(uri, document);
     return document;
   }
+  /** 为数据模型 / 物料端口建立资源根，pointer 保留其在源配置中的位置。 */
   addRoot(schema: JsonSchema, fallback: string, pointer: string): SchemaNode {
     const id =
       record(schema) && typeof schema.$id === 'string'
@@ -92,6 +103,7 @@ export class SchemaModel {
   private location(node: SchemaNode): string {
     return node.document.sourceId ? '' : node.document.sourcePointer + node.pointer;
   }
+  /** 嵌套 $id 开启新的资源基址；后续相对 $ref 必须从这里重新解析。 */
   private enter(node: SchemaNode): SchemaNode {
     if (node.pointer && record(node.schema) && typeof node.schema.$id === 'string') {
       const id = this.uri(node.schema.$id, node.document.uri, this.location(node));
@@ -113,6 +125,7 @@ export class SchemaModel {
   private child(node: SchemaNode, key: string, schema: JsonSchema): SchemaNode {
     return { schema, document: node.document, pointer: at(node.pointer, key) };
   }
+  /** 只走 Schema 关键字，default / examples 内的普通业务对象不当作子 Schema。 */
   private children(node: SchemaNode): SchemaNode[] {
     if (!record(node.schema)) return [];
     const children: SchemaNode[] = [];
@@ -146,9 +159,10 @@ export class SchemaModel {
       key = node.document.uri + '#' + node.pointer;
     if (this.indexed.has(key)) return;
     this.indexed.add(key);
-    // Schema resource declarations are indexed before following any forward refs.
+    // 先收集全部资源声明，后续 scan 才跟随引用，允许引用写在目标 $id 之前。
     for (const child of this.children(node)) this.index(child);
   }
+  /** 从固定内存资源解析 URI + JSON Pointer；缺失即诊断，不联网补齐。 */
   private resolveRef(input: SchemaNode, ref: string): SchemaNode | undefined {
     const node = this.enter(input);
     const resolved = this.uri(ref, node.document.uri, at(this.location(node), '$ref'));
@@ -170,6 +184,7 @@ export class SchemaModel {
       );
       return undefined;
     }
+    // 引用即使落到外部资源的嵌套 $id，也要把包含它的原资源带入输出闭包。
     const resource = this.resourceAliases.get(uri);
     if (resource) this.usedResources.set(resource.key, resource.schema);
     else if (document.external) {
@@ -200,6 +215,7 @@ export class SchemaModel {
     let target: SchemaNode = { schema: document.schema, document, pointer: '' };
     for (const part of pointer.split('/').slice(1)) {
       const key = part.replaceAll('~1', '/').replaceAll('~0', '~');
+      // Pointer 途中只有真实 Schema 位置才切换 $id 基址，字典容器里的同名键不切换。
       if (this.schemaLocations.has(target.document.uri + '#' + target.pointer))
         target = this.enter(target);
       const schema: unknown = target.schema;
@@ -227,6 +243,7 @@ export class SchemaModel {
     }
     return this.enter(target);
   }
+  /** 检查引用完整性并收集外部资源闭包；允许递归资源，用身份去重避免无限展开。 */
   scan(input: SchemaNode): void {
     if (++this.operations > 20_000) {
       this.diagnostics.error(
@@ -253,6 +270,7 @@ export class SchemaModel {
     }
     for (const child of this.children(node)) this.scan(child);
   }
+  /** 为形状分析跟随纯引用；递归链或带兄弟断言的组合返回无法证明。 */
   dereference(input: SchemaNode): SchemaNode | undefined {
     let node = this.enter(input);
     const seen = new Set<string>();
@@ -260,7 +278,7 @@ export class SchemaModel {
       const key = node.document.uri + '#' + node.pointer;
       if (seen.has(key)) return undefined;
       seen.add(key);
-      // Sibling assertions must never be discarded while following a reference.
+      // 如 {$ref: '...', type: 'string'} 不能只看 $ref，否则会丢失兄弟断言。
       if (
         Object.keys(node.schema).some(
           (key) =>
@@ -288,6 +306,10 @@ export class SchemaModel {
     }
     return node;
   }
+  /**
+   * 例如数据路径 /user/name → 数据 Schema 的 properties.user.properties.name。
+   * 这里只投影声明形状，不读取运行时数据、不把数组索引绑定成真实 Scope ID。
+   */
   dataReference(path: string, location: string): SchemaNode | undefined {
     let node: SchemaNode | undefined = this.root;
     for (const part of path.split('/').slice(1)) {
@@ -327,7 +349,7 @@ export class SchemaModel {
           this.diagnostics.error('REFERENCE_UNPROVEN', location, `Cannot prove property ${key}.`);
           return undefined;
         }
-        // A declared property is absent from a closed dictionary, or from the declared simple model.
+        // 开放对象允许这个键出现，但未声明其形状，不能据此放行有类型要求的连接。
         if (
           node.schema === true &&
           schema.additionalProperties === undefined &&
@@ -354,6 +376,7 @@ export class SchemaModel {
     }
     return node;
   }
+  /** 检查来源形状能否连接到目标端口；不是检查某次输入值是否满足业务规则。 */
   connection(source: SchemaNode, target: SchemaNode, depth = 0): Connection {
     return connectSchemas(
       source,
@@ -365,6 +388,7 @@ export class SchemaModel {
       depth,
     );
   }
+  /** 已知静态 Props 有具体值，可直接按 Manifest Schema 和当前 Ajv 配置做值校验。 */
   validateValue(node: SchemaNode, value: JsonValue, location: string): boolean {
     return validateStaticValue(
       node,
@@ -378,6 +402,7 @@ export class SchemaModel {
       this.diagnostics,
     );
   }
+  /** 稳定输出已引用外部资源；根数据 Schema 和物料声明仍保留各自原有归属。 */
   resources(): Record<string, JsonSchema> {
     return Object.fromEntries(
       [...this.usedResources].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),

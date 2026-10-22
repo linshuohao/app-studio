@@ -13,7 +13,7 @@ export class JsonInputError extends Error {
   }
 }
 
-/** Snapshot plain JSON without invoking accessors or toJSON on caller objects. */
+/** 复制纯 JSON；不用 JSON.stringify 拷贝，避免触发 getter / toJSON 或静默丢失非法值。 */
 export function snapshot(value: unknown): JsonValue {
   let count = 0;
   const active = new WeakSet<object>();
@@ -52,6 +52,7 @@ export function snapshot(value: unknown): JsonValue {
         );
       entries.push([key, visit(descriptor.value, at(pointer, key), depth + 1)]);
     }
+    // 只拒绝当前递归路径上的环；多个位置共享同一普通对象仍可分别复制。
     active.delete(input);
     if (Array.isArray(input)) {
       if (entries.length !== input.length || entries.some(([key], i) => key !== String(i)))
@@ -67,7 +68,7 @@ export function snapshot(value: unknown): JsonValue {
   return visit(value, '', 0);
 }
 
-/** Exact JSON text with lexicographically ordered object keys, preserving arrays. */
+/** 对象键递归排序，数组顺序保留；用于确定性比较和 Manifest 摘要。 */
 export function canonicalJson(value: JsonValue): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
@@ -76,6 +77,7 @@ export function canonicalJson(value: JsonValue): string {
     .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key]!)}`)
     .join(',')}}`;
 }
+/** 仅计算静态 JSON 内容摘要，不读取或计算实际实现制品的摘要。 */
 export function contentDigest(value: JsonValue): ContentDigest {
   return `sha256:${bytesToHex(sha256(canonicalJson(value)))}`;
 }

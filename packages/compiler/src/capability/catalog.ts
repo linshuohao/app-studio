@@ -9,6 +9,10 @@ import { own } from '../common/object.js';
 import { contentDigest } from '../common/json.js';
 import { validateMaterialManifest } from './validation.js';
 
+/**
+ * 本次编译的物料查询器：按需读取固定 Catalog，缓存自检结果并收集使用锁。
+ * 不访问 Registry、不加载实现；未使用的物料不进入产物锁。
+ */
 export function createMaterialCatalog(
   catalog: CapabilityCatalogSnapshot,
   target: NonNullable<CompileInput['target']>,
@@ -30,6 +34,7 @@ export function createMaterialCatalog(
     const entry = catalog.materials[id]!;
     const base = at(at('/materials', id), 'manifest');
     const related = (suffix: string) => [{ sourceId: catalog.id, pointer: base + suffix }];
+    // 自检检查声明自身；下方再检查 Catalog 键、目标平台等使用上下文。
     const contract = validateMaterialManifest(entry.manifest);
     for (const error of contract.diagnostics)
       diagnostics.error(
@@ -61,6 +66,7 @@ export function createMaterialCatalog(
       return undefined;
     }
     contracts.set(id, entry.manifest);
+    // 声明摘要由静态内容计算；实现制品摘要来自快照，两者不可互相替代。
     locked.set(id, {
       id,
       version: entry.manifest.version,

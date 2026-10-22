@@ -7,6 +7,10 @@ import { Diagnostics } from '../diagnostics/collector.js';
 import { at } from '../common/pointer.js';
 import { own } from '../common/object.js';
 
+/**
+ * 只展开 bind / children 和 Scope 默认 mode，保留原有协议分层。
+ * source 将规范位置映射回作者输入，例如 bindings.value → bind；不展开模板。
+ */
 export function normalize(definition: CompilerInputDefinition, diagnostics: Diagnostics) {
   const origins = new Map<string, string>();
   function node(input: AuthoringViewNode, pointer: string, source: string): ViewNode {
@@ -95,6 +99,7 @@ export function normalize(definition: CompilerInputDefinition, diagnostics: Diag
             },
           ]),
         );
+  // 子路径沿用最近祖先的映射，children 内嵌套节点的诊断也能回到原位置。
   const source = (pointer: string): string => {
     let prefix = pointer;
     while (!origins.has(prefix) && prefix) prefix = prefix.slice(0, prefix.lastIndexOf('/'));

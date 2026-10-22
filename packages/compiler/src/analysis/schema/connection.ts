@@ -9,6 +9,11 @@ interface SchemaConnectionContext {
   child: (node: SchemaNode, key: string, schema: JsonSchema) => SchemaNode;
 }
 
+/**
+ * 保守证明来源结构能否交给目标端口：string → string 可证明，number → string 不兼容。
+ * compatible / incompatible / unproven 分开，复杂组合不猜测放行。
+ * 只处理当前结构子集，不是完整 JSON Schema 包含关系求解器；业务范围由运行时校验。
+ */
 export function connectSchemas(
   sourceInput: SchemaNode,
   targetInput: SchemaNode,
@@ -17,6 +22,7 @@ export function connectSchemas(
 ): Connection {
   const result = (kind: Connection['kind'], reason: string): Connection => ({ kind, reason });
   if (depth > 64) return result('unproven', 'Type proof depth exceeded.');
+  // 同一资源内同一位置无需重复推导；递归资源也不会因无限展开失去这个身份。
   if (
     sourceInput.document.uri === targetInput.document.uri &&
     sourceInput.pointer === targetInput.pointer
@@ -124,6 +130,7 @@ export function connectSchemas(
       );
       if (next.kind !== 'compatible') return next;
     }
+    // 来源未声明目标属性时，还要检查开放字典可能提供的值，不能直接跳过该属性。
     for (const [key, schema] of Object.entries(bp)) {
       if (own(ap, key) || a.additionalProperties === false) continue;
       const next = connectSchemas(

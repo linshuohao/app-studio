@@ -25,6 +25,10 @@ tests/
 
 入口只组织流程；分析与编译模块各自负责其领域，公共导出保持集中。测试独立于 src，生产与测试分别进行类型检查；已有 engineering 入口保留在 src 根用于工程联验。
 
+阅读实现时先看 pipeline/compile.ts，再沿 input → capability / analysis/schema / view → output 阅读。当前体量主要来自校验，尤其是 Schema 的资源身份、引用解析、结构连接和静态 Props 值校验；这些是静态视图闭环已使用的基础能力，也会被后续表达式 / 完整视图批次复用。外部资源别名、嵌套 $id 等是现有引用支持的边界处理，不代表已建设平台分析功能。
+
+I01 尚未实现表达式依赖分析、watch 生成和规则编译，也没有平台分析报告、可视化、增量编译或代码生成。当前校验闭环不等于已证明运行时优化收益；后续须由真实依赖分析及 Runtime / Adapter 消费验证。
+
 ```typescript
 import { compile } from '@form-engine/compiler';
 

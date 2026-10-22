@@ -8,6 +8,7 @@ modules:
 - M05
 - M06
 sources:
+- SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIO
 - SRC-COMPILERIOTYPES
@@ -22,13 +23,13 @@ navigation:
   group: 03 · L2 预处理
   order: 41
 last_reviewed: '2026-10-22'
-status_note: 本期详细设计已确认并授权实施；实现进展见本主题实施现状，平台完整报告与可视化后置
+status_note: 本期设计已确认；I01 静态编译纵切已实现，完整表达式 / 规则 / 交互及各端联验待完成
 reading_next: DESIGN-L3-RUNTIME
 ---
 
 # Compiler 详细设计与实施
 
-**本期方案已确认 · 2026-10-22。** 本文整合整体蓝图、本期范围、需求、架构、模块详细设计、流程、诊断、验收与后续实施步骤。平台可视化与能力自校验按本轮补充纳入；平台报告的具体公共格式仍属后期设计。已确认并实现的是协议层输入表示与 Prepared 交换类型；用户已确认本期模块方案、检查策略和接口安排，并授权归档、提交及开始实现；归档时 Compiler 算法尚未实现。示例 Prepared 是预期契约样本，不是编译执行结果。
+**本期方案已确认 · 2026-10-22。** 本文整合整体蓝图、本期范围、需求、架构、模块详细设计、流程、诊断、验收与后续实施步骤。平台可视化与能力自校验按本轮补充纳入；平台报告的具体公共格式仍属后期设计。已确认并实现的是协议层输入表示与 Prepared 交换类型；用户已确认本期模块方案、检查策略和接口安排，并授权归档、提交及开始实现；归档时 Compiler 算法尚未实现；随后已按授权完成 I01 静态视图纵切，当前进展见实施现状。示例 Prepared 是预期契约样本，不是编译执行结果。
 
 ## 整体蓝图：从本地编译到平台分析 {#blueprint}
 
@@ -148,7 +149,7 @@ Compiler 的目标是把配置错误前移，并提前完成运行时确实需�
 | 已确认行为 | 唯一 Prepared 入口、Data-only Reaction watch、表达式级观察、模板共享、同步校验前置、Request 通道 | 所有模块遵守 |
 | 本轮补充方向 | 后期平台复用、错误链路与 Reaction / Validation 展示、能力自校验分工 | 纳入蓝图与责任边界；本期 / 后期细化随全文审阅 |
 | 本期方案已确认 | 四个职责组、六阶段流程、失败累计、检查范围、内部接口、预算、报告扩展安排与实施步骤 | 按本期范围实施；不代表代码已完成 |
-| 未实现 | Compiler 分析 / 转换、Runtime 精确失效、Adapter、生产性能 | 不把类型测试或本文样本当成实现证据 |
+| 部分实现 | I01 静态视图编译 / 契约自检已实现；完整表达式 / 规则 / 交互、Runtime、Adapter 与生产性能待完成 | 仅以真实 compile 和消费测试证明对应范围 |
 
 必须保持：
 
@@ -166,7 +167,7 @@ Compiler 的目标是把配置错误前移，并提前完成运行时确实需�
 
 ### 接口草案
 
-以下是本期 Compiler SDK 的目标契约，归档时尚未导出；相关交换类型已经在 protocol 的三个领域中实现。
+以下是本期 Compiler SDK 的目标契约，归档后 I01 已导出该入口，但仅支持实施现状所列静态子集；相关交换类型已经在 protocol 的三个领域中实现。
 
 ```typescript
 interface CompileInput {
@@ -477,7 +478,7 @@ JSON Pointer 检查空串、空字符串属性及 ~0 / ~1，字段存在性结�
 
 业务根 Schema 保持完整，不按关键字拆成多个局部校验器。字段前置的 Schema 影响范围若不能精确推导，观察可保守覆盖相关对象 / 根范围，但 Runtime 的 Schema 校验仍按既定完整根域执行。
 
-Context 类型的静态来源是本草案发现的真实接缝：当前 CompileInput 未单独约定 contextSchema。没有证据时必须返回 unproven，而不是猜类型；是否在 Compiler 上下文增加可选 Context Schema 声明见集中待确认项。
+Context 类型的静态来源是本专题识别的后期接缝：当前 CompileInput 未单独约定 contextSchema。没有证据时必须返回 unproven，而不是猜类型；是否在 Compiler 上下文增加可选 Context Schema 声明见本期确认结论与后期接缝。
 
 **验收：**每类兼容均有正反例；无法证明单独分类；合法 Schema 递归能终止分析；外部资源基址和完整闭包正确；不执行任何业务函数。
 
@@ -1612,24 +1613,26 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 
 ## 实施现状与证据边界 {#implementation-status}
 
-**核对日期：2026-10-22。** 本节是仓库实际状态，不是实施承诺；后面实施步骤仍为建议。当前只有协议与工程底座具备代码，Compiler 语义实现尚未开始。
+**核对日期：2026-10-22。** 本期设计提交 6a0d97b 后已实施 I01；下表是实际状态，后续批次仍未完成。
 
-| 项目 | 当前实际情况 | 可核对依据 | 不能据此宣称 |
-| --- | --- | --- | --- |
-| 工程底座 | compiler → protocol 包边界、构建 / 类型 / 测试工具与工程样例已存在 | packages/compiler/package.json；docs/design/engineering.md | 表单编译功能已实现 |
-| 输入与交换类型 | Definition / Capability / Prepared 三领域已实现，输入输出迁移已提交 | packages/protocol/src；提交 bdec628 / e036bb4 | 已经真实生成 Prepared |
-| JSON Schema | 10 个 2020-12 根 Schema、自动派生与确定性检查已存在 | packages/protocol/schemas；scripts/generate-schemas.mjs | 已完成 Scope / 类型连接 / 依赖算法 |
-| 协议测试 | 本轮复跑 pnpm --filter @form-engine/protocol test：10 个根 Schema 检查与 48 个用例通过 | protocol/tests 三份测试文件及本轮命令输出 | 手写 Prepared 夹具等于 compile 输出 |
-| Compiler 公共 API | src/index.ts 仍为 export {}，没有生产 compile 导出 | packages/compiler/src/index.ts | 文中候选 CompileInput / CompileResult 已发布 |
-| Compiler 各分析模块 | 规范化、引用、Schema 连接、表达式依赖、规则 / 视图编译、锁与输出装配尚未实现 | 当前 compiler 源文件只有占位与工程入口 | 本文步骤、图或示例就是算法实现 |
-| Manifest 自校验 | 类型 / Schema 已有；独立语义检查器与能力开发 / Registry 工具未实现 | protocol/capability 与对应根 Schema | 能力实现已兑现 Manifest 或已证明纯净 |
-| Runtime / Adapter | 生产入口仍为工程占位；真实精确失效和消费联验未实现 | packages/runtime/src/index.ts；packages/renderer-react/src/index.ts | 已验证端到端更新次数、Scope 移动或性能 |
-| 平台分析与可视化 | 属于本方案后期蓝图，尚无报告 API、关系图或联动 Trace 实现 | 本文蓝图与报告章节；平台现行范围文档 | Platform / Studio 完整设计或产品已完成 |
-| 本评审附件 | 完整设计正文与独立评审 HTML、三份可检查契约样本 | 本主题、统一构建与独立评审来源 | 附件生成代表专题已确认归档 |
+| 项目 | 当前实际情况 | 可核对依据 / 限制 |
+| --- | --- | --- |
+| 归档与基线 | 本期完整设计已确认，先归档并提交 6a0d97b，再实现 | 输入输出继承 ADR-FE-017；无新增 ADR 或 ABI 决策替代 |
+| 协议与 Schema | 三领域类型、10 个 2020-12 根 Schema、48 个协议测试已有 | 协议结构测试不等于依赖推导实现 |
+| Compiler SDK | 真实 compile、CompileInput / CompileResult / Diagnostic 已导出 | 同步纯内存输入，Error 不返回 Prepared；仍 private / 0.0.0 |
+| I01 静态视图 | 简写 / 默认目标、原位置、静态 Props / Literal、根 Binding、Slot、资源、锁与输出自检 | 41 个真实编译 / 元信息用例通过；含已复现的 Schema 基址与前向 ID 回归 |
+| 能力自校验 | 可独立调用 Material / Pure Function 结构与参数顺序检查 | 不执行实现；独立自检尚不处理外部资源闭包；Registry / CLI 未建设 |
+| Schema 最小模型 | 本期 I01 已用基础 / 简单对象 / 数组连接、局部 / 外部引用、资源基址与闭包 | 完整 I02 子集、词法 Scope、表达式分析未交付；无法证明不放行 |
+| 后续语义 | 命名 / 动态表达式、Constraint、Reaction、Scope / Template、Event / Request、消息编译未实现 | 相关使用明确 FEATURE_NOT_IMPLEMENTED；必需请求漏映射有具体错误，不生成残缺产物 |
+| 生产消费 | Node 生产编译入口已实际导入；隔离打包 JS / 类型消费纳入统一检查 | 不代表浏览器视觉、Runtime / Adapter 或更新性能已验收 |
+| Runtime / Adapter | 生产入口仍为工程占位 | I06 需要真实消费者实现后联验 |
+| 平台 | 独立分析报告、可视化与 Trace 联动仍为后期蓝图 | 不计入 I01 完成，不冻结其公共格式 |
 
-协议迁移后的全仓 pnpm check 通过记录见 engineering.md；本轮未重跑全仓门禁，也没有修改生产代码。Compiler 清单仍允许 passWithNoTests，工程命令成功不能作为 Compiler 功能验收，实施时必须引入真实语义用例。
+实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/1 为未发布交换格式，不代表 Runtime 已支持。
 
-本轮文档验证：三份示例用现有正式 Schema 检查；HTML 目录 / 锚点、离线资源、脚本语法与搜索检查。浏览器本地文件导航在此前检查中被安全策略拒绝，因此没有浏览器视觉检查证据；不将结构检查写成视觉验收通过。
+最终全仓 pnpm check 已通过，含 Compiler 41 个用例、协议 48 个用例、HTTP 集成、生产 / development 隔离打包 JS / 类型消费及文档同步；详细命令、环境限制与证据边界统一记录于 [工程实施](../engineering.md#compiler-i01)。曾发现并修正 Node ESM JSON import 属性、Schema 嵌套 ID 重复注册 / 前向索引、外部检索别名基址、开放对象连接和 children 原位置映射；对应行为有回归测试。完整编译收益、精确失效和性能仍须后续消费者与基准证据。
+
+文档 / 附件的示例、锚点、资源和脚本检查不能代替浏览器视觉检查；此前本地文件导航被安全策略拒绝，未取得浏览器视觉证据。
 
 ## 取舍与后期扩展 {#tradeoffs}
 
@@ -1654,7 +1657,7 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 
 | 批次 | 需要实现 | 依赖与实际验收 | 当前状态 |
 | --- | --- | --- | --- |
-| I01 基础闭环 | 输入结构 / 规范化、默认目标、诊断 / OriginMap、Catalog 读取、必要 Manifest 自检、静态物料输出 | 真实 compile 对简单静态定义产出合法 Prepared；错误位置可定位；输入不变 | 未开始 |
+| I01 基础闭环 | 输入结构 / 规范化、默认目标、诊断 / OriginMap、Catalog 读取、必要 Manifest 自检、静态物料输出 | 真实 compile 对简单静态定义产出合法 Prepared；错误位置可定位；输入不变 | 已完成首批静态纵切，见实施现状 |
 | I02 共享分析 | 声明、Scope、引用、Schema 资源与连接、Expression / ValueSpec 分析、Props watch | 同一内核完成类型 / 读取；递归、Literal、命名环、模板参数环境正反例；保留必要来源 | 未开始 |
 | I03 规则 | Reaction / Command、Internal / External、requires、依赖传递 | Reaction 不补触发；约束失效覆盖前置输入；Scope 唯一绑定；环与缺契约失败 | 未开始 |
 | I04 完整视图与交付 | 模板共享闭包、Binding / Slot / Event / Request、资源 / 双摘要锁 / Host 需求、输出自检 | 实际编译贯穿样例，与手写预期独立比较；无关能力不进入锁；请求契约与闭包完整 | 未开始 |
@@ -1704,7 +1707,7 @@ Compiler 包自身可在 I05 完成其契约内交付；跨层收益与端到端
 | 请求契约 | docs/design/l1/05-view-material-host.md 的 material-requests / request-development-contract | 输入输出、必需映射、装配预检与局部隔离 |
 | 校验 | docs/design/l3-validation.md | 同步前置、Schema 根域、依赖传递和运行时归属 |
 | 实际交换类型 | packages/protocol/src/definition、capability、prepared | 已迁移类型和派生 Schema，不等于 Compiler |
-| Compiler 现状 | packages/compiler/src/index.ts | 仍为工程占位，无真实 compile 导出 |
+| Compiler 现状 | packages/compiler/src/index.ts；packages/compiler/README.md | I01 真实 compile 已导出，完整语义与各端联验未完成 |
 | 平台与静态 / 动态展示边界 | docs/design/platform-studio.md；docs/design/l3-observability.md | 平台专题未闭环，Trace 与静态事实分别解释 |
 | 本轮补充与确认 | 用户 2026-10-22 对平台可视化、元信息校验及阶段 / 实施情况的要求与本期确认 | 本期归档；后期完整报告格式 / 平台产品不冻结 |
 | 已有提交 | bdec628 / e036bb4 | 设计归档、协议类型迁移；未包含本文新模块方案 |

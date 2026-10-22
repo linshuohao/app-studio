@@ -26,7 +26,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 127
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 status_note: 输入输出及默认易用性已确认，协议类型 / Schema 已迁移；Compiler 功能 / 校验算法及各端执行尚未实现
 ---
 

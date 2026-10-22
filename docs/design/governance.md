@@ -17,7 +17,7 @@ sources:
 navigation:
   group: 08 · 继续设计
   order: 90
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 status_note: 审查记录与建议，非新增架构决策
 module_layers:
   M01: 系统
@@ -77,7 +77,7 @@ module_layers:
 | M02 L1 数据 / 引用 / 词法 Scope | 部分完成 | [结构化引用、局部 Binder、Missing / null](l1/02-data-reference-scope.md#reference) | 严格结构与可证明兼容策略已确认；Union 形状、存在性与兼容子集；OD-05 / 06 / 11 | 主体语义收敛，正式规范未闭环 | 可固化类型 / 反例；不标正式协议可发布 |
 | M03 Expression / Pure Function | 部分完成 | [纯 AST、递归 ValueSpec、boolean assert](l1/03-expression-validation.md#expression) | 短名映射、签名、错误、跨端类型；OD-11 | 职责闭环；机器契约未闭环 | 可做纯求值与静态分析原型 |
 | M04 L1 View / Template / Binding | 部分完成 | [三类节点、端口、Slots、Typed Params](l1/05-view-material-host.md#view) | 端口子类型、组合 Schema 兼容；OD-11 | 声明模型收敛，类型证明未闭环 | 可固化 Canonical 和 Manifest 测试 |
-| M05 L2 编译与诊断 | 部分完成 | [本期完整设计](l2/compiler.md)、四职责组 / 六阶段 / 检查策略与目标 SDK 已确认；协议类型已迁移 | 算法实现、实际产物与消费者联验；Context 类型证据、后期报告格式 | 本期模块设计已收敛；实现未验收，不提升整体发布状态 | 按 I01–I06 实施；不以手写样本或 passWithNoTests 证明编译完成 |
+| M05 L2 编译与诊断 | 部分完成 | [本期完整设计](l2/compiler.md)、四职责组 / 六阶段 / 检查策略与目标 SDK 已确认；协议类型已迁移 | I01 已实施；完整语义算法与消费者联验仍待完成，Context 类型证据 / 后期报告格式保留 | 本期模块设计已收敛；全量实现与消费联验未完成，不提升整体发布状态 | I01 静态纵切已有真实编译测试；继续 I02–I06，不以部分通过代表全量完成 |
 | M06 能力与发布治理 | 部分完成 | [双流水线、不可变锁与回滚](l2-preparation.md#l2-release) | 摘要对象、兼容矩阵、Host 缺失分级；OD-08 / 10 / 11 | 原则闭环；发布接口未闭环 | 可设计发布契约；不能称有生产发布平台 |
 | M07 数据 / Snapshot | 部分完成 | [即时不可变 Root、稳定读](l3-data-scope.md#l3-data) | 输入复制 / 读取只读 / 开发冻结已确认；Missing、snapshot SDK 与实际成本；OD-06 | 不变量明确，接入细节部分闭环 | 可验证结构共享、旧快照；不作稳定 SDK 承诺 |
 | M08 Scope / 变化索引 | 部分完成 | [逐 Command 比较、相对位置](l3-data-scope.md#l3-change-detection) | 等值、旧位置视图 / 性能；整数组替换即重建已确认；OD-07 | 原则闭环；身份与观察契约未全闭环 | 可跑数据与 Scope 场景原型，Trie 仍推荐 |

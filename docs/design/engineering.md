@@ -12,6 +12,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERIOTYPES
 - SRC-PROTOCOLIMPLEMENTATION
 - SRC-PROTOCOLBASELINE
@@ -19,8 +20,8 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 30
-last_reviewed: '2026-10-21'
-status_note: E1–E4 工程底座已初始化并完成本地联验；Protocol 三领域类型 / Schema 首批实现已通过本地检查；Compiler / Runtime 与远端 CI 未完成
+last_reviewed: '2026-10-22'
+status_note: 工程 / Protocol 已有本地证据；Compiler I01 静态纵切已实现，完整语义、Runtime 与远端 CI 未完成
 ---
 
 # 工程工具链与初始化方案
@@ -387,3 +388,16 @@ pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / �
 后续工作是编译功能清单与校验 / 依赖算法、SDK 和真实消费者接入。此次为未发布协议的结构替换，不虚构兼容版本或自动迁移旧 Prepared。来源为当前用户授权和本地代码 / 验证，见 [SRC-COMPILERIOTYPES](source-map.md#src-compiler-io-types)。
 
 迁移完成后全仓 pnpm check 已通过：10 个 Schema 确定性检查、格式 / Lint / 依赖边界、八包构建和类型检查、包内与跨包测试、HTTP 集成、六包隔离打包的生产 / development 条件与声明消费，以及文档构建同步。HTTP 测试最初因沙箱禁止本机监听失败，允许本机端口后通过；打包检查最初缺少已安装 React 依赖的离线元数据，在临时目录补齐相同版本缓存后通过，未修改项目清单或锁文件。独立审查复验无剩余问题。此次没有 UI 改动，未运行浏览器 E2E。
+
+
+## Compiler I01：真实静态编译入口 {#compiler-i01}
+
+2026-10-22 用户确认本期完整设计并要求先归档 / Git 提交再开始实现，设计提交为 6a0d97b。[Compiler 主题](l2/compiler.md#implementation-status)维护整体进展；当前只交付 I01 静态视图纵切，不将后续批次或 Runtime 更新性能写成完成。
+
+packages/compiler 已提供真实 compile、SDK 结果 / 诊断类型及独立 validateMaterialManifest / validatePureFunctionManifest。支持确定输入快照、目标默认、Authoring 简写与位置映射、静态物料 / Props / Binding / Slot、最小 Schema 结构连接与完整根资源引用扫描、能力锁和 Prepared 输出自检。非空规则 / 命名表达式、动态 $expr、Scope / 模板、事件 / 请求和校验消息仍明确报未实现，无 Error 才返回产物。
+
+清单增加与仓库已装版本一致的 Ajv 8.20.0、@noble/hashes 1.8.0；脱离平台可同步运行，不导入组件 / Runtime 或执行业务函数。Schema 从 protocol 公共 JSON 入口导入，带 ESM JSON import 属性；标准 URL 用于 URI 解析，DOM lib 仅提供其跨环境类型，不建立 UI 依赖。包保持 private / 0.0.0，格式标识 form-engine.prepared/1 未发布；节点身份由定义与源位置确定，双摘要对象不混用。
+
+首批 28 个用例先在缺少真实入口时失败。后续补 Schema 检索别名、嵌套 ID / 前向引用、开放对象 / 条件依赖证明与简写来源的回归，共 41 个用例；独立审查发现的问题已复现并修正。测试检查真实输出，非手写 Prepared 代替算法。生产包已单独导入；统一隔离打包检查新增真实编译、JSON 往返、元信息自检与 SDK 类型消费。单独元信息自检目前不完成外部资源闭包检查，实际资源连接仍由使用点处理。
+
+当前包命令为 pnpm --filter @form-engine/compiler test / typecheck / lint / build；已取消 passWithNoTests，类型检查同时覆盖测试。最终全仓 pnpm check 已通过：10 个 Schema 确定性、格式 / Lint / 依赖边界、八包构建 / 类型、Compiler 41 个真实用例与 Protocol 48 个结构 / 方言用例、包内与跨包测试、HTTP 集成、六包隔离打包的生产 / development JS 与声明消费、47 个阅读页同步及 6356 个本地链接 / 资源检查。第一次全仓执行在 HTTP 集成遇到沙箱 listen EPERM；允许 127.0.0.1 监听后完整重跑通过。最终 Schema 回归修复后又重新执行全套，仍通过。独立审查复验最后的嵌套资源 / 别名 / Pointer 组合，无剩余重要问题；未执行的浏览器视觉、Runtime / Adapter 或更新性能联验不计为通过。

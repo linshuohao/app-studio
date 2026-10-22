@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
@@ -22,7 +23,7 @@ sources:
 - SRC-HOST
 - SRC-V07
 related: {}
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -1205,3 +1206,8 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 用户随后明确确认本期内容并授权归档、Git 提交及开始实现。本期采用四职责组、六阶段、完整同步 compile、独立错误累计与根因抑制、全输入结构 / 共享业务语义 / 所选视图闭包的检查范围。完整设计归入 [Compiler 主题](l2/compiler.md)，L2 保留跨层契约，不另立平行规范。Context 静态类型证据仍是后期新增输入接缝；未提供证据时需要证明的连接返回 unproven。平台报告格式、增量 SDK、图布局与 Trace 联动后置。归档时生产 Compiler 尚未实现；实施批次与真实验收在主题内增量记录。
 
 本轮不替代 ADR-FE-017 的输入输出决定，细化其模块与消费路径；没有新增 ABI、平台产品完成或运行性能证据。来源 SRC-COMPILERDESIGN。
+
+
+### Compiler I01 实施
+
+本期设计提交 6a0d97b 后，按授权实现真实 compile 的首个静态纵切；结构 / 简写 / 默认选择、静态物料与 Binding / Props / Slot、资源闭包、双摘要与输出自检有真实结果。独立元信息自检复用协议 Schema 并检查可选参数顺序。后续批次暂不支持的声明明确报错，无部分执行产物。实际入口、范围、问题修复与门禁结果见 [工程记录](engineering.md#compiler-i01)，来源 SRC-COMPILERIMPLEMENTATION；不将 I01 完成写成整个 Compiler 或各端消费完成。

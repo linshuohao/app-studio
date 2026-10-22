@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10984,
-      "sha256": "cbff77de148a12fb9814bb65ff8d4fa13a518dd3a5c775988979e182bb2a888b",
+      "bytes": 11352,
+      "sha256": "4e4ed8185a3a05c5c6e1b308e34ac9285e6cd697bd15b481f1234642124077de",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -1157,7 +1157,7 @@
       "role": "current-markdown",
       "coverage": "indexed",
       "bytes": 6430,
-      "sha256": "dee3154f566261c3b1efdcafb81a31a7d1abd9c618aa25b97af48d8c33cc8956",
+      "sha256": "df41363fdfa401c392b9949831e426f21ed3599586d9d38f855e34e6c8ca71c5",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1321,8 +1321,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 142407,
-      "sha256": "219819b62cf417b3a67482af114b69cd6b0d8590a90882b6711fe12ffee45c7c",
+      "bytes": 143025,
+      "sha256": "83956e5ae18653c5737646613047fff02dea8a8e6fe209054bfa064c85adfc4f",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1779,6 +1779,11 @@
           "level": 2,
           "title": "Compiler 本期完整方案确认与开发授权",
           "anchor": "compiler-design-confirmed"
+        },
+        {
+          "level": 3,
+          "title": "Compiler I01 实施",
+          "anchor": null
         }
       ]
     },
@@ -1871,8 +1876,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 41007,
-      "sha256": "ef1cf56bd42658032a5cf4848ae6225bc315d3d8890a18e12e911bfa18f744db",
+      "bytes": 43704,
+      "sha256": "71191d41b03dce865ae015846729b014713902849b1001d15b0d0b6e44906c7d",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1994,6 +1999,11 @@
           "level": 3,
           "title": "编译输入输出的协议类型迁移",
           "anchor": "compiler-io-types"
+        },
+        {
+          "level": 2,
+          "title": "Compiler I01：真实静态编译入口",
+          "anchor": "compiler-i01"
         }
       ]
     },
@@ -2066,8 +2076,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35804,
-      "sha256": "50e4433ad3a7b2b4ce891cf7cd70b43d3c5e3470f27bc80c61261e8c2eed0e24",
+      "bytes": 35869,
+      "sha256": "ca165f0b5326be108833a2f9d329678dcd2281e90c5ca20aeb257d85230baa39",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2591,8 +2601,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 93508,
-      "sha256": "ffdaf650fe998383ec8bb171ead64ae0c7a18a9df38c8f78ce2199debabb1dad",
+      "bytes": 93984,
+      "sha256": "adf02ac026110aafc7c38da70e7a476697cd62fd3a4da061dbcd977f2f3d40ea",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {
@@ -3632,7 +3642,7 @@
       "role": "current-markdown",
       "coverage": "indexed",
       "bytes": 39149,
-      "sha256": "96020a570553f0cbaa6db5ea0eeb15ab9efb3b988030c3628b58af7fc18082e7",
+      "sha256": "ff249584a859575037d22cf258cb5e53e3fc61785fd84eeadce19dabc3e2e85b",
       "mapping": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
       "sections": [
         {

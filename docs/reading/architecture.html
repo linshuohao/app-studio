@@ -8,7 +8,7 @@
   <title>整体架构设计 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=99225b39feca" defer></script>
+  <script src="assets/knowledge-index.js?v=f73f08f9aae4" defer></script>
   <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -975,6 +975,8 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 <em>Avoid</em>：原始 JSON 的另存副本、实例状态容器，或运行时自动补全 watch 的配置。</p>
 <p><strong>Prepared Source Map（编译来源映射）</strong>：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；详细结构和 SDK 随实现固化；不参与执行控制。
 <em>Avoid</em>：调度控制关系、Reaction 父子树，或可确定性重放的证明。</p>
+<p><strong>Analysis Report（静态分析报告）</strong>：后期平台按需消费的独立工具数据，解释引用、类型连接、读取 / 触发 / 写入、同步前置、错误链路及分析覆盖范围；与确定输入关联，公共格式尚未冻结。
+<em>Avoid</em>：Prepared 的必填依赖、部分可执行产物，或实际 Runtime 执行 / 校验结果的替代。</p>
 <p><strong>Read Dependency（读取依赖）</strong>：某个表达式或取值过程可能使用的输入引用，不表示这些输入的变化必然触发业务行为。
 <em>Avoid</em>：将所有读取自动视为 Reaction 的触发条件。</p>
 <p><strong>Watch Dependency（触发依赖）</strong>：某个行为需要响应的状态变化范围，由使用位置的语义决定，显式 <code>watch</code> 是其中一种声明方式。

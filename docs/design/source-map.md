@@ -13,7 +13,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -41,6 +41,10 @@ status_note: 本地资料范围的来源索引与覆盖记录
 **覆盖声明：**完成本地现行主题的整理与交叉审查，建立本地历史文件及 ZIP 成员的完整可重复盘点，重要决策按下表定位。历史快照采用主题 / 替代链核对，未对每份重复快照的每句话重新作语义证明；代码 / 样本附件按其证据边界检查。因此不能称为“所有历史讨论逐句全量重写”或“生产设计 / 实现全量验收”。本地不存在的完整原始对话仍为来源缺口；后续新增资料必须增量核对。
 
 ## 来源编号与精确定位 {#source-register}
+
+### SRC-COMPILERIMPLEMENTATION：Compiler I01 源码与真实编译验收 {#src-compiler-implementation}
+
+2026-10-22 按用户“归档和 git 提交，然后开始实现”的授权，先提交完整设计 6a0d97b，再实现 packages/compiler 的 I01 静态视图纵切与独立元信息结构 / 参数顺序自检。真实 compile 与生产 ESM 入口、确定资源 / 摘要、原位置、Error 无产物有实际用例；独立审查的资源基址、嵌套 ID、检索别名 / fragment 与结构证明问题补回归并修正。完整表达式 / 规则 / 交互、Standalone 外部资源自检、Runtime / Adapter、平台可视化仍未完成。证据与门禁详见 [工程记录](engineering.md#compiler-i01)，不将工程样例或手写 Prepared 当作全量编译实现。
 
 ### SRC-COMPILERDESIGN：Compiler 本期完整设计确认与实施授权 {#src-compiler-design}
 

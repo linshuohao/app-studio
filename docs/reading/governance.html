@@ -8,7 +8,7 @@
   <title>设计进展与待讨论事项 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=3bad98a48c8f" defer></script>
+  <script src="assets/knowledge-index.js?v=99225b39feca" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -30,7 +30,8 @@
 <a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a>
 <a href="l1/07-examples.html#sample">完整示例与业务组合</a>
 <a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></div></details>
-<details class="nav-group"><summary>03 · L2 预处理</summary><div><a href="l2-preparation.html">L2 预处理与编译</a></div></details>
+<details class="nav-group"><summary>03 · L2 预处理</summary><div><a href="l2-preparation.html">L2 预处理与编译</a>
+<a href="compiler.html">Compiler 详细设计与实施</a></div></details>
 <details class="nav-group"><summary>04 · L3 运行时</summary><div><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a>
 <a href="l3-data-scope.html">L3 数据、快照与 Scope</a>
 <a href="l3-validation.html">L3 校验与结果</a>
@@ -98,8 +99,8 @@
 </tr>
 <tr>
 <td>L2 · 预处理</td>
-<td>已确认输入输出、默认入口、保留领域结构与规则 / 表达式 watch；协议类型 / Schema 已同步</td>
-<td>下一专题：Compiler 功能、检查 / 依赖算法和 SDK；不重开已确认输出</td>
+<td>已确认输入输出和本期 Compiler 完整设计；协议类型 / Schema 已同步</td>
+<td>按四职责组、六阶段实施与实际消费验收；平台完整报告后置</td>
 <td>OD-08 / 10 / 11；T06</td>
 </tr>
 <tr>
@@ -137,7 +138,7 @@
 </section>
 <section class="section" id="next-discussion"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>下一次讨论从哪里开始</h2></div></div>
 
-<p>本轮已确认 <a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">Compiler 输入输出与默认易用性</a>。用户随后授权先提交设计再同步协议类型，已完成 <a href="engineering.html#compiler-io-types" rel="noopener noreferrer">Prepared 类型 / Schema 迁移</a>。下一轮集中讨论 Compiler 功能、检查清单 / 失败策略、依赖与类型连接算法和 SDK。无需再逐字段访谈或恢复三类 Plan / 模板全展开 / 组件合并的旧选择，不把协议结构通过当作 Compiler 已实现。</p>
+<p>2026-10-22 用户已确认 <a href="compiler.html" rel="noopener noreferrer">Compiler 本期完整设计</a>并授权归档、Git 提交和实施。下一步按 I01–I06 推进真实 compile、检查与静态准备，保留既定输入输出和精确表达式观察；平台报告与图形展示后置。Context 类型证据的新输入仍留作接缝，不要求先完成 Platform / Studio；各端运行效果须真实消费联验。</p>
 <p>2026-10-19 已确认可推导校验依赖由 L2 补全、后置入队递归补齐前置（见 <a href="design-history.html#validation-prerequisite-update" rel="noopener noreferrer">讨论记录</a>）。同日后续已确认 Reaction 错误不自动阻止提交，熔断暂停联动但保留填写与独立完整校验（见<a href="design-history.html#reaction-failure-submit-update" rel="noopener noreferrer">讨论记录</a>）。跨 Reaction 不声明业务顺序与 Host 自主管理异步任务也已确认。同步回调写回归当前 Flush、沿用去重与预算也已确认，不再作为待决策行为；具体实现需验收；T01 继续固化引用、实例绑定及资格契约；L1 的独立固化工作 T03 可并行。Platform / Studio 可以先各自澄清目标与范围，不需要等核心全部实现，但完整接口要等相关消费契约明确后再定。</p>
 <p>每次讨论只选择一个明确问题，记录已有约束、仍可比较的方案、要验证的反例与预期输出。获得明确共识后回写所属设计；未得出结论就继续保留为待讨论，不按讨论轮次创建“新版本”。</p>
 </section>
@@ -191,10 +192,10 @@
 <tr id="M05">
 <td>M05 L2 编译与诊断</td>
 <td>部分完成</td>
-<td><a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">已确认输入输出与默认方式</a>、ADR-FE-017；协议类型 / Schema 已迁移</td>
-<td>Compiler 功能清单、检查 / 依赖算法和 SDK；OD-08 / 10 / 11</td>
-<td>输入输出已闭环，模块功能和实现未闭环</td>
-<td>按新输出推进功能设计，不以结构测试证明已可执行</td>
+<td><a href="compiler.html" rel="noopener noreferrer">本期完整设计</a>、四职责组 / 六阶段 / 检查策略与目标 SDK 已确认；协议类型已迁移</td>
+<td>算法实现、实际产物与消费者联验；Context 类型证据、后期报告格式</td>
+<td>本期模块设计已收敛；实现未验收，不提升整体发布状态</td>
+<td>按 I01–I06 实施；不以手写样本或 passWithNoTests 证明编译完成</td>
 </tr>
 <tr id="M06">
 <td>M06 能力与发布治理</td>
@@ -382,7 +383,7 @@
 <tr id="OD-10">
 <td>OD-10 / B</td>
 <td>Prepared ABI、版本兼容、求值 / 订阅 / 首次读与改绑交接</td>
-<td>已确认 JSON、首阶段格式精确匹配、Error 无执行制品且编辑分析可返回；保留领域结构、共享模板、完整表达式级就地 watch、默认输入和资源闭包；外部一次装载检查保持；类型 / Schema 已迁移，功能和 SDK 待设计实施</td>
+<td>已确认 JSON、首阶段格式精确匹配、Error 无执行制品且编辑分析可返回；保留领域结构、共享模板、完整表达式级就地 watch、默认输入和资源闭包；外部一次装载检查保持；类型 / Schema 已迁移，本期详细设计与目标 SDK 已确认，算法和消费联验待实施</td>
 <td>依赖 T01–T05 的最小消费契约；影响 M05 / 06 / 14；T06 / T07</td>
 </tr>
 <tr id="OD-11">
@@ -550,7 +551,7 @@
 </tr>
 <tr id="T06">
 <td>T06 / 高 / B</td>
-<td>两份结构 / 独立 ABI 保留；ADR-FE-017 输入输出和协议类型 / Schema 已同步：领域结构、模板共享、精确表达式 watch、默认入口；Compiler 功能 / 校验算法与 SDK 待推进</td>
+<td>两份结构 / 独立 ABI 保留；ADR-FE-017 输入输出和协议类型 / Schema 已同步：领域结构、模板共享、精确表达式 watch、默认入口；本期 Compiler 模块 / 校验策略与目标 SDK 已确认，按 I01–I06 实施</td>
 <td>T01–T05 最小消费需求；M05 / 06 / 14</td>
 <td>输出可序列化 Prepared / Format 精确匹配契约、能力锁、诊断及来源关联；同锁定输入可复现、多实例隔离、Profile 不裁剪共享规则、不兼容拒绝且不回退 L1</td>
 </tr>
@@ -657,7 +658,7 @@
 <a href="#open-decisions" data-to="open-decisions" title="待决策事项"><span class="nav-num">04</span><span>待决策事项</span></a>
 <a href="#design-roadmap" data-to="design-roadmap" title="按依赖推进的设计路线"><span class="nav-num">05</span><span>按依赖推进的设计路线</span></a>
 <a href="#implementation-readiness" data-to="implementation-readiness" title="从原则讨论转入契约与编码准备"><span class="nav-num">06</span><span>从原则讨论转入契约与编码准备</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>GOV-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>审查记录与建议，非新增架构决策</p></details><details><summary>相关正文与历史 · 38</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION · Protocol 首批代码与本地验收</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>GOV-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>审查记录与建议，非新增架构决策</p></details><details><summary>相关正文与历史 · 39</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="compiler.html">Compiler 详细设计与实施</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/01-foundation.html#definition">L1 模型、边界与顶层结构</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION · Protocol 首批代码与本地验收</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
       </aside>
       </div>
     </div>

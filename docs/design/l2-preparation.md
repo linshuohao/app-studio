@@ -15,6 +15,7 @@ related:
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-COMPILERDESIGN
 - SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
@@ -26,7 +27,7 @@ sources:
 navigation:
   group: 03 · L2 预处理
   order: 40
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 reading_next: DESIGN-L3-RUNTIME
 relocated_sections:
 - source: docs/design/architecture.md
@@ -36,7 +37,7 @@ relocated_sections:
 
 # L2 预处理与编译
 
-L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见[已确认协议](#compiler-io-contract)和 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)；本页旧接口草图仅追溯，不作为另一套有效 ABI。协议类型及派生 Schema 已按后续授权迁移，见[实施记录](engineering.md#compiler-io-types)。Compiler 功能清单、检查算法和 SDK 下一专题继续设计。
+L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见[已确认协议](#compiler-io-contract)和 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)；本页旧接口草图仅追溯，不作为另一套有效 ABI。协议类型及派生 Schema 已按后续授权迁移，见[实施记录](engineering.md#compiler-io-types)。2026-10-22 用户确认本期完整 Compiler 方案并授权实施，四职责组、六阶段、模块详细设计、检查范围与失败策略见 [Compiler 详细设计](l2/compiler.md)。平台分析报告与可视化保留后期方向。
 
 ## L2 · Preparation：定义预处理层 {#preparation}
 
@@ -48,7 +49,7 @@ L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读�
 
 ### 预处理流水线
 
-图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。整体功能清单与算法下一专题落实。
+图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。本期模块与流程按 [Compiler 详细设计](l2/compiler.md#pipeline)实施。
 
 ```diagram
 {
@@ -77,7 +78,7 @@ L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读�
 
 Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope 关系，现行就地交付，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载的表达式消费者；集中计划 ID 是已被修订的旧选择。
 
-配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。推荐编辑期增量检查、发布期完整编译，并用 Source Map 关联 L1 来源，详见 [编辑与编译闭环](l2-preparation.md#l2-authoring-diagnostics)。
+配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。首期编辑预览复用完整 compile，后期按需求增加增量检查，并用 Source Map 关联 L1 来源，详见 [编辑与编译闭环](l2-preparation.md#l2-authoring-diagnostics)。
 
 ### 复杂度取舍
 
@@ -87,7 +88,7 @@ Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope �
 | 编译深度 | Validate / Analyze / Transform / Package，复用规范化、解析与索引 | 完整代码生成与重型优化器 |
 | 依赖关系 | 区分 read / watch / write / use / scope；实例化时关联 Scope | 将所有读取自动变成 Reaction watch |
 | 物料检查 | 检查 Manifest、版本、端口和类型 | 执行物料内部代码来推断契约 |
-| 循环与成本 | 表达式 / 模板静态环 Error，潜在 Reaction 环默认 Warning；L3 另有保护 | 将合法 Schema 递归或全部潜在环判为非法 |
+| 循环与成本 | 表达式 / 模板静态环 Error，潜在 Reaction 环分析后置为可选风险工具；L3 另有保护 | 将合法 Schema 递归或全部潜在环判为非法 |
 | 产物缓存 | 版本、目标、内容 Hash 与锁定依赖关联 | 先建设复杂编译集群 |
 
 例如 500 个字段、200 条表达式的表单，应能根据索引定位受影响节点；实际收益需要基准验证，不能把目标直接写成性能结论。
@@ -104,13 +105,15 @@ Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope �
 | --- | --- | --- |
 | 已收敛 | Material / Pure Function / Host 三类职责；复杂同步校验复用纯函数；L2 静态编译；能力 Manifest 与发布锁定 | 后续设计基线 |
 | 已收敛 | 内置与注册纯函数共用调用协议，`core.*` 为保留命名空间；Host 运行时注册，静态契约可选 | 不再另建校验函数 DSL 或通用业务执行器 |
-| 已确认输入输出 | PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择 | 正式类型迁移、Compiler 功能 / 算法及各端消费仍待实现 |
+| 已确认输入输出 | PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择 | 正式类型迁移、Compiler 本期模块方案已确认；算法与各端消费待实现 |
 | 跨层设计基线 | Read / Watch / Subscription 分离；按使用位置编译 Dependency Plan；L3 统一匹配，L4 按挂载激活视图 | 计划是静态描述，不是已建立的观察者；完整接口与调度未冻结 |
 | 已确认 | L1 / PreparedForm 双结构；L3 不直接解释 L1；显式 watch 保留，编译提供建议，作者确认后回写再编译 | Prepared 执行依赖编译时确定，兼容失败不静默回退解释 L1 |
 | 推荐 | 编译 Source Map；编辑期增量分析、发布期全量检查 | 具体字段、增量算法与编辑交互仍待固化 |
-| 待实施 / 继续设计 | 输入输出确认后同步旧类型；功能检查、类型连接 / 依赖算法、诊断 SDK 与装载联验继续 | 不把输出确认等同于模块完成或生产性能通过 |
+| 本期设计已确认 / 待实施 | 协议类型已同步；四职责组、六阶段、检查范围、静态准备与诊断 SDK 见 [详细设计](l2/compiler.md)；后期完整分析报告独立交付 | 不把输出确认等同于模块完成或生产性能通过 |
 
 Pure Function 表示同步、确定性的受限纯计算；表达式调用节点仍采用 `op + args`，名称与协议字段不混为一项设计。
+
+本篇保留全局与跨层契约，[Compiler 详细设计](l2/compiler.md)维护完整模块与实施。旧内部接口草图中集中计划 / 模板展开等机制按 ADR-FE-017 替代；本期不建设潜在 Reaction 环全图分析或增量 SDK。
 
 本篇覆盖 L2 与平台的交界、能力分类、编译输入输出、注册、版本化、依赖分析及发布验收。Working Data、Reaction / Flush 属于 L3，Material DOM 和组件生命周期属于 L4。[本层总览](#preparation)说明模块位置和跨层关系；L1 语义以 [定义协议](l1/README.md) 为准。
 

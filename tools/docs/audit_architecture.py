@@ -37,6 +37,7 @@ CURRENT_TOPICS = {
     "workflows.md": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
     "usage-guide.md": "SRC-L1 / SRC-V05 / SRC-HOST / SRC-V07",
     "l2-preparation.md": "SRC-L2 / K06 / K10–K13 / K29–K30",
+    "l2/compiler.md": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
     "dependency-reactivity.md": "SRC-DEP / SRC-V05 / K10–K13",
     "l3-reactive-engine.md": "SRC-V04 / SRC-V05 / SRC-V06 / SRC-HOST / K14–K24",
     "l3-validation.md": "SRC-V07 / K25–K28",

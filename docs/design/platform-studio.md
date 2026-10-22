@@ -347,3 +347,8 @@ A2A 是通信协议，不自动提供多 Agent 编排；A2UI 是声明式 UI 协
 先围绕真实场景确认价值，再逐项决定集成 / 自建 / 延期，不要求现在完成所有 Agent 接口。当前待讨论而非已确认的重点：最先赋能创作、填写还是运维；采用外部 Agent 服务还是平台逐步提供治理；A2UI 独立展示与本项目表单生成分别覆盖哪些场景。
 
 本节保留完整接入覆盖，不纳入当前首期交付。前轮更细的候选分析见 [讨论历史](design-history.md#agent-deferred)，当前解释以本节及本轮澄清为准。
+
+
+## Compiler 分析复用与展示边界 {#compiler-platform-analysis}
+
+2026-10-22 Compiler 本期方案确认将平台复用纳入蓝图，完整边界见 [Compiler 蓝图](l2/compiler.md#blueprint)与[分析报告](l2/compiler.md#analysis-report)。Compiler 提供静态事实及来源，Studio 负责错误链路、Reaction 排布和 Validation 关系展示；读取 / 触发 / 写入 / 前置 / Issue 归属须区分，实际执行来自 Runtime Trace。报告独立于 Prepared，失败可解释部分结果不能进入 Runtime。元信息自校验由能力开发 / Registry 复用契约检查，表单使用匹配由 Compiler 完成。这些方向不意味着平台模块、报告 API、图布局或增量编辑已完成。

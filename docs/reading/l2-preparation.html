@@ -8,7 +8,7 @@
   <title>L2 预处理与编译 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=3bad98a48c8f" defer></script>
+  <script src="assets/knowledge-index.js?v=99225b39feca" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -30,7 +30,8 @@
 <a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a>
 <a href="l1/07-examples.html#sample">完整示例与业务组合</a>
 <a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></div></details>
-<details class="nav-group" open><summary>03 · L2 预处理</summary><div><a class="active" aria-current="page" href="l2-preparation.html">L2 预处理与编译</a></div></details>
+<details class="nav-group" open><summary>03 · L2 预处理</summary><div><a class="active" aria-current="page" href="l2-preparation.html">L2 预处理与编译</a>
+<a href="compiler.html">Compiler 详细设计与实施</a></div></details>
 <details class="nav-group"><summary>04 · L3 运行时</summary><div><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a>
 <a href="l3-data-scope.html">L3 数据、快照与 Scope</a>
 <a href="l3-validation.html">L3 校验与结果</a>
@@ -75,7 +76,7 @@
       </header>
       <div class="reading-layout">
       <main class="content" id="top">
-        <header class="hero"><div class="eyebrow">FORM ENGINE · LAYER 02 · DESIGN BASELINE</div><h1>L2 预处理与编译</h1><div class="desc">L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见<a href="#compiler-io-contract" rel="noopener noreferrer">已确认协议</a>和 <a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>；本页旧接口草图仅追溯，不作为另一套有效 ABI。协议类型及派生 Schema 已按后续授权迁移，见<a href="engineering.html#compiler-io-types" rel="noopener noreferrer">实施记录</a>。Compiler 功能清单、检查算法和 SDK 下一专题继续设计。</div></header>
+        <header class="hero"><div class="eyebrow">FORM ENGINE · LAYER 02 · DESIGN BASELINE</div><h1>L2 预处理与编译</h1><div class="desc">L2 把声明式 Definition 与确定能力契约准备为可序列化 PreparedForm，供运行时消费。2026-10-21 已确认以运行时收益限定转换：保留 Definition 领域结构、词法引用和表达式语法，补充规则 / 表达式 watch、已解析 requires、资源闭包与锁定信息。单视图与默认输入无需额外区分语法、Profile 或平台。现行输入输出见<a href="#compiler-io-contract" rel="noopener noreferrer">已确认协议</a>和 <a href="decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>；本页旧接口草图仅追溯，不作为另一套有效 ABI。协议类型及派生 Schema 已按后续授权迁移，见<a href="engineering.html#compiler-io-types" rel="noopener noreferrer">实施记录</a>。2026-10-22 用户确认本期完整 Compiler 方案并授权实施，四职责组、六阶段、模块详细设计、检查范围与失败策略见 <a href="compiler.html" rel="noopener noreferrer">Compiler 详细设计</a>。平台分析报告与可视化保留后期方向。</div></header>
         <hr class="hero-line">
         <section class="section" id="preparation"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>L2 · Preparation：定义预处理层</h2></div></div>
 
@@ -83,7 +84,7 @@
 <p><strong>当前已确认：</strong>L2 是静态协议编译能力；平台另行管理 Form Registry、Capability Registry、代码构建与 Release Management。内置与注册纯计算能力统一称为 Pure Function，Host 在应用运行时注册实现。完整职责、契约草图、发布例子、决策及待固化项见 <a href="" rel="noopener noreferrer">L2 平台能力治理与编译发布</a>。</p>
 <p>L2 可以在发布期 AOT、服务端按需或客户端加载时调用，不读取实例 Working Data，也不执行业务纯函数、Command 或 Reaction。调用上下文提供确定的 Material / Pure Function 契约快照，平台 / Profile / 格式按需显式选择或采用确定默认；Host 静态契约可选，缺失时提取需求并说明无法证明的兼容性，不能据此认定运行时实现不存在。</p>
 <h3 id="预处理流水线">预处理流水线</h3>
-<p>图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。整体功能清单与算法下一专题落实。</p>
+<p>图中 Form / View / Dependency Plan 表示逻辑职责；现行存储位置是保留领域结构的 definition 和就地 watch，不要求三类顶层 Plan。本期模块与流程按 <a href="compiler.html#pipeline" rel="noopener noreferrer">Compiler 详细设计</a>实施。</p>
 <figure class="architecture-diagram" id="figure-preparation"><figcaption>图 3 · Preparation Pipeline：从定义到准备产物</figcaption>
 <div class="arch-row arch-row--flow">
 <div class="arch-node">
@@ -137,7 +138,7 @@
 </ol>
 <p>读取分析覆盖嵌套 ValueSpec、Named use 和全部可能分支，Literal 不参与。随后按 L1 使用位置解释：Internal Constraint 合并 when + assert；External 合并显式 watch 与 when；Reaction 不追加 when / then 读取；View Binding / 动态 Props 自动观察，事件 Payload 只在事件时求值。L2 不执行纯函数发现依赖；整对象输入与无法精确推导的 Schema 条件按子树保守覆盖。</p>
 <p>Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope 关系，现行就地交付，不保存真实数组成员、回调或组件。L2 知道 each 模式，L3 知道实例，L4 知道挂载的表达式消费者；集中计划 ID 是已被修订的旧选择。</p>
-<p>配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。推荐编辑期增量检查、发布期完整编译，并用 Source Map 关联 L1 来源，详见 <a href="#l2-authoring-diagnostics" rel="noopener noreferrer">编辑与编译闭环</a>。</p>
+<p>配置编辑复用同一 L2 分析能力。Reads 不在 Watch 中时提供风险与补全建议，不静默改写配置或 Prepared 计划；作者可确认保持现有触发意图。产品变化清空选项，即使计算不读取产品也应保留显式 Watch。首期编辑预览复用完整 compile，后期按需求增加增量检查，并用 Source Map 关联 L1 来源，详见 <a href="#l2-authoring-diagnostics" rel="noopener noreferrer">编辑与编译闭环</a>。</p>
 <h3 id="复杂度取舍">复杂度取舍</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -170,7 +171,7 @@
 </tr>
 <tr>
 <td>循环与成本</td>
-<td>表达式 / 模板静态环 Error，潜在 Reaction 环默认 Warning；L3 另有保护</td>
+<td>表达式 / 模板静态环 Error，潜在 Reaction 环分析后置为可选风险工具；L3 另有保护</td>
 <td>将合法 Schema 递归或全部潜在环判为非法</td>
 </tr>
 <tr>
@@ -209,7 +210,7 @@
 <tr>
 <td>已确认输入输出</td>
 <td>PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择</td>
-<td>正式类型迁移、Compiler 功能 / 算法及各端消费仍待实现</td>
+<td>正式类型迁移、Compiler 本期模块方案已确认；算法与各端消费待实现</td>
 </tr>
 <tr>
 <td>跨层设计基线</td>
@@ -227,13 +228,14 @@
 <td>具体字段、增量算法与编辑交互仍待固化</td>
 </tr>
 <tr>
-<td>待实施 / 继续设计</td>
-<td>输入输出确认后同步旧类型；功能检查、类型连接 / 依赖算法、诊断 SDK 与装载联验继续</td>
+<td>本期设计已确认 / 待实施</td>
+<td>协议类型已同步；四职责组、六阶段、检查范围、静态准备与诊断 SDK 见 <a href="compiler.html" rel="noopener noreferrer">详细设计</a>；后期完整分析报告独立交付</td>
 <td>不把输出确认等同于模块完成或生产性能通过</td>
 </tr>
 </tbody>
 </table></div>
 <p>Pure Function 表示同步、确定性的受限纯计算；表达式调用节点仍采用 <code>op + args</code>，名称与协议字段不混为一项设计。</p>
+<p>本篇保留全局与跨层契约，<a href="compiler.html" rel="noopener noreferrer">Compiler 详细设计</a>维护完整模块与实施。旧内部接口草图中集中计划 / 模板展开等机制按 ADR-FE-017 替代；本期不建设潜在 Reaction 环全图分析或增量 SDK。</p>
 <p>本篇覆盖 L2 与平台的交界、能力分类、编译输入输出、注册、版本化、依赖分析及发布验收。Working Data、Reaction / Flush 属于 L3，Material DOM 和组件生命周期属于 L4。<a href="#preparation" rel="noopener noreferrer">本层总览</a>说明模块位置和跨层关系；L1 语义以 <a href="l1-definition-protocol.html" rel="noopener noreferrer">定义协议</a> 为准。</p>
 <p>当前规范从职责到失败 / 验收展开；讨论记录单独在<a href="design-history.html" rel="noopener noreferrer">设计演进</a>追溯。重要取舍分别见 <a href="decisions/ADR-FE-004-prepared-entry.html" rel="noopener noreferrer">Prepared 唯一入口 ADR</a>和<a href="decisions/ADR-FE-011-release-lock.html" rel="noopener noreferrer">能力 / 发布 ADR</a>。Host Validator 已确认以独立能力名称被规则显式引用，REV-05 策略缺口已解释；引用字段 / 签名与注册 SDK 仍待固化，见 <a href="decisions/ADR-FE-012-host-output.html" rel="noopener noreferrer">ADR-FE-012</a>。</p>
 <p><a href="dependency-reactivity.html" rel="noopener noreferrer">跨层依赖编译与订阅模型</a> 补齐本层到 L3/L4 的消费契约；本篇继续维护编译与发布职责，不因统一观察机制接管真实订阅、实例状态或 UI 调度。</p>
@@ -1341,7 +1343,7 @@
 <a href="#l2-decisions" data-to="l2-decisions" title="待固化接口与验收标准"><span class="nav-num">16</span><span>待固化接口与验收标准</span></a>
 <a href="#l2-delivery" data-to="l2-delivery" title="后续交付与来源"><span class="nav-num">17</span><span>后续交付与来源</span></a>
 <a href="#prepared-delivery" data-to="prepared-delivery" title="Prepared 交付与编译错误边界"><span class="nav-num">18</span><span>Prepared 交付与编译错误边界</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 25</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 8</summary><ul><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-protocol-source">SRC-PROTOCOL · 协议结构源与校验路线确认</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L2</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 26</summary><ul><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="compiler.html">Compiler 详细设计与实施</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 9</summary><ul><li><a href="source-map.html#src-compiler-design">SRC-COMPILERDESIGN · Compiler 本期完整设计确认与实施授权</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-l2">SRC-L2 · 平台与编译发布 V0.1</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-protocol-source">SRC-PROTOCOL · 协议结构源与校验路线确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

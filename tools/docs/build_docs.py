@@ -42,6 +42,7 @@ PAGES = [
     (DOCS / "design/source-map.md", READING / "source-map.html", "FORM ENGINE · SOURCES & COVERAGE"),
     (DOCS / "history/README.md", DOCS / "history/index.html", "FORM ENGINE · HISTORY ARCHIVE"),
 ]
+PAGES += [(DOCS / "design/l2/compiler.md", READING / "compiler.html", "FORM ENGINE · COMPILER · DETAILED DESIGN")]
 PAGES += [
     (source, READING / "decisions" / (source.stem + ".html"), "FORM ENGINE · ARCHITECTURE DECISION RECORD")
     for source in sorted((DOCS / "design/decisions").glob("ADR-FE-*.md"))

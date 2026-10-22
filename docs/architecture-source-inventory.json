@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 46,
+    "current-markdown": 47,
     "documentation-tooling": 12,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 399,
-  "unique_byte_contents": 360,
+  "total_entries": 400,
+  "unique_byte_contents": 361,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18414,
-      "sha256": "469e7ce3253777a6fe93eed25c0d75c3654d08ef7a4350555bb3ad1eea2ab1b0",
+      "bytes": 18472,
+      "sha256": "3f50fc9de8a80a4596610a6632b69cb8ed9245db4d6aaa0ec66daa6cf4482e04",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -1156,8 +1156,8 @@
       "path": "docs/design/decisions/ADR-FE-017-compiler-io.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5927,
-      "sha256": "28dfb22a52757571c76394e5af706fe1423f9bb499781d37ce7468d414c054f4",
+      "bytes": 6430,
+      "sha256": "dee3154f566261c3b1efdcafb81a31a7d1abd9c618aa25b97af48d8c33cc8956",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1193,6 +1193,11 @@
         {
           "level": 2,
           "title": "来源",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "后续确认：Compiler 本期模块与实施",
           "anchor": null
         }
       ]
@@ -1316,8 +1321,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 141107,
-      "sha256": "47ee86834ef6baf73d44ec17a0d2730a7f93a79f5f3c570db3a4bb7e25e0cc02",
+      "bytes": 142407,
+      "sha256": "219819b62cf417b3a67482af114b69cd6b0d8590a90882b6711fe12ffee45c7c",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1769,6 +1774,11 @@
           "level": 3,
           "title": "后续授权与协议结构实施",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "Compiler 本期完整方案确认与开发授权",
+          "anchor": "compiler-design-confirmed"
         }
       ]
     },
@@ -2056,8 +2066,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35800,
-      "sha256": "d80ab5566a97223998f6e45833730c168a36907be9d3331e81666dcde743f843",
+      "bytes": 35804,
+      "sha256": "50e4433ad3a7b2b4ce891cf7cd70b43d3c5e3470f27bc80c61261e8c2eed0e24",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2578,11 +2588,371 @@
       ]
     },
     {
+      "path": "docs/design/l2/compiler.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 93508,
+      "sha256": "ffdaf650fe998383ec8bb171ead64ae0c7a18a9df38c8f78ce2199debabb1dad",
+      "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
+      "sections": [
+        {
+          "level": 1,
+          "title": "Compiler 详细设计与实施",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "整体蓝图：从本地编译到平台分析",
+          "anchor": "blueprint"
+        },
+        {
+          "level": 3,
+          "title": "能力全景与阶段",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "三类交付，分别服务执行、诊断和解释",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Reaction 与 Validation 需要展示什么",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "取舍与本期保留的扩展接缝",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "需求与使用场景",
+          "anchor": "requirements"
+        },
+        {
+          "level": 3,
+          "title": "谁在什么情况下使用",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "功能需求与验收",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "本期范围",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "本期设计与后期建设的分界",
+          "anchor": "phase-scope"
+        },
+        {
+          "level": 2,
+          "title": "基线、状态与不变量",
+          "anchor": "baseline"
+        },
+        {
+          "level": 2,
+          "title": "输入输出与公共入口",
+          "anchor": "public-contract"
+        },
+        {
+          "level": 3,
+          "title": "接口草案",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "输出沿用已实现协议",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "整体架构与职责划分",
+          "anchor": "architecture"
+        },
+        {
+          "level": 3,
+          "title": "合并与拆分依据",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "内部模型与数据所有权",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "六阶段主流程与失败路径",
+          "anchor": "pipeline"
+        },
+        {
+          "level": 2,
+          "title": "输入处理模块",
+          "anchor": "module-input"
+        },
+        {
+          "level": 2,
+          "title": "能力契约取得与读取模块",
+          "anchor": "module-contracts"
+        },
+        {
+          "level": 3,
+          "title": "取得链路与所有者",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "快照结构节选",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "读取与检查流程",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "能力元信息自校验与使用匹配",
+          "anchor": "capability-validation"
+        },
+        {
+          "level": 3,
+          "title": "三种检查分别由谁负责",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "可复用契约检查的设计",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "从开发到编译的完整链路",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "正反例与验收",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "声明、Scope 与引用模块",
+          "anchor": "module-references"
+        },
+        {
+          "level": 2,
+          "title": "Schema 资源与类型连接模块",
+          "anchor": "module-schema"
+        },
+        {
+          "level": 3,
+          "title": "连接方向",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "表达式与 ValueSpec 模块",
+          "anchor": "module-expression"
+        },
+        {
+          "level": 3,
+          "title": "根据位置生成不同结果",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "精确到完整表达式的例子",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "规则与同步前置模块",
+          "anchor": "module-rules"
+        },
+        {
+          "level": 3,
+          "title": "Reaction 与 Command",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Constraint",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "requires 的完整处理",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "视图、物料与模板模块",
+          "anchor": "module-view"
+        },
+        {
+          "level": 3,
+          "title": "一个物料节点的完整处理顺序",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Template 与 ScopeNode",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Request 分析与输出",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "输出、资源与锁定模块",
+          "anchor": "module-output"
+        },
+        {
+          "level": 2,
+          "title": "诊断、来源与检查策略",
+          "anchor": "diagnostics"
+        },
+        {
+          "level": 3,
+          "title": "诊断例子",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "本期检查范围（已确认）",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "后期分析报告与可视化接入",
+          "anchor": "analysis-report"
+        },
+        {
+          "level": 3,
+          "title": "报告需要的事实种类",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "错误链路例子",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "成功、失败与不完整分析",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "静态图与 Runtime Trace 的联合展示",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "实现方式与取舍",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "贯穿案例与输入输出对照",
+          "anchor": "worked-example"
+        },
+        {
+          "level": 3,
+          "title": "依赖变化与运行消费",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "字段级对照",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "完整契约样本",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "四个关键差异（高亮为新增内容）",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "同一案例的失败分支",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "性能、缓存与执行边界",
+          "anchor": "nonfunctional"
+        },
+        {
+          "level": 3,
+          "title": "本期收益与测量",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "资源与错误保护",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "验收、交付顺序与质量门禁",
+          "anchor": "acceptance"
+        },
+        {
+          "level": 2,
+          "title": "实施现状与证据边界",
+          "anchor": "implementation-status"
+        },
+        {
+          "level": 2,
+          "title": "取舍与后期扩展",
+          "anchor": "tradeoffs"
+        },
+        {
+          "level": 2,
+          "title": "实施步骤、依赖与完成条件",
+          "anchor": "implementation-plan"
+        },
+        {
+          "level": 3,
+          "title": "后期平台路线",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "本轮审阅与后续归档",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "本期确认结论与后期接缝",
+          "anchor": "review-decisions"
+        },
+        {
+          "level": 2,
+          "title": "依据与当前代码状态",
+          "anchor": "sources"
+        }
+      ]
+    },
+    {
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 66753,
-      "sha256": "52bfd115ea74dffbb59addaad651b55cdcd391e646d352b9512cd57072c42201",
+      "bytes": 67349,
+      "sha256": "bbbe48e827de4b1c86316467981e4c964a64a5dc24b726d0e2a74aeac1e66a98",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -3261,8 +3631,8 @@
       "path": "docs/design/platform-studio.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 38418,
-      "sha256": "d253a29bb40eb8773e09c11672e6cd9e441e5eb36cc6d390371c22851182e46c",
+      "bytes": 39149,
+      "sha256": "96020a570553f0cbaa6db5ea0eeb15ab9efb3b988030c3628b58af7fc18082e7",
       "mapping": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
       "sections": [
         {
@@ -3424,6 +3794,11 @@
           "level": 3,
           "title": "6. 后续讨论方式",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "Compiler 分析复用与展示边界",
+          "anchor": "compiler-platform-analysis"
         }
       ]
     },
@@ -23549,8 +23924,8 @@
       "path": "tools/docs/audit_architecture.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 19653,
-      "sha256": "f602a9fc2070b9d97771ad6631ddf9ee46c47d9cb2c575166c21bb0efe3345d7",
+      "bytes": 19769,
+      "sha256": "56e1ef50f7d402231090e4a6201674904917fa5f4889321819841225d0936910",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -23558,8 +23933,8 @@
       "path": "tools/docs/build_docs.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 12819,
-      "sha256": "2d3cad0e5ec9795e79a8ff4d2acf41852783ed3cb39a5849d352e11ceabab253",
+      "bytes": 12936,
+      "sha256": "3a9c6ac31b0264bff52b18f1237bd3dc253af7138351a8419da5d2257dd03d59",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

@@ -10,7 +10,7 @@
 - [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁，以及初始化后的实际命令 / 版本 / 本地验收；远端 CI 尚未运行。
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
 - [L1 协议](design/l1/README.md)：模型 → 数据 / 引用 / Scope → 表达式 / 校验 → 命令 / 联动 → 视图 → 生命周期 → 示例与类型。八份主题分别生成 HTML，不再合成长页。
-- [L2 预处理](design/l2-preparation.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。
+- [L2 预处理](design/l2-preparation.md)与[Compiler 详细设计 / 实施](design/l2/compiler.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。
 - [跨层依赖](design/dependency-reactivity.md)、[物料 / Host](design/extension-integration.md)：横向能力的主要契约。
 - [Platform / Studio](design/platform-studio.md)：已有范围与待设计工作；尚未形成整体产品、模块或接口方案。
 

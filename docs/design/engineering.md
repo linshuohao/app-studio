@@ -457,3 +457,5 @@ Props 的每个完整 $expr 有独立 watch，内部递归节点不生成订阅�
 真实编译用例覆盖命名表达式前向引用 / 环、optional / rest 签名、短路全分支、Literal 边界、动态 Props、Scope 链 / 句柄、前置传递 / 自环 / External / 唯一绑定、模板共享 / 参数 / 环、Event Payload、请求双向契约与资源、消息定位及长链预算。隔离打包消费者新增真实依赖生成与空依赖断言，不能仅凭工作区源码测试判定 SDK 可用。Schema 复杂组合、Context 缺少类型证据、命名锚点和动态 Schema 引用仍保持可解释的拒绝边界；性能基准、浏览器消费和 Runtime / Adapter 实际更新收益尚未验收。
 
 本次最终 pnpm check 已通过：Compiler 78 个用例、Protocol 48 个用例、八包构建 / 类型、格式 / Lint / 边界、HTTP 集成、六包生产 / development 隔离打包消费和文档同步。新补长 Schema 引用链预算、递归联合证明去重与预算，避免有限输入引发深递归或重复展开。另从 Compiler 正文提取完整保险 Definition / Catalog，使用 dist 的真实 compile 编译，逐项核对所有表达式 / 规则 watch 与人工契约样本一致、共享模板仅一份及 JSON 往返通过；不修改人工样本迁就实现。此结果不替代浏览器渲染或 Runtime / Adapter 性能验收。
+
+针对 68c223e 的后续代码审查复现并修复三类缺陷：混合动态 / 静态 Props 对 additionalProperties、nullable 容器及简单 anyOf 的静态值限制漏检；合法请求名 __proto__ 在普通对象赋值时丢失；请求资源 URI fragment 中的百分号未编码。值检查复用同一联合拆分和 Schema 子模型，分支试检隔离诊断、限制递归与次数，不把失败候选的错误带到合法分支；容器关键字只作用于实际值种类。请求字典改由 fromEntries 构造，引用先做 Pointer 转义再做 URI 编码。新增八个正反例，Compiler 共 86 个用例通过，修复后的完整 pnpm check 通过。公共协议 / SDK、模块职责、后续验收状态和 ADR 无变化。

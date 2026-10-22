@@ -10,6 +10,37 @@ interface SchemaConnectionContext {
   proof?: { operations: number; active: Set<string>; memo: Map<string, Connection> };
 }
 
+/** 只拆没有其他断言的简单联合，供结构证明和部分静态值检查共用。 */
+export function schemaUnionBranches(
+  node: SchemaNode,
+  keyword: 'anyOf' | 'oneOf',
+): SchemaNode[] | undefined {
+  const schema = node.schema;
+  if (
+    typeof schema !== 'object' ||
+    !Array.isArray(schema[keyword]) ||
+    Object.keys(schema).some(
+      (key) =>
+        ![
+          keyword,
+          '$id',
+          '$schema',
+          '$comment',
+          'title',
+          'description',
+          '$defs',
+          'definitions',
+        ].includes(key),
+    )
+  )
+    return undefined;
+  return schema[keyword].map((child, index) => ({
+    schema: child as JsonSchema,
+    document: node.document,
+    pointer: at(at(node.pointer, keyword), index),
+  }));
+}
+
 /**
  * 保守证明来源结构能否交给目标端口：string → string 可证明，number → string 不兼容。
  * compatible / incompatible / unproven 分开，复杂组合不猜测放行。
@@ -72,33 +103,7 @@ function proveSchemas(
   if (a === false) return result('compatible', 'Empty source accepts no values.');
   if (b === false || a === true) return result('unproven', 'No provable value shape.');
   // 简单联合只在没有其他断言时拆分；不能丢弃与 anyOf / oneOf 并列的约束。
-  const simpleUnion = (node: SchemaNode, keyword: 'anyOf' | 'oneOf'): SchemaNode[] | undefined => {
-    const schema = node.schema;
-    if (
-      typeof schema !== 'object' ||
-      !Array.isArray(schema[keyword]) ||
-      Object.keys(schema).some(
-        (key) =>
-          ![
-            keyword,
-            '$id',
-            '$schema',
-            '$comment',
-            'title',
-            'description',
-            '$defs',
-            'definitions',
-          ].includes(key),
-      )
-    )
-      return undefined;
-    return schema[keyword].map((child, index) => ({
-      schema: child as JsonSchema,
-      document: node.document,
-      pointer: at(at(node.pointer, keyword), index),
-    }));
-  };
-  const sourceUnion = simpleUnion(source, 'anyOf') ?? simpleUnion(source, 'oneOf');
+  const sourceUnion = schemaUnionBranches(source, 'anyOf') ?? schemaUnionBranches(source, 'oneOf');
   if (sourceUnion) {
     const proofs = sourceUnion.map((branch) => connectSchemas(branch, target, context, depth + 1));
     return (
@@ -107,7 +112,7 @@ function proveSchemas(
       result('compatible', 'Every source union branch is accepted.')
     );
   }
-  const targetUnion = simpleUnion(target, 'anyOf');
+  const targetUnion = schemaUnionBranches(target, 'anyOf');
   if (targetUnion) {
     const proofs = targetUnion.map((branch) => connectSchemas(source, branch, context, depth + 1));
     return (

@@ -32,7 +32,8 @@ export class InteractionCompiler {
     expressions.models.scan(node);
     // 根基址显式化，避免相对引用在移入资源表后改变含义；嵌套 $id 保持原语义。
     this.schemas.set(key, record(schema) ? { ...schema, $id: node.document.uri } : schema);
-    return '#' + at('/resources/requestSchemas', key);
+    // URI fragment 先做 Pointer 转义，再做百分号编码；资源键中的 % 必须作为字面值保留。
+    return '#' + at('/resources/requestSchemas', key).split('/').map(encodeURIComponent).join('/');
   }
   compile(
     node: MaterialNode,
@@ -106,7 +107,7 @@ export class InteractionCompiler {
           source(at(pointer, 'requests')),
           `Material ${node.material} requires request mapping ${name}.`,
         );
-    const requests: Record<string, PreparedHostRequestIntent> = {};
+    const requests: Array<[string, PreparedHostRequestIntent]> = [];
     for (const [name, intent] of Object.entries(node.requests ?? {})) {
       const location = at(at(pointer, 'requests'), name);
       const contract =
@@ -190,9 +191,13 @@ export class InteractionCompiler {
       const nodeIds = this.requests.get(intent.request) ?? new Set<string>();
       nodeIds.add(nodeId);
       this.requests.set(intent.request, nodeIds);
-      requests[name] = prepared;
+      requests.push([name, prepared]);
     }
-    return { ...(node.on ? { on: node.on } : {}), ...(node.requests ? { requests } : {}) };
+    return {
+      ...(node.on ? { on: node.on } : {}),
+      // fromEntries 创建自有数据属性，合法业务键 __proto__ 也不会触发原型 setter。
+      ...(node.requests ? { requests: Object.fromEntries(requests) } : {}),
+    };
   }
   result(): {
     events: HostEventRequirement[];

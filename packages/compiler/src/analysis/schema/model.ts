@@ -123,7 +123,8 @@ export class SchemaModel {
     }
     return node;
   }
-  private child(node: SchemaNode, key: string, schema: JsonSchema): SchemaNode {
+  /** 按 Schema 声明位置取子模型，保留资源基址；不要求父容器只能有一个 type。 */
+  child(node: SchemaNode, key: string, schema: JsonSchema): SchemaNode {
     return { schema, document: node.document, pointer: at(node.pointer, key) };
   }
   /** 只走 Schema 关键字，default / examples 内的普通业务对象不当作子 Schema。 */
@@ -488,6 +489,7 @@ export class SchemaModel {
     value: JsonValue,
     location: string,
     code = 'PROPS_INVALID',
+    diagnostics = this.diagnostics,
   ): boolean {
     return validateStaticValue(
       node,
@@ -498,7 +500,7 @@ export class SchemaModel {
         enter: (node) => this.enter(node),
         child: (node, key, schema) => this.child(node, key, schema),
       },
-      this.diagnostics,
+      diagnostics,
       code,
     );
   }

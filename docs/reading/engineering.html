@@ -8,7 +8,7 @@
   <title>工程工具链与初始化方案 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=ebd62dccbb1f" defer></script>
+  <script src="assets/knowledge-index.js?v=d11523570cc6" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -653,7 +653,8 @@ pnpm<span class="syn-w"> </span>--filter<span class="syn-w"> </span>@form-engine
 <p>ReferenceAnalyzer 统一根 / Scope / Event 引用与 Binder 环境；ExpressionAnalyzer 一次递归同时产出结果模型、可能 Data 读取和已知值；ValueCompiler 统一递归 ValueSpec 与动态形状，按位置决定是否生成响应式包装。SchemaModel 的资源 / 连接 / 值校验继续共用；Catalog 的物料 / 纯函数共享查询、自检、缓存和双摘要锁，不再分别维护相同逻辑。</p>
 <p>Props 的每个完整 $expr 有独立 watch，内部递归节点不生成订阅。Constraint 合并 when / assert / 显式输入及 requires 传递；字段前置补齐 constraintIds，Schema 全为已知局部断言时观察目标字段，条件 / 集合等无法精确证明的影响保守覆盖根域，不拆分根校验器。Reaction 仍用作者显式 watch；Command / Event / Request Payload 仅按调用分析，不因读取建立自动触发。模板只输出所选视图的共享闭包，保留参数别名，Scope ID 留给运行时；Request 增加默认并发策略、具有显式基址的资源引用和 Host 需求。</p>
 <p>真实编译用例覆盖命名表达式前向引用 / 环、optional / rest 签名、短路全分支、Literal 边界、动态 Props、Scope 链 / 句柄、前置传递 / 自环 / External / 唯一绑定、模板共享 / 参数 / 环、Event Payload、请求双向契约与资源、消息定位及长链预算。隔离打包消费者新增真实依赖生成与空依赖断言，不能仅凭工作区源码测试判定 SDK 可用。Schema 复杂组合、Context 缺少类型证据、命名锚点和动态 Schema 引用仍保持可解释的拒绝边界；性能基准、浏览器消费和 Runtime / Adapter 实际更新收益尚未验收。</p>
-<p>本次最终 pnpm check 已通过：Compiler 78 个用例、Protocol 48 个用例、八包构建 / 类型、格式 / Lint / 边界、HTTP 集成、六包生产 / development 隔离打包消费和文档同步。新补长 Schema 引用链预算、递归联合证明去重与预算，避免有限输入引发深递归或重复展开。另从 Compiler 正文提取完整保险 Definition / Catalog，使用 dist 的真实 compile 编译，逐项核对所有表达式 / 规则 watch 与人工契约样本一致、共享模板仅一份及 JSON 往返通过；不修改人工样本迁就实现。此结果不替代浏览器渲染或 Runtime / Adapter 性能验收。</p></section>
+<p>本次最终 pnpm check 已通过：Compiler 78 个用例、Protocol 48 个用例、八包构建 / 类型、格式 / Lint / 边界、HTTP 集成、六包生产 / development 隔离打包消费和文档同步。新补长 Schema 引用链预算、递归联合证明去重与预算，避免有限输入引发深递归或重复展开。另从 Compiler 正文提取完整保险 Definition / Catalog，使用 dist 的真实 compile 编译，逐项核对所有表达式 / 规则 watch 与人工契约样本一致、共享模板仅一份及 JSON 往返通过；不修改人工样本迁就实现。此结果不替代浏览器渲染或 Runtime / Adapter 性能验收。</p>
+<p>针对 68c223e 的后续代码审查复现并修复三类缺陷：混合动态 / 静态 Props 对 additionalProperties、nullable 容器及简单 anyOf 的静态值限制漏检；合法请求名 <strong>proto</strong> 在普通对象赋值时丢失；请求资源 URI fragment 中的百分号未编码。值检查复用同一联合拆分和 Schema 子模型，分支试检隔离诊断、限制递归与次数，不把失败候选的错误带到合法分支；容器关键字只作用于实际值种类。请求字典改由 fromEntries 构造，引用先做 Pointer 转义再做 URI 编码。新增八个正反例，Compiler 共 86 个用例通过，修复后的完整 pnpm check 通过。公共协议 / SDK、模块职责、后续验收状态和 ADR 无变化。</p></section>
         
         
         

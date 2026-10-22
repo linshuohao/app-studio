@@ -1876,8 +1876,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 49803,
-      "sha256": "e4e2fa6c264e6d732c564c0f08949a66ae69976de368f258f6808d48f1e21dbb",
+      "bytes": 50554,
+      "sha256": "7de9e00e68f1b5cc6b1421773a2eb0be19975dcebbb7af118781a59acb9cc6a2",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {

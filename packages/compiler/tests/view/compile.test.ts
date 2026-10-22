@@ -21,6 +21,133 @@ function codes(value: CompileInput) {
 }
 
 describe('shared templates, event and request boundaries', () => {
+  it.each(['object', ['object', 'null']])(
+    'checks static additional-property values with type %j and dynamic siblings',
+    (type) => {
+      const value = input();
+      value.catalog.materials.input!.manifest.propsSchema = {
+        type,
+        additionalProperties: { type: 'string', minLength: 2 },
+      };
+      value.definition.views.only = {
+        material: 'input',
+        props: {
+          dynamic: { $expr: { ref: data('/name') } },
+          short: 'x',
+        },
+      };
+      expect(codes(value)).toContain('PROPS_INVALID');
+    },
+  );
+  it('checks static array values against nullable array contracts with dynamic siblings', () => {
+    const value = input();
+    value.catalog.materials.input!.manifest.propsSchema = {
+      type: 'object',
+      properties: {
+        labels: { type: ['array', 'null'], items: { type: 'string', minLength: 2 } },
+      },
+    };
+    value.definition.views.only = {
+      material: 'input',
+      props: { labels: [{ $expr: { ref: data('/name') } }, 'x'] },
+    };
+    expect(codes(value)).toContain('PROPS_INVALID');
+  });
+  it('applies only array keywords to array values under an object-or-array contract', () => {
+    const value = input();
+    value.catalog.materials.input!.manifest.propsSchema = {
+      type: 'object',
+      properties: {
+        labels: {
+          type: ['array', 'object'],
+          items: { type: 'string', minLength: 2 },
+          additionalProperties: { type: 'number' },
+        },
+      },
+    };
+    value.definition.views.only = {
+      material: 'input',
+      props: { labels: ['valid', { $expr: { ref: data('/name') } }] },
+    };
+    expect(prepared(value).definition.views.only).toBeDefined();
+    value.definition.views.only.props!.labels = ['x', { $expr: { ref: data('/name') } }];
+    expect(codes(value)).toContain('PROPS_INVALID');
+  });
+  it('does not claim full compatibility for mixed values across alternative object contracts', () => {
+    const value = input();
+    value.catalog.materials.input!.manifest.propsSchema = {
+      anyOf: [
+        { type: 'object', properties: { short: { type: 'string', minLength: 3 } } },
+        { type: 'object', properties: { short: { type: 'string', minLength: 2 } } },
+      ],
+    };
+    value.definition.views.only = {
+      material: 'input',
+      props: {
+        dynamic: { $expr: { ref: data('/name') } },
+        short: 'x',
+      },
+    };
+    expect(codes(value)).toContain('PROPS_INVALID');
+    value.definition.views.only.props!.short = 'ok';
+    expect(prepared(value).definition.views.only).toBeDefined();
+  });
+  it('can select a valid recursive-union alternative without leaking failed branch diagnostics', () => {
+    const value = input();
+    value.catalog.materials.input!.manifest.propsSchema = {
+      $id: 'https://example.test/props-union',
+      anyOf: [
+        { $ref: '#' },
+        { type: 'object', properties: { short: { type: 'string', minLength: 2 } } },
+      ],
+    };
+    value.definition.views.only = {
+      material: 'input',
+      props: {
+        dynamic: { $expr: { ref: data('/name') } },
+        short: 'ok',
+      },
+    };
+    expect(prepared(value).definition.views.only).toBeDefined();
+  });
+  it('preserves a required request mapping named __proto__ as an own JSON property', () => {
+    const value = input();
+    value.catalog.materials.input!.manifest.requests = JSON.parse(
+      '{"__proto__":{"payloadSchema":true,"resultSchema":true}}',
+    );
+    value.definition.views.only = {
+      material: 'input',
+      requests: JSON.parse('{"__proto__":{"type":"host.request","request":"lookup"}}'),
+    };
+    const output = prepared(value);
+    const node = output.definition.views.only!;
+    if (!('material' in node)) throw Error('Expected material');
+    expect(Object.hasOwn(node.requests!, '__proto__')).toBe(true);
+    expect(node.requests!['__proto__']).toMatchObject({
+      type: 'host.request',
+      request: 'lookup',
+      concurrency: 'latest',
+    });
+  });
+  it('resolves generated request resource fragments when names contain escaped characters', () => {
+    const value = input();
+    const name = 'search/path%~';
+    value.catalog.materials.input!.manifest.requests = {
+      [name]: { payloadSchema: { type: 'string' }, resultSchema: true },
+    };
+    value.definition.views.only = {
+      material: 'input',
+      requests: { [name]: { type: 'host.request', request: 'lookup' } },
+    };
+    const output = prepared(value);
+    const node = output.definition.views.only!;
+    if (!('material' in node)) throw Error('Expected material');
+    const reference = node.requests![name]!.payloadSchemaRef;
+    const key = decodeURIComponent(reference.slice('#/resources/requestSchemas/'.length))
+      .replaceAll('~1', '/')
+      .replaceAll('~0', '~');
+    expect(output.resources.requestSchemas[key]).toMatchObject({ type: 'string' });
+  });
   it('keeps one prepared template with parameter-relative watch for multiple uses', () => {
     const value = input();
     value.definition.viewTemplates = {
@@ -169,8 +296,7 @@ describe('shared templates, event and request boundaries', () => {
       mapping.hostPayloadSchemaRef!,
       mapping.hostResultSchemaRef!,
     ]) {
-      const key = ref
-        .slice('#/resources/requestSchemas/'.length)
+      const key = decodeURIComponent(ref.slice('#/resources/requestSchemas/'.length))
         .replaceAll('~1', '/')
         .replaceAll('~0', '~');
       expect(output.resources.requestSchemas[key]).toMatchObject({

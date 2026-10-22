@@ -145,7 +145,13 @@ export class ExpressionAnalyzer {
     return { node, reads };
   }
   /** 静态常量检查实际值；动态结果用共用三态连接，失败分析不再制造类型级联错误。 */
-  expect(analysis: ExpressionAnalysis, target: SchemaNode, pointer: string, code: string): void {
+  expect(
+    analysis: ExpressionAnalysis,
+    target: SchemaNode,
+    pointer: string,
+    code: string,
+    diagnostics = this.diagnostics,
+  ): void {
     if (!analysis.node) return;
     if (analysis.known) {
       this.models.validateValue(
@@ -153,12 +159,13 @@ export class ExpressionAnalyzer {
         analysis.known.value,
         this.source(pointer),
         code + '_INCOMPATIBLE',
+        diagnostics,
       );
       return;
     }
     const proof = this.models.connection(analysis.node, target);
     if (proof.kind !== 'compatible')
-      this.diagnostics.error(
+      diagnostics.error(
         code + (proof.kind === 'incompatible' ? '_INCOMPATIBLE' : '_UNPROVEN'),
         this.source(pointer),
         proof.reason,

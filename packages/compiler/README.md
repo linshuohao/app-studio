@@ -102,6 +102,8 @@ if (result.success) {
 
 未选视图不要求其目标物料存在；未使用模板只做输入结构和简写冲突检查，不进入产物闭包。所有保留的全局命名表达式 / 规则均会分析，不因当前视图没引用就遗漏能力锁。
 
+Request 的 Schema 引用使用 URI fragment：读取时先做百分号解码，再按 JSON Pointer 解释转义和查找；不要将编码后的片段直接当作资源字典键。
+
 Schema 静态证明仍是有限子集。复杂组合、条件依赖、Tuple、联合对象路径投影及无法确定的形状拒绝连接；命名锚点与动态 Schema 引用尚不支持。Context 没有额外类型证据时，要求确定类型的连接报告 unproven；不新增 Context watch。Schema 的 default / examples、`$literal` 与 metadata 不作为表达式或依赖递归解析。核心函数只读确定 Catalog，未引入内置实现、别名猜测或常量折叠。
 
 元信息可独立检查，无需表单：

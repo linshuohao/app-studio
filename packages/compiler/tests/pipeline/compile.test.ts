@@ -1,46 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { CompilerInputDefinition } from '@form-engine/protocol/definition';
-import type { CapabilityCatalogSnapshot } from '@form-engine/protocol/capability';
-import * as compiler from './index.js';
+import * as compiler from '../../src/index.js';
+import { input, digest } from '../fixtures.js';
 
-const digest = `sha256:${'1'.repeat(64)}` as const;
-function input() {
-  const definition: CompilerInputDefinition = {
-    protocolVersion: 'test-protocol',
-    id: 'enrollment',
-    version: 'draft',
-    data: {
-      schema: {
-        type: 'object',
-        properties: { name: { type: 'string' }, age: { type: 'integer' } },
-        additionalProperties: false,
-      },
-    },
-    views: { only: { material: 'input', bind: '/name', props: { label: '姓名' } } },
-    metadata: { watch: { $expr: 'business-data' } },
-  };
-  const catalog: CapabilityCatalogSnapshot = {
-    id: 'catalog-fixed',
-    materials: {
-      input: {
-        manifest: {
-          id: 'input',
-          version: 'v1',
-          propsSchema: {
-            type: 'object',
-            properties: { label: { type: 'string' } },
-            additionalProperties: false,
-          },
-          bindings: { value: { schema: { type: 'string' } } },
-          slots: ['default'],
-        },
-        artifact: { id: 'app-build', platform: 'web', digest },
-      },
-    },
-    pureFunctions: {},
-  };
-  return { definition, catalog };
-}
 function errors(result: ReturnType<typeof compiler.compile>) {
   expect(result.success).toBe(false);
   expect(result).not.toHaveProperty('prepared');
@@ -549,61 +510,5 @@ describe('compile: first executable slice', () => {
     expect(errors(compiler.compile(source))).toContainEqual(
       expect.objectContaining({ code: 'SCHEMA_RESOURCE_INVALID' }),
     );
-  });
-});
-
-describe('standalone capability contract checks', () => {
-  it('checks a Manifest without needing a definition, catalog or implementation', () => {
-    expect(compiler.validateMaterialManifest(input().catalog.materials.input!.manifest)).toEqual({
-      valid: true,
-      diagnostics: [],
-    });
-    expect(
-      compiler.validatePureFunctionManifest({
-        id: 'business.f',
-        version: 'v1',
-        parameters: [{ name: 'n', schema: { type: 'number' } }],
-        returns: { type: 'number' },
-      }).valid,
-    ).toBe(true);
-  });
-  it('distinguishes invalid structure from invalid optional parameter ordering', () => {
-    expect(
-      compiler.validateMaterialManifest({
-        id: 'bad',
-        version: 'v1',
-        requests: { query: { payloadSchema: true } },
-      }).valid,
-    ).toBe(false);
-    expect(
-      compiler.validatePureFunctionManifest({
-        id: 'f',
-        version: 'v1',
-        parameters: [
-          { name: 'x', schema: true, optional: true },
-          { name: 'y', schema: true },
-        ],
-        returns: true,
-      }).diagnostics,
-    ).toContainEqual(
-      expect.objectContaining({ code: 'FUNCTION_PARAMETER_ORDER', sourcePointer: '/parameters/1' }),
-    );
-  });
-  it('reports malformed used contracts at catalog locations and avoids cascades', () => {
-    const source = input();
-    source.catalog.materials.input!.manifest.id = 'other';
-    const diagnostics = errors(compiler.compile(source));
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        code: 'CAPABILITY_ID_MISMATCH',
-        relatedLocations: expect.arrayContaining([
-          expect.objectContaining({
-            sourceId: 'catalog-fixed',
-            pointer: '/materials/input/manifest/id',
-          }),
-        ]),
-      }),
-    );
-    expect(diagnostics.some((d) => d.code === 'PROPS_INVALID')).toBe(false);
   });
 });

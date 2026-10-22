@@ -1,11 +1,4 @@
-import type { Diagnostic } from './types.js';
-
-export const escapePointer = (key: string) => key.replaceAll('~', '~0').replaceAll('/', '~1');
-export const at = (pointer: string, key: string | number) =>
-  `${pointer}/${escapePointer(String(key))}`;
-export const own = (value: object, key: PropertyKey) => Object.hasOwn(value, key);
-export const record = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
+import type { Diagnostic } from '../types.js';
 
 export class Diagnostics {
   private readonly entries: Diagnostic[] = [];

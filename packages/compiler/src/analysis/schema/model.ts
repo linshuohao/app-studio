@@ -1,40 +1,14 @@
 import type { JsonSchema, JsonValue } from '@form-engine/protocol';
-import { at, Diagnostics, own, record } from './diagnostics.js';
-import { canonicalJson } from './json.js';
-import { createAjv } from './structure.js';
+import { at } from '../../common/pointer.js';
+import { own, record } from '../../common/object.js';
+import { Diagnostics } from '../../diagnostics/collector.js';
+import { canonicalJson } from '../../common/json.js';
+import type { SchemaDocument as Document, SchemaNode, Connection } from './types.js';
+import { mapKeywords, arrayKeywords, singleKeywords } from './keywords.js';
+import { connectSchemas } from './connection.js';
+import { validateStaticValue } from './validation.js';
 
-interface Document {
-  schema: JsonSchema;
-  uri: string;
-  sourcePointer: string;
-  sourceId?: string;
-  external?: string;
-}
-export interface SchemaNode {
-  schema: JsonSchema;
-  document: Document;
-  pointer: string;
-}
-export interface Connection {
-  kind: 'compatible' | 'incompatible' | 'unproven';
-  reason: string;
-}
 const virtualRoot = 'https://form-engine.invalid/schema/root';
-const mapKeywords = ['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas'];
-const arrayKeywords = ['allOf', 'anyOf', 'oneOf', 'prefixItems'];
-const singleKeywords = [
-  'items',
-  'additionalProperties',
-  'unevaluatedProperties',
-  'unevaluatedItems',
-  'contains',
-  'not',
-  'if',
-  'then',
-  'else',
-  'propertyNames',
-  'contentSchema',
-];
 const supportedPointer = /^(?:\/(?:[^~/]|~[01])*)*$/;
 
 export class SchemaModel {
@@ -380,249 +354,29 @@ export class SchemaModel {
     }
     return node;
   }
-  connection(sourceInput: SchemaNode, targetInput: SchemaNode, depth = 0): Connection {
-    const result = (kind: Connection['kind'], reason: string): Connection => ({ kind, reason });
-    if (depth > 64) return result('unproven', 'Type proof depth exceeded.');
-    if (
-      sourceInput.document.uri === targetInput.document.uri &&
-      sourceInput.pointer === targetInput.pointer
-    )
-      return result('compatible', 'Same schema identity.');
-    const source = this.dereference(sourceInput),
-      target = this.dereference(targetInput);
-    if (!source || !target)
-      return result('unproven', 'Cannot prove recursive or combined reference.');
-    if (source.document.uri === target.document.uri && source.pointer === target.pointer)
-      return result('compatible', 'Same schema identity.');
-    const a = source.schema,
-      b = target.schema;
-    if (b === true) return result('compatible', 'Unconstrained destination.');
-    if (a === false || b === false || a === true)
-      return result('unproven', 'No provable value shape.');
-    if (
-      [
-        'allOf',
-        'anyOf',
-        'oneOf',
-        'not',
-        'if',
-        'then',
-        'else',
-        '$dynamicRef',
-        'patternProperties',
-        'dependentSchemas',
-        'dependentRequired',
-        'propertyNames',
-        'contains',
-        'unevaluatedProperties',
-        'unevaluatedItems',
-      ].some((key) => own(a, key) || own(b, key))
-    )
-      return result('unproven', 'Schema composition is outside this slice of the proof subset.');
-    const types = (schema: Exclude<JsonSchema, boolean>) =>
-      typeof schema.type === 'string'
-        ? [schema.type]
-        : Array.isArray(schema.type)
-          ? schema.type.filter((v): v is string => typeof v === 'string')
-          : [];
-    const srcTypes = types(a),
-      dstTypes = types(b);
-    if (
-      !dstTypes.length &&
-      !own(b, 'enum') &&
-      !own(b, 'const') &&
-      Object.keys(b).every((key) =>
-        [
-          '$id',
-          '$schema',
-          'title',
-          'description',
-          '$comment',
-          '$defs',
-          'definitions',
-          'default',
-          'examples',
-        ].includes(key),
-      )
-    )
-      return result('compatible', 'No structural destination constraints.');
-    if (!srcTypes.length || !dstTypes.length) return result('unproven', 'Missing definite type.');
-    if (
-      !srcTypes.every(
-        (t) => dstTypes.includes(t) || (t === 'integer' && dstTypes.includes('number')),
-      )
-    )
-      return result('incompatible', 'Source types are not accepted by destination.');
-    const values = (schema: Exclude<JsonSchema, boolean>): JsonValue[] | undefined =>
-      own(schema, 'const') ? [schema.const!] : Array.isArray(schema.enum) ? schema.enum : undefined;
-    const av = values(a),
-      bv = values(b);
-    if (
-      bv &&
-      (!av ||
-        !av.every((value) => bv.some((target) => canonicalJson(value) === canonicalJson(target))))
-    )
-      return result('incompatible', 'Destination const/enum is not guaranteed.');
-    if (srcTypes.includes('object') && dstTypes.includes('object')) {
-      const ap = record(a.properties) ? a.properties : {},
-        bp = record(b.properties) ? b.properties : {};
-      const ar = Array.isArray(a.required) ? a.required : [],
-        br = Array.isArray(b.required) ? b.required : [];
-      if (!br.every((key) => ar.includes(key)))
-        return result('incompatible', 'Destination required properties are not guaranteed.');
-      for (const [key, schema] of Object.entries(ap)) {
-        const targetSchema = own(bp, key) ? bp[key] : (b.additionalProperties ?? true);
-        if (targetSchema === false)
-          return result('incompatible', `Destination rejects property ${key}.`);
-        const next = this.connection(
-          {
-            schema: schema as JsonSchema,
-            document: source.document,
-            pointer: at(at(source.pointer, 'properties'), key),
-          },
-          {
-            schema: targetSchema as JsonSchema,
-            document: target.document,
-            pointer: own(bp, key)
-              ? at(at(target.pointer, 'properties'), key)
-              : at(target.pointer, 'additionalProperties'),
-          },
-          depth + 1,
-        );
-        if (next.kind !== 'compatible') return next;
-      }
-      for (const [key, schema] of Object.entries(bp)) {
-        if (own(ap, key) || a.additionalProperties === false) continue;
-        const next = this.connection(
-          this.child(
-            source,
-            'additionalProperties',
-            (a.additionalProperties ?? true) as JsonSchema,
-          ),
-          {
-            schema: schema as JsonSchema,
-            document: target.document,
-            pointer: at(at(target.pointer, 'properties'), key),
-          },
-          depth + 1,
-        );
-        if (next.kind !== 'compatible')
-          return result(
-            'unproven',
-            `Open source property ${key} does not have a provable destination shape.`,
-          );
-      }
-      if (
-        a.additionalProperties !== false &&
-        b.additionalProperties !== undefined &&
-        b.additionalProperties !== true
-      )
-        return result('unproven', 'Cannot prove additional properties.');
-    }
-    if (srcTypes.includes('array') && dstTypes.includes('array')) {
-      if (a.prefixItems || b.prefixItems)
-        return result('unproven', 'Tuple projection is not implemented.');
-      return this.connection(
-        this.child(source, 'items', (a.items ?? true) as JsonSchema),
-        this.child(target, 'items', (b.items ?? true) as JsonSchema),
-        depth + 1,
-      );
-    }
-    return result(
-      'compatible',
-      'Structural types are compatible; business value restrictions are not write gates.',
+  connection(source: SchemaNode, target: SchemaNode, depth = 0): Connection {
+    return connectSchemas(
+      source,
+      target,
+      {
+        dereference: (node) => this.dereference(node),
+        child: (node, key, schema) => this.child(node, key, schema),
+      },
+      depth,
     );
   }
-  private validatorSchema(
-    input: SchemaNode,
-    cache: Map<string, JsonSchema>,
-    order: Document[],
-  ): JsonSchema {
-    const node = this.enter(input),
-      key = node.document.uri + '#' + node.pointer;
-    const previous = cache.get(key);
-    if (previous !== undefined) return previous;
-    if (!record(node.schema)) {
-      cache.set(key, node.schema);
-      if (!node.pointer) order.push(node.document);
-      return node.schema;
-    }
-    const schema = { ...node.schema };
-    if (!node.pointer) schema.$id = node.document.uri;
-    cache.set(key, schema);
-    for (const keyword of mapKeywords) {
-      const map = node.schema[keyword];
-      if (record(map))
-        schema[keyword] = Object.fromEntries(
-          Object.entries(map).map(([name, child]) => [
-            name,
-            this.validatorSchema(
-              this.child(this.child(node, keyword, map), name, child as JsonSchema),
-              cache,
-              order,
-            ),
-          ]),
-        );
-    }
-    for (const keyword of arrayKeywords) {
-      const array = node.schema[keyword];
-      if (Array.isArray(array))
-        schema[keyword] = array.map((child, index) =>
-          this.validatorSchema(
-            {
-              schema: child as JsonSchema,
-              document: node.document,
-              pointer: at(at(node.pointer, keyword), index),
-            },
-            cache,
-            order,
-          ),
-        );
-    }
-    for (const keyword of singleKeywords) {
-      const child = node.schema[keyword];
-      if (typeof child === 'boolean' || record(child))
-        schema[keyword] = this.validatorSchema(
-          this.child(node, keyword, child as JsonSchema),
-          cache,
-          order,
-        );
-    }
-    // Register resource children first. Shared canonical objects preserve Ajv cache identity
-    // whether a resource was declared inline, supplied externally, or retrieved via aliases.
-    if (!node.pointer) order.push(node.document);
-    return schema;
-  }
   validateValue(node: SchemaNode, value: JsonValue, location: string): boolean {
-    const ajv = createAjv();
-    try {
-      const canonicalSchemas = new Map<string, JsonSchema>(),
-        order: Document[] = [];
-      for (const document of new Set(this.documents.values()))
-        this.validatorSchema(
-          { schema: document.schema, document, pointer: '' },
-          canonicalSchemas,
-          order,
-        );
-      for (const document of order)
-        ajv.addSchema(canonicalSchemas.get(document.uri + '#')!, document.uri);
-      for (const [alias, document] of this.documents)
-        if (alias !== document.uri) ajv.addSchema(canonicalSchemas.get(document.uri + '#')!, alias);
-      const validator = ajv.getSchema(node.document.uri + (node.pointer ? '#' + node.pointer : ''));
-      if (!validator) throw new Error('Schema validator not found.');
-      if (!validator(value)) {
-        this.diagnostics.error('PROPS_INVALID', location, ajv.errorsText(validator.errors));
-        return false;
-      }
-      return true;
-    } catch (error) {
-      this.diagnostics.error(
-        'SCHEMA_CHECK_UNPROVEN',
-        location,
-        `Cannot validate static value: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      return false;
-    }
+    return validateStaticValue(
+      node,
+      value,
+      location,
+      {
+        documents: this.documents,
+        enter: (node) => this.enter(node),
+        child: (node, key, schema) => this.child(node, key, schema),
+      },
+      this.diagnostics,
+    );
   }
   resources(): Record<string, JsonSchema> {
     return Object.fromEntries(

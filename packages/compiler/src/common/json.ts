@@ -1,7 +1,7 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import type { ContentDigest, JsonValue } from '@form-engine/protocol';
-import { at } from './diagnostics.js';
+import { at } from './pointer.js';
 
 export class JsonInputError extends Error {
   constructor(

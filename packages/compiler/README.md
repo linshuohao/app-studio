@@ -2,6 +2,29 @@
 
 本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前完成 I01 静态视图纵切，保持 private / 0.0.0；完整表达式、规则与交互编译尚未交付。
 
+目录遵循[全仓包组织约定](../../docs/design/engineering.md#package-source-layout)：
+
+```text
+src/
+  index.ts                  # 公共导出
+  types.ts                  # 公共 SDK 类型
+  pipeline/compile.ts       # 阶段编排
+  input/                    # 接收、规范化、原始位置映射
+  capability/               # Catalog 查询、Manifest 自检与锁收集
+  analysis/schema/          # 资源模型、连接证明、静态值校验
+  view/                     # 视图检查与静态 ValueSpec 遍历
+  output/assemble.ts        # Prepared 装配与自检
+  diagnostics/              # 诊断收集
+  validation/               # 协议结构校验
+  common/                   # JSON、对象与 Pointer 基础操作
+tests/
+  pipeline/compile.test.ts
+  capability/validation.test.ts
+  fixtures.ts
+```
+
+入口只组织流程；分析与编译模块各自负责其领域，公共导出保持集中。测试独立于 src，生产与测试分别进行类型检查；已有 engineering 入口保留在 src 根用于工程联验。
+
 ```typescript
 import { compile } from '@form-engine/compiler';
 

@@ -1876,8 +1876,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 43704,
-      "sha256": "71191d41b03dce865ae015846729b014713902849b1001d15b0d0b6e44906c7d",
+      "bytes": 46668,
+      "sha256": "33ad08e634eb9355351ec870134326722d578072b116e3b7715d7f5c5036f532",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -1949,6 +1949,16 @@
           "level": 2,
           "title": "6. 构建、类型与样式契约",
           "anchor": "engineering-contracts"
+        },
+        {
+          "level": 3,
+          "title": "包目录与模块组织",
+          "anchor": "package-source-layout"
+        },
+        {
+          "level": 3,
+          "title": "构建与消费约束",
+          "anchor": null
         },
         {
           "level": 2,
@@ -2601,8 +2611,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 93984,
-      "sha256": "adf02ac026110aafc7c38da70e7a476697cd62fd3a4da061dbcd977f2f3d40ea",
+      "bytes": 94945,
+      "sha256": "eb35d03885e7439438bd6f782cb9231a3f5553398c9013041a640fe4d61bd32d",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {
@@ -2694,6 +2704,11 @@
           "level": 3,
           "title": "内部模型与数据所有权",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "当前实现的物理目录",
+          "anchor": "source-layout"
         },
         {
           "level": 2,

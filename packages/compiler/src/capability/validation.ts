@@ -1,8 +1,9 @@
 import type { PureFunctionManifest } from '@form-engine/protocol/capability';
-import { Diagnostics, at } from './diagnostics.js';
-import { snapshot, JsonInputError } from './json.js';
-import { structure, structuralErrors } from './structure.js';
-import type { ContractValidationResult } from './types.js';
+import { Diagnostics } from '../diagnostics/collector.js';
+import { at } from '../common/pointer.js';
+import { snapshot, JsonInputError } from '../common/json.js';
+import { structure, structuralErrors } from '../validation/structure.js';
+import type { ContractValidationResult } from '../types.js';
 
 /** Standalone declaration checks; never imports or invokes an implementation. */
 function validate(value: unknown, kind: 'material' | 'pureFunction'): ContractValidationResult {

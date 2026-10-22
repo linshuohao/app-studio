@@ -231,6 +231,48 @@ Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各�
 
 ## 6. 构建、类型与样式契约 {#engineering-contracts}
 
+### 包目录与模块组织 {#package-source-layout}
+
+所有 packages 下的包采用同一套目录骨架，职责模块按各自领域命名：
+
+```text
+packages/<package>/
+  src/
+    index.ts                  # 公共入口与导出
+    <职责模块>/               # 按知识所有权组织实现 / 类型
+  tests/
+    <职责模块>/               # 对应模块测试；小包可直接放测试文件
+    fixtures.ts               # 有共享测试数据时建立
+  scripts/                    # 有包级生成 / 工具脚本时建立
+  schemas/                    # 有交付 Schema 时建立
+  tsconfig.json               # 生产源码类型检查
+  tsconfig.tests.json         # 存在 TS 测试时独立检查测试
+  vitest.config.ts
+  tsdown.config.ts
+  package.json
+```
+
+src 不混放测试文件；Vitest 从 tests 发现包内测试。测试可以通过包内相对路径引用 src，但跨包仍经包名和 exports。生产 tsconfig 只包含 src，测试 tsconfig 继承生产规则并按需补 Node / 测试库类型，包 typecheck 同时执行两项。测试数据与测试辅助函数放在 tests，不进入生产导出。
+
+统一的是源码、测试、工具和交付物的边界，不要求所有包复制同一套业务目录。Protocol 保留 definition / capability / prepared；Compiler 按下表组织；Runtime 等占位包在实际职责落地时再建立相应模块，不先创建空层次。包根保留配置与 README；src 根可保留公共类型和已有 engineering 联验入口。内部模块直接导入所需文件，不为每个目录增加无用途的转导出入口。
+
+| Compiler 目录 | 当前职责 |
+| --- | --- |
+| pipeline | compile 入口、阶段顺序与失败返回 |
+| input | 输入快照 / 结构接收、简写规范化与来源映射 |
+| capability | 确定 Catalog 查询、Manifest 自检、能力锁收集 |
+| analysis/schema | Schema 资源 / 引用模型、结构连接证明、静态值校验；三者分文件 |
+| view | 物料 / Binding / Slot 检查、静态 ValueSpec 遍历 |
+| output | Prepared 装配与输出自检 |
+| diagnostics / validation / common | 统一诊断收集、协议结构校验、JSON / 对象 / Pointer 基础操作 |
+| tests/pipeline / tests/capability | 真实编译行为与独立契约自检；共享夹具位于 tests/fixtures.ts |
+
+这次目录调整只拆职责和移动既有测试，公共 exports、编译输入输出及 I01 支持范围不变；后续表达式、规则等按真实实现增加模块，不以目录存在作为能力完成依据。
+
+目录迁移后全仓 pnpm check 已通过，包括 Compiler 原有 41 个用例、Protocol 48 个用例、React 包测试及独立测试类型检查、依赖边界、构建、HTTP 集成和六包隔离打包消费。阅读页重新生成并通过同步与链接检查。本次没有 UI 行为改动，未运行浏览器 E2E；没有新增 ADR 或调整后续实施范围。
+
+### 构建与消费约束
+
 - ESM 优先，公开 JS、d.ts 和 Source Map；CJS 仅在出现真实消费者时补充及验证。Next / Nest 各自构建，不能用统一 tsconfig 覆盖框架所需模块解析或装饰器选项。
 - TS 开启 strict、noUncheckedIndexedAccess，逐包处理框架必要差异；核心限制 Node / DOM 专有全局，服务与 React 使用各自环境配置。异常 any / ts-ignore 必须有理由和覆盖场景。
 - 普通包不跨源码路径 alias 导入，始终经包名及 exports 消费：开发 / 单元与工作区集成测试使用 development 源码入口，生产构建和隔离打包消费者使用默认 dist 入口；生产依赖顺序包括类型产物。Compiler 在 Node 侧不加载 React；已发布表单运行不带 Compiler / Studio / 平台在线依赖。

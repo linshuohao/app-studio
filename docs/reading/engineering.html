@@ -8,7 +8,7 @@
   <title>工程工具链与初始化方案 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=f73f08f9aae4" defer></script>
+  <script src="assets/knowledge-index.js?v=c615b4b0f87e" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -370,6 +370,70 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 </section>
 <section class="section" id="engineering-contracts"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>6. 构建、类型与样式契约</h2></div></div>
 
+<h3 id="package-source-layout">包目录与模块组织</h3>
+<p>所有 packages 下的包采用同一套目录骨架，职责模块按各自领域命名：</p>
+<div class="code-box"><div class="code-head"><span>TEXT</span><button class="copy" type="button">复制</button></div><pre><code>packages/&lt;package&gt;/
+  src/
+    index.ts                  # 公共入口与导出
+    &lt;职责模块&gt;/               # 按知识所有权组织实现 / 类型
+  tests/
+    &lt;职责模块&gt;/               # 对应模块测试；小包可直接放测试文件
+    fixtures.ts               # 有共享测试数据时建立
+  scripts/                    # 有包级生成 / 工具脚本时建立
+  schemas/                    # 有交付 Schema 时建立
+  tsconfig.json               # 生产源码类型检查
+  tsconfig.tests.json         # 存在 TS 测试时独立检查测试
+  vitest.config.ts
+  tsdown.config.ts
+  package.json
+</code></pre></div>
+<p>src 不混放测试文件；Vitest 从 tests 发现包内测试。测试可以通过包内相对路径引用 src，但跨包仍经包名和 exports。生产 tsconfig 只包含 src，测试 tsconfig 继承生产规则并按需补 Node / 测试库类型，包 typecheck 同时执行两项。测试数据与测试辅助函数放在 tests，不进入生产导出。</p>
+<p>统一的是源码、测试、工具和交付物的边界，不要求所有包复制同一套业务目录。Protocol 保留 definition / capability / prepared；Compiler 按下表组织；Runtime 等占位包在实际职责落地时再建立相应模块，不先创建空层次。包根保留配置与 README；src 根可保留公共类型和已有 engineering 联验入口。内部模块直接导入所需文件，不为每个目录增加无用途的转导出入口。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Compiler 目录</th>
+<th>当前职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pipeline</td>
+<td>compile 入口、阶段顺序与失败返回</td>
+</tr>
+<tr>
+<td>input</td>
+<td>输入快照 / 结构接收、简写规范化与来源映射</td>
+</tr>
+<tr>
+<td>capability</td>
+<td>确定 Catalog 查询、Manifest 自检、能力锁收集</td>
+</tr>
+<tr>
+<td>analysis/schema</td>
+<td>Schema 资源 / 引用模型、结构连接证明、静态值校验；三者分文件</td>
+</tr>
+<tr>
+<td>view</td>
+<td>物料 / Binding / Slot 检查、静态 ValueSpec 遍历</td>
+</tr>
+<tr>
+<td>output</td>
+<td>Prepared 装配与输出自检</td>
+</tr>
+<tr>
+<td>diagnostics / validation / common</td>
+<td>统一诊断收集、协议结构校验、JSON / 对象 / Pointer 基础操作</td>
+</tr>
+<tr>
+<td>tests/pipeline / tests/capability</td>
+<td>真实编译行为与独立契约自检；共享夹具位于 tests/fixtures.ts</td>
+</tr>
+</tbody>
+</table></div>
+<p>这次目录调整只拆职责和移动既有测试，公共 exports、编译输入输出及 I01 支持范围不变；后续表达式、规则等按真实实现增加模块，不以目录存在作为能力完成依据。</p>
+<p>目录迁移后全仓 pnpm check 已通过，包括 Compiler 原有 41 个用例、Protocol 48 个用例、React 包测试及独立测试类型检查、依赖边界、构建、HTTP 集成和六包隔离打包消费。阅读页重新生成并通过同步与链接检查。本次没有 UI 行为改动，未运行浏览器 E2E；没有新增 ADR 或调整后续实施范围。</p>
+<h3 id="构建与消费约束">构建与消费约束</h3>
 <ul>
 <li>ESM 优先，公开 JS、d.ts 和 Source Map；CJS 仅在出现真实消费者时补充及验证。Next / Nest 各自构建，不能用统一 tsconfig 覆盖框架所需模块解析或装饰器选项。</li>
 <li>TS 开启 strict、noUncheckedIndexedAccess，逐包处理框架必要差异；核心限制 Node / DOM 专有全局，服务与 React 使用各自环境配置。异常 any / ts-ignore 必须有理由和覆盖场景。</li>

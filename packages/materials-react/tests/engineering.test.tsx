@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { expect, it } from 'vitest';
-import { EngineeringInput } from './engineering';
+import { EngineeringInput } from '../src/engineering.js';
 it('forwards real controlled input without adding form state semantics', async () => {
   function Example() {
     const [value, setValue] = useState('');

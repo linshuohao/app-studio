@@ -8,7 +8,7 @@
   <title>Compiler 详细设计与实施 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
   
-  <script src="assets/knowledge-index.js?v=f73f08f9aae4" defer></script>
+  <script src="assets/knowledge-index.js?v=c615b4b0f87e" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -693,6 +693,9 @@
 </tbody>
 </table></div>
 <p>包依赖仍为 compiler → protocol；不导入 runtime、renderer、React 组件或实际业务纯函数。Schema 结构检查沿用已确认 Ajv 路线，算法实现保持当前 TS / 浏览器可消费边界，不以 Node-only 全局状态作为隐式前提。</p>
+<h3 id="source-layout">当前实现的物理目录</h3>
+<p>遵循<a href="engineering.html#package-source-layout" rel="noopener noreferrer">统一包目录约定</a>，生产代码放在 src，测试放在独立 tests 目录。当前 I01 的入口编排位于 pipeline；输入接收和规范化在 input；Catalog 读取、自检与锁收集在 capability；Schema 资源模型、连接证明和静态值校验在 analysis/schema，分别独立文件；物料节点与静态值遍历在 view；Prepared 装配在 output。diagnostics、validation、common 提供贯穿支撑。</p>
+<p>src/index.ts 维持公共导出，公共 SDK 类型保留在 src/types.ts；内部文件移动不新增公共子入口。tests/pipeline 覆盖真实 compile 行为，tests/capability 覆盖独立元信息自检，共享夹具单独维护。此次拆分不改变公共行为，也不提前建立尚未实现的表达式 / 规则模块。完整文件定位见包 README，统一约定与各职责说明以工程主题为准。</p>
 </section>
 <section class="section" id="pipeline"><div class="section-head"><div class="kicker">07 · FORM ENGINE</div><div class="section-title"><h2>六阶段主流程与失败路径</h2></div></div>
 

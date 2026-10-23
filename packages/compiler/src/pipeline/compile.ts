@@ -68,9 +68,11 @@ export function compile(input: CompileInput): CompileResult {
   );
   const values = new ValueCompiler(expressions);
   expressions.checkDeclarations();
-  const rules = compileRules(definition, values, catalog.host);
-  checkMessages(definition.validationMessages ?? [], expressions);
   const interactions = new InteractionCompiler(values, catalog.host);
+  const rules = compileRules(definition, values, catalog.host, (intent, env, pointer) =>
+    interactions.emit(intent, env, pointer),
+  );
+  checkMessages(definition.validationMessages ?? [], expressions);
   const context = {
     definitionId: definition.id,
     catalogSnapshotId: catalog.id,

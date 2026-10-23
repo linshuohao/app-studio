@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 47,
-    "documentation-tooling": 12,
+    "current-markdown": 50,
+    "documentation-tooling": 13,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 400,
-  "unique_byte_contents": 361,
+  "total_entries": 404,
+  "unique_byte_contents": 365,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18472,
-      "sha256": "3f50fc9de8a80a4596610a6632b69cb8ed9245db4d6aaa0ec66daa6cf4482e04",
+      "bytes": 19018,
+      "sha256": "598fc5f6a7b43e0937d776dbb6da089668f24c3f9d9243322ea868c3723350c8",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 11352,
-      "sha256": "4e4ed8185a3a05c5c6e1b308e34ac9285e6cd697bd15b481f1234642124077de",
+      "bytes": 12805,
+      "sha256": "718d33e44b23ef20a6520f4a8d596297b95b77f479aa759928acc2a6e354ead5",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -271,8 +271,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 45639,
-      "sha256": "6bee0eeecd8144dc15e95586617f1fc1649b2db8e48be46e0eb60d6b78eb4b14",
+      "bytes": 46234,
+      "sha256": "72c5400b50c8ab26f625d7b1a9cf027e109ebc8785598ec3d7dcf1bbafc36407",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -401,8 +401,8 @@
       "path": "docs/design/capability-map.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10086,
-      "sha256": "5638de534d4b19c51da0f2b2e391a1c9e211c4914253c42e6f7d477cd61652ff",
+      "bytes": 10112,
+      "sha256": "f1fa551da3be4f83bdcafd989b566e1009cd021256e85bf32ad72a56d00bbbaf",
       "mapping": "MAP-CAPABILITIES / 已有纵向职责与横向契约的阅读关系",
       "sections": [
         {
@@ -636,8 +636,8 @@
       "path": "docs/design/decisions/ADR-FE-005-watch-subscription.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3554,
-      "sha256": "128b6655b8f8285182ec411c5461d2dd8cbd8a5c773a6918ef34f8c8b75bb586",
+      "bytes": 4180,
+      "sha256": "6542dd40b2e69c188c7d5dd8bc2311e94fa00bcac56c1a366a054553d2168657",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -669,6 +669,11 @@
           "level": 3,
           "title": "2026-10-21：输入输出与精确表达式观察的局部修订",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-23 的局部修订",
+          "anchor": null
         }
       ]
     },
@@ -676,8 +681,8 @@
       "path": "docs/design/decisions/ADR-FE-006-command-flush.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 6325,
-      "sha256": "49dcab839ca006b542e7d67f916a768e6c71b299f7b3990d935a47ffcba47018",
+      "bytes": 6946,
+      "sha256": "6a71bd354d59b98d2f5e51cac61f716a2ad40b271832a0575c10622d5d267d38",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -718,6 +723,11 @@
         {
           "level": 3,
           "title": "2026-10-19：交互入口限制，数据层不做业务拦截",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-23 的局部修订",
           "anchor": null
         }
       ]
@@ -811,8 +821,8 @@
       "path": "docs/design/decisions/ADR-FE-009-errors-trace.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5444,
-      "sha256": "422bc5cfe2749a83ae5c7ad0d04a7ee8923d8714e4aa26f0baea16eccde6f333",
+      "bytes": 5750,
+      "sha256": "0055da4a11e65a9dec4b7911d8c67e7f0195678efbe255c6e899f518ccb8106b",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -851,8 +861,8 @@
       "path": "docs/design/decisions/ADR-FE-010-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 11166,
-      "sha256": "022af4726552675d0d6a5623f03658733ba5d5a0f510889e7a1ffd09be10d09b",
+      "bytes": 12170,
+      "sha256": "4a9817c90ad0c15a25c0a165cf0d701d19207fa4432cbb93586a71a3d10e3158",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -879,6 +889,11 @@
           "level": 2,
           "title": "推荐实现与未决边界",
           "anchor": "adr-010-open"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-22：统一校验批次与结果整理",
+          "anchor": null
         },
         {
           "level": 2,
@@ -1203,11 +1218,116 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-018-flush-round-protection.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 4267,
+      "sha256": "f2bfbebe754bc31de238ea41715d6ce65867b469428cec6ae4ab968670c56d0d",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与替代范围",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决定",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "取舍与未完成工作",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "来源",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-019-host-context-replacement.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 3906,
+      "sha256": "87c08ceef5f940d93e42fce7a0311b8ac554fd9341db60927ba4a6071e39ee7e",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-019：Host 显式替换只读 Context 与统一失效",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "问题与场景",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认决定",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "取舍、接缝与状态",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "来源",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-020-reaction-state-host.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 4054,
+      "sha256": "8233a1c4a2c227c4cf92b14a4df758dfa6b88ac16479e1dade9412c22eafb294",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-020：Reaction 显式状态观察与 Host 行为出口",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与确认范围",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "已确认选择",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "局部替代与延续",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "收益、代价与状态",
+          "anchor": null
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 43545,
-      "sha256": "ab2245fbafe48968c972a139cfedb510746b6b97cc0c1067a6d3f282afb144d6",
+      "bytes": 46157,
+      "sha256": "b22969a0d3acf56c3bc195f72ff7d57f09cdec0e70234ba929a0ea0337930b9b",
       "mapping": "SRC-DEP / SRC-V05 / K10–K13",
       "sections": [
         {
@@ -1314,6 +1434,11 @@
           "level": 3,
           "title": "Adapter 的组件生命周期与回调清理",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "统一观察注册与分源通知",
+          "anchor": "state-observation"
         }
       ]
     },
@@ -1321,14 +1446,24 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 143025,
-      "sha256": "83956e5ae18653c5737646613047fff02dea8a8e6fe209054bfa064c85adfc4f",
+      "bytes": 147923,
+      "sha256": "ebcbf02eee184886024d7b22c0287c4a37b6a90950e4e7cbda954e8180be8ea6",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
           "level": 1,
           "title": "设计决策与讨论演进",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-22：运行时全景与外部能力展示",
+          "anchor": "runtime-overview-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-22：L3 整体领域骨架与剩余行为收敛",
+          "anchor": "l3-domain-baseline-confirmed"
         },
         {
           "level": 2,
@@ -1784,6 +1919,11 @@
           "level": 3,
           "title": "Compiler I01 实施",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-10-23：Reaction 状态观察与 Host 行为统一",
+          "anchor": "reaction-state-evolution"
         }
       ]
     },
@@ -1791,8 +1931,8 @@
       "path": "docs/design/design-review.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17633,
-      "sha256": "35605df7da579bafe404d80027a0bde264f131267704dccaca11c2ec3ca0d260",
+      "bytes": 18109,
+      "sha256": "c4599c555b8f192605df74627ffb80f72c382f76158512a4965acc256210e38d",
       "mapping": "REVIEW-FE-001 / 迁移的约束与冲突证据",
       "sections": [
         {
@@ -1877,7 +2017,7 @@
       "role": "current-markdown",
       "coverage": "indexed",
       "bytes": 50554,
-      "sha256": "7de9e00e68f1b5cc6b1421773a2eb0be19975dcebbb7af118781a59acb9cc6a2",
+      "sha256": "e90bd0f2cec6f3e7060a686ad8dbb1353993386bc9559e7592d612651c4d3025",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2026,8 +2166,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13939,
-      "sha256": "a30df2df84ff0bf65ee00f6af81fb8bdffa3bf4f7649bd7f96f07496d9a7d53a",
+      "bytes": 16309,
+      "sha256": "9d952b408c2a5b295c4865ba248ac979e2cae688c209eb2ce947958821494fbb",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -2072,6 +2212,11 @@
         },
         {
           "level": 3,
+          "title": "Host 显式替换 Context",
+          "anchor": "host-context-update"
+        },
+        {
+          "level": 3,
           "title": "Host 接入与业务输出的已确认契约",
           "anchor": null
         },
@@ -2091,8 +2236,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 35922,
-      "sha256": "3a3844e6bccebd5f2c969715a21f82e6be8dbc3a1fd195b64298c1991e698975",
+      "bytes": 38295,
+      "sha256": "f61543aa9d119013578b137bd49e33bf754fdfebf623c69c2b4947e3e3adbcf2",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2117,7 +2262,7 @@
         },
         {
           "level": 2,
-          "title": "待决策事项",
+          "title": "待决策与契约整理事项",
           "anchor": "open-decisions"
         },
         {
@@ -2164,6 +2309,11 @@
           "level": 3,
           "title": "请求开发接入的实现目标补齐",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "状态观察与 Host 行为的增量状态",
+          "anchor": "reaction-state-status"
         }
       ]
     },
@@ -2171,8 +2321,8 @@
       "path": "docs/design/l1/01-foundation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13295,
-      "sha256": "01dcbca85a56886594d649e5b008f41a76ecba4ebe6b5b242ac7032b3071b8a8",
+      "bytes": 13366,
+      "sha256": "7a8db202d4b2b74a918af3d69a26821931a1e3f98e78bc2250489268ef303692",
       "mapping": "SRC-L1 / K01 / K10–K11",
       "sections": [
         {
@@ -2236,8 +2386,8 @@
       "path": "docs/design/l1/02-data-reference-scope.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 7252,
-      "sha256": "e028285345c5ab2149c414e12d4121578444d4b25536c6b44f999ce27bf17c4d",
+      "bytes": 7438,
+      "sha256": "57656d2399f917958191661e97c16c268f83c12938dcf13e69086644b52f0033",
       "mapping": "SRC-L1 / K03–K04 / K17–K22",
       "sections": [
         {
@@ -2271,8 +2421,8 @@
       "path": "docs/design/l1/03-expression-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 16852,
-      "sha256": "4479c675a33617d12f8ffe19fdbeb2e79eed0c3c7136ed0704b341dbcdc6cb0b",
+      "bytes": 17337,
+      "sha256": "0fc4d69689fae95aa506116be732070c48db354197f2098b3ef2eb1e1b4f66c5",
       "mapping": "SRC-L1 / K05–K06 / K12 / K25–K28",
       "sections": [
         {
@@ -2326,8 +2476,8 @@
       "path": "docs/design/l1/04-command-reaction.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 8500,
-      "sha256": "5040e84976adc6f9c8796a4d6db16e66c1de10acf341ce44e91033f6ff868481",
+      "bytes": 12527,
+      "sha256": "a525c5460c130176f61dbeb8ee3dd554498e62a646719fe98cee852d53a803e8",
       "mapping": "SRC-L1 / K14–K16 / K20 / K23",
       "sections": [
         {
@@ -2349,6 +2499,16 @@
           "level": 2,
           "title": "Reaction：明确触发与条件的边界",
           "anchor": "reactions"
+        },
+        {
+          "level": 2,
+          "title": "状态观察与 Host 行为出口",
+          "anchor": "reaction-state-host"
+        },
+        {
+          "level": 3,
+          "title": "旧 Reaction 类型示意（已局部替代）",
+          "anchor": "reaction-legacy-type"
         }
       ]
     },
@@ -2451,8 +2611,8 @@
       "path": "docs/design/l1/06-lifecycle-profiles.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5234,
-      "sha256": "d429490807843cc353217ac4569d0344c5f2bd3d7d846f084f2e88f2c170bb5d",
+      "bytes": 5526,
+      "sha256": "0224206f599c6e8b4a5f79ebe6fc73c1d9088604c3573d3b18ea8e667ec1071d",
       "mapping": "SRC-L1 / SRC-HOST / K20–K22 / K28",
       "sections": [
         {
@@ -2506,8 +2666,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18542,
-      "sha256": "3e4460c8d779f8eaa77586f0ce8b292bf81daa9a5bce6d34d3126b4537270dc6",
+      "bytes": 19012,
+      "sha256": "b541f5a379310f165c552bb72eb2719314d3ef273307dc12b42da88468f7c4d6",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -2616,8 +2776,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 95978,
-      "sha256": "8d5c1cdf6fdd3f438beca116e795419911074eb0ec362b9be38c820322c430df",
+      "bytes": 97593,
+      "sha256": "ab40e65e4ce6631dc651923f7d459a42d609b0cfcf1c90c407b61fde9d2a3f41",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {
@@ -2974,6 +3134,11 @@
           "level": 2,
           "title": "依据与当前代码状态",
           "anchor": "sources"
+        },
+        {
+          "level": 2,
+          "title": "Reaction 状态与 Host 出口的编译衔接",
+          "anchor": "compiler-reaction-state"
         }
       ]
     },
@@ -2981,8 +3146,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 67349,
-      "sha256": "bbbe48e827de4b1c86316467981e4c964a64a5dc24b726d0e2a74aeac1e66a98",
+      "bytes": 68286,
+      "sha256": "5de9cad576ad46d52eedee4963d357c955b1a28272b929e14262ecd4c06e640f",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -3169,6 +3334,11 @@
           "level": 3,
           "title": "请求映射完整性与实际注册边界",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "状态观察与响应项的兼容增量",
+          "anchor": "prepared-state-actions"
         }
       ]
     },
@@ -3176,8 +3346,8 @@
       "path": "docs/design/l3-data-scope.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 29506,
-      "sha256": "4b7cbad276d1f8322887a57081700db2c1d1548251a40ee3018b7feaf45cc0e4",
+      "bytes": 29579,
+      "sha256": "ef6110ecd0379df0d9d73656bc7aa7d26ae1e407fb80e1181d63d8ca3ee2ee8d",
       "mapping": "DESIGN-L3-DATA / 逐 Command 数据、快照、Scope 与完整行为验收迁移",
       "sections": [
         {
@@ -3246,8 +3416,8 @@
       "path": "docs/design/l3-observability.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 6383,
-      "sha256": "27fa6a49caf643068158469824a53fcb1b21e43580e48a1a274251e4f3b3dad9",
+      "bytes": 6415,
+      "sha256": "09557d11739b138cab6d92f4711c8c3ce63c9df0f0e41837cf89ee2891f825ce",
       "mapping": "DESIGN-L3-DIAGNOSTICS / 运行事实、Trace 与开发工具说明迁移",
       "sections": [
         {
@@ -3276,8 +3446,8 @@
       "path": "docs/design/l3-reactive-engine.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 48903,
-      "sha256": "f24d4bc59a8f13b269ced6a1b025d6150e4afa40c69e86b46d64f5a4ee49a83b",
+      "bytes": 68257,
+      "sha256": "da6262ad8750512a34924a6ffd854669e40e66ee010863291ab720403ccc40ca",
       "mapping": "SRC-V04 / SRC-V05 / SRC-V06 / SRC-HOST / K14–K24",
       "sections": [
         {
@@ -3287,8 +3457,18 @@
         },
         {
           "level": 2,
+          "title": "运行时、调度与外部能力全景",
+          "anchor": "runtime-overview"
+        },
+        {
+          "level": 2,
           "title": "L3 · Runtime：状态、身份与内部执行",
           "anchor": "runtime"
+        },
+        {
+          "level": 3,
+          "title": "整体领域骨架与协作入口",
+          "anchor": "l3-domain-model"
         },
         {
           "level": 3,
@@ -3389,6 +3569,11 @@
           "level": 3,
           "title": "业务数据防御与内部管理结构",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "校验观察与 Host 行为的调度交接",
+          "anchor": "runtime-state-actions"
         }
       ]
     },
@@ -3396,8 +3581,8 @@
       "path": "docs/design/l3-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 38216,
-      "sha256": "9b30c38b25c0ca8c1633e269cb1243db66029f9d0baa465e5b1b808a78be4995",
+      "bytes": 44211,
+      "sha256": "f39cc15b5307f5ffa6e215d1c6e8aa4c854560acaff6213dacb7a9bfd253d825",
       "mapping": "SRC-V07 / K25–K28",
       "sections": [
         {
@@ -3471,6 +3656,11 @@
           "anchor": "validation-completeness"
         },
         {
+          "level": 3,
+          "title": "完整结果的信息结构与组合",
+          "anchor": "validation-result-contract"
+        },
+        {
           "level": 2,
           "title": "跨层交付、替代方案与取舍",
           "anchor": "validation-layers"
@@ -3509,6 +3699,11 @@
           "level": 3,
           "title": "输入值与校验对象的一致性",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "字段状态观察与逐结果通知",
+          "anchor": "validation-state-observation"
         }
       ]
     },
@@ -3516,8 +3711,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 26592,
-      "sha256": "dfd1a5fe44e74997e24be18ce0459e16c11bffdbf0cdbae10dd2cded650f8f23",
+      "bytes": 28302,
+      "sha256": "51529a656fdd43b645d7b83a57cc314318828e9e6fee7f2bccbaa6a1ba0f7c49",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {
@@ -3654,6 +3849,11 @@
           "level": 3,
           "title": "请求接入预检与页面错误",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "状态订阅的统一交接",
+          "anchor": "renderer-state-subscription"
         }
       ]
     },
@@ -3836,8 +4036,8 @@
       "path": "docs/design/usage-guide.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 20620,
-      "sha256": "3db1ab2a8c7e43253a4ff9b9171ef12fbfbffadcff7d0c08cba7b9667deecc21",
+      "bytes": 20824,
+      "sha256": "c0fbd257badf8dbfad2861d2908f53de210f467e635f15b4583ca59b3e14bc8b",
       "mapping": "SRC-L1 / SRC-V05 / SRC-HOST / SRC-V07",
       "sections": [
         {
@@ -23972,8 +24172,8 @@
       "path": "tools/docs/diagrams.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 3119,
-      "sha256": "a17132f9779c7b1910bd58f874dcc4ecf3cd83282d128455f7bf7341772cdbfb",
+      "bytes": 6710,
+      "sha256": "0ff91b5a3c33b6e6362c2d0cca383ecb6069231361602d8393a3e4ea683ab0c0",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -24005,11 +24205,20 @@
       "sections": []
     },
     {
+      "path": "tools/docs/test_diagrams.py",
+      "role": "documentation-tooling",
+      "coverage": "indexed",
+      "bytes": 3519,
+      "sha256": "2dca4059c081afa7faada21d50c7fb10381d07f8a94ec225602bed89b300f09d",
+      "mapping": "文档生成 / 盘点；非引擎实现",
+      "sections": []
+    },
+    {
       "path": "tools/docs/test_knowledge.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 9192,
-      "sha256": "d55491576a7d4733209d03cb3531cd0fdf5714d35a87556ea902cbd6868464bf",
+      "bytes": 9363,
+      "sha256": "7cfe13e3e90258e2395b457b33419f13634e15665bcdff7d6e1da5aae8cd86fd",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -24017,8 +24226,8 @@
       "path": "tools/docs/test_search.cjs",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 2896,
-      "sha256": "1359deb380d741c1c914cf60ed46c991b02b29b67da6d642657055cf09cdc39f",
+      "bytes": 3152,
+      "sha256": "085e66120011f988f2be7aea1019b17c0140697b988174ae0fa0062b2c27beba",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -24060,8 +24269,8 @@
       "path": "docs/reading/assets/documentation.css",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 25439,
-      "sha256": "bd375cbbd539748103c911355d63422960196acef505f670dd6886d21a4157f5",
+      "bytes": 26419,
+      "sha256": "91b5ad1ba5854106e0e0b30aa69a775a9a6da9f71bc68ba43b13b3c520b555ad",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

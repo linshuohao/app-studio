@@ -1,4 +1,4 @@
-import type { Constraint, FormDefinition } from '@form-engine/protocol/definition';
+import type { Constraint, FormDefinition, HostEventIntent } from '@form-engine/protocol/definition';
 import type {
   PreparedConstraint,
   PreparedReaction,
@@ -25,7 +25,8 @@ interface RuleEntry {
 export function compileRules(
   definition: FormDefinition,
   values: ValueCompiler,
-  host?: HostContract,
+  host: HostContract | undefined,
+  emit: (intent: HostEventIntent, env: LexicalEnvironment, pointer: string) => void,
 ) {
   const { expressions } = values;
   const { references, diagnostics, source } = expressions;
@@ -228,13 +229,20 @@ export function compileRules(
     duplicate(rule.id, at(pointer, 'id'));
     const { scope, ...shared } = rule;
     const bound = references.bind(scope, rootEnvironment(), at(pointer, 'scope'));
+    const env = { ...bound.env, validation: true };
     rule.watch.forEach((item, i) =>
-      references.resolve(item, bound.env, at(at(pointer, 'watch'), i)),
+      references.resolve(
+        item.source === 'validation' ? item.field : item,
+        env,
+        at(at(pointer, 'watch'), i),
+      ),
     );
-    expressions.boolean(rule.when, bound.env, at(pointer, 'when'));
-    rule.then.forEach((command, i) =>
-      checkCommand(command, bound.env, at(at(pointer, 'then'), i), values),
-    );
+    expressions.boolean(rule.when, env, at(pointer, 'when'));
+    rule.then.forEach((action, i) => {
+      const location = at(at(pointer, 'then'), i);
+      if ('type' in action) emit(action, env, location);
+      else checkCommand(action, env, location, values);
+    });
     return {
       ...shared,
       ...(bound.scope ? { scope: bound.scope } : {}),

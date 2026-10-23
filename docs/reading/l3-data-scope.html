@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>L3 数据、快照与 Scope · 动态表单引擎</title>
-  <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -95,7 +98,7 @@
 再次读取先前持有的 v1：仍为 age = 20
 联动 premium 此刻可能尚未完成，需分别判断收敛状态。
 </code></pre></div>
-<p>默认 <code>batch</code> 和 Reaction 的 <code>then[]</code> 都按顺序执行 Command，各条有效修改实时生效，不默认回滚先前成功写入。该边界取代“候选数据树中完成整个 batch 后原子提交”的早期候选。业务 Invalid、Scope 已删除、非法数组位置、非法 Command 是不同结果；后几种属于结构性执行失败，单个结构操作仍须保持内部一致性。可隔离的单条 Command 失败应记录并报告，后续独立 Command 继续尝试，其他 Reaction 仍只由有效 Data Change 和自身 watch 决定；精确错误类型、返回值与无法继续的结构性条件待固化。</p>
+<p>默认 <code>batch</code> 按顺序执行 Command，Reaction 的 <code>then[]</code> 按顺序执行 Command / host.emit，各条有效修改实时生效，不默认回滚先前成功写入。该边界取代“候选数据树中完成整个 batch 后原子提交”的早期候选。业务 Invalid、Scope 已删除、非法数组位置、非法 Command 是不同结果；后几种属于结构性执行失败，单个结构操作仍须保持内部一致性。可隔离的单条 Command 失败应记录并报告，后续独立 Command 继续尝试，其他 Reaction 仍由有效 Data Change / Validation 发布和自身显式 watch 决定；精确错误类型、返回值与无法继续的结构性条件待固化。</p>
 <p>组合 batch 的每条实际子 Command 仍分别取得前后状态并完成检测，不能仅在整组结束后比较一次净结果。显式首次激活是独立入队原因；这里“按有效 Data Change”描述变化传播，不取消激活策略。</p>
 <p>两条显式 <code>array.insert</code> 各执行一次，不能因目标相同被合并；待执行 Reaction 的多次失效可以合并，两者属于不同层次。同值短路放在实际变化判定中，基本值应避免无意义传播；对象不默认全量深比较；推荐按观察值 Object.is 与存在性比较，子路径同值跳过、对象引用变化保守失效，具体编码继续固化。</p>
 </section>
@@ -656,7 +659,7 @@ execution events → use the separate execution observer interface
 <a href="#l3-array-lifecycle" data-to="l3-array-lifecycle" title="数组操作、生命周期与统一订阅"><span class="nav-num">08</span><span>数组操作、生命周期与统一订阅</span></a>
 <a href="#l3-command-sequence" data-to="l3-command-sequence" title="多 Command 轨迹与执行骨架"><span class="nav-num">09</span><span>多 Command 轨迹与执行骨架</span></a>
 <a href="#l3-v06-acceptance" data-to="l3-v06-acceptance" title="端到端设计验收与实现边界"><span class="nav-num">10</span><span>端到端设计验收与实现边界</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-DATA</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li></ul></details><details><summary>相关正文与历史 · 13</summary><ul><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-DATA</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 13</summary><ul><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

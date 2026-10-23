@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-006：即时非原子 Command 与最新状态 Flush · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="../assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="../assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -90,7 +93,7 @@
 <h3 id="2026-10-19规则顺序与宿主任务边界">2026-10-19：规则顺序与宿主任务边界</h3>
 <p>2026-10-19 已确认：Reaction 不声明彼此前后依赖、业务优先级或拓扑调度关系。一个完整业务计算优先在同一 Reaction 内表达；跨 Reaction 通过真实 Data Change 与自身 Watch 自然级联。业务不应依赖无关规则谁先执行，稳定调度顺序用于复现与排查，不是业务排序手段。多条规则竞争覆盖同一字段、结果依赖最后写入者时，先检查规则拆分与数据模型，不新增优先级或冲突仲裁协议。</p>
 <p>Pending 按具体 Reaction 实例去重，执行时读取最新输入；取出执行后再次被有效变化命中仍可重新入队。不承诺任意冲突配置都与顺序无关，也不改变同一 then[] 内显式 Command 的有序语义。同步回调写回归当前轮已确认，具体容器与调用栈处理留给实现验收。</p>
-<p>Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。</p>
+<p>以下是已由 <a href="ADR-FE-020-reaction-state-host.html" rel="noopener noreferrer">ADR-FE-020</a> 局部替代的旧 Host 接入限制，保留用于追溯：Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。</p>
 </section>
 <section class="section" id="adr-006-consequences"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>代价与影响</h2></div></div>
 
@@ -110,8 +113,12 @@
 <p>讨论记录见 <a href="../design-history.html#flush-callback-update" rel="noopener noreferrer">同轮写回</a>。</p>
 <h3 id="2026-10-19交互入口限制数据层不做业务拦截">2026-10-19：交互入口限制，数据层不做业务拦截</h3>
 <p>业务输入限制在交互入口落实；例如 maxItems=5 时界面禁用添加按钮，不发出插入 Command。数据层不依据业务 Schema 拦截写入：若 Host 导入或程序写入第六项，只要操作结构可执行，就写入 Working Data，再由 Validation 报告超限并阻止提交。目标不是数组、位置非法等结构性错误仍须拒绝，不能与业务校验失败混为一类。该边界统一适用于插入、修改和导入，保留暂时业务不合法的工作态，不增加逐 Command 业务预校验或事务机制。</p>
-<p>这澄清既有即时非原子 Command 原则，不新增 ADR 或协议字段；原 array.insert“受目标 Schema 约束”的模糊表述已修正。记录见 <a href="../design-history.html#input-validation-boundary-update" rel="noopener noreferrer">本轮讨论</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认跨 Reaction 不声明业务顺序；同步回调归当前轮已确认，队列细节待实现验收</p><nav class="decision-path"><a href="#adr-006-context">背景与原有候选</a><span>→</span><a href="#adr-006-decision">已确认选择</a><span>→</span><a href="#adr-006-consequences">代价与影响</a><span>→</span><a href="#adr-006-sources">来源与替代关系</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>早期候选树 / 整体原子 Batch</p><a href="../source-map.html#src-l1">SRC-L1</a></div><div><span class="status">已确认决策</span><p>有序即时 Command；默认非原子</p><a href="../source-map.html#src-v04">SRC-V04</a></div></div></section>
+<p>这澄清既有即时非原子 Command 原则，不新增 ADR 或协议字段；原 array.insert“受目标 Schema 约束”的模糊表述已修正。记录见 <a href="../design-history.html#input-validation-boundary-update" rel="noopener noreferrer">本轮讨论</a>。</p>
+</section>
+<section class="section" id="2026-10-23-的局部修订"><div class="section-head"><div class="kicker">05 · FORM ENGINE</div><div class="section-title"><h2>2026-10-23 的局部修订</h2></div></div>
+
+<p><a href="ADR-FE-020-reaction-state-host.html" rel="noopener noreferrer">ADR-FE-020</a> 局部替代本文中 Reaction 仅观察 Data、不能复用 Host 行为出口的限制：显式 watch 可含 ValidationWatch，then 可含既有 HostEventIntent。其余 Read / Watch / Subscription 分离、同步 Flush、Command 受控写入与去重原则继续有效。历史选择保留用于追溯，现行字段见<a href="../l1/04-command-reaction.html#reaction-state-host" rel="noopener noreferrer">Reaction</a>。</p></section>
+        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认跨 Reaction 不声明业务顺序；同步回调归当前轮已确认，队列细节待实现验收</p><nav class="decision-path"><a href="#adr-006-context">背景与原有候选</a><span>→</span><a href="#adr-006-decision">已确认选择</a><span>→</span><a href="#adr-006-consequences">代价与影响</a><span>→</span><a href="#adr-006-sources">来源与替代关系</a><span>→</span><a href="#2026-10-23-的局部修订">2026-10-23 的局部修订</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>早期候选树 / 整体原子 Batch</p><a href="../source-map.html#src-l1">SRC-L1</a></div><div><span class="status">已确认决策</span><p>有序即时 Command；默认非原子</p><a href="../source-map.html#src-v04">SRC-V04</a></div></div></section>
         
         
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
@@ -122,8 +129,9 @@
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#adr-006-context" data-to="adr-006-context" title="背景与原有候选"><span class="nav-num">01</span><span>背景与原有候选</span></a>
 <a href="#adr-006-decision" data-to="adr-006-decision" title="已确认选择"><span class="nav-num">02</span><span>已确认选择</span></a>
 <a href="#adr-006-consequences" data-to="adr-006-consequences" title="代价与影响"><span class="nav-num">03</span><span>代价与影响</span></a>
-<a href="#adr-006-sources" data-to="adr-006-sources" title="来源与替代关系"><span class="nav-num">04</span><span>来源与替代关系</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-006</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认跨 Reaction 不声明业务顺序；同步回调归当前轮已确认，队列细节待实现验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li></ul></details><details><summary>相关正文与历史 · 10</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
+<a href="#adr-006-sources" data-to="adr-006-sources" title="来源与替代关系"><span class="nav-num">04</span><span>来源与替代关系</span></a>
+<a href="#2026-10-23-的局部修订" data-to="2026-10-23-的局部修订" title="2026-10-23 的局部修订"><span class="nav-num">05</span><span>2026-10-23 的局部修订</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-006</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认跨 Reaction 不声明业务顺序；同步回调归当前轮已确认，队列细节待实现验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li></ul></details><details><summary>相关正文与历史 · 11</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="../source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
       </aside>
       </div>
     </div>

@@ -8,11 +8,17 @@ modules:
 - M14
 tags: []
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-EARLY
 - SRC-DEP
-related: {}
-last_reviewed: '2026-10-20'
+related:
+  decisions:
+  - ADR-FE-020
+  - ADR-FE-018
+  - ADR-FE-019
+last_reviewed: '2026-10-23'
 navigation:
   group: 05 · L4 呈现
   order: 60
@@ -201,6 +207,8 @@ L4 将兼容 Prepared View 与 Runtime 当前状态呈现为目标平台组件�
 5. 只读数据遵守已确认的输入复制 / 内部不可变 / 开发冻结契约；组件不直接修改接收对象。
 6. 动态 Props 求值失败作为对应物料的接入失败处理，不用旧结果冒充当前状态；具体错误形状归统一诊断 SDK。
 
+Host 显式替换 Context 是 Data watch 之外的管理失效入口：保守失效全部已挂载动态表达式，由 Adapter 重新取得 Runtime 求值结果；不自行监听 Host 对象原地修改，也不因 watch: [] 就永久缓存 Context 读取。普通 Data 更新继续按完整表达式的精确 watch 处理。见 [Context 交接](extension-integration.md#host-context-update)。
+
 ### 6. 输入、指令与确认交互
 
 - 普通编辑经物料解析并调用共用指令入口；符合目标类型时写相应值，非法中间文本可写 Working Data，由 Schema / Constraint 检查，不回退上一次合法值。
@@ -269,3 +277,11 @@ L4 行为专题已收敛，不再按已确认原则或常规框架实现逐项�
 ### 请求接入预检与页面错误
 
 按所选 Prepared 的请求需求在页面装配时检查实际 Host 注册，不能推迟到用户点击或条件子树首次挂载；缺失项关联物料显示局部配置错误并停止相应交互。开发页面明确标出物料、请求名、Host 名及来源位置；生产以业务提示呈现局部不可用，其他可用物料继续。调用层仍保留 error 兜底。物料请求类型、Host 处理函数和静态注册约束共同构成开发接入验收，见 [完整目标](l1/05-view-material-host.md#request-development-contract)；本轮不宣称已实现 SDK 或页面错误组件。
+
+## 状态订阅的统一交接 {#renderer-state-subscription}
+
+挂载时 Adapter 绑定实际 Scope，注册 Binding 与 Prepared 完整表达式的观察，并用一致初读交接获取当前值。Runtime 在有效变化发布后通知命中消费者，Adapter 重读权威 Data / Validation，并只重新求值失效表达式，再交框架更新 Props；不要求每次通知立即完成绘制。
+
+校验展示订阅 ValidationWatch（source / field / observe），数据展示仍使用 DataWatch。两者共用注册 / 通知 / 释放方式，但发布源和比较投影不同：Issues 相同而状态改变，只通知相应 status / state 观察。发布须先完成字段聚合与状态的一致更新，再同步通知；订阅不重放历史事件。字段 Issues 不放进组件自己的业务 Store。
+
+卸载或 Scope 改绑释放原观察并安全取得新快照；父条件观察不能随隐藏子树一并移除。View 的校验展示无需在 L1 新增 errorBind，也不因 Reaction 新增 ValidationReference 就允许任意持续 Props 读取校验状态；当前编译边界见[Compiler](l2/compiler.md#compiler-reaction-state)。精确 Runtime / Adapter API、缓存与框架接入仍待实现。

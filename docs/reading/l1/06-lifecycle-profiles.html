@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>生命周期与多视图交付 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="../assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="../assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="../decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="../decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="../decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="../decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="../decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="../decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -123,7 +126,7 @@
 <p>Definition 不增加 onInit、onReset、beforeSubmit 通用脚本，也不增加 isDirty、markClean、resetToBaseline 核心状态方法。具体实例装载 / 替换、稳定快照、错误与完成观察 SDK 仍待固化；这些工程契约不重新把业务编辑语义放回 Runtime。</p>
 <p>Runtime 随 Form / Scope 建立规则实例，runOnActivate 只控制新 Reaction 实例首次激活是否运行，默认不执行；根实例、新增成员与整数组替换的新成员一致适用。首次校验、主动完整校验与首次 View 读取分别有明确入口：完整校验覆盖全部适用规则，普通增量集合不能替代它。结果按来源 / 字段聚合，异步代次和完整结论仍须与有效输入关联，详见 <a href="../l3-validation.html" rel="noopener noreferrer">L3 校验</a>。subscribe 不是规则首次执行的别称；View 重挂不重新激活同一业务实例。删除、真实替换或销毁须处理失效订阅、Scope 和外部报告适用性。</p>
 <p>Host 如需初始联动完成后的业务快照，可观察相应完成结果后调用 snapshot 自行保存；何时保存和何时标 Clean 由业务决定。读取 snapshot 不隐式 Flush、不等待全部异步校验、不自动建立 Baseline。推荐 Host 先取得外部数据再创建实例；如提供显式装载入口，Host 仍须防止迟到响应覆盖编辑，不用普通 set 猜测业务加载是否结束。</p>
-<p>Reset 后 Watch 未变，已有 Reaction 就不新增入队，即使当前费率或期望计算结果不同。业务需通过正确 Watch 配置或明确数据修改表达目标；本次经用户确认保留现行 Context 契约，不新增 Context 写入命令或 Context Reaction.watch。例子与现行边界验收见 <a href="../l3-reactive-engine.html#l3-runtime-host-boundary" rel="noopener noreferrer">Runtime / Host 四条原则</a>。异常 / 整体预算停止、Pending 再触发与 异常轮次与 Validation / Submit 的完成衔接仍见 <a href="../l3-reactive-engine.html#l3-consumers" rel="noopener noreferrer">L3 契约</a>，不增加业务 Reset 执行模式。</p>
+<p>Reset 后 Watch 未变，已有 Reaction 就不新增入队，即使当前费率或期望计算结果不同。业务需通过正确 Watch 配置或明确数据修改表达目标；本次经用户确认保留现行 Context 契约，不新增 Context 写入命令或 Context Reaction.watch。例子与现行边界验收见 <a href="../l3-reactive-engine.html#l3-runtime-host-boundary" rel="noopener noreferrer">Runtime / Host 四条原则</a>。当前轮预算停止清空剩余 Reaction，后续新有效触发正常执行；Host 显式 Context 替换的失效交接见 <a href="../extension-integration.html#host-context-update" rel="noopener noreferrer">Context 管理</a>，不新增 Context Watch；Reaction 可另行显式观察 Validation。异常轮次与 Validation / Submit 的完成衔接见 <a href="../l3-reactive-engine.html#l3-consumers" rel="noopener noreferrer">L3 契约</a>，不增加业务 Reset 执行模式。</p>
 </section>
 <section class="section" id="profiles"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>多 Profile 与按需交付</h2></div></div>
 
@@ -155,7 +158,7 @@
         <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#lifecycle" data-to="lifecycle" title="实例装载、Host 恢复与提交职责"><span class="nav-num">01</span><span>实例装载、Host 恢复与提交职责</span></a>
 <a href="#profiles" data-to="profiles" title="多 Profile 与按需交付"><span class="nav-num">02</span><span>多 Profile 与按需交付</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-LIFECYCLE</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="../decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="../decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 8</summary><ul><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-LIFECYCLE</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 6</summary><ul><li><a href="../decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="../decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="../decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="../decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="../decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

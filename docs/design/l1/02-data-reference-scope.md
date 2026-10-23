@@ -11,9 +11,11 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
   - ADR-FE-002
   - ADR-FE-007
 sources:
+- SRC-REACTIONSTATE
 - SRC-L1
 - SRC-V06
 navigation:
@@ -99,7 +101,7 @@ type EventReference = {
 
 > **位置级约束**
 > 
-> Expression 可读取受允许的 Data / Context（Event 仅在交互上下文有效）；Command `target` 只能写 Data，不能写 Context、Event 或 Material Props。
+> Expression 可读取受允许的 Data / Context（Event 仅在交互上下文有效）；Reaction 的 when / action 值另可读取 ValidationReference，详见[校验状态观察](04-command-reaction.md#reaction-state-host)。Command `target` 只能写 Data，不能写 Context、Event、Validation 或 Material Props。
 
 ## ScopeBinder：局部词法绑定，不建全局注册表 {#scope}
 

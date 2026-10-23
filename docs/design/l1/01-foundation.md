@@ -10,9 +10,11 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
   - ADR-FE-001
   - ADR-FE-004
 sources:
+- SRC-REACTIONSTATE
 - SRC-L1
 navigation:
   group: 02 · L1 协议
@@ -63,7 +65,7 @@ Data 与 View 在语义上分离，在设计器中可以统一编辑。用户添
 
 - JSON Schema 定义数据结构与基础约束；Working Data 可暂时不合法；业务输出转换与检查归 Host。
 - Reference 统一寻址；ScopeBinder 建立词法名称。ScopeHandle 用于实例命令，模板参数传 Typed DataReference，不能把 Handle 当作业务 ID 发送给服务端。
-- Expression 为纯 AST，ValueSpec 通过显式 `$expr` 递归嵌入计算。Constraint 不写数据，Reaction 的变化传播只消费内部 Data Change；显式首次激活是独立入队原因，不是外部异步业务 Reaction。
+- Expression 为纯 AST，ValueSpec 通过显式 `$expr` 递归嵌入计算。Constraint 不写数据，Reaction 的变化传播消费显式 Data / Validation 观察目标；显式首次激活是独立入队原因，不是外部异步业务 Reaction。
 - View 由 MaterialNode / ScopeNode / TemplateUse 构成；具名 Profile 的值直接为 ViewNode，共享业务规则不因隐藏或 Profile 切换而裁剪。
 - Canonical 使用具名 `bindings` 和数组 `slots`；`bind`、`children` 只属于 Authoring 简写。
 
@@ -150,7 +152,7 @@ Material Registry 和 Host 是外部能力边界，不是要往 `FormDefinition`
 | D4 | Expression | **纯 AST + 递归 $expr** | 动态 JSON 值由显式包装识别 |
 | D5 | Constraint | **Internal / External** | 内部 when + assert 推导；外部 watch 合并 when，声明失效义务，不编排请求 |
 | D6 | Command | **有限数据修改集合** | 有效修改即时生效，batch 默认有序非原子；不等于任意 Action 脚本 |
-| D7 | Reaction | **watch / when / then，最新状态收敛** | 同实例 pending 可合并，显式首次激活可配置；变化传播只消费 Data，不按触发次数记账 |
+| D7 | Reaction | **watch / when / then，最新状态收敛** | 同实例 pending 可合并，显式首次激活可配置；变化传播按显式 Data / Validation 观察，不按触发次数记账 |
 | D8 | View | **Material / Scope / TemplateUse** | 每个 Profile 直接对应 ViewNode |
 | D9 | Binding | **Canonical: bindings 端口映射** | 不增加 read/write/validationBind |
 | D10 | Slots | **Canonical: slots** | children 是默认 Slot 简写 |

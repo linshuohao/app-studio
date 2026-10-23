@@ -11,8 +11,11 @@ modules:
 - M13
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-018
+  - ADR-FE-019
 sources:
+- SRC-L3BASELINE
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
 - SRC-L1
@@ -20,7 +23,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 120
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 status_note: 已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐
 ---
 
@@ -52,9 +55,15 @@ L2 自动补全可推导的 Validation 数据依赖，未知业务依赖由作�
 
 按 Source 保存、字段索引派生、同步原子替换、聚合内容变化才通知、默认消息模板加局部覆盖为推荐。过期 / 已销毁实例返回不能提交是必要正确性，具体代次 / token 实现为推荐。Issue、消息覆盖、多语言、Source / SDK 均未冻结。
 
-2026-10-19 确认：仅 B 初始入队时补齐 A，使用本轮前置结论，不复用历史通过结果；A 输入变化通过编译补全的依赖使 B 失效，不建立结果 PubSub。依赖补全不等于立即请求 Host，自动 / 失焦 / 主动策略、异步资格撤销、字段 Schema 资格范围和跨 Scope 绑定仍待固化。Reaction 显式 Watch 原则保持不变。`requires` / `validationMessages` 未作为当前候选 Canonical 字段发布，不通过本 ADR 自动加入。
+2026-10-19 确认：仅 B 初始入队时补齐 A，使用本轮前置结论，不复用历史通过结果；A 输入变化通过编译补全的依赖使 B 失效，不建立结果 PubSub。请求不在 Command 内立即发出，2026-10-22 已确认在 Flush 结束后的统一批次按同步前置执行内外校验；字段资格与唯一实例沿用现行基线，异步资格 / 通知 SDK 及实现待完成。Reaction 显式 Watch 原则保持不变。`requires` / `validationMessages` 未作为当前候选 Canonical 字段发布，不通过本 ADR 自动加入。
 
-无 Issue 不证明通过。完整返回需表达业务失败、不完备和输入过期，全部适用校验仍须完成；业务输出由 Host 转换和检查；Reaction 错误不自动阻止提交，联动熔断后仍可独立完整校验，通过后 Host 可提交对应快照；准确 valid / invalid / incomplete / stale 编码、等待范围、Context 证明与恢复接口仍待固化。Web Ajv / Dart 是 Adapter 方向，不宣称现有 Dart 库已通过；性能必须实测。
+无 Issue 不证明通过。完整返回需表达业务失败、不完备和输入过期，全部适用校验仍须完成；业务输出由 Host 转换和检查；Reaction 错误不自动阻止提交，联动熔断后仍可独立完整校验，通过后 Host 可提交对应快照；四类结果语义与全部适用任务等待已定，结构由维护者整合；Context 替换见 ADR-FE-019，当前轮熔断与后续新触发见 ADR-FE-018，具体 SDK 尚未实现。Web Ajv / Dart 是 Adapter 方向，不宣称现有 Dart 库已通过；性能必须实测。
+
+## 2026-10-22：统一校验批次与结果整理
+
+用户明确内部与外部校验共用 Flush 之后的执行流程：先根 Schema，再按稳定顺序与同步前置执行就绪规则。发起 External 后不串行等待网络，独立规则继续；普通增量覆盖命中任务及前置，完整校验覆盖全部适用义务。无 Reaction 时仍独立启动，不要求额外失焦或显式请求才执行外部校验。旧自动 / 失焦策略未冻结的描述至此收敛，不扩展异步前置 DAG。
+
+完整结果语义不再重开讨论，具体结构由维护者按 [信息模型](../l3-validation.md#validation-result-contract)整理；Host 显式 Context 替换使旧完整证明 / 外部任务失效，再经统一入口校验。来源见 [SRC-L3BASELINE](../source-map.md#src-l3-baseline)。
 
 ## 来源、演进与关联 {#adr-010-sources}
 

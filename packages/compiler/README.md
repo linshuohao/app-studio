@@ -96,7 +96,7 @@ if (result.success) {
 - 基础类型、简单对象、同构数组及可判定的简单联合的保守结构连接；已知不兼容与无法证明分别拒绝，不将业务数值 / 长度限制变成写入门禁。
 - 使用能力的 Manifest SHA-256 和输入制品摘要分别锁定，确定静态节点 ID，产物经过 Prepared Schema 自检。
 
-当前 `PREPARED_FORMAT_VERSION` 为 `form-engine.prepared/1`，只是未发布交换格式身份；Runtime 尚未实现，不代表已有兼容运行端。
+当前 `PREPARED_FORMAT_VERSION` 为 `form-engine.prepared/2`，只是未发布交换格式身份；Runtime 尚未实现，不代表已有兼容运行端。
 
 例如输入 `label: { $expr: { ref: { source: 'data', path: '/name' } } }`，输出在同一包装中加入 `watch: [{ source: 'data', path: '/name' }]`；内部 AST 不变。相同表达式出现在 Command / Payload 时只检查，不附加 watch。Issue target 不自动成为 Constraint 输入，Reaction 的 when / then 读取不变成触发来源。
 
@@ -123,3 +123,9 @@ const functionCheck = validatePureFunctionManifest({
 这两个入口目前检查结构、嵌入 Schema 语法和固定参数可选顺序；不证明实现符合声明，也不独立完成外部 Schema 资源闭包检查。Compiler 使用点另行处理相关资源、平台与模型连接。后续契约资源自检和能力开发工具沿同一规则演进。
 
 验证命令：`pnpm --filter @form-engine/compiler test`、`typecheck`、`lint`、`build`。隔离打包消费者由根 `pnpm packages:check` 验证，根 `pnpm check` 串联工程门禁。I05 的完整基准与浏览器消费、I06 的 Runtime / Adapter 联验仍待完成。
+
+Reaction 支持显式 Data / Validation 观察与有序 Command / host.emit 响应项，复用 Host
+事件名称 / Payload 检查，需求独立于 View 收集。Validation 引用仅在 Reaction 条件和动作
+按调用读取，不补充 watch；其他持续表达式或 Constraint 使用时明确诊断。
+Prepared 格式为 `form-engine.prepared/2`，明确拒绝旧 `/1` 目标，旧定义可重新编译。
+实际 Runtime 校验发布、Host 行为执行和 Adapter 订阅仍由后续模块实现。

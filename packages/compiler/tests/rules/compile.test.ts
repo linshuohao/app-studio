@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compile, type CompileInput } from '../../src/index.js';
 import type { DataReference, InternalConstraint } from '@form-engine/protocol/definition';
-import { input } from '../fixtures.js';
+import { input, digest } from '../fixtures.js';
 
 const data = (path: string, scope?: string): DataReference => ({
   source: 'data',
@@ -239,4 +239,116 @@ describe('rule preparation and lexical prerequisite transfer', () => {
     );
     expect(codes(value)).toContain('EXPRESSION_BUDGET_EXCEEDED');
   });
+});
+
+describe('Reaction Host actions and Validation observation', () => {
+  it('collects shared Host requirements without material events and preserves action order', () => {
+    const value = source();
+    const field = data('/name');
+    const watch = { source: 'validation' as const, field, observe: 'status' as const };
+    value.catalog.host = { events: { quote: { payloadSchema: { type: 'string' } } } };
+    value.definition.reactions = [
+      {
+        id: 'quote',
+        watch: [watch],
+        then: [
+          { type: 'host.emit', event: 'quote', payload: { $expr: { ref: watch } } },
+          { op: 'set', target: field, value: 'next' },
+          { type: 'host.emit', event: 'quote', payload: 'again' },
+        ],
+      },
+    ];
+    const output = prepared(value);
+    expect(output.hostRequirements.events).toEqual([{ name: 'quote', optional: false }]);
+    expect(output.definition.reactions![0]!.watch).toEqual([watch]);
+    expect(output.definition.reactions![0]!.then).toEqual(value.definition.reactions[0]!.then);
+  });
+  it('checks Host declarations, payloads and absence of Event context', () => {
+    const value = source();
+    value.catalog.host = { events: { quote: { payloadSchema: { type: 'string' } } } };
+    value.definition.reactions = [
+      {
+        id: 'x',
+        watch: [data('/name')],
+        then: [
+          { type: 'host.emit', event: 'missing' },
+          { type: 'host.emit', event: 'quote', payload: 42 },
+          {
+            type: 'host.emit',
+            event: 'quote',
+            payload: { $expr: { ref: { source: 'event', path: '' } } },
+          },
+        ],
+      },
+    ];
+    expect(codes(value)).toEqual(
+      expect.arrayContaining([
+        'HOST_EVENT_NOT_FOUND',
+        'HOST_EVENT_PAYLOAD_INVALID',
+        'EVENT_NOT_AVAILABLE',
+      ]),
+    );
+  });
+  it('resolves validation field scope and rejects validation reads in Constraint assertions', () => {
+    const value = source();
+    value.definition.reactions = [
+      {
+        id: 'x',
+        watch: [{ source: 'validation', field: data('/name', 'missing'), observe: 'issues' }],
+        then: [],
+      },
+    ];
+    expect(codes(value)).toContain('SCOPE_NOT_VISIBLE');
+    value.definition.reactions = [];
+    value.definition.constraints = [
+      {
+        id: 'c',
+        kind: 'internal',
+        assert: { ref: { source: 'validation', field: data('/name'), observe: 'status' } },
+        issue: { target: data('/name'), code: 'bad' },
+      },
+    ];
+    expect(codes(value)).toContain('VALIDATION_NOT_AVAILABLE');
+  });
+});
+
+it('rejects the prior Prepared format instead of silently ignoring new action semantics', () => {
+  const value = source();
+  value.target = { preparedFormatVersion: 'form-engine.prepared/1' };
+  expect(codes(value)).toContain('PREPARED_FORMAT_UNSUPPORTED');
+});
+
+it('reads Validation in a boolean condition without adding it to explicit Data watch', () => {
+  const value = source();
+  value.catalog.pureFunctions['status.valid'] = {
+    manifest: {
+      id: 'status.valid',
+      version: 'test',
+      parameters: [{ name: 'status', schema: { type: 'string' } }],
+      returns: { type: 'boolean' },
+    },
+    artifact: { id: 'status-build', platform: 'web', digest },
+  };
+  value.definition.reactions = [
+    {
+      id: 'valid-name',
+      watch: [data('/name')],
+      when: {
+        op: 'status.valid',
+        args: [
+          {
+            ref: {
+              source: 'validation',
+              field: data('/name'),
+              observe: 'status',
+            },
+          },
+        ],
+      },
+      then: [{ op: 'set', target: data('/flag'), value: true }],
+    },
+  ];
+  const output = prepared(value);
+  expect(output.definition.reactions![0]!.watch).toEqual([data('/name')]);
+  expect(output.capabilityLock.pureFunctions).toHaveProperty('status.valid');
 });

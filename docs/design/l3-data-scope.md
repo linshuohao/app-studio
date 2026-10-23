@@ -8,6 +8,7 @@ modules:
 - M07
 - M08
 sources:
+- SRC-REACTIONSTATE
 - SRC-V04
 - SRC-V05
 - SRC-V06
@@ -17,7 +18,7 @@ related:
   - ADR-FE-006
   - ADR-FE-007
   - ADR-FE-008
-  - ADR-FE-009
+  - ADR-FE-018
 navigation:
   group: 04 · L3 运行时
   order: 52
@@ -79,7 +80,7 @@ relocated_sections:
 联动 premium 此刻可能尚未完成，需分别判断收敛状态。
 ```
 
-默认 `batch` 和 Reaction 的 `then[]` 都按顺序执行 Command，各条有效修改实时生效，不默认回滚先前成功写入。该边界取代“候选数据树中完成整个 batch 后原子提交”的早期候选。业务 Invalid、Scope 已删除、非法数组位置、非法 Command 是不同结果；后几种属于结构性执行失败，单个结构操作仍须保持内部一致性。可隔离的单条 Command 失败应记录并报告，后续独立 Command 继续尝试，其他 Reaction 仍只由有效 Data Change 和自身 watch 决定；精确错误类型、返回值与无法继续的结构性条件待固化。
+默认 `batch` 按顺序执行 Command，Reaction 的 `then[]` 按顺序执行 Command / host.emit，各条有效修改实时生效，不默认回滚先前成功写入。该边界取代“候选数据树中完成整个 batch 后原子提交”的早期候选。业务 Invalid、Scope 已删除、非法数组位置、非法 Command 是不同结果；后几种属于结构性执行失败，单个结构操作仍须保持内部一致性。可隔离的单条 Command 失败应记录并报告，后续独立 Command 继续尝试，其他 Reaction 仍由有效 Data Change / Validation 发布和自身显式 watch 决定；精确错误类型、返回值与无法继续的结构性条件待固化。
 
 组合 batch 的每条实际子 Command 仍分别取得前后状态并完成检测，不能仅在整组结束后比较一次净结果。显式首次激活是独立入队原因；这里“按有效 Data Change”描述变化传播，不取消激活策略。
 

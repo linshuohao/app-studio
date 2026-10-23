@@ -1,6 +1,6 @@
 import type { JsonSchema } from '../common.js';
 import type { FormDefinition, Reaction } from '../definition/form.js';
-import type { DataWatch, PreparedScopeDeclaration } from './reference.js';
+import type { PreparedReactionWatch, PreparedScopeDeclaration } from './reference.js';
 import type { CapabilityLock, HostRequirements } from './requirements.js';
 import type { PreparedConstraint } from './validation.js';
 import type { PreparedViewNode, PreparedViewTemplate } from './view.js';
@@ -8,7 +8,7 @@ import type { PreparedViewNode, PreparedViewTemplate } from './view.js';
 /** 显式 watch 保留，when / then 不参与自动触发依赖补全。 */
 export interface PreparedReaction extends Omit<Reaction, 'watch' | 'runOnActivate' | 'scope'> {
   scope?: PreparedScopeDeclaration;
-  watch: DataWatch[];
+  watch: PreparedReactionWatch[];
   /** 缺省 false 在输出中明确保存；只控制新实例首次激活。 */
   runOnActivate: boolean;
 }

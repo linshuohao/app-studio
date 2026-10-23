@@ -9,8 +9,10 @@ modules:
 - M09
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-020
 sources:
+- SRC-REACTIONSTATE
 - SRC-V04
 - SRC-V05
 - SRC-V06
@@ -50,7 +52,7 @@ V1 延迟一次启动同步 Flush，内部级联继续当前轮，多个外部 O
 
 Pending 按具体 Reaction 实例去重，执行时读取最新输入；取出执行后再次被有效变化命中仍可重新入队。不承诺任意冲突配置都与顺序无关，也不改变同一 then[] 内显式 Command 的有序语义。同步回调写回归当前轮已确认，具体容器与调用栈处理留给实现验收。
 
-Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。
+以下是已由 [ADR-FE-020](ADR-FE-020-reaction-state-host.md) 局部替代的旧 Host 接入限制，保留用于追溯：Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。
 
 ## 代价与影响 {#adr-006-consequences}
 
@@ -77,3 +79,7 @@ Reaction 仅承担协议内同步联动，不理解网络请求、取消、重�
 业务输入限制在交互入口落实；例如 maxItems=5 时界面禁用添加按钮，不发出插入 Command。数据层不依据业务 Schema 拦截写入：若 Host 导入或程序写入第六项，只要操作结构可执行，就写入 Working Data，再由 Validation 报告超限并阻止提交。目标不是数组、位置非法等结构性错误仍须拒绝，不能与业务校验失败混为一类。该边界统一适用于插入、修改和导入，保留暂时业务不合法的工作态，不增加逐 Command 业务预校验或事务机制。
 
 这澄清既有即时非原子 Command 原则，不新增 ADR 或协议字段；原 array.insert“受目标 Schema 约束”的模糊表述已修正。记录见 [本轮讨论](../design-history.md#input-validation-boundary-update)。
+
+## 2026-10-23 的局部修订
+
+[ADR-FE-020](ADR-FE-020-reaction-state-host.md) 局部替代本文中 Reaction 仅观察 Data、不能复用 Host 行为出口的限制：显式 watch 可含 ValidationWatch，then 可含既有 HostEventIntent。其余 Read / Watch / Subscription 分离、同步 Flush、Command 受控写入与去重原则继续有效。历史选择保留用于追溯，现行字段见[Reaction](../l1/04-command-reaction.md#reaction-state-host)。

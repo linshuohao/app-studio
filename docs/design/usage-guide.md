@@ -8,8 +8,11 @@ modules:
 - M01
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-018
+  - ADR-FE-019
 sources:
+- SRC-L3BASELINE
 - SRC-L1
 - SRC-V05
 - SRC-HOST
@@ -17,7 +20,7 @@ sources:
 navigation:
   group: 10 · 使用与例证
   order: 200
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-22'
 ---
 
 # 使用与开发指南
@@ -137,13 +140,13 @@ Host 的三条接入路径分别服务不同任务：
 | host.emit | 保存意图、点击报价或触发业务流程 | Material 语义事件交给 Host |
 | 配置物料请求 | 城市搜索、详情、复杂候选选择 | requests 映射到 Host 输入输出函数；公共 Adapter 交付结果，选定值经 Binding / Command 写入；文件传输归平台实现 |
 
-例如城市查询 A 尚未返回，用户已经改选目的地并发起 B。A 晚到不能覆盖 B；外部校验还需核对 Scope、请求和输入新鲜度。External watch 变化使旧结果失效，不必立即发送请求，请求可以由 blur、validate 或 submit 等策略决定。
+例如城市查询 A 尚未返回，用户已经改选目的地并发起 B。A 晚到不能覆盖 B；外部校验还需核对 Scope、请求和输入新鲜度。External watch 变化使旧结果失效并登记任务；Flush 结束后与内部校验统一执行，先 Schema，再按同步前置发起就绪任务，独立规则不等待网络。
 
 Host 准备初始数据后创建 Runtime / Scope / 规则，新 Reaction 实例只按 runOnActivate 首次激活。后续已有实例的常规执行必须发生有效 Watch 变化；导入、Reset、读取快照或重挂 View 的意图本身都不能绕过变化检测。真正的新实例按其生命周期处理，不能把普通恢复伪装成重新初始化来修复计算结果。
 
 Runtime 提供稳定 snapshot，Host 自行决定是否保存为业务 Baseline、何时标 Clean、哪些字段或修改计入 Dirty。需要初始联动完成后的快照时，Host 可在观察到完成后读取；snapshot 本身不 Flush、不建基准、不判断编辑状态。网络加载、迟到响应保护、保存和 Reset 意图都由 Host 管理。
 
-用户点击 Reset 时，Host 按自己的规则生成普通恢复 Command。Watch 未变，已有 Reaction 就不新增入队；即使期望当前费率下的保费不同，也不能让 Runtime 绕过依赖检测重算。业务应通过正确的 Watch 配置或实际数据修改表达触发条件，Context 仍沿用现行只读契约。详见 [Host 业务基准与恢复](l3-data-scope.md#l3-initialization-baseline)。
+用户点击 Reset 时，Host 按自己的规则生成普通恢复 Command。Watch 未变，已有 Reaction 就不新增入队；即使期望当前费率下的保费不同，也不能让 Runtime 绕过依赖检测重算。业务应通过正确的 Watch 配置或实际数据修改表达触发条件，Context 对表单仍只读；Host 可显式替换快照，统一失效呈现 / 校验，但不直接重跑 Reaction。详见 [Host 业务基准与恢复](l3-data-scope.md#l3-initialization-baseline)。
 
 例如 age25 / premium150 被导入 age25 / premium80，现存规则只 watch age 且没有先前 pending，就保持 premium80。引擎按协议执行，不承诺自动修正业务结果。已有 pending 若来自先前有效变化仍会按队列执行；这与同值导入不会新增任务分别解释。Dirty 也不会由 Runtime 判断：普通资料、审批、投保和实时数据页面可以各自定义何谓“需要保存的修改”。
 
@@ -162,7 +165,7 @@ Host 真正提交前需要显式完整校验，覆盖全部适用规则，由 Ho
 | 有命令报错但其他规则仍运行 | 可隔离错误不阻断独立行为；Trace 区分错误与成功 Change | [错误隔离](l3-reactive-engine.md#l3-errors) |
 | 字段没有错误但无法提交 | 是否有未执行、过期或异常的必要规则；是否请求了完整校验 | [完整性](l3-validation.md#validation-completeness) |
 | 后置校验被跳过 | 本轮前置是否存在且通过；严格缺失策略仍待验证 | [本轮校验链](l3-validation.md#validation-round) |
-| 整轮预算停止后队列空 | 本轮是中止而非正常收敛；Pending 再触发契约仍待定 | [整体熔断](l3-reactive-engine.md#l3-errors) |
+| 整轮预算停止后队列空 | 本轮是中止；剩余 Reaction 已清空且不自重试，后续新有效触发正常建轮 | [整体熔断](l3-reactive-engine.md#l3-errors) |
 | 只改保费却未按年龄重算 | 现存规则只 watch age，age 同值就不新增执行；结果不是 Runtime 主动修复的职责 | [已确认执行边界](l3-reactive-engine.md#l3-runtime-host-boundary) |
 | Host 想知道规则是否执行 | 使用执行事件观察 / Trace；数据订阅只表达所观察数据是否失效 | [两类订阅](l3-data-scope.md#l3-array-lifecycle) |
 | 远程结果覆盖了新输入 | Host 适用性检查、报告输入与 Scope 新鲜度 | [Host](l1/05-view-material-host.md#host) |

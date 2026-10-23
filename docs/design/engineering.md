@@ -440,7 +440,7 @@ pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / �
 
 I01 初次提供真实 compile、SDK 结果 / 诊断类型及独立 validateMaterialManifest / validatePureFunctionManifest，支持确定输入快照、目标默认、Authoring 简写与位置映射、静态物料 / Props / Binding / Slot、最小 Schema 结构连接与完整根资源引用扫描、能力锁和 Prepared 输出自检。当时对规则 / 命名表达式、动态 $expr、Scope / 模板、事件 / 请求和校验消息明确报未实现；这些拒绝分支已在下节实现中替换为真实分析。Error 无产物的边界保持。
 
-清单增加与仓库已装版本一致的 Ajv 8.20.0、@noble/hashes 1.8.0；脱离平台可同步运行，不导入组件 / Runtime 或执行业务函数。Schema 从 protocol 公共 JSON 入口导入，带 ESM JSON import 属性；标准 URL 用于 URI 解析，DOM lib 仅提供其跨环境类型，不建立 UI 依赖。包保持 private / 0.0.0，格式标识 form-engine.prepared/1 未发布；节点身份由定义与源位置确定，双摘要对象不混用。
+清单增加与仓库已装版本一致的 Ajv 8.20.0、@noble/hashes 1.8.0；脱离平台可同步运行，不导入组件 / Runtime 或执行业务函数。Schema 从 protocol 公共 JSON 入口导入，带 ESM JSON import 属性；标准 URL 用于 URI 解析，DOM lib 仅提供其跨环境类型，不建立 UI 依赖。包保持 private / 0.0.0，格式标识 form-engine.prepared/2 未发布；节点身份由定义与源位置确定，双摘要对象不混用。
 
 首批 28 个用例先在缺少真实入口时失败。后续补 Schema 检索别名、嵌套 ID / 前向引用、开放对象 / 条件依赖证明与简写来源的回归，共 41 个用例；独立审查发现的问题已复现并修正。测试检查真实输出，非手写 Prepared 代替算法。生产包已单独导入；统一隔离打包检查新增真实编译、JSON 往返、元信息自检与 SDK 类型消费。单独元信息自检目前不完成外部资源闭包检查，实际资源连接仍由使用点处理。
 

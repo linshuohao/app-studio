@@ -8,6 +8,7 @@ modules:
 - M05
 - M06
 sources:
+- SRC-REACTIONSTATE
 - SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIO
@@ -17,12 +18,13 @@ related:
   - DESIGN-L2
   - DESIGN-PLATFORM-STUDIO
   decisions:
+  - ADR-FE-020
   - ADR-FE-017
   - ADR-FE-015
 navigation:
   group: 03 · L2 预处理
   order: 41
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-23'
 status_note: 本期设计已确认；I01–I04 编译主链与表达式 watch 已实现，完整基准 / 浏览器消费及 Runtime / Adapter 联验待完成
 reading_next: DESIGN-L3-RUNTIME
 ---
@@ -146,7 +148,7 @@ Compiler 的目标是把配置错误前移，并提前完成运行时确实需�
 | 状态 | 范围 | 本文处理 |
 | --- | --- | --- |
 | 已确认且已实现结构 | Definition、能力 Manifest、PreparedForm 类型及派生 Schema | 作为输入；不重新选择协议形状 |
-| 已确认行为 | 唯一 Prepared 入口、Data-only Reaction watch、表达式级观察、模板共享、同步校验前置、Request 通道 | 所有模块遵守 |
+| 已确认行为 | 唯一 Prepared 入口、Reaction 的显式 Data / Validation watch、表达式级观察、模板共享、同步校验前置、Request 通道 | 所有模块遵守 |
 | 本轮补充方向 | 后期平台复用、错误链路与 Reaction / Validation 展示、能力自校验分工 | 纳入蓝图与责任边界；本期 / 后期细化随全文审阅 |
 | 本期方案已确认 | 四个职责组、六阶段流程、失败累计、检查范围、内部接口、预算、报告扩展安排与实施步骤 | 按本期范围实施；不代表代码已完成 |
 | 部分实现 | I01–I04 编译主链 / 契约自检、表达式依赖、规则与模板 / 交互已实现；完整基准、浏览器消费、Runtime / Adapter 待完成 | 仅以真实 compile 和消费测试证明对应范围 |
@@ -546,7 +548,7 @@ age 变化不要求重算 caption。内部 lt / ref 不分别建立观察。普�
 
 ### Reaction 与 Command
 
-Reaction：建立规则词法环境 → 检查显式 Data watch → 检查 when 的 boolean → 递归检查 then → 明确 runOnActivate → 保留原触发集合。命令检查七种既有结构、引用可写性、句柄及位置；命令值按调用求值，不附加持续观察。
+Reaction：建立规则词法环境 → 检查显式 Data / Validation watch 与字段 Scope → 检查 when 的 boolean → 按 ReactionAction 分支检查 then → 明确 runOnActivate → 保留原触发集合。命令检查七种既有结构、引用可写性、句柄及位置；命令值按调用求值，不附加持续观察。
 
 set / patch 可以写业务不合法的工作值，不能仅因目标业务 Schema 不接受当前值而升级成写入权限。数组命令的当前目标值类型、实际长度和句柄有效性由 Runtime 保护；Compiler 负责静态模型和配置自身能证明的部分。
 
@@ -1636,7 +1638,7 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 | Runtime / Adapter | 生产入口仍为工程占位 | I06 需要真实消费者实现后联验 |
 | 平台 | 独立分析报告、可视化与 Trace 联动仍为后期蓝图 | 不计入 I01 完成，不冻结其公共格式 |
 
-实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/1 为未发布交换格式，不代表 Runtime 已支持。
+实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/2 为未发布交换格式，不代表 Runtime 已支持。
 
 初次 I01 的全仓检查及资源 / 来源回归记录见[基础工程实施](../engineering.md#compiler-i01)。当前共享分析与运行准备的用例、打包消费和门禁证据见[工程实施](../engineering.md#compiler-static-analysis)。复杂度 / 体积基准、浏览器消费、精确失效和实际性能仍须后续证据，不因产物已有 watch 就宣称运行收益已通过。
 
@@ -1721,3 +1723,13 @@ Compiler 包自身可在 I05 完成其契约内交付；跨层收益与端到端
 | 已有提交 | bdec628 / e036bb4 | 设计归档、协议类型迁移；未包含本文新模块方案 |
 
 本期确认来源为当前对话，见 SRC-COMPILERDESIGN。原独立 HTML 仅为评审附件；现行内容在本主题维护，由统一构建生成阅读页。归档同步 L2、ADR-FE-017 的后续实施范围、演进与治理；不因归档提升 Runtime / Platform 实现状态。
+
+## Reaction 状态与 Host 出口的编译衔接 {#compiler-reaction-state}
+
+ReactionAction 保留裸 Command 或既有 HostEventIntent，Compiler 复用物料事件的 Host 名称 / Payload 契约检查；Reaction 不提供 Event Reference。ValidationWatch 检查 field 的模型位置与词法 Scope，输出保留来源和 observe，不能混入 Constraint 的 DataWatch。when / then / Payload 读取不反推显式 watch，Payload 不输出持续 $expr.watch。
+
+ValidationReference 在 Reaction 的条件与动作中按调用读取；当前静态投影为 issues 数组、status 字符串、state 对象（含 issues / status），不推断尚未冻结的 Issue 内部字段或状态枚举。Constraint、全局命名表达式和持续 View 表达式使用该引用时明确诊断 VALIDATION_NOT_AVAILABLE，不静默生成缺少通知依赖的产物。视图校验展示沿用字段订阅。
+
+Reaction 的 Host 需求与所选视图的需求汇总去重，即使没有任何物料事件也必须进入 hostRequirements.events；共享业务规则不随 Profile 裁剪。纯函数能力仍通过表达式分析收集，Host 事件名不混入纯函数注册表。
+
+本轮同步协议类型、派生 Schema 及 Compiler 检查；Prepared 格式身份提升为 form-engine.prepared/2，旧 /1 目标明确拒绝。旧裸 Command / Data watch 定义仍能重新编译；旧运行端不能以忽略新分支的方式消费 /2。不增加 Runtime 自动回退，也不表示 Runtime 已实现观察 / 调度。

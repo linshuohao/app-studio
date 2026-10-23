@@ -7,16 +7,18 @@ layer: L3
 modules:
 - M16
 sources:
+- SRC-L3BASELINE
 - SRC-V04
 - SRC-V05
 - SRC-V06
 - SRC-HOST
 related:
   decisions:
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-006
   - ADR-FE-007
   - ADR-FE-008
-  - ADR-FE-009
 navigation:
   group: 04 · L3 运行时
   order: 54

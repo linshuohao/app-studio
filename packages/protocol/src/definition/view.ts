@@ -1,3 +1,5 @@
+import type { HostEventIntent } from './host-event.js';
+export type { HostEventIntent } from './host-event.js';
 import type { Command } from './command.js';
 import type { ValueSpec } from './expression.js';
 import type { DataReference, ScopeBinder } from './reference.js';
@@ -5,14 +7,6 @@ import type { DataReference, ScopeBinder } from './reference.js';
 export interface CommandIntent {
   type: 'form.command';
   command: Command;
-}
-/** 将业务意图交给 Host；不描述网络或等待 Host 返回值的编排。 */
-export interface HostEventIntent {
-  type: 'host.emit';
-  /** Host 业务事件名称，区别于 MaterialNode.on 字典中的物料事件名称。 */
-  event: string;
-  /** 事件发生时求值；可读取当次允许的 Event Reference。 */
-  payload?: ValueSpec;
 }
 /** 对配置开放的两类事件响应；物料内部 Binding 写入不必重复映射成 on.change。 */
 export type InteractionIntent = CommandIntent | HostEventIntent;

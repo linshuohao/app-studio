@@ -204,6 +204,9 @@
         },
         {
           "$ref": "#/$defs/EventReference"
+        },
+        {
+          "$ref": "#/$defs/ValidationReference"
         }
       ],
       "description": "读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。"
@@ -218,6 +221,38 @@
       },
       "required": [
         "ref"
+      ],
+      "type": "object"
+    },
+    "ValidationObservation": {
+      "description": "字段对外校验快照的观察 / 读取投影；不暴露内部任务与请求代次。",
+      "enum": [
+        "issues",
+        "status",
+        "state"
+      ],
+      "type": "string"
+    },
+    "ValidationReference": {
+      "additionalProperties": false,
+      "description": "只读字段校验引用，当前用于 Reaction 条件 / 动作；field 按当前词法 Scope 绑定稳定成员，不以数组下标充当成员身份。",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "observe": {
+          "$ref": "#/$defs/ValidationObservation",
+          "description": "issues 读取聚合问题，status 读取对外状态，state 读取完整对外快照。"
+        },
+        "source": {
+          "const": "validation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "field",
+        "observe"
       ],
       "type": "object"
     },

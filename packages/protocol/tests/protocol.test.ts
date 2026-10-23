@@ -311,3 +311,45 @@ describe('material request contracts', () => {
     ).toBe(false);
   });
 });
+
+describe('Reaction state observation and Host actions', () => {
+  const field = { source: 'data', path: '/name' };
+  const watch = { source: 'validation', field, observe: 'state' };
+  const action = { type: 'host.emit', event: 'quote.refresh', payload: { $expr: { ref: watch } } };
+  it('preserves mixed action ordering in Canonical, Authoring and Prepared', () => {
+    const reaction = {
+      id: 'quote',
+      watch: [field, watch],
+      then: [action, { op: 'set', target: field, value: '' }],
+    };
+    expect(definition({ ...simpleDefinition, reactions: [reaction] })).toBe(true);
+    expect(authoring({ ...simpleDefinition, reactions: [reaction] })).toBe(true);
+    expect(
+      prepared({
+        ...preparedForm,
+        definition: {
+          ...preparedForm.definition,
+          reactions: [{ ...reaction, runOnActivate: false }],
+        },
+      }),
+    ).toBe(true);
+  });
+  it('keeps Validation read-only and out of Data-only observers and command batches', () => {
+    expect(expression({ ref: watch })).toBe(true);
+    expect(command({ op: 'set', target: watch, value: null })).toBe(false);
+    expect(command({ op: 'batch', commands: [action] })).toBe(false);
+    expect(
+      definition({
+        ...simpleDefinition,
+        constraints: [{ id: 'x', kind: 'external', validator: 'x', target: field, watch: [watch] }],
+      }),
+    ).toBe(false);
+    for (const invalid of [
+      { ...watch, observe: 'all' },
+      { ...watch, field: { source: 'context', path: '' } },
+    ])
+      expect(
+        definition({ ...simpleDefinition, reactions: [{ id: 'x', watch: [invalid], then: [] }] }),
+      ).toBe(false);
+  });
+});

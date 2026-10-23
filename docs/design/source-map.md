@@ -7,13 +7,18 @@ layer: 跨层
 modules: []
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-020
+  - ADR-FE-018
+  - ADR-FE-019
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-REVIEW
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-23'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -41,6 +46,24 @@ status_note: 本地资料范围的来源索引与覆盖记录
 **覆盖声明：**完成本地现行主题的整理与交叉审查，建立本地历史文件及 ZIP 成员的完整可重复盘点，重要决策按下表定位。历史快照采用主题 / 替代链核对，未对每份重复快照的每句话重新作语义证明；代码 / 样本附件按其证据边界检查。因此不能称为“所有历史讨论逐句全量重写”或“生产设计 / 实现全量验收”。本地不存在的完整原始对话仍为来源缺口；后续新增资料必须增量核对。
 
 ## 来源编号与精确定位 {#source-register}
+
+### SRC-REACTIONSTATE：Reaction 行为出口、状态观察与协议更新确认 {#src-reaction-state}
+
+2026-10-23 延续当前对话，用户指出 Host 异步报价也应由 Reaction 配置触发，讨论自定义 Command 与复用 Host 行为，要求解释监听对象、View 更新与校验订阅，并最终明确要求“把文档和协议层都更新一下”。归档复用 HostEventIntent、显式 Data / Validation watch、只读校验引用、分源统一观察与逐结果一致发布；网络新鲜度 / 防覆盖由 Host 承担，Command 仍只修改 Data。
+
+现行主题见[Reaction](l1/04-command-reaction.md#reaction-state-host)、[统一观察](dependency-reactivity.md#state-observation)、[字段校验](l3-validation.md#validation-state-observation)、[Compiler](l2/compiler.md#compiler-reaction-state)，取舍与局部替代见 [ADR-FE-020](decisions/ADR-FE-020-reaction-state-host.md)。本来源是当前对话的摘要，不伪造逐字历史附件；协议 / 编译检查与 Runtime 实现状态分别报告。
+
+### SRC-RUNTIMEOVERVIEW：运行时全景、外部能力与结果通知确认 {#src-runtime-overview}
+
+2026-10-22 当前对话中，用户要求以 Runtime / 调度为中心，完整展示 Command 即时修改、基础与校验状态、注册与数组身份、Reaction 去重 / 同轮级联、校验前置及视图通知，并补齐 L1–L4、物料、纯函数和 Host 的边界。用户明确校验每次有效结果就绪即更新并通知；后续排布调整保留完整图的内容，只缩短或合并连线，拒绝删减和矩阵替代，最后明确要求集成到文档。
+
+现行入口为[运行时全景](l3-reactive-engine.md#runtime-overview)与[结果发布](l3-validation.md#validation-messages-subscription)，整体架构 / 能力图谱只链接该入口。图的节点、说明和连接维护在同一 Markdown 的结构化 diagram 中，阅读页复用共享生成与放大；不以会话预览 PNG 作为第二份规范。归档按现行 ADR-FE-018 / 019 对齐轮次中止与 Context 管理，不覆盖已确认的新行为，不新增架构 ADR、不提高模块完成度；未保存逐字会话快照。
+
+### SRC-L3BASELINE：L3 领域骨架、统一校验与 Context 更新确认 {#src-l3-baseline}
+
+2026-10-22 当前对话中，用户要求先对整个 L3 建模，整理各模块功能并串起流程，再进行实现；认可整体草案后要求直接整理已讨论结论，避免重复决策。随后明确外部校验与内部校验统一在 Flush 结束后执行，先根 Schema，再按同步前置与顺序启动就绪任务；熔断仅停止当前轮并清空剩余 Reaction，等待下一次新交互 / 操作正常触发。用户询问 Context 更新场景，接受 Host 显式替换只读快照、保守刷新动态呈现与校验、不自动触发 Reaction 的方案，并授权维护者整理完整校验结果结构。
+
+权威归档在 [L3 整体骨架](l3-reactive-engine.md#l3-domain-model)、[校验](l3-validation.md#validation-result-contract)、[Host Context](extension-integration.md#host-context-update)、[ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)和 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。[本轮演进](design-history.md#l3-domain-baseline-confirmed)说明持续暂停方案的替代与首期状态。来源是本次对话的确认摘要，不伪造逐字存档；没有 Runtime 编码、正式 SDK、协议样本迁移或生产验收授权。
 
 ### SRC-COMPILERIMPLEMENTATION：Compiler 源码与真实编译验收 {#src-compiler-implementation}
 

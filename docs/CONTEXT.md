@@ -7,12 +7,15 @@ layer: 跨层
 modules: []
 tags: []
 related:
-  decisions: []
-sources: []
+  decisions:
+  - ADR-FE-018
+  - ADR-FE-019
+sources:
+- SRC-L3BASELINE
 navigation:
   group: 09 · 决策与追溯
   order: 150
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-22'
 ---
 
 # 术语与语义边界
@@ -23,6 +26,9 @@ last_reviewed: '2026-10-19'
 
 **Working Data（工作数据）**：单个 FormRuntime 当前唯一权威的业务数据，允许处于尚未满足业务约束的编辑状态。
 _Avoid_：另设最后合法值作为当前真相，或把 UI 临时输入、校验结果与工作数据混为一体。
+
+**Host Context（宿主上下文）**：由 Host 提供、供表单表达式及调用读取的只读环境快照。Host 可以显式提供新快照；旧调用仍对应自己的输入，替换会使旧呈现缓存与校验结论失效。
+_Avoid_：业务输入或请求缓存的统一容器、Host 可随意原地修改的共享对象，或自动触发 Reaction 的新 Watch 来源。
 
 **Normalized Output（规范化输出）**：Host 根据已校验 Working Data 构造的业务提交数据；转换与所需输出检查归 Host，不是 Runtime 的第二份核心状态，也不属于引擎完整校验范围。
 _Avoid_：将当前 Working Data 或没有 Issue 的快照自动等同于可提交输出。
@@ -53,6 +59,12 @@ _Avoid_：将静态 watch 当作已经激活的订阅、为内部每个运算子
 
 **Dependency Index（运行时依赖索引）**：根据 Prepared 依赖计划与活跃订阅定位可能受某次修改影响的观察者的查找结构，命中后仍需比较观察值与处理实例生命周期。
 _Avoid_：把索引命中当成必然触发，或把具体 Trie 存储结构当成已经冻结的 Prepared ABI。
+
+**ValidationWatch（校验状态观察）**：显式描述字段及 issues / status / state 投影的观察目标；与 DataWatch 分源匹配，发布一致状态后通知消费者重读。ValidationReference 以同样描述只读求值，不能写入，不自动建立观察。
+_Avoid_：将校验结果放入 Data Trie、把空 Issues 当作校验完成，或把读取自动加入 Reaction.watch。
+
+**ReactionAction（联动响应项）**：裸 Command 或既有 HostEventIntent，按 then 顺序同步执行 / 发起；Host 异步任务由 Host 管理，Runtime 不等待。
+_Avoid_：自定义任意写命令、将 host.request / Validator 当成 Reaction 异步编排，或合并两个显式 emit。
 
 **Subscription（活跃订阅）**：某个消费者在 FormRuntime 中已建立的观察关系，具有自身的激活与释放生命周期。
 _Avoid_：把全部 Prepared View 计划等同于已挂载的视图订阅。
@@ -101,6 +113,9 @@ _Avoid_：全部 Runtime 状态的容器，或跨轮保留的完整生产历史�
 
 **Flush Outcome（轮次执行结果）**：描述本轮是否收敛、发生可隔离错误或因预算停止的结果，与调度阶段分别表达；准确字段和提交消费方式仍待固化。
 _Avoid_：以此建立局部 Reaction Health、失败下游禁用或局部影响链恢复状态；整体 Flush 是当前保护边界。
+
+**当前轮熔断**：执行预算超限时停止本轮 Flush 并清空剩余 Reaction，保留已写数据；下一次新操作产生有效失效时可以正常建立新轮。
+_Avoid_：旧队列自动跨轮重试、永久暂停实例等待显式恢复，或把中止当成正常收敛及业务关系已经完成。
 
 **Flush Trace（轮次追踪）**：一轮执行中的有序行为、实际数据变化及触发来源记录，供异常诊断与开发工具解释执行链。
 _Avoid_：将追踪等同于完整历史数据、确定性重放或热路径实时因果图。

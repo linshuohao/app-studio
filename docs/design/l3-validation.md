@@ -12,9 +12,15 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-017
   - ADR-FE-010
 sources:
+- SRC-REACTIONSTATE
+- SRC-RUNTIMEOVERVIEW
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
@@ -22,13 +28,13 @@ sources:
 navigation:
   group: 04 · L3 运行时
   order: 53
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-23'
 reading_next: DESIGN-L3-DIAGNOSTICS
 ---
 
 # L3 校验与结果
 
-校验读取当前数据并产生结果，正常联动后消费本轮任务。它复用运行时的数据与依赖匹配，不另建响应式系统，也不修改 Working Data。前置、完整结果及接口未闭环的部分明确保留待讨论状态。
+校验读取当前数据并产生结果，正常联动后消费本轮任务。它复用运行时的数据与依赖匹配，不另建响应式系统，也不修改 Working Data。已确认原则直接整理为契约，SDK 与验收未完成不等于需要重新讨论架构。
 
 ## 目标、职责与当前状态 {#validation-baseline}
 
@@ -38,11 +44,11 @@ Validation 读取业务数据，产生结构化 Issue，供 View / Host 消费�
 
 | 状态 | 当前设计 |
 | --- | --- |
-| 已收敛 | 保留完整 JSON Schema；业务 Constraint 独立于 Schema 库扩展；Reaction 正常收敛后校验；复用 Data Dependency Index；按编译依赖触发并补齐本轮前置，不建立前置结果 PubSub；按字段聚合错误 |
+| 已收敛 | 保留完整 JSON Schema；业务 Constraint 独立于 Schema 库扩展；Flush 结束后统一执行内部 / 外部校验，Schema 先执行、同步前置决定就绪；复用 Data Dependency Index；按编译依赖触发并补齐本轮前置，不建立前置结果 PubSub；按字段聚合错误 |
 | 已确认的前置策略 | L2 自动补全可推导的校验依赖；后置入队时递归补齐前置 Constraint，使用本轮前置结论，不复用历史通过结果 |
 | 推荐实现 | 按 Source 保存结果、字段索引派生；同步结果原子替换；默认消息模板加局部覆盖；实例代次隔离；独立任务继续 |
 | 必须满足的正确性 | 过期或已销毁实例的异步返回不能提交；执行异常 / 跳过 / 未校验不能冒充通过；无 Issue 不等于校验完备 |
-| 待固化 / 验证 | 前置正式类型及 PreparedValidation 实施、Issue / 完整结果 API、通知时序、性能与 Web / Dart 一致性 |
+| 待固化 / 验证 | 前置 / Prepared 消费的实际实施、Issue / 完整结果 API、通知时序、性能与 Web / Dart 一致性 |
 
 Reaction 和 Validation 共用 Data / Scope / 依赖匹配，分别管理待执行任务与完成语义。需要“条件不成立则清空保障”时，两者可以复用同一纯业务条件；不让 Reaction 监听 Validation Result 来产生 Data → Reaction → Validation → Reaction 的跨轮循环。异步后续业务动作由 Host 明确发出 Command。
 
@@ -132,7 +138,7 @@ interface PendingValidation {
 | 初始化 / 新 Scope / 主动校验 | 显式覆盖应检查的规则；不等待第一次 Data Change，不以 subscribe 代替初次执行 |
 | Host 完整校验 / Submit | 根 Schema + 全部适用 Constraint 构造完整校验链，不能用普通增量集合冒充完整性 |
 
-Internal 依赖仍来自 when + assert；External 以显式 Data watch + when 可见读取作为基础依赖；两类规则均叠加 L2 沿前置关系补全的有效依赖来标记失效。给出数据变化后的自动增量校验路径，但“旧结果失效”和“立即请求 Host”继续分开：外部请求的自动策略、blur / 主动校验入口及通知节流尚未冻结，不能把登记 Pending 等同于每次输入必发请求。网络、重试、取消由 Host 实现，Runtime 管结果适用性。
+Internal 依赖仍来自 when + assert；External 以显式 Data watch + when 可见读取作为基础依赖，两者均叠加 L2 传递的前置输入。有效变化立即使旧结论失效并登记 Pending，外部校验与内部校验统一在 Flush 结束后的本批次执行：先根 Schema，再按稳定顺序处理已满足同步前置的 Constraint，未满足者按前置关系后排；前置失败只阻止对应后置，独立规则继续。External 发起任务后不等待网络阻塞其他独立规则，异步完成不计入同步 Flush。没有 Reaction 时校验独立启动；普通增量仍只覆盖命中任务及前置，完整校验覆盖全部适用规则。网络、重试与实际取消由 Host 实现。
 
 ## 本轮前置检查、重排序与四种推演 {#validation-round}
 
@@ -181,7 +187,7 @@ A 读取 idNumber，B 自身读取 name 并以前置 A 为条件。只修改 nam
 
 2026-10-19 已确认：可从表达式和已解析前置关系确定的依赖由 L2 自动补全，不要求作者重复配置，也不因未重复声明阻止编译。Internal 从 when / assert 等读取推导；External 的 Host 内部业务依赖不可见，只有无法推导的部分才由作者显式提供，不能声称编译器能发现所有遗漏。前置的数据依赖沿前置链传递纳入后置的有效触发依赖，具体可分析输入映射与正式字段仍待定义。Reaction 的显式 Watch 语义保持不变。
 
-依赖补全决定结果失效和待校验任务，不等于每次输入立即发起外部请求；自动、失焦与主动校验策略仍待固化。编译计划应保留补全依据供诊断。根 JSON Schema 已全量校验，不按 Constraint 前置链重复补任务；字段资格按前置完成且该字段无错误判断，无关字段错误不能阻断全部规则；精确解析与实例绑定仍待固化。
+依赖补全决定结果失效和待校验任务；请求不在 Command 内立即发送，而在 Flush 结束后的统一校验批次中，按适用性与同步前置发起。不再把“外部默认只等失焦或显式调用”作为当前策略。编译计划应保留补全依据供诊断。根 JSON Schema 已全量校验，不按 Constraint 前置链重复补任务；字段资格按前置完成且该字段无错误判断，无关字段错误不能阻断全部规则；精确解析与实例绑定仍待固化。
 
 ## 结果按来源保存，按字段聚合 {#validation-results}
 
@@ -229,6 +235,8 @@ const unsubscribe = runtime.subscribeIssues(field, () => {
 | 数组成员移动 | 相对字段订阅仍跟随同一 ScopeId；固定物理位置观察按原有位置语义解释 |
 | Scope 删除 / 实例销毁 | 清理来源贡献、派生索引及对应实例订阅；旧返回不能恢复它们 |
 
+结果按来源就绪及时发布：同步校验结果与通过适用性检查的外部返回分别更新自身贡献，有实际聚合或对外校验状态变化即通知对应订阅；不等全部异步任务结束后才统一交付。完整校验调用的全适用等待与输入证明仍独立维护。贯穿关系见[运行时全景](l3-reactive-engine.md#runtime-overview)。
+
 View 主要消费字段聚合，不必逐步感知每个校验单元的内部执行状态。L4 可封装 Vue Hook、Flutter Stream / Listenable 等接入。减少 UI 状态暴露不等于删掉内部有效性：请求代次、是否完成、是否过期仍供运行正确性与完整校验使用。Dirty、Touched、spinner 和何时展示错误不因此进入 L3。
 
 ### 消息的首期交付契约 {#validation-message-contract}
@@ -267,7 +275,7 @@ async function runExternal(unit: ConstraintInstance) {
 
 这里不建立前置结果 PubSub。L2 将可推导的前置输入依赖纳入后置有效依赖，使相关输入变化可使后置结果失效并登记待校验，不依赖前置结果通知触发后置。异步在途结果仍须校验输入、实例与前置资格；具体 token、撤销与通知时序待固化，不能把共同入队视为这些接口已完成。
 
-Context 沿用用户已确认的 Host 提供、表达式只读契约。本轮不增加 Context Command、External watch 的 Context 引用或 Reaction.watch 类别。完整校验若使用 Context，应与调用时的受控输入条件关联；Host 更新相关上下文后不能继续把旧完成证明用于新输入。如何识别上下文变化、重新请求完整校验的 SDK 仍待定，不能反推自动 Context 触发链。
+Context 由 Host 提供、表达式只读；Host 通过显式替换快照更新，Context 身份改变后撤销旧完整证明及旧外部任务资格，保守失效全部校验来源并登记重新校验。当前 Flush 正在执行时在结束后校验，否则独立启动；旧调用读取自己的稳定 Context 快照，不能混读新值。完整证明关联本次 Data / Context / Runtime 身份，数据局部变化仍按自身依赖保护独立任务，不套用 Context 的整体失效策略。该管理入口不增加 Context Command、External.watch 或 Reaction.watch 来源，具体行为见 [Context 交接](extension-integration.md#host-context-update)。
 
 ## 完整校验、Readiness 与异常轮次 {#validation-completeness}
 
@@ -277,17 +285,34 @@ Context 沿用用户已确认的 Host 提供、表达式只读契约。本轮不
 | 显式完整校验（validateAll 为概念名称） | 当前根数据与全部适用 Constraint，构造完整链 | 需核对执行完成、业务失败、诊断、异步有效性与调用输入 |
 | Submit 准备 | 完整校验全部当前适用的同步 / 异步规则，交付对应数据快照 | 全部完成且通过后 Host 决定业务许可与真实提交；不以部分完成冒充完整通过 |
 
-`getIssues().length === 0` 只能说明当前没有展示出来的 Issue，不能证明必要规则均执行并通过。完整结果至少需区分当前通过（valid）、业务不通过（invalid）、未完成 / 执行异常 / 配置阻塞（incomplete）、输入已改变（stale）的语义；名称、组合优先级、返回类型与等待范围尚未冻结。来源 D17 将配置错误的完整返回列为待验证，当前只保证不能把它当作 valid。
+`getIssues().length === 0` 只能说明当前没有展示出来的 Issue，不能证明必要规则均执行并通过。完整结果至少需区分当前通过（valid）、业务不通过（invalid）、未完成 / 执行异常 / 配置阻塞（incomplete）、输入已改变（stale）的语义；具体 TS 返回类型与通知交接仍待整理，完整校验等待全部适用同步 / 异步义务已确认。来源 D17 将配置错误的完整返回列为待验证，当前只保证不能把它当作 valid。
 
 数据变化时，单个外部结果依据自身输入与实例判断是否仍适用；完整校验证明则关联该次所验证的整体输入。无关字段变化不应误伤独立请求，却可能使上一份全表完整证明不再对应当前表单。这两个判断层次不能混用。
 
 2026-10-19 已确认：Reaction 错误只表示相应联动未完成，不自动阻止提交；独立规则继续，已写 Data 不回滚。代码异常报告交 Host，用于正确用户提示与监控告警；网络失败由 Host 提示 / 重试。业务校验不通过与校验执行异常分别表达，必要校验无法完成不能放行。非关键辅助操作失败不阻断主流程。
 
-整体预算熔断停止整个当前 Reaction Flush，并暂停该实例后续 Reaction 自动执行；剩余任务不得自动跨轮续跑，后续输入也不自动重启联动，须显式恢复或重建。恢复入口、剩余队列物理清理与重建规则仍待固化。保留当前 Data、填写 / Command、读取 / 快照与独立完整校验能力，Host 提示自动联动已暂停。这里“整体停止”针对联动执行，不表示数据和校验能力全部失效，不建立局部 Health 或失败下游传播。
+整体预算熔断只停止整个当前 Reaction Flush，清空剩余待执行 Reaction；保留已写 Data、填写 / Command、读取 / 快照与独立完整校验。旧 Pending 不跨轮转移或自动重试，当前轮真正结束后的下一次外部交互或 Host 新操作若产生有效 Watch 失效，按正常流程建立新轮次与新预算。无有效变化不伪造入队，不补跑被清空任务，不重新激活已有实例，也不需要显式恢复入口。开发端报告可定位错误，生产交 Host 监控告警及业务承接；继续填写不保证未执行的业务计算已经完成，必须成立的关系仍由 Constraint 检查。不建立局部 Health 或失败下游传播。2026-10-22 本轮决定替代原持续暂停方案，见 [ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)。
 
 Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Reaction，也不要求历史 Reaction 成功。Schema 与全部适用同步 / 异步 Constraint 通过后，可提交该次证明对应的数据快照。必须成立的业务关系应表达为校验约束，不能只依靠联动成功维护。联动 Outcome 与完整校验结论分别报告；校验通过不把熔断改记为正常收敛。若数据已无法可靠读取或校验机制不可用，则无法证明合规，不允许据此提交。
 
-正常自动增量在联动收敛后校验；联动暂停时仍允许独立完整校验。异步不纳入同步 Flush，完整结果的编码、等待范围、输入证明与恢复接口仍待固化。
+正常自动增量在联动收敛后统一执行内外校验；当前轮熔断后仍允许独立完整校验，后续新触发正常执行。异步不纳入同步 Flush；完整结果语义已定，结构由维护者按下方信息模型整合，具体 SDK、通知与实际验收尚未完成。
+
+### 完整结果的信息结构与组合 {#validation-result-contract}
+
+完整结果的四类语义已经确定，用户授权维护者整理结构，不再逐字段重开决策。下表是 SDK 应承载的信息模型，具体 TS 名称与表示尚未实现，不向可序列化 L1 / Prepared 增加实例字段。
+
+| 信息 | 含义与约束 |
+| --- | --- |
+| 调用身份 / 输入身份 | 关联本次完整调用、Runtime 代次、Data 修订与 Context 身份；旧证明不能代表新输入 |
+| 对应数据快照 | 稳定只读的本次校验对象，Host 据此转换业务请求；不构造引擎内部第二份输出 |
+| 总体状态 | valid、invalid、incomplete、stale；状态与 Issues / 诊断分别表达，不丢失并存事实 |
+| Issues | 当前输入下已确认的业务错误，保留来源及稳定 Scope / 字段定位 |
+| 覆盖与原因 | 区分完成、正常不适用、前置阻断、未完成及执行异常；无 Issue 不代替覆盖证明 |
+| 诊断关联 | 解释缺能力、执行异常和输入 / 任务资格失效，技术错误不伪造业务 Issue |
+
+组合表达按输入资格优先：输入或调用资格已失效为 stale；否则存在必要校验未完成、缺能力或执行异常为 incomplete；否则存在业务错误为 invalid；全部适用义务完成且通过才为 valid。前置已明确业务失败导致后置按契约跳过时，保留该阻断原因并汇总真实业务错误，不伪造后置业务失败，也不单因这次正常跳过改记 incomplete；前置未完成或异常造成的阻断则不能证明完备。业务错误与异常可同时保留，即使总体只给一个状态也不能丢弃证据。when=false 是本次正常不适用；when 求值失败是执行异常。
+
+每次完整调用固定本次输入身份与覆盖范围，不自动追赶后续编辑，也不为提交额外触发 Reaction。Host 如需等待已安排联动结束，可先观察其 Outcome，再对当前状态发起完整校验。等待期间输入改变使旧调用成为 stale；仍有独立资格的异步任务可以继续更新自己的来源，不能据此把旧完整调用恢复为当前通过。具体取消 / 替换返回与通知交接随 SDK 整理，不把本段当作已实现能力。
 
 ## 跨层交付、替代方案与取舍 {#validation-layers}
 
@@ -364,3 +389,15 @@ Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端
 ### 输入值与校验对象的一致性
 
 普通输入的非法工作值进入 Working Data 后由现有 Schema / Constraint 校验，不对组件里保留的旧合法值发出通过结论。明确确认型交互在确认前不交付，确认后按正常 Command / Flush / 校验路径处理；引擎不扫描组件草稿或建立额外解析状态。详见 [L4 输入交付](l4-renderer.md#input-handoff)。
+
+## 字段状态观察与逐结果通知 {#validation-state-observation}
+
+字段校验展示与 Reaction 采用同一观察目标描述：source=validation，field 为 DataReference，observe 为 issues / status / state。View / Host 可以订阅该描述，Reaction 在 watch 中声明该描述；不把 Validation State 当成可写 Data，不改变 Constraint 的数据依赖与同步 requires。
+
+发布顺序固定为：检查任务 / 输入 / Scope 资格 → 替换该来源贡献 → 一致更新受影响字段的 Issues 聚合与公开状态 → 登记命中的内部观察失效 → 通知对应外部订阅。通知回调读取到的是已完成发布的快照，不能看见新 Issues 配旧状态。来源结果每次就绪分别发布，不等全部外部任务完成；完整校验仍独立等待全部适用义务。
+
+投影决定变更比较：issues 关注问题内容，status 关注公开校验状态，state 关注整个对外字段快照。空问题列表从 pending 进入完成时，issues 不变但 status / state 可变化。完整状态的精确枚举、Issue 排序和 SDK 返回仍待固化；不能以没有 Issue 证明已完成。只发布对外状态的有效变化，不暴露 Runner 临时中间态。
+
+按字段快照一致发布不要求一次重跑的所有来源全量锁步完成，也不允许清除其他来源贡献。数组 Scope 稳定身份、过期结果拒绝与删除清理继续适用。普通订阅回调同步通知，Reaction 消费者进入其规则调度；若校验在当前 Flush 的收敛交接中产生新 Reaction，先记录入队，不能递归调用 Runner，按现有轮次 / 重入规则继续调度。网络返回时没有活动 Flush，则请求一次延迟启动。跨异步轮循环不由单轮预算保证收敛。
+
+ValidationReference 供 Reaction when / 动作按调用读取上述投影，读取本身不建立观察。状态满足时才发起 Host 行为可由 when + 注册纯函数表达；不是把校验结果监听退化成 Host 自行猜测的外部数据监听。Runtime 观察 SDK、执行事件与完整校验结果类型仍需独立落地，本轮协议 / 编译通过不表示执行实现完成。

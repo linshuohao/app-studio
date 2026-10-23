@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Compiler 详细设计与实施 · 动态表单引擎</title>
-  <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -442,7 +445,7 @@
 </tr>
 <tr>
 <td>已确认行为</td>
-<td>唯一 Prepared 入口、Data-only Reaction watch、表达式级观察、模板共享、同步校验前置、Request 通道</td>
+<td>唯一 Prepared 入口、Reaction 的显式 Data / Validation watch、表达式级观察、模板共享、同步校验前置、Request 通道</td>
 <td>所有模块遵守</td>
 </tr>
 <tr>
@@ -1204,7 +1207,7 @@ Props.$expr      → 检查 Props 类型；包装增加自身 watch
 
 <p><strong>责任：</strong>把共享分析结果解释成 Reaction / Constraint 行为，并准备跨规则关系；不运行 Flush、校验任务或 Host。</p>
 <h3 id="reaction-与-command">Reaction 与 Command</h3>
-<p>Reaction：建立规则词法环境 → 检查显式 Data watch → 检查 when 的 boolean → 递归检查 then → 明确 runOnActivate → 保留原触发集合。命令检查七种既有结构、引用可写性、句柄及位置；命令值按调用求值，不附加持续观察。</p>
+<p>Reaction：建立规则词法环境 → 检查显式 Data / Validation watch 与字段 Scope → 检查 when 的 boolean → 按 ReactionAction 分支检查 then → 明确 runOnActivate → 保留原触发集合。命令检查七种既有结构、引用可写性、句柄及位置；命令值按调用求值，不附加持续观察。</p>
 <p>set / patch 可以写业务不合法的工作值，不能仅因目标业务 Schema 不接受当前值而升级成写入权限。数组命令的当前目标值类型、实际长度和句柄有效性由 Runtime 保护；Compiler 负责静态模型和配置自身能证明的部分。</p>
 <h3 id="constraint">Constraint</h3>
 <div class="table-wrap"><table>
@@ -2602,7 +2605,7 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 </tr>
 </tbody>
 </table></div>
-<p>实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/1 为未发布交换格式，不代表 Runtime 已支持。</p>
+<p>实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/2 为未发布交换格式，不代表 Runtime 已支持。</p>
 <p>初次 I01 的全仓检查及资源 / 来源回归记录见<a href="engineering.html#compiler-i01" rel="noopener noreferrer">基础工程实施</a>。当前共享分析与运行准备的用例、打包消费和门禁证据见<a href="engineering.html#compiler-static-analysis" rel="noopener noreferrer">工程实施</a>。复杂度 / 体积基准、浏览器消费、精确失效和实际性能仍须后续证据，不因产物已有 watch 就宣称运行收益已通过。</p>
 <p>文档 / 附件的示例、锚点、资源和脚本检查不能代替浏览器视觉检查；此前本地文件导航被安全策略拒绝，未取得浏览器视觉证据。</p>
 </section>
@@ -2889,7 +2892,14 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 </tr>
 </tbody>
 </table></div>
-<p>本期确认来源为当前对话，见 SRC-COMPILERDESIGN。原独立 HTML 仅为评审附件；现行内容在本主题维护，由统一构建生成阅读页。归档同步 L2、ADR-FE-017 的后续实施范围、演进与治理；不因归档提升 Runtime / Platform 实现状态。</p></section>
+<p>本期确认来源为当前对话，见 SRC-COMPILERDESIGN。原独立 HTML 仅为评审附件；现行内容在本主题维护，由统一构建生成阅读页。归档同步 L2、ADR-FE-017 的后续实施范围、演进与治理；不因归档提升 Runtime / Platform 实现状态。</p>
+</section>
+<section class="section" id="compiler-reaction-state"><div class="section-head"><div class="kicker">27 · FORM ENGINE</div><div class="section-title"><h2>Reaction 状态与 Host 出口的编译衔接</h2></div></div>
+
+<p>ReactionAction 保留裸 Command 或既有 HostEventIntent，Compiler 复用物料事件的 Host 名称 / Payload 契约检查；Reaction 不提供 Event Reference。ValidationWatch 检查 field 的模型位置与词法 Scope，输出保留来源和 observe，不能混入 Constraint 的 DataWatch。when / then / Payload 读取不反推显式 watch，Payload 不输出持续 $expr.watch。</p>
+<p>ValidationReference 在 Reaction 的条件与动作中按调用读取；当前静态投影为 issues 数组、status 字符串、state 对象（含 issues / status），不推断尚未冻结的 Issue 内部字段或状态枚举。Constraint、全局命名表达式和持续 View 表达式使用该引用时明确诊断 VALIDATION_NOT_AVAILABLE，不静默生成缺少通知依赖的产物。视图校验展示沿用字段订阅。</p>
+<p>Reaction 的 Host 需求与所选视图的需求汇总去重，即使没有任何物料事件也必须进入 hostRequirements.events；共享业务规则不随 Profile 裁剪。纯函数能力仍通过表达式分析收集，Host 事件名不混入纯函数注册表。</p>
+<p>本轮同步协议类型、派生 Schema 及 Compiler 检查；Prepared 格式身份提升为 form-engine.prepared/2，旧 /1 目标明确拒绝。旧裸 Command / Data watch 定义仍能重新编译；旧运行端不能以忽略新分支的方式消费 /2。不增加 Runtime 自动回退，也不表示 Runtime 已实现观察 / 调度。</p></section>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="l3-reactive-engine.html">下一步 · L3 运行时总览与 Flush</a></nav>
         
@@ -2923,8 +2933,9 @@ eligibility: { watch: [insured.amount, &lt;mark&gt;insured.age&lt;/mark&gt;] }
 <a href="#tradeoffs" data-to="tradeoffs" title="取舍与后期扩展"><span class="nav-num">23</span><span>取舍与后期扩展</span></a>
 <a href="#implementation-plan" data-to="implementation-plan" title="实施步骤、依赖与完成条件"><span class="nav-num">24</span><span>实施步骤、依赖与完成条件</span></a>
 <a href="#review-decisions" data-to="review-decisions" title="本期确认结论与后期接缝"><span class="nav-num">25</span><span>本期确认结论与后期接缝</span></a>
-<a href="#sources" data-to="sources" title="依据与当前代码状态"><span class="nav-num">26</span><span>依据与当前代码状态</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-COMPILER</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>本期设计已确认；I01–I04 编译主链与表达式 watch 已实现，完整基准 / 浏览器消费及 Runtime / Adapter 联验待完成</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 6</summary><ul><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-design">SRC-COMPILERDESIGN · Compiler 本期完整设计确认与实施授权</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li></ul></details></section>
+<a href="#sources" data-to="sources" title="依据与当前代码状态"><span class="nav-num">26</span><span>依据与当前代码状态</span></a>
+<a href="#compiler-reaction-state" data-to="compiler-reaction-state" title="Reaction 状态与 Host 出口的编译衔接"><span class="nav-num">27</span><span>Reaction 状态与 Host 出口的编译衔接</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-COMPILER</dd><dt>所属层级</dt><dd>L2</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>本期设计已确认；I01–I04 编译主链与表达式 watch 已实现，完整基准 / 浏览器消费及 Runtime / Adapter 联验待完成</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-design">SRC-COMPILERDESIGN · Compiler 本期完整设计确认与实施授权</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li></ul></details></section>
       </aside>
       </div>
     </div>

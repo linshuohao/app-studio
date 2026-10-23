@@ -9,11 +9,17 @@ modules:
 - M15
 tags: []
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-CONTRACTS
 - SRC-EARLY
 - SRC-L1
-related: {}
-last_reviewed: '2026-10-19'
+related:
+  decisions:
+  - ADR-FE-020
+  - ADR-FE-018
+  - ADR-FE-019
+last_reviewed: '2026-10-23'
 navigation:
   group: 06 · 横向能力
   order: 71
@@ -86,7 +92,7 @@ interface MaterialManifest {
 
 ## Host / View Adapter：外部能力与业务集成 {#capabilities}
 
-Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。
+Reaction 同步执行协议响应项，可通过已有 host.emit 发起 Host 行为；不等待网络，不管理取消、重试、超时或业务结果适用性。Host 按 HostContract.events 注册处理函数，由 Runtime 根据显式 watch 与 when 触发；Host 自主管理报价请求、合并与乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对规则实例，相同两项 host.emit 仍交付两次；Host 请求是否合并另由 Host 决定。该修订复用语义事件出口，不将 External Validator 或物料 host.request 当作 Reaction 异步执行器，见[完整契约](l1/04-command-reaction.md#reaction-state-host)。
 
 本节保留最初 Capability 章节的接入问题与锚点，按当前职责更新：请求、取消、Loading / Error / Retry / Cache、上传和提交属于 Host。Runtime 管理内部状态及外部校验结论的有效性，不执行网络流程。
 
@@ -145,6 +151,23 @@ External Constraint 接入选定“Host 返回结果任务及可选 cancel 句�
 2026-10-21 用户确认：Host Validator 采用本次调用的数据读取快照 + 当前 Scope + 显式 watch，不新增命名参数映射或 External Payload DSL。影响校验结论的表单数据须从本次调用输入读取，并由 watch 及已有可推导依赖覆盖；不能在异步过程中改读不断变化的 Runtime 当前值，再把结果作为旧输入的结论。具体快照持有 / 读取签名归 Runtime SDK，实例、输入资格、任务代次及可选取消仍沿用现行规则。
 
 这属于 Host 实现契约，不是权限隔离：同进程宿主可以通过闭包持有 Runtime，显式参数也不能阻止越界读取。引擎不能从 Host 任意代码自动发现所有遗漏依赖，也不能为违反调用输入 / watch 约定的实现保证结果新鲜度。业务复用确实需要字段映射时再讨论参数能力，不预先建设。
+
+### Host 显式替换 Context {#host-context-update}
+
+Context 对表单表达式只读，Host 可以显式提供新的环境快照。replaceContext 是说明性接口名，具体 TS 签名由 Runtime 契约整理；这不是 Data Command，也不新增 Context watch。决定与取舍见 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。
+
+| 交接环节 | 已确认行为 |
+| --- | --- |
+| 接管新输入 | 解除与 Host 原对象的可变别名，建立只读快照与新 Context 身份；不依赖原地修改对象 |
+| 既有调用 | 继续读取调用时的稳定 Data / Scope / Context 视图，不混读新环境并伪装为旧输入结论 |
+| 呈现 | 保守失效全部已挂载动态表达式的缓存，由 Adapter 调用 Runtime 统一求值并重读；watch: [] 只表示没有 Data 观察项 |
+| 校验 | 撤销旧完整证明与旧外部任务发布资格，再尽力取消；保守失效全部来源并登记重新校验，不能因撤销 Issue 就报告通过 |
+| 时序 | 有正在执行的 Flush 时在其结束后启动新校验，否则独立启动；沿用先 Schema、再按同步前置执行内外任务的正常路径 |
+| Reaction | 不因 Context 替换直接入队；Context 不成为 Watch 来源。校验重新发布的真实状态变化可命中显式 ValidationWatch；External.watch 与 L1 Command 不扩张 |
+
+首期不推导 Host 任意代码中的 Context 读取，也不增加 Context 路径级观察。保守整体失效会重算无关表达式、可能撤销无关请求，因此面向相对低频环境更新；不能将此策略推广为任意 Data 变化都取消所有任务。
+
+宿主流程状态或只读操作资格可以放入 Context；用户所选地区 / 币种 / 方案等业务输入放入 Working Data，才能自然驱动联动。语言与显示环境优先由 Host / L4 处理，只有表达式确需读取时进入 Context；搜索候选、加载状态及请求缓存继续走物料 Request / Host 资源管理。更换单据或根业务身份通常由 Host 明确替换 Runtime。Context 运行快照不提供 Compiler 的静态类型证据，后者仍是现行单独接缝。
 
 ### Host 接入与业务输出的已确认契约
 

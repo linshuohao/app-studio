@@ -1,6 +1,7 @@
 import type {
   DataReference,
   Reference,
+  ValidationWatch,
   ScopeBinder,
   ScopeHandleReference,
 } from '../definition/reference.js';
@@ -23,8 +24,11 @@ export type PreparedScopeDeclaration =
 /**
  * 规则和完整呈现表达式共用的静态观察项；不是已激活订阅。
  * 省略 aspect 等同 value，structure 只表示同一 Data 的集合结构观察。
- * 不新增 Context / Event / 校验状态等 L1 Watch 来源。
+ * 仅 Data 消费者使用；校验状态由独立 ValidationWatch 描述，不能混入 Constraint 数据依赖。
  */
 export interface DataWatch extends DataReference {
   aspect?: 'value' | 'structure';
 }
+
+/** Reaction 保留显式来源；不会把 when / then 读取自动加入触发集合。 */
+export type PreparedReactionWatch = DataWatch | ValidationWatch;

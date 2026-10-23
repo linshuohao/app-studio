@@ -24,8 +24,21 @@ export interface EventReference {
   /** 相对本次 Payload 根；路径与值类型须能由对应 Event / Request 的 payloadSchema 证明。 */
   path: JsonPointer;
 }
+/** 字段对外校验快照的观察 / 读取投影；不暴露内部任务与请求代次。 */
+export type ValidationObservation = 'issues' | 'status' | 'state';
+/** 只读字段校验引用，当前用于 Reaction 条件 / 动作；field 按当前词法 Scope 绑定稳定成员，不以数组下标充当成员身份。 */
+export interface ValidationReference {
+  source: 'validation';
+  field: DataReference;
+  /** issues 读取聚合问题，status 读取对外状态，state 读取完整对外快照。 */
+  observe: ValidationObservation;
+}
+/** 显式校验状态观察目标；与只读引用共享位置和投影，不是 Data Change。 */
+export type ValidationWatch = ValidationReference;
+/** Reaction 的显式触发来源；Context / Event 不在此集合内。 */
+export type ReactionWatch = DataReference | ValidationWatch;
 /** 读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。 */
-export type Reference = DataReference | ContextReference | EventReference;
+export type Reference = DataReference | ContextReference | EventReference | ValidationReference;
 /** 在规定的结构入口建立局部词法绑定；不创建第二份数据，也不是全局 Scope 注册项。 */
 export interface ScopeBinder {
   /** 绑定的数据位置，只能为静态 Data Reference，不能用表达式动态拼接位置。 */

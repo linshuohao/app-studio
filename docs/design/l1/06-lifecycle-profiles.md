@@ -10,17 +10,22 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-017
   - ADR-FE-008
   - ADR-FE-010
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-L1
 - SRC-HOST
 navigation:
   group: 02 · L1 协议
   order: 36
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-23'
 reading_next: L1-EXAMPLES
 ---
 
@@ -49,7 +54,7 @@ Runtime 随 Form / Scope 建立规则实例，runOnActivate 只控制新 Reactio
 
 Host 如需初始联动完成后的业务快照，可观察相应完成结果后调用 snapshot 自行保存；何时保存和何时标 Clean 由业务决定。读取 snapshot 不隐式 Flush、不等待全部异步校验、不自动建立 Baseline。推荐 Host 先取得外部数据再创建实例；如提供显式装载入口，Host 仍须防止迟到响应覆盖编辑，不用普通 set 猜测业务加载是否结束。
 
-Reset 后 Watch 未变，已有 Reaction 就不新增入队，即使当前费率或期望计算结果不同。业务需通过正确 Watch 配置或明确数据修改表达目标；本次经用户确认保留现行 Context 契约，不新增 Context 写入命令或 Context Reaction.watch。例子与现行边界验收见 [Runtime / Host 四条原则](../l3-reactive-engine.md#l3-runtime-host-boundary)。异常 / 整体预算停止、Pending 再触发与 异常轮次与 Validation / Submit 的完成衔接仍见 [L3 契约](../l3-reactive-engine.md#l3-consumers)，不增加业务 Reset 执行模式。
+Reset 后 Watch 未变，已有 Reaction 就不新增入队，即使当前费率或期望计算结果不同。业务需通过正确 Watch 配置或明确数据修改表达目标；本次经用户确认保留现行 Context 契约，不新增 Context 写入命令或 Context Reaction.watch。例子与现行边界验收见 [Runtime / Host 四条原则](../l3-reactive-engine.md#l3-runtime-host-boundary)。当前轮预算停止清空剩余 Reaction，后续新有效触发正常执行；Host 显式 Context 替换的失效交接见 [Context 管理](../extension-integration.md#host-context-update)，不新增 Context Watch；Reaction 可另行显式观察 Validation。异常轮次与 Validation / Submit 的完成衔接见 [L3 契约](../l3-reactive-engine.md#l3-consumers)，不增加业务 Reset 执行模式。
 
 ## 多 Profile 与按需交付 {#profiles}
 

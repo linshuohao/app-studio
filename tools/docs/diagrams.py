@@ -2,7 +2,67 @@
 from __future__ import annotations
 
 import html
+import math
 import re
+
+
+def render_canvas(spec: dict) -> str:
+    """Render positioned semantic nodes; the Markdown remains the only content source."""
+    anchor = spec['id']
+
+    def numbers(values, size):
+        if not isinstance(values, list) or len(values) != size or any(
+            type(value) not in (int, float) or not math.isfinite(value) or value < 0
+            for value in values
+        ):
+            raise ValueError(f'Invalid diagram coordinates: {anchor}')
+        return values
+
+    width, height = numbers(spec['canvas'], 2)
+    if not width or not height:
+        raise ValueError(f'Empty diagram canvas: {anchor}')
+    escape = html.escape
+    nodes = [node for row in spec['rows'] for node in row]
+    parts = [f'<figure class="architecture-diagram canvas-diagram" id="{anchor}">',
+             '<figcaption>' + escape(spec['title']) + '</figcaption>',
+             '<div class="diagram-canvas-shell">',
+             f'<svg class="diagram-canvas" viewBox="0 0 {width} {height}" role="img" aria-label="{escape(spec["title"], quote=True)}" xmlns="http://www.w3.org/2000/svg">',
+             '<title>' + escape(spec['title']) + '</title>',
+             '<defs><marker id="' + anchor + '-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="diagram-arrowhead" d="M0,0 L10,5 L0,10 Z"/></marker></defs>']
+
+    def node_markup(node):
+        x, y, w, h = numbers(node['position'], 4)
+        if x + w > width or y + h > height or not w or not h:
+            raise ValueError(f'Diagram node outside canvas: {anchor}')
+        kind = node.get('kind', 'node')
+        if kind not in {'node', 'group', 'state', 'label', 'asset', 'host', 'reaction', 'validation', 'layer'}:
+            raise ValueError(f'Unknown diagram node kind: {kind}')
+        result = [f'<g class="diagram-block diagram-block--{kind}">']
+        if kind != 'label':
+            result.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14"/>')
+        result.append(f'<text class="diagram-node-title" x="{x + 18}" y="{y + 34}">' + escape(node['title']) + '</text>')
+        lines = node.get('body', '').splitlines() + node.get('items', [])
+        for index, line in enumerate(lines):
+            result.append(f'<text class="diagram-node-body" x="{x + 18}" y="{y + 72 + index * 32}">' + escape(line) + '</text>')
+        return '\n'.join(result) + '</g>'
+
+    # Group boundaries sit behind connections; foreground nodes cover crossing endpoints.
+    parts.extend(node_markup(node) for node in nodes if node.get('kind') == 'group')
+    for edge in spec.get('edges', []):
+        points = [numbers(point, 2) for point in edge['points']]
+        if len(points) < 2 or any(x > width or y > height for x, y in points):
+            raise ValueError(f'Diagram edge outside canvas: {anchor}')
+        points_text = ' '.join(f'{x},{y}' for x, y in points)
+        arrow = '' if edge.get('arrow') is False else f' marker-end="url(#{anchor}-arrow)"'
+        if edge.get('both'):
+            arrow += f' marker-start="url(#{anchor}-arrow)"'
+        dash = ' diagram-edge--binding' if edge.get('binding') else ''
+        parts.append(f'<polyline class="diagram-edge{dash}" points="{points_text}"{arrow}/>')
+    parts.extend(node_markup(node) for node in nodes if node.get('kind') != 'group')
+    parts.append('</svg></div>')
+    if spec.get('note'):
+        parts.append('<p class="caption arch-note">' + escape(spec['note']) + '</p>')
+    return '\n'.join(parts) + '</figure>'
 
 
 def render_diagram(spec: dict) -> str:
@@ -13,6 +73,8 @@ def render_diagram(spec: dict) -> str:
     rows = spec["rows"]
     if not rows or any(not row for row in rows):
         raise ValueError(f"Diagram needs nonempty node rows: {anchor}")
+    if spec.get('canvas'):
+        return render_canvas(spec)
     if spec.get('columns'):
         columns = spec['columns']
         if any(len(row) != len(columns) for row in rows):

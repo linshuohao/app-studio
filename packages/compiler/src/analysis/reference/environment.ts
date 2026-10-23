@@ -16,6 +16,8 @@ export interface ScopeBinding {
 export interface LexicalEnvironment {
   scopes: ReadonlyMap<string, ScopeBinding>;
   event?: SchemaNode;
+  /** Validation reads are on-demand in Reaction conditions / actions only. */
+  validation?: boolean;
 }
 export const rootEnvironment = (): LexicalEnvironment => ({ scopes: new Map() });
 
@@ -41,6 +43,37 @@ export class ReferenceAnalyzer {
 
   resolve(reference: Reference, env: LexicalEnvironment, pointer: string): SchemaNode | undefined {
     const location = this.source(pointer);
+    if (reference.source === 'validation') {
+      if (!env.validation) {
+        this.diagnostics.error(
+          'VALIDATION_NOT_AVAILABLE',
+          location,
+          'Validation references are available in Reaction conditions and actions only.',
+        );
+        return undefined;
+      }
+      if (!this.resolve(reference.field, env, at(pointer, 'field'))) return undefined;
+      // The wire reference selects a public projection, never internal runner state.
+      // Concrete Issue fields / status values remain the Runtime SDK contract.
+      const issues = { type: 'array', items: true } as const;
+      const status = { type: 'string' } as const;
+      const schema =
+        reference.observe === 'issues'
+          ? issues
+          : reference.observe === 'status'
+            ? status
+            : {
+                type: 'object',
+                properties: { issues, status },
+                required: ['issues', 'status'],
+                additionalProperties: true,
+              };
+      return this.models.addRoot(
+        schema,
+        'https://form-engine.invalid/validation/' + reference.observe,
+        location,
+      );
+    }
     if (reference.source === 'context')
       return this.models.addRoot(true, 'https://form-engine.invalid/context/unknown', location);
     if (reference.source === 'event') {

@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>L4 呈现与交互适配 · 动态表单引擎</title>
-  <link rel="stylesheet" href="assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -376,6 +379,7 @@
 <li>只读数据遵守已确认的输入复制 / 内部不可变 / 开发冻结契约；组件不直接修改接收对象。</li>
 <li>动态 Props 求值失败作为对应物料的接入失败处理，不用旧结果冒充当前状态；具体错误形状归统一诊断 SDK。</li>
 </ol>
+<p>Host 显式替换 Context 是 Data watch 之外的管理失效入口：保守失效全部已挂载动态表达式，由 Adapter 重新取得 Runtime 求值结果；不自行监听 Host 对象原地修改，也不因 watch: [] 就永久缓存 Context 读取。普通 Data 更新继续按完整表达式的精确 watch 处理。见 <a href="extension-integration.html#host-context-update" rel="noopener noreferrer">Context 交接</a>。</p>
 <h3 id="6-输入指令与确认交互">6. 输入、指令与确认交互</h3>
 <ul>
 <li>普通编辑经物料解析并调用共用指令入口；符合目标类型时写相应值，非法中间文本可写 Working Data，由 Schema / Constraint 检查，不回退上一次合法值。</li>
@@ -479,7 +483,13 @@
 <h3 id="renderer-requests">物料请求接入</h3>
 <p>共用 Adapter 根据 PreparedMaterialNode.requests 处理物料请求，不要求逐物料工厂，亦不解析原始 Definition。桥接管理实际挂载实例 + 请求名的 latest / parallel、success / error / discarded、卸载 / 改绑及数组身份有效性，并按 PreparedViewPlan.requestSchemas 检查输入输出。Host 只接收业务输入并返回 JSON 结果，结果不自动写入表单。完整语义及验收见 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">L1 请求契约</a>；运行时接口及测试仍待实现，不由协议结构测试替代。</p>
 <h3 id="请求接入预检与页面错误">请求接入预检与页面错误</h3>
-<p>按所选 Prepared 的请求需求在页面装配时检查实际 Host 注册，不能推迟到用户点击或条件子树首次挂载；缺失项关联物料显示局部配置错误并停止相应交互。开发页面明确标出物料、请求名、Host 名及来源位置；生产以业务提示呈现局部不可用，其他可用物料继续。调用层仍保留 error 兜底。物料请求类型、Host 处理函数和静态注册约束共同构成开发接入验收，见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">完整目标</a>；本轮不宣称已实现 SDK 或页面错误组件。</p></section>
+<p>按所选 Prepared 的请求需求在页面装配时检查实际 Host 注册，不能推迟到用户点击或条件子树首次挂载；缺失项关联物料显示局部配置错误并停止相应交互。开发页面明确标出物料、请求名、Host 名及来源位置；生产以业务提示呈现局部不可用，其他可用物料继续。调用层仍保留 error 兜底。物料请求类型、Host 处理函数和静态注册约束共同构成开发接入验收，见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">完整目标</a>；本轮不宣称已实现 SDK 或页面错误组件。</p>
+</section>
+<section class="section" id="renderer-state-subscription"><div class="section-head"><div class="kicker">07 · FORM ENGINE</div><div class="section-title"><h2>状态订阅的统一交接</h2></div></div>
+
+<p>挂载时 Adapter 绑定实际 Scope，注册 Binding 与 Prepared 完整表达式的观察，并用一致初读交接获取当前值。Runtime 在有效变化发布后通知命中消费者，Adapter 重读权威 Data / Validation，并只重新求值失效表达式，再交框架更新 Props；不要求每次通知立即完成绘制。</p>
+<p>校验展示订阅 ValidationWatch（source / field / observe），数据展示仍使用 DataWatch。两者共用注册 / 通知 / 释放方式，但发布源和比较投影不同：Issues 相同而状态改变，只通知相应 status / state 观察。发布须先完成字段聚合与状态的一致更新，再同步通知；订阅不重放历史事件。字段 Issues 不放进组件自己的业务 Store。</p>
+<p>卸载或 Scope 改绑释放原观察并安全取得新快照；父条件观察不能随隐藏子树一并移除。View 的校验展示无需在 L1 新增 errorBind，也不因 Reaction 新增 ValidationReference 就允许任意持续 Props 读取校验状态；当前编译边界见<a href="compiler.html#compiler-reaction-state" rel="noopener noreferrer">Compiler</a>。精确 Runtime / Adapter API、缓存与框架接入仍待实现。</p></section>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="extension-integration.html">下一步 · 物料扩展与 Host 集成</a></nav>
         
@@ -493,8 +503,9 @@
 <a href="#adapter-lifecycle" data-to="adapter-lifecycle" title="Adapter 生命周期与迟到调用"><span class="nav-num">03</span><span>Adapter 生命周期与迟到调用</span></a>
 <a href="#material-errors" data-to="material-errors" title="物料错误隔离、降级与报告"><span class="nav-num">04</span><span>物料错误隔离、降级与报告</span></a>
 <a href="#implementation-contract" data-to="implementation-contract" title="L4 完整模块草案与编码契约"><span class="nav-num">05</span><span>L4 完整模块草案与编码契约</span></a>
-<a href="#l4-design-closure" data-to="l4-design-closure" title="设计收尾与卸载流程"><span class="nav-num">06</span><span>设计收尾与卸载流程</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L4</dd><dt>所属层级</dt><dd>L4</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details><summary>相关正文与历史 · 11</summary><ul><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li></ul></details></section>
+<a href="#l4-design-closure" data-to="l4-design-closure" title="设计收尾与卸载流程"><span class="nav-num">06</span><span>设计收尾与卸载流程</span></a>
+<a href="#renderer-state-subscription" data-to="renderer-state-subscription" title="状态订阅的统一交接"><span class="nav-num">07</span><span>状态订阅的统一交接</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L4</dd><dt>所属层级</dt><dd>L4</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 13</summary><ul><li><a href="decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="compiler.html">Compiler 详细设计与实施</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li></ul></details></section>
       </aside>
       </div>
     </div>

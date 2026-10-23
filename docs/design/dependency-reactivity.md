@@ -11,10 +11,15 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-017
   - ADR-FE-004
   - ADR-FE-005
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-DEP
@@ -23,7 +28,7 @@ sources:
 navigation:
   group: 06 · 横向能力
   order: 70
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-23'
 reading_next: DESIGN-INTEGRATION
 ---
 
@@ -57,7 +62,7 @@ reading_next: DESIGN-INTEGRATION
 | 现行已确认 | 逐 Command 前后 Root / Scope；候选后比较观察值；新实例按 runOnActivate，已有规则常规执行只因有效 Watch 变化；稳定 snapshot，业务 Baseline / Dirty / Reset 归 Host；执行事件与数据订阅分开 |
 | 推荐 | Object.is 观察值比较、Trie / 路径模板、临时旧 ScopeReadView 与位置型匹配 |
 | 校验方向 | 匹配时去重登记 Constraint Pending，正常联动后执行根 Schema / 本轮前置链；字段 Issue 聚合，完整校验另覆盖全部适用约束；编译补全依赖与前置共同入队已确认 |
-| 待固化 | ABI、稳定快照与完成观察、状态引用 / 求值、激活字段形状、队列实现、熔断恢复接口、Validation / Submit 与 View 粒度；不设计核心 Dirty / Reset 重算入口 |
+| 待固化 | ABI、稳定快照与完成观察、状态引用 / 求值、激活字段形状、队列实现、轮次结果 SDK、Validation / Submit 与 View 粒度；不设计核心 Dirty / Reset 重算入口 |
 
 ## 原始协议与编译后协议：一条执行路径 {#dependency-compiled-protocol}
 
@@ -67,7 +72,7 @@ reading_next: DESIGN-INTEGRATION
 | --- | --- | --- |
 | 消费者 | 作者、配置编辑器、版本审查、L2 | L3 Runtime / L4 Adapter |
 | 目标 | 业务意图清晰、可编辑审查 | 确定执行计划与较低运行解析成本 |
-| Reaction | 显式 watch / when / then | 已解析观察计划与 Command 执行计划 |
+| Reaction | 显式 watch / when / then | 显式分源观察与有序 Command / Host 响应项 |
 | Expression | AST 与命名 use | 解析、验证、预处理后的求值描述 |
 | Scope | 词法 Binder 与逐项关系 | 静态绑定计划；真实实例仍由 L3 建立 |
 | 能力 | Material / Pure Function 引用与要求 | 确定能力绑定、锁定信息、Host Requirements |
@@ -327,15 +332,15 @@ interface SubscribeOptions {
 
 只更新 Validation Issue 不应触发仅观察 Data 的 Reaction。Reaction 产生的新 Command 仍走统一数据入口，不能旁路写 Store。外部观察者收到的可以是“当前投影可能失效”信号，随后读取最新状态；Reaction 自身也已明确为状态收敛语义，同一 pending 实例多次失效可以合并，执行时读取最新值。显式 Command / Host 事件的次数不因此合并。
 
-External Constraint 要分开三件事：依赖变化立即使旧结论不再可信并可登记校验 Pending；blur、显式 validate、submit 或待固化的自动策略决定是否请求 Host；返回成功 / 异常都核对有效输入、请求代次与 Scope 实例，过期结果不得覆盖当前状态。请求、重试和取消仍归 Host。
+External Constraint 要分开三件事：依赖变化立即撤销旧结论并登记 Pending；Flush 结束后与内部校验统一执行，先根 Schema，再按同步前置与稳定顺序发起就绪任务；返回成功 / 异常均核对输入、请求代次、Scope 与实例。External 发起不阻塞独立规则，普通增量不扩为全表完整校验。没有 Reaction 时有独立校验入口。请求、重试和实际取消仍归 Host。
 
-明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不新增结果反向 PubSub。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 [L2](l2-preparation.md#compiler-io-differences)。
+明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不依赖结果反向 PubSub；显式 ValidationWatch 另行消费已发布状态。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 [L2](l2-preparation.md#compiler-io-differences)。
 
 初始化校验、主动校验、首次 View 读取和 Reaction 是否初始化执行都有独立入口。`subscribe` 本身不隐含“注册时必然执行一次”；初始数据已违反 Constraint 也必须能被初始化 / 主动校验发现。
 
 常规 Reaction 的新增失效严格来自有效 Watch 变化；业务结果不符预期、Host Reset 意图或读取 snapshot 均不构成触发。runOnActivate 只在新实例首次建立时独立应用，既有实例不借它主动修复结果。Host 自选业务快照 / Dirty / 恢复 Command；snapshot 不隐式 Flush 或标 Clean，是否等待已有任务完成由 Host 所需场景及完成观察契约决定。详见 [四条职责原则](l3-reactive-engine.md#l3-runtime-host-boundary)。
 
-用户已明确本次 Context 保持原有契约：L1 Command 只写 Data、Reaction.watch 只接受 DataReference，Context 对表达式只读。运行时订阅草图中的 Context / Field Meta 等候选状态类别不等于新增 L1 Watch；Field Meta 也不因此承诺核心 Dirty 或编辑来源分类。
+用户已明确本次 Context 保持原有契约：L1 Command 只写 Data、Reaction.watch 只接受 DataReference，Context 对表达式只读。Host 显式替换 Context 时，保守失效挂载动态表达式及全部校验、撤销旧外部任务资格；校验沿用 Flush 结束后的统一入口，不使 Reaction 入队，见 [Context 管理](extension-integration.md#host-context-update)。运行时订阅草图中的 Context / Field Meta 等候选状态类别不等于新增 L1 Watch；Field Meta 也不因此承诺核心 Dirty 或编辑来源分类。
 
 单条 Command 内取得稳定 before / after ReadState，索引只定位可能受影响的观察者，再按观察粒度比较。推荐 Object.is / 存在性判断：整对象新引用可保守失效，内部 age 相同的观察可跳过；不能深比较全表或缓存上次 Reaction 参数替代逐 Command 检测。结构变更的旧 Scope 位置只在本次比较保留，不放进 pending，不沿规则链传播 ScopeChange；新旧实例的销毁 / 激活分别处理。完整机制与伪代码见 [L3 变化检测](l3-data-scope.md#l3-change-detection)。
 
@@ -409,7 +414,7 @@ function mountPreparedView(runtime, node, scope) {
 | Reaction 调度 | 延迟一次启动，随后同步执行到结束或保护停止 | 已确认；具体启动点、精确排序待固化 |
 | Reaction 交付 | 同实例 pending 合并，执行时读最新状态，执行后可重新入队 | 已确认；内部级联进入当前 Flush |
 | batch / then | 按序实时写入，不默认整组原子回滚 | 可隔离单 Command 错误继续独立行为已确认；准确错误类型 / 接口待固化 |
-| 超限边界 | 整个 Flush 统一预算与熔断 | 已确认；暂停后续自动联动，保留填写和独立完整校验，恢复接口待固化，不做局部影响链 |
+| 超限边界 | 整个 Flush 统一预算与熔断 | 已确认；只停止当前轮并清空剩余 Reaction，旧任务不自重试；后续新有效失效正常建轮，保留填写和独立完整校验，不做局部影响链 |
 | 消费者通知 | 数据写入、失效登记与回调交付分别设计 | 同步写回归当前轮并沿用整体保护已确认；跨消费者交付细节留给实现 |
 | View 粒度 | 按 Node / Binding / 属性拆分 | 共享静态语义，性能测量后决定 |
 | 变化记录 | 有效 Change 与有序 Trace 保留来源 | 底层路径 / 事件编码、记录预算和截断待固化 |
@@ -487,7 +492,7 @@ Reaction 的 Command 同步、受控、有序，外部 dispatch 后可以立即�
 
 Pending 按具体 Reaction 实例去重，执行时读取最新输入；取出执行后再次被有效变化命中仍可重新入队。不承诺任意冲突配置都与顺序无关，也不改变同一 then[] 内显式 Command 的有序语义。同步回调写回归当前轮已确认，具体容器与调用栈处理留给实现验收。
 
-Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。
+Reaction 同步执行协议响应项，可通过已有 host.emit 发起 Host 行为；不等待网络，不管理取消、重试、超时或业务结果适用性。Host 按 HostContract.events 注册处理函数，由 Runtime 根据显式 watch 与 when 触发；Host 自主管理报价请求、合并与乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对规则实例，相同两项 host.emit 仍交付两次；Host 请求是否合并另由 Host 决定。该修订复用语义事件出口，不将 External Validator 或物料 host.request 当作 Reaction 异步执行器，见[完整契约](l1/04-command-reaction.md#reaction-state-host)。
 
 具体执行见 [Reaction 合并](l3-reactive-engine.md#l3-reactions)，决策见 [ADR-FE-006](decisions/ADR-FE-006-command-flush.md)。
 
@@ -518,3 +523,18 @@ Adapter 是共用的引擎接入能力，不为每个物料编写独立数据 / 
 卸载或改绑时，Adapter 释放旧监听、订阅与可解绑回调，不要求每个物料重复处理共性生命周期。正确清理后旧回调通常不再触发；已经被排入外部队列或不能物理撤回的调用仍可能迟到，必须按旧组件 / Scope / 关联身份拒绝，不得使用新的绑定上下文写入其他成员。该检查属于 Adapter 实现保护，不建立新的运行时任务队列或要求用户配置。首次订阅读取与改绑交接应不漏更新，具体平台实现由契约测试验证。
 
 单物料错误按 [L4 错误隔离](l4-renderer.md#material-errors)处理，不通过依赖图向其他物料传播失败。
+
+## 统一观察注册与分源通知 {#state-observation}
+
+Data、View Binding / 表达式、Validation 展示及 Host 响应共享观察注册、Scope 绑定、匹配、通知和释放的框架；它们保留不同的激活与执行策略。DataWatch 走数据变化匹配，ValidationWatch 走字段聚合 / 状态发布匹配，不能把 Issue 塞入 Data Trie。执行事件仍是独立诊断通道，不作为状态快照重放。
+
+| 消费者 | 观察目标 | 命中后的行为 |
+| --- | --- | --- |
+| Reaction | 显式 Data / Validation watch | 按实例进入同步响应队列，执行 when / 有序 then |
+| View Binding / 动态表达式 | 明确 Data 引用 / L2 完整表达式 watch | 通知 Adapter，重读值并只重新求值受影响表达式 |
+| View / Host 校验展示 | 字段 ValidationWatch 的 issues / status / state | 通知后重读权威字段快照 |
+| Constraint | 原 Data-only 有效依赖 | 登记校验 Pending，由独立校验阶段执行 |
+
+订阅注册本身不隐含执行 Reaction。Adapter 在挂载时绑定实际 Scope，通过一致的初读 / 版本核对交接避免“读完到订阅前”漏更新，卸载或改绑时释放；控制子树显隐的父观察在子树缺席时仍存在。Runtime 发布完整一致的状态、完成内部失效登记后，同步通知普通订阅；框架实际绘制由 Adapter / 框架调度。通知语义是状态失效、重新读取，不保证逐事件重放或渲染次数。
+
+issues 只比较公开 Issue 内容；status 只比较公开状态；state 比较整个公开字段快照。Issues 仍为空但 pending / 完成状态改变时，status / state 观察可以命中，issues 观察不因此产生伪变化。每次合格校验结果分别发布，旧输入结果拒绝发布；[校验发布边界](l3-validation.md#validation-state-observation)与[Reaction 行为出口](l1/04-command-reaction.md#reaction-state-host)共同约束时序。

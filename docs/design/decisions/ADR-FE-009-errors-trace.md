@@ -2,22 +2,25 @@
 id: ADR-FE-009
 title: ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace
 type: decision
-status: accepted
+status: superseded
 layer: 跨层
 modules:
 - M09
 - M16
 tags: []
 related:
-  decisions: []
+  decisions:
+  - ADR-FE-018
 sources:
+- SRC-L3BASELINE
 - SRC-V04
 - SRC-V05
 navigation:
   group: 09 · 决策与追溯
   order: 119
-last_reviewed: '2026-10-19'
-status_note: 基线已确认；Pending、通知、Trace 接口仍待固化
+last_reviewed: '2026-10-22'
+status_note: 已由 ADR-FE-018 完整承接；持续暂停改为当前轮清队列、后续新触发正常执行
+superseded_by: ADR-FE-018
 evolution:
 - source: SRC-V04
   status: superseded
@@ -29,6 +32,7 @@ evolution:
 
 # ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace
 
+本 ADR 已由 [ADR-FE-018](ADR-FE-018-flush-round-protection.md) 替代。以下保留当时完整决定与未决状态供追溯；现行保护、清队列及后续触发规则以新 ADR 和 L3 正文为准。
 
 
 ## 背景与演进 {#adr-009-context}

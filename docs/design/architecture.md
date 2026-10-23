@@ -9,6 +9,8 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-017
   - ADR-FE-001
   - ADR-FE-002
@@ -18,12 +20,13 @@ related:
   - ADR-FE-006
   - ADR-FE-007
   - ADR-FE-008
-  - ADR-FE-009
   - ADR-FE-010
   - ADR-FE-011
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-EARLY
@@ -31,7 +34,7 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 10
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-22'
 status_note: 分层与主体语义已确认，公开接口与生产实现未完成
 relocated_sections:
 - source: docs/design/platform-studio.md
@@ -423,6 +426,8 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 }
 ```
 
+指令、运行时状态、Reaction / Validation 调度与外部能力的完整连接，见 [运行时全景](l3-reactive-engine.md#runtime-overview)。
+
 | 层 / 协作方 | 核心问题 | 主要服务对象 |
 | --- | --- | --- |
 | L1 · Definition | 表单是什么？数据与业务规则是什么？ | 配置者、设计器、Preparation |
@@ -490,7 +495,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 
 **运行执行基线：**Command 即时写入，待执行 Reaction 实例合并后读取最新状态，同步级联留在当前 Flush。可隔离 Command 错误记录后继续独立行为，安全预算超限停止整轮，已写 Data 保留；有序 Trace 记录事实，图由开发工具派生。完整状态所有权、执行契约与行为验收见 [L3 运行时](l3-reactive-engine.md)；数据与身份、校验、Trace 分别在对应能力主题维护。
 
-**执行资格与业务编辑分开。**常规 Reaction 仅因显式 Watch 的有效观察值变化新增入队；runOnActivate 只用于新规则实例首次激活。导入 age25 / premium80 覆盖 age25 / premium150，若只 watch age 且没有先前 pending，Runtime 保留导入的 80，不自动修复为 150。Runtime 保证协议执行与声明校验，Host 决定编辑、业务基准、恢复与保存期望；snapshot 只读取稳定数据，不标 Clean 或重算。Context 保留现行只读 / Data-only Watch 契约。
+**执行资格与业务编辑分开。**常规 Reaction 仅因显式 Watch 的有效观察值变化新增入队；runOnActivate 只用于新规则实例首次激活。导入 age25 / premium80 覆盖 age25 / premium150，若只 watch age 且没有先前 pending，Runtime 保留导入的 80，不自动修复为 150。Runtime 保证协议执行与声明校验，Host 决定编辑、业务基准、恢复与保存期望；snapshot 只读取稳定数据，不标 Clean 或重算。Context 保留表单侧只读边界，不成为 Watch 来源；Host 可显式替换快照并统一失效呈现与校验，不直接触发 Reaction。Reaction 可显式观察 Data 或 Validation，并经 host.emit 发起 Host 行为；校验状态的真实变化按该显式观察响应，见[状态观察](l1/04-command-reaction.md#reaction-state-host)。
 
 ## 完整案例：保险投保表单的一次交互 {#flow}
 
@@ -509,7 +514,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
     [{"title":"06 · 展示报价 / 受控回写 / 提交","body":"结果按适用性展示或 Command 回写；完整校验通过后交付数据，Host 构造业务输出并核对许可提交"}]
   ],
   "arrows":["↓","↓","↓","↓","↓"],
-  "note":"图示反映即时写入与独立 Flush；可隔离错误继续，预算超限整轮停止；通知重入与 SDK 方法名待固化。父条件成立后 L4 挂载监护人子节点并订阅；正常联动后校验方向已确认；外部请求时机、通知重入和 SDK 仍待固化。"
+  "note":"图示反映即时写入与独立 Flush；可隔离错误继续，预算超限整轮停止；同轮通知写回与预算已确认，SDK 方法名和实际验收待完成。父条件成立后 L4 挂载监护人子节点并订阅；Flush 结束后先 Schema、再按同步前置统一启动内外校验；熔断仅停当前轮并清空 Reaction，后续新触发正常建轮。"
 }
 ```
 

@@ -142,6 +142,19 @@ figcaption { color: var(--muted); font: 11px/1.8 var(--font-code); }
 .arch-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 12px 0 0; list-style: none; }
 .arch-chips li { padding: 3px 9px; margin: 0; border: 1px solid var(--border); border-radius: 5px; color: var(--muted); font-size: 11px; }
 .architecture-diagram .arch-note { margin: 16px 0 0; }
+.diagram-canvas-shell { overflow-x: auto; }
+.diagram-canvas { display: block; width: 100%; height: auto; font-family: var(--font-body); }
+.diagram-block rect { fill: var(--surface); stroke: var(--border-strong); stroke-width: 2; }
+.diagram-block--group rect { fill: var(--panel); stroke: var(--muted); stroke-width: 3; }
+.diagram-block--state rect, .diagram-block--asset rect, .diagram-block--host rect { fill: var(--subtle); }
+.diagram-block--reaction rect, .diagram-block--validation rect { stroke: var(--muted); }
+.diagram-node-title { fill: var(--ink); font-size: 25px; font-weight: 500; }
+.diagram-node-body { fill: var(--muted); font-size: 22px; }
+.diagram-block--label .diagram-node-title { fill: var(--muted); font-size: 22px; }
+.diagram-edge { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-linejoin: round; }
+.diagram-edge--binding { stroke-dasharray: 8 7; }
+.diagram-arrowhead { fill: var(--muted); }
+#diagramContent .canvas-diagram { min-width: 1540px; }
 .document-foot { padding-top: 25px; margin-top: 40px; border-top: 1px solid var(--border); color: var(--quiet); font-size: 12px; }
 
 @media (max-width: 1150px) {

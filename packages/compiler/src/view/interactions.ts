@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@form-engine/protocol';
 import type { HostContract, MaterialManifest } from '@form-engine/protocol/capability';
-import type { MaterialNode } from '@form-engine/protocol/definition';
+import type { HostEventIntent, MaterialNode } from '@form-engine/protocol/definition';
 import type {
   HostEventRequirement,
   HostRequestRequirement,
@@ -22,6 +22,40 @@ export class InteractionCompiler {
     private readonly host?: HostContract,
   ) {}
 
+  /** Shared by material events and global Reaction actions; no persistent payload watch. */
+  emit(intent: HostEventIntent, env: LexicalEnvironment, location: string): void {
+    const { expressions } = this.values;
+    const { models, diagnostics, source } = expressions;
+    const contract =
+      this.host?.events && own(this.host.events, intent.event)
+        ? this.host.events[intent.event]
+        : undefined;
+    if (this.host && !contract)
+      diagnostics.error(
+        'HOST_EVENT_NOT_FOUND',
+        source(at(location, 'event')),
+        `No Host event ${intent.event}.`,
+      );
+    this.events.set(intent.event, {
+      name: intent.event,
+      optional: contract?.optional ?? false,
+    });
+    const payload = this.values.compile(
+      intent.payload ?? null,
+      env,
+      at(location, 'payload'),
+      false,
+    );
+    if (contract?.payloadSchema !== undefined) {
+      const target = models.addRoot(
+        contract.payloadSchema,
+        `https://form-engine.invalid/host/event/${encodeURIComponent(intent.event)}`,
+        source(location),
+      );
+      models.scan(target);
+      this.values.expect(payload, target, at(location, 'payload'), 'HOST_EVENT_PAYLOAD');
+    }
+  }
   private resource(schema: JsonSchema, key: string, pointer: string): string {
     const { expressions } = this.values;
     const node = expressions.models.addRoot(
@@ -69,35 +103,7 @@ export class InteractionCompiler {
       if (intent.type === 'form.command')
         checkCommand(intent.command, context, at(location, 'command'), this.values);
       else {
-        const contract =
-          this.host?.events && own(this.host.events, intent.event)
-            ? this.host.events[intent.event]
-            : undefined;
-        if (this.host && !contract)
-          diagnostics.error(
-            'HOST_EVENT_NOT_FOUND',
-            source(at(location, 'event')),
-            `No Host event ${intent.event}.`,
-          );
-        this.events.set(intent.event, {
-          name: intent.event,
-          optional: contract?.optional ?? false,
-        });
-        const payload = this.values.compile(
-          intent.payload ?? null,
-          context,
-          at(location, 'payload'),
-          false,
-        );
-        if (contract?.payloadSchema !== undefined) {
-          const target = models.addRoot(
-            contract.payloadSchema,
-            `https://form-engine.invalid/host/event/${encodeURIComponent(intent.event)}`,
-            source(location),
-          );
-          models.scan(target);
-          this.values.expect(payload, target, at(location, 'payload'), 'HOST_EVENT_PAYLOAD');
-        }
+        this.emit(intent, context, location);
       }
     }
     for (const name of Object.keys(manifest.requests ?? {}))

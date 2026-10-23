@@ -7,6 +7,8 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIOTYPES
@@ -22,8 +24,12 @@ sources:
 - SRC-V06
 - SRC-HOST
 - SRC-V07
-related: {}
-last_reviewed: '2026-10-22'
+related:
+  decisions:
+  - ADR-FE-020
+  - ADR-FE-018
+  - ADR-FE-019
+last_reviewed: '2026-10-23'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -61,6 +67,25 @@ relocated_sections:
 ---
 
 # 设计决策与讨论演进
+
+## 2026-10-22：运行时全景与外部能力展示 {#runtime-overview-confirmed}
+
+用户指出局部 Command / Flush、变化检测与校验图缺少以整个 Runtime 为中心的贯穿关系，要求完整显示状态组成、指令、同步联动、校验与结果通知，并补出纵向分层、物料、纯函数及 Host。确认校验结果按每次有效结果就绪更新和通知，不等待全部异步完成才呈现。
+
+排布讨论中用户认可完整度，随后要求减少交叉连线；矩阵和压缩剖面未采纳，因为过程不直观且丢失内容。最终采用完整图为基线，合并契约入口、按层就近放置实现和 Host 接口，只优化布局与连线，并明确授权集成到文档。现行入口为[运行时全景](l3-reactive-engine.md#runtime-overview)，来源为 [SRC-RUNTIMEOVERVIEW](source-map.md#src-runtime-overview)。图示澄清既有职责，不替代原局部图、不新增 ADR 或模块完成结论；超限及 Context 表达以 ADR-FE-018 / 019 的现行决定为准。
+
+## 2026-10-22：L3 整体领域骨架与剩余行为收敛 {#l3-domain-baseline-confirmed}
+
+用户在 L1 / L2 主体落地后要求先完整建模 L3，明确各块功能并串联流程，再实现。整体草案以 FormRuntime 为统一入口，整合数据 / Scope、引用求值、Command、观察、Reaction / Flush、Validation、诊断与生命周期；区分修改完成、联动结束和完整校验完成。后续直接整理已确认内容与接口，不因字段、容器、普通实现细化反复讨论。
+
+本轮确认与变化：
+
+- **校验时序明确：**外部与内部校验共用 Flush 结束后的正常路径；先根 Schema，再按同步前置及稳定顺序执行就绪规则。异步任务发起后独立规则继续，普通增量与全适用完整校验的覆盖范围仍分别解释。助手此前提出外部默认仅显式调用的建议已被用户纠正，未成为共识。
+- **熔断决定替代：**原 2026-10-19 持续暂停、等待显式恢复的选择不再有效。当前轮停止、清空剩余 Reaction，旧任务不续跑或自动重试；后续新交互 / Host 操作产生有效失效时正常建立新轮次和预算。保留已写 Data、填写与独立完整校验，开发端定位问题、生产交 Host 监控告警。正常操作继续不保证被丢弃的计算完成，关键业务关系由 Constraint 检查。[ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)完整承接旧错误 / 预算 / Trace 基线，替代 ADR-FE-009；旧 ADR 和以下原讨论记录保留追溯。
+- **Context 管理新增：**Host 可显式替换只读快照，赋新身份；保守失效挂载动态表达式与全部校验，撤销旧外部任务及完整证明资格，再经统一入口校验。旧调用不混读新 Context。不增加 Context Command / watch 或自动 Reaction；业务输入放入 Data，资源与高频查询走 Host / 物料通道。决定与代价见 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。
+- **结果结构整理：**valid / invalid / incomplete / stale 语义已定，结构由维护者整合输入身份、快照、Issues、覆盖及诊断，不逐字段重开用户决策；具体 SDK 尚未实现。
+
+状态复核将 M09 / M11 / M13 从需要架构决策阻塞调整为部分完成，REV-02 / REV-06 的行为缺口已解释；接口整理、异步资格 / 清理和消费验收仍未完成。没有以本轮文档数量提升为模块设计全闭环或实现就绪。来源见 [SRC-L3BASELINE](source-map.md#src-l3-baseline)。下一项是整理 Data / Snapshot / Scope 完整契约，随后按依赖展开其余模块与纵切联验。
 
 本篇专门回答“为什么这样设计、曾考虑什么、后来改变了什么”。直接理解当前方案不需要先读本篇；完整行为在各层设计维护，独立 ADR 记录重要取舍。
 
@@ -1211,3 +1236,11 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 ### Compiler I01 实施
 
 本期设计提交 6a0d97b 后，按授权实现真实 compile 的首个静态纵切；结构 / 简写 / 默认选择、静态物料与 Binding / Props / Slot、资源闭包、双摘要与输出自检有真实结果。独立元信息自检复用协议 Schema 并检查可选参数顺序。后续批次暂不支持的声明明确报错，无部分执行产物。实际入口、范围、问题修复与门禁结果见 [工程记录](engineering.md#compiler-i01)，来源 SRC-COMPILERIMPLEMENTATION；不将 I01 完成写成整个 Compiler 或各端消费完成。
+
+## 2026-10-23：Reaction 状态观察与 Host 行为统一 {#reaction-state-evolution}
+
+本轮修订旧 Data-only Reaction / Command-only then 限制，沿用同步触发模型：Reaction 可声明 ValidationWatch，并复用已有 host.emit 调用 Host 注册行为。Host 内部异步请求不占用 Flush，取消 / 过期 / 防覆盖仍归 Host。View 与校验展示补齐观察目标、发布一致性、重读与释放链路。
+
+拒绝以“Host 自行监听即可”省略运行时的触发配置；也未采用任意自定义数据 Command 或通用异步 Reaction Scheduler。新只读 ValidationReference 与写目标分开，Constraint 的同步 requires 不变；逐结果通知不等于完整校验提前完成。局部替代见 [ADR-FE-020](decisions/ADR-FE-020-reaction-state-host.md)，来源 SRC-REACTIONSTATE。
+
+协议 TypeScript、派生 Schema 与 Compiler 衔接同步维护，Prepared 格式升至 /2；Runtime / Adapter 仍待实现，字段状态枚举与 Issue SDK 仍在原任务内。此前来源中的“Data-only”保留历史语境，现行有效行为以对应主题及新 ADR 为准。

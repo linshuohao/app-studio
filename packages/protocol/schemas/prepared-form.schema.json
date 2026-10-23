@@ -349,7 +349,7 @@
     },
     "DataWatch": {
       "additionalProperties": false,
-      "description": "规则和完整呈现表达式共用的静态观察项；不是已激活订阅。 省略 aspect 等同 value，structure 只表示同一 Data 的集合结构观察。 不新增 Context / Event / 校验状态等 L1 Watch 来源。",
+      "description": "规则和完整呈现表达式共用的静态观察项；不是已激活订阅。 省略 aspect 等同 value，structure 只表示同一 Data 的集合结构观察。 仅 Data 消费者使用；校验状态由独立 ValidationWatch 描述，不能混入 Constraint 数据依赖。",
       "properties": {
         "aspect": {
           "enum": [
@@ -439,7 +439,7 @@
         },
         "payload": {
           "$ref": "#/$defs/ValueSpec",
-          "description": "事件发生时求值；可读取当次允许的 Event Reference。"
+          "description": "触发时按调用求值；仅物料事件上下文允许 Event Reference，Reaction 不提供 Event。"
         },
         "type": {
           "const": "host.emit",
@@ -1196,15 +1196,15 @@
           "$ref": "#/$defs/PreparedScopeDeclaration"
         },
         "then": {
-          "description": "按序执行的受控命令；当前数据可立即读取，默认不整体回滚。",
+          "description": "按序执行命令或发出 Host 通知；不 await Host，不默认整体回滚。",
           "items": {
-            "$ref": "#/$defs/Command"
+            "$ref": "#/$defs/ReactionAction"
           },
           "type": "array"
         },
         "watch": {
           "items": {
-            "$ref": "#/$defs/DataWatch"
+            "$ref": "#/$defs/PreparedReactionWatch"
           },
           "type": "array"
         },
@@ -1220,6 +1220,17 @@
         "watch"
       ],
       "type": "object"
+    },
+    "PreparedReactionWatch": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataWatch"
+        },
+        {
+          "$ref": "#/$defs/ValidationWatch"
+        }
+      ],
+      "description": "Reaction 保留显式来源；不会把 when / then 读取自动加入触发集合。"
     },
     "PreparedResources": {
       "additionalProperties": false,
@@ -1381,6 +1392,17 @@
       ],
       "type": "object"
     },
+    "ReactionAction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Command"
+        },
+        {
+          "$ref": "#/$defs/HostEventIntent"
+        }
+      ],
+      "description": "有序响应项；Host 行为同步发起，不等待其异步完成，不扩展 Command。"
+    },
     "Reference": {
       "anyOf": [
         {
@@ -1391,6 +1413,9 @@
         },
         {
           "$ref": "#/$defs/EventReference"
+        },
+        {
+          "$ref": "#/$defs/ValidationReference"
         }
       ],
       "description": "读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。"
@@ -1521,6 +1546,42 @@
         "$use"
       ],
       "type": "object"
+    },
+    "ValidationObservation": {
+      "description": "字段对外校验快照的观察 / 读取投影；不暴露内部任务与请求代次。",
+      "enum": [
+        "issues",
+        "status",
+        "state"
+      ],
+      "type": "string"
+    },
+    "ValidationReference": {
+      "additionalProperties": false,
+      "description": "只读字段校验引用，当前用于 Reaction 条件 / 动作；field 按当前词法 Scope 绑定稳定成员，不以数组下标充当成员身份。",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "observe": {
+          "$ref": "#/$defs/ValidationObservation",
+          "description": "issues 读取聚合问题，status 读取对外状态，state 读取完整对外快照。"
+        },
+        "source": {
+          "const": "validation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "field",
+        "observe"
+      ],
+      "type": "object"
+    },
+    "ValidationWatch": {
+      "$ref": "#/$defs/ValidationReference",
+      "description": "显式校验状态观察目标；与只读引用共享位置和投影，不是 Data Change。"
     },
     "ValueObject": {
       "additionalProperties": {

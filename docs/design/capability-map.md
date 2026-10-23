@@ -126,7 +126,7 @@ relocated_sections:
 | --- | --- | --- |
 | L1 | [协议设计](l1/README.md) | 模型与顶层结构 → 数据 / 引用 / Scope → 表达式 / 约束 → Command / Reaction → 视图 → 生命周期 → 示例与类型 |
 | L2 | [预处理与编译](l2-preparation.md) | 编译输入输出、诊断、静态分析、能力契约与 Prepared 交付 |
-| L3 | [总览与 Flush](l3-reactive-engine.md)、[数据与 Scope](l3-data-scope.md)、[校验](l3-validation.md)、[Trace](l3-observability.md) | 唯一数据、身份、变化传播、Flush、错误，以及独立校验完成语义 |
+| L3 | [运行时全景与 Flush](l3-reactive-engine.md#runtime-overview)、[数据与 Scope](l3-data-scope.md)、[校验](l3-validation.md)、[Trace](l3-observability.md) | 唯一数据、身份、变化传播、Flush、错误，以及独立校验完成语义 |
 | L4 | [呈现与交互适配](l4-renderer.md) | 行为专题已收敛，首期 React 已选；正式 SDK 与平台实现待验证 |
 
 ## 横向：跨层协作能力 {#horizontal-capabilities}

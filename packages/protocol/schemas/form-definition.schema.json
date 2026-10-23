@@ -527,7 +527,7 @@
         },
         "payload": {
           "$ref": "#/$defs/ValueSpec",
-          "description": "事件发生时求值；可读取当次允许的 Event Reference。"
+          "description": "触发时按调用求值；仅物料事件上下文允许 Event Reference，Reaction 不提供 Event。"
         },
         "type": {
           "const": "host.emit",
@@ -832,7 +832,7 @@
     },
     "Reaction": {
       "additionalProperties": false,
-      "description": "数据变化驱动的同步联动声明；实例随 Runtime / Scope 激活，不随 View 显隐注销。",
+      "description": "数据或校验状态变化驱动的同步联动声明；实例随 Runtime / Scope 激活，不随 View 显隐注销。",
       "properties": {
         "id": {
           "description": "定义内规则身份，区别于每个 Scope 的实际运行实例身份。",
@@ -847,16 +847,16 @@
           "description": "规则使用的局部词法上下文；省略时不建立额外 Binder。"
         },
         "then": {
-          "description": "按序执行的受控命令；当前数据可立即读取，默认不整体回滚。",
+          "description": "按序执行命令或发出 Host 通知；不 await Host，不默认整体回滚。",
           "items": {
-            "$ref": "#/$defs/Command"
+            "$ref": "#/$defs/ReactionAction"
           },
           "type": "array"
         },
         "watch": {
           "description": "显式触发来源；when 和 Command 值的读取不会被静默加入。",
           "items": {
-            "$ref": "#/$defs/DataReference"
+            "$ref": "#/$defs/ReactionWatch"
           },
           "type": "array"
         },
@@ -872,6 +872,28 @@
       ],
       "type": "object"
     },
+    "ReactionAction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Command"
+        },
+        {
+          "$ref": "#/$defs/HostEventIntent"
+        }
+      ],
+      "description": "有序响应项；Host 行为同步发起，不等待其异步完成，不扩展 Command。"
+    },
+    "ReactionWatch": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DataReference"
+        },
+        {
+          "$ref": "#/$defs/ValidationWatch"
+        }
+      ],
+      "description": "Reaction 的显式触发来源；Context / Event 不在此集合内。"
+    },
     "Reference": {
       "anyOf": [
         {
@@ -882,6 +904,9 @@
         },
         {
           "$ref": "#/$defs/EventReference"
+        },
+        {
+          "$ref": "#/$defs/ValidationReference"
         }
       ],
       "description": "读取来源的封闭集合。使用位置决定是否可读，写目标只接受 DataReference。"
@@ -1072,6 +1097,15 @@
       ],
       "type": "object"
     },
+    "ValidationObservation": {
+      "description": "字段对外校验快照的观察 / 读取投影；不暴露内部任务与请求代次。",
+      "enum": [
+        "issues",
+        "status",
+        "state"
+      ],
+      "type": "string"
+    },
     "ValidationPrerequisite": {
       "anyOf": [
         {
@@ -1082,6 +1116,33 @@
         }
       ],
       "description": "多项前置须全部满足；首期不支持跨异步等待及集合 or / any。"
+    },
+    "ValidationReference": {
+      "additionalProperties": false,
+      "description": "只读字段校验引用，当前用于 Reaction 条件 / 动作；field 按当前词法 Scope 绑定稳定成员，不以数组下标充当成员身份。",
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/DataReference"
+        },
+        "observe": {
+          "$ref": "#/$defs/ValidationObservation",
+          "description": "issues 读取聚合问题，status 读取对外状态，state 读取完整对外快照。"
+        },
+        "source": {
+          "const": "validation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "field",
+        "observe"
+      ],
+      "type": "object"
+    },
+    "ValidationWatch": {
+      "$ref": "#/$defs/ValidationReference",
+      "description": "显式校验状态观察目标；与只读引用共享位置和投影，不是 Data Change。"
     },
     "ValueObject": {
       "additionalProperties": {

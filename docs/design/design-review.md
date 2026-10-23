@@ -7,9 +7,13 @@ layer: 跨层
 modules: []
 tags: []
 sources:
+- SRC-L3BASELINE
 - SRC-REVIEW
-related: {}
-last_reviewed: '2026-10-19'
+related:
+  decisions:
+  - ADR-FE-018
+  - ADR-FE-019
+last_reviewed: '2026-10-22'
 reviews:
   REV-01:
     modules:
@@ -26,8 +30,8 @@ reviews:
     - M12
     - M13
     severity: high
-    blocking: true
-    state: open
+    blocking: false
+    state: explained
   REV-03:
     modules:
     - M09
@@ -60,7 +64,7 @@ reviews:
     - M15
     severity: medium
     blocking: false
-    state: open
+    state: explained
   REV-07:
     modules:
     - M07
@@ -139,8 +143,8 @@ relocated_sections:
 | G06 | Command 即时不可变写入；batch / then 默认有序非原子；逐 Command 检测 | [Data / Command](l3-data-scope.md#l3-data)、[检测](l3-data-scope.md#l3-change-detection) | [006](decisions/ADR-FE-006-command-flush.md) |
 | G07 | Reaction pending 可合并、执行读最新状态、内部级联归本轮；显式 Command 保留次数 | [Reaction](l3-reactive-engine.md#l3-reactions)、[Flush](l3-reactive-engine.md#l3-flush) | [006](decisions/ADR-FE-006-command-flush.md) |
 | G08 | Scope 身份与下标分离；Data / Scope 一致发布；位置存父级相对关系 | [Scope Index](l3-data-scope.md#l3-scope-index) | [007](decisions/ADR-FE-007-scope-comparison.md) |
-| G09 | runOnActivate 仅新规则实例；稳定 snapshot；业务 Baseline / Dirty / Reset 归 Host；Context 保留现行只读契约 | [四条原则](l3-reactive-engine.md#l3-runtime-host-boundary) | [008](decisions/ADR-FE-008-host-editing.md) |
-| G10 | 可隔离错误继续独立行为；预算超限停整个 Flush；无局部 Health；Trace 不参与执行许可 | [错误](l3-reactive-engine.md#l3-errors)、[Trace](l3-observability.md#l3-trace) | [009](decisions/ADR-FE-009-errors-trace.md) |
+| G09 | runOnActivate 仅新规则实例；稳定 snapshot；业务 Baseline / Dirty / Reset 归 Host；Context 表单侧只读，Host 可显式替换并统一失效 | [四条原则](l3-reactive-engine.md#l3-runtime-host-boundary)、[Context](extension-integration.md#host-context-update) | [008](decisions/ADR-FE-008-host-editing.md)、[019](decisions/ADR-FE-019-host-context-replacement.md) |
+| G10 | 可隔离错误继续；预算超限只停当前 Flush 并清队列，后续新有效触发正常建轮；无局部 Health，Trace 不参与许可 | [错误](l3-reactive-engine.md#l3-errors)、[Trace](l3-observability.md#l3-trace) | [018](decisions/ADR-FE-018-flush-round-protection.md) |
 | G11 | 完整根 Schema + 独立 Constraint；校验只读，字段聚合不等于完整通过；过期异步结果不可提交 | [校验](l3-validation.md#validation-baseline)、[完整性](l3-validation.md#validation-completeness) | [010](decisions/ADR-FE-010-validation.md) |
 | G12 | Material / Pure Function / Host 分责；发布锁定版本和不可变制品；L1 Protocol 与 Prepared ABI 独立 | [能力与发布](l2-preparation.md#l2-release) | [011](decisions/ADR-FE-011-release-lock.md) |
 
@@ -160,13 +164,13 @@ relocated_sections:
 
 - **原问题与来源：**B 在途时只有 A 的输入变化，若 B 未观察相关输入，单比较 B 自身依赖无法撤销其资格。
 - **2026-10-19 结论：**L2 自动推导可分析读取，并把前置输入依赖传递纳入后置有效依赖；不可推导的 Host 业务依赖由作者显式提供。无需作者重复声明，也不建立前置结果 PubSub，不改变 Reaction Watch。
-- **剩余边界 / 严重程度：**字段 Schema 资格范围、跨 Scope 绑定、异步 token / 撤销与通知时序仍未固化，高。依赖方向已确认，但不等于完整资格接口已闭环，继续关联 OD-02 / OD-09 / T01。补全只决定失效与待校验，不等于立即请求 Host。
+- **2026-10-22 状态复核：**前置已明确为 Schema + 相关适用 Internal 的同步资格、具体 Scope 唯一实例和本轮共同入队；输入 / 前置 / 实例失效以及新调用替换均先撤销旧任务资格。原行为张力已解释，不再阻塞架构决策。具体绑定算法、token / 通知和在途资格验收仍关联 OD-02 / OD-09 / T01，不以设计归档宣称 Runtime 已实现。
 
 ### REV-03：异常 Flush 与提交的原交接缺口 {#rev-03}
 
 - **原问题：**已写 Data 保留，但熔断后是否继续校验、是否阻止提交与后续触发边界未定。
-- **2026-10-19 已确认：**Reaction 异常隔离、报告 Host，不自动阻止提交。整体预算熔断暂停本轮及后续自动 Reaction，保留填写 / Command、快照与独立完整校验；Host 可在必要校验与输出要求通过后提交对应快照。必须成立的业务关系应由 Constraint 表达，不依赖联动成功。数据不可可靠读取或校验本身不可用时不能证明合规。
-- **状态：**策略缺口已解释；恢复入口、Pending 清理、Outcome / 完整结果 SDK 仍由 OD-03 / OD-04 / T02 固化，不宣称生产实现已完成。现行说明见 [错误](l3-reactive-engine.md#l3-errors)及[完整校验](l3-validation.md#validation-completeness)。
+- **2026-10-19 已确认及本轮替代：**Reaction 异常隔离、报告 Host，不自动阻止提交。2026-10-22 将持续暂停改为仅停止当前轮并清空剩余 Reaction，后续新有效触发正常建轮；保留填写、快照与独立完整校验，关键业务关系由 Constraint 检查。数据不可可靠读取或校验机制不可用时不能证明合规，见 [ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)。
+- **状态：**策略已收敛；Outcome / 完整结果与清理交接由 OD-03 / OD-04 / T02 整理并实际验收，不再等待恢复行为决策。
 
 ### REV-04：数组命令的 Schema 限制歧义已澄清 {#rev-04}
 
@@ -184,7 +188,7 @@ relocated_sections:
 - **双方与来源：**[现行 Context 只读 / Data-only Watch](l3-reactive-engine.md#l3-runtime-host-boundary)；[完整证明关联 Context](l3-validation.md#validation-async)。
 - **类型 / 严重程度：**新鲜度接口缺口，中；两项原则可以共存，不构成扩展 Context Watch 的依据。
 - **具体表现：**完整校验使用渠道或策略上下文后，Host 换入新上下文，旧证明怎样被识别为不可复用尚无 SDK。局部请求有效性与整体输入证明也须分别处理。
-- **解决方向（建议）：**明确受控输入身份和 Host 重新完整校验的入口，不自动增加 Context Command / Reaction Watch。**需要决策：是，OD-09 / T02 / T05。**
+- **2026-10-22 已解决：**Host 显式替换只读 Context 快照并赋新身份，保守失效动态呈现、全部校验及旧外部任务资格；旧完整证明不代表新输入，重新校验走统一入口，不自动触发 Reaction。见 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。SDK / 通知及性能仍需整理验收，OD-09 / T02 / T05 不再重复讨论是否允许更新。
 
 ### REV-07：稳定旧值的数据防御契约已明确 {#rev-07}
 

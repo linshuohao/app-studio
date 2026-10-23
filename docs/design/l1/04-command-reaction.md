@@ -9,10 +9,14 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-006
   - ADR-FE-008
-  - ADR-FE-009
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-L1
 - SRC-V04
 - SRC-V05
@@ -20,7 +24,7 @@ sources:
 navigation:
   group: 02 · L1 协议
   order: 34
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-23'
 reading_next: L1-VIEW
 ---
 
@@ -84,9 +88,9 @@ Command ValueSpec 在执行时求值，不因读取其他字段而自行建立�
 interface Reaction {
   id: string;
   scope?: ScopeBinder | ScopeBinder[];
-  watch: DataReference[];
+  watch: ReactionWatch[];
   when?: Expression;
-  then: Command[];
+  then: ReactionAction[];
 }
 ```
 
@@ -113,7 +117,7 @@ interface Reaction {
 }
 ```
 
-`watch` 规定常规执行需要响应的观察位置，有效观察值变化才使已有实例入队；`when` 决定入队执行时是否运行 then。二者不能互相代替，Expression 读取不自动成为触发条件。`then` 已是有序 Command 数组，不必强制包 batch；新实例首次激活按独立策略处理。
+`watch` 规定常规执行需要响应的观察位置，有效观察值变化才使已有实例入队；`when` 决定入队执行时是否运行 then。二者不能互相代替，Expression 读取不自动成为触发条件。`then` 是有序 ReactionAction 数组，支持裸 Command 与 HostEventIntent，不必强制包 batch；新实例首次激活按独立策略处理。
 
 L2 分开记录读取与显式触发关系，L3 随 FormRuntime / Scope 激活 Reaction，通过统一观察机制匹配 watch；View 是否挂载不影响业务联动。`when` 与 `then` 的读取均不自动追加 watch。首次是否运行 Reaction 是独立生命周期策略，不能由订阅注册隐式决定。
 
@@ -129,4 +133,58 @@ Reaction 是变化驱动的同步规则，不是主动维护业务结果正确�
 
 > **范围约束**
 > 
-> Reaction.watch 的变化匹配只消费内部 Data Change，显式首次激活策略是另一种入队原因；Command 求值与修改保持同步受控，不引入异步业务 Reaction。外部校验完成仅更新 Validation State，不触发只观察 Data 的联动；需要改变数据时由 Host 显式提交 Command。L3 延迟启动同步 Flush，内部级联留在当前轮；可隔离错误继续独立行为，预算超限整轮熔断，不建立父子执行控制或局部 Health。通知重入、精确排序与熔断后 Pending 仍待固化，见 [L3 执行契约](../l3-reactive-engine.md#l3-flush)。L1 不加入队列、计数、Trie、Scope Index 或 Trace 字段。
+> Reaction.watch 显式区分 Data 与 Validation 来源，首次激活策略是另一种入队原因；Command 求值、修改与 Host 行为发起保持同步受控，不等待 Host 异步结果。外部校验更新 Validation State 后可以触发显式观察该状态的 Reaction，不触发只观察 Data 的联动；Host 异步结果需要改变数据时仍显式提交 Command。L3 延迟启动同步 Flush，内部级联留在当前轮；可隔离错误继续独立行为，预算超限整轮熔断，不建立父子执行控制或局部 Health。同轮通知重入已确认；当前轮熔断清空 Pending，下一次新有效触发正常执行，具体队列与结果 SDK 待固化，见 [L3 执行契约](../l3-reactive-engine.md#l3-flush)。L1 不加入队列、计数、Trie、Scope Index 或 Trace 字段。
+
+## 状态观察与 Host 行为出口 {#reaction-state-host}
+
+2026-10-23 确认并整合：Reaction 是运行时触发的响应任务，可以同步发起 Host 内部的异步行为。复用已有 `HostEventIntent`，不开放自定义数据 Command；取舍见 [ADR-FE-020](../decisions/ADR-FE-020-reaction-state-host.md)。
+
+```typescript
+type ReactionAction = Command | HostEventIntent;
+type ReactionWatch = DataReference | ValidationWatch;
+type ValidationObservation = 'issues' | 'status' | 'state';
+interface ValidationReference {
+  source: 'validation';
+  field: DataReference;
+  observe: ValidationObservation;
+}
+type ValidationWatch = ValidationReference;
+```
+
+`field` 描述要观察的字段，`observe` 描述该字段的对外投影：issues 为聚合问题列表，status 为对外校验状态，state 为包括 issues / status 的对外字段快照。字段位置存在不代表当前已经校验；空 Issues 不能证明 valid。状态值、Issue 字段及完整 SDK 返回契约仍须由 L3 专题固化，不能把内部任务代次序列化进 Definition。
+
+```json
+{
+  "id": "notify-quote-validation",
+  "watch": [{"source":"validation","field":{"source":"data","path":"/age"},"observe":"state"}],
+  "then": [{
+    "type":"host.emit",
+    "event":"quote.validationChanged",
+    "payload":{"ageValidation":{"$expr":{"ref":{"source":"validation","field":{"source":"data","path":"/age"},"observe":"state"}}}}
+  }]
+}
+```
+
+Host 在实例装配时按 `HostContract.events` 注册同名处理函数，Runtime 在 Reaction 执行到该项时同步求值 Payload 并调用它。注册是可释放的行为接入，watch 才是触发声明；不是要求 Host 另外猜测何时监听 Data。处理函数可以发起报价请求，异步完成后由 Host 核对输入 / 成员身份 / 过期与覆盖策略，再发普通 Command；Runtime 不 await、重试或接管返回的 Promise。Host 应在自身边界接住异步失败；同步处理异常按既有可隔离行为诊断，不改变前序已写数据，不把 Host 返回值当作后续 then 的输入。
+
+then 按数组顺序执行；前一条 Command 的写入对后一项 Payload 立即可见。相同的两个 host.emit 是两次显式交付，不能按事件名合并。Reaction 实例尚在 Pending 时可去重合并触发，Host 实际请求是否合并另由 Host 决定。batch 仍只含 Command，不能嵌入 Host 行为或 host.request。
+
+ValidationReference 只读，当前允许用于 Reaction 的 when、Command 值和 Host Payload；普通 Reaction 无 Event 上下文。when 必须返回 boolean，可通过注册纯函数解释状态；读取不会补入 watch。全局命名表达式不捕获调用方环境，当前不携带 Validation 引用；Constraint / 持续 View 表达式不据此获得结果反向依赖。View 的校验展示使用字段状态订阅。
+
+成员级观察通过 `field.scope` 绑定实际稳定 Scope；成员移动继续观察同一成员，删除释放实例，旧异步结果不得复活它。Data-only Constraint.watch、ScopeBinder.from、Binding 和 Command.target 保持 DataReference。
+
+校验状态 → Reaction → Host → Command → 新校验可能跨轮循环。同步轮预算继续生效，但不能证明跨异步轮收敛；业务必须选择合适 watch、when 与 Host 适用性 / 去重策略，不把它升级为引擎通用异步工作流。
+
+### 旧 Reaction 类型示意（已局部替代） {#reaction-legacy-type}
+
+以下原始概念稿保留用于追溯，Data-only watch 与 Command-only then 已由 ADR-FE-020 和上文正式响应项替代，不是现行类型。
+
+```typescript
+interface Reaction {
+  id: string;
+  scope?: ScopeBinder | ScopeBinder[];
+  watch: DataReference[];
+  when?: Expression;
+  then: Command[];
+}
+```

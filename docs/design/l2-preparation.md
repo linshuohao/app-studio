@@ -10,11 +10,13 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
   - ADR-FE-017
   - ADR-FE-004
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-REACTIONSTATE
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIOTYPES
 - SRC-COMPILERIO
@@ -27,7 +29,7 @@ sources:
 navigation:
   group: 03 · L2 预处理
   order: 40
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-23'
 reading_next: DESIGN-L3-RUNTIME
 relocated_sections:
 - source: docs/design/architecture.md
@@ -453,7 +455,7 @@ PreparedDefinition 保留 protocolVersion / id / version、data、expressions、
 | Profile 与资源 | 选中一个视图入口、其模板传递闭包和所需能力；完整共享 Schema / Constraint / Reaction 保留 | 减少交付内容，不因不可见裁剪业务义务 |
 | Request | 原映射增加确定 concurrency 和物料 / 已知 Host 输入输出 Schema 资源引用 | 复用 requests 通道既有接入契约，Payload 仅调用时求值 |
 
-普通 Data watch 统一沿用 DataReference，可增加 `aspect?: 'value' | 'structure'`，缺省为 value；结构是 Data 的观察方面，不是另一份状态源。统一条目 / 字段命名不统一各消费者的激活、完成或调度行为。只读 Context、Data-only Reaction.watch、校验状态与 Event 边界不扩张；不因统一 watch 自动新增 Context 触发链或 L1 引用来源。
+普通 Data watch 统一沿用 DataReference，可增加 `aspect?: 'value' | 'structure'`，缺省为 value；结构是 Data 的观察方面，不是另一份状态源。统一条目 / 字段命名不统一各消费者的激活、完成或调度行为。DataWatch 仍仅表示数据观察；Reaction.watch 使用 DataWatch | ValidationWatch，显式区分校验状态来源。Context / Event 不成为触发来源，Constraint 的 Data-only watch 不扩张；ValidationReference 仅在允许的位置只读求值。
 
 ### 表达式包装、递归与精确更新 {#compiler-expression-watch}
 
@@ -771,3 +773,9 @@ createFormRuntime({
 页面实际使用的物料声明的 requests 首期全部必需，Compiler 按确定 Catalog 检查是否逐项映射；漏项产生 Error 并定位物料节点 / 请求名 / 配置位置，不生成可执行 Prepared。MaterialNode.requests 在结构上可省略不意味着语义可漏项；无请求物料允许省略。仅 Registry 中未使用物料不产生此义务。
 
 HostContract 可选只影响静态兼容证明，不豁免运行时注册。所选 Prepared 的 HostRequirements.requests 在页面装配、交互可用前核对实际函数，条件隐藏或尚未挂载不豁免；缺失项对应物料进入明确错误状态，其他可用物料继续。开发类型约束及详细验收见 [请求开发接入](l1/05-view-material-host.md#request-development-contract)。
+
+### 状态观察与响应项的兼容增量 {#prepared-state-actions}
+
+Reaction.watch 从仅 DataWatch 扩为 PreparedReactionWatch（DataWatch | ValidationWatch），then 保留 ReactionAction 的显式顺序；Command、Constraint.watch 和持续 View 表达式的 DataWatch 不扩张。只读 ValidationReference 保留静态字段与投影，不序列化当前 Issues 或任务。
+
+HostEventIntent 由物料事件和 Reaction 共同使用，需求来自完整共享 Reaction 与所选视图，按名称合并。名称 / Payload 检查、Event 环境限制与版本边界见[Compiler 衔接](l2/compiler.md#compiler-reaction-state)。新产物使用 form-engine.prepared/2，/1 目标拒绝，旧定义可重新编译；不能通过结构 Schema 接受就宣称旧消费者理解新语义。

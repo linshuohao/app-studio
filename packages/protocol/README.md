@@ -56,3 +56,18 @@ PreparedForm 现为 preparedFormatVersion / build / definition / resources / cap
 resources.schemas 补充外部业务 Schema，根 Schema 仍位于 definition.data.schema；请求资源位于 resources.requestSchemas。详细来源映射作为独立 PreparedSourceMap 类型，不混入执行产物。CompilerInputDefinition 只描述定义输入；CompileInput / CompileResult / Diagnostic SDK 和实际默认选择属于后续 Compiler 接口设计，本包不假装已实现 compile。
 
 本次是未发布 ABI 的明确结构替换，不为旧执行树提供双格式或回退解释。语义分析、watch 推导、缓存失效、真实 Scope、装载检查与多端 Renderer 均不在本包实现；结构测试通过不能作为运行效率或正确执行的证据。
+
+## Reaction 状态观察与 Host 行为
+
+`Reaction.watch` 使用 `ReactionWatch = DataReference | ValidationWatch`；校验目标包含
+`source: 'validation'`、`field: DataReference` 和 `observe: 'issues' | 'status' | 'state'`。
+`ValidationReference` 以相同结构只读求值，当前仅用于 Reaction 条件和动作；
+Schema 检查引用形状，Compiler 检查使用位置、字段 / Scope 与类型连接。
+Command 写目标、Binding、ScopeBinder 与 Constraint 数据观察保持 Data-only。
+
+`Reaction.then` 使用 `ReactionAction = Command | HostEventIntent`，兼容裸 Command，
+复用 `host.emit` 按序同步发起 Host 行为，不等待 Host 内部异步结果。
+HostEventIntent 从共享模块定义并由原 definition 公共出口继续导出；`batch` 不接受它。
+Payload / when 的读取不会自动加入 watch，普通 Reaction 没有 Event 上下文。
+Compiler 汇总独立于视图的 Host 事件需求，新 Prepared 格式为 `form-engine.prepared/2`，
+旧 `/1` 目标拒绝；旧定义可以重新编译。本轮不实现 Runtime 订阅 / 调度 SDK。

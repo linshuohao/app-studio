@@ -25,7 +25,10 @@ class KnowledgeContracts(unittest.TestCase):
         records = self.catalog["records"]
         for kind, count in [("module", 19), ("conflict", 10), ("open-decision", 17), ("task", 11), ("constraint", 12)]:
             self.assertEqual(sum(row["kind"] == kind for row in records), count, kind)
-        self.assertEqual([row["id"] for row in records if row["kind"] == "conflict" and row["blocking"]], ["REV-02"])
+        self.assertEqual([row["id"] for row in records if row["kind"] == "conflict" and row["blocking"]], [])
+        for review_id in ("REV-02", "REV-06"):
+            review = next(row for row in records if row["id"] == review_id)
+            self.assertEqual(review["state"], "explained")
 
     def test_all_search_positions_keep_document_identity(self):
         for doc in self.catalog["documents"]:
@@ -39,7 +42,7 @@ class KnowledgeContracts(unittest.TestCase):
         catalog = json.loads(json.dumps(self.catalog, sort_keys=True))
         module = next(row for row in catalog["records"] if row["id"] == "M09")
         self.assertEqual(module["fieldOrder"][-1], "可进入的工作")
-        self.assertIn("正式调度接口受阻", module["fields"][module["fieldOrder"][-1]])
+        self.assertIn("新有效失效建轮", module["fields"][module["fieldOrder"][-1]])
 
     def test_l1_topics_have_independent_reading_pages(self):
         topics = [doc for doc in self.catalog["documents"] if doc["type"] == "protocol" and doc["id"] != "PROTOCOL-L1"]

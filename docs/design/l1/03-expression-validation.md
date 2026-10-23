@@ -11,11 +11,16 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-017
   - ADR-FE-002
   - ADR-FE-005
   - ADR-FE-010
 sources:
+- SRC-REACTIONSTATE
+- SRC-L3BASELINE
 - SRC-COMPILERIO
 - SRC-PROTOCOLBASELINE
 - SRC-PREREQUISITES
@@ -26,7 +31,7 @@ sources:
 navigation:
   group: 02 · L1 协议
   order: 33
-last_reviewed: '2026-10-21'
+last_reviewed: '2026-10-23'
 reading_next: L1-COMMAND
 ---
 
@@ -101,7 +106,7 @@ Expression 描述可能读取什么，本身没有订阅生命周期。L2 按类
 | `expressions.*` | 被引用时纯求值 | 仅提供读取集，由使用方决定触发；不捕获调用方局部 Scope |
 | `reaction.watch` | 变化匹配 | 显式触发来源，保持 DataReference[] |
 | `reaction.when` | watch 命中或显式首次激活入队后判断 | 否，不自动追加到 Reaction.watch |
-| `reaction.then` / `command.value` 中的 ValueSpec | Command 执行时 | 否，按执行时当前数据求值 |
+| Reaction 动作 / Command 值 / Host Payload 中的 ValueSpec | 动作执行时 | 否，按执行时当前数据求值 |
 | Internal Constraint `when` / `assert` | 初始化、主动校验或依赖变化后的校验入口 | 是，合并二者所有可能读取 |
 | External Constraint `watch` / `when` | 失效匹配 / 适用性判断 | watch 显式补充 Host 输入，when 可见读取自动合并 |
 | View `bindings` | 首次读取与后续投影更新 | 是，端口所读数据；Field State 经 L3 接入契约消费 |
@@ -181,13 +186,13 @@ Missing 是内部缺失语义，不自动转为 null / 0 / 空字符串，也不
 
 Internal Constraint 的触发依赖来自 `when + assert` 的读取并集，无需再填 watch。例如 `when` 读取年龄、`assert` 读取监护人姓名，两者任一变化都可能改变结果；条件不再适用时移除该规则实例的旧 Issue。`issue.target` 只管错误归属，不代表唯一输入。
 
-External Constraint 的 `watch: DataReference[]` 显式声明 Host 内部不透明的 Data 输入，与可选 `when` 的静态可见读取合并为失效依赖。当前协议没有 External Payload 字段，不据来源稿中的候选描述新增字段。2026-10-21 已确认采用本次调用的数据读取快照及 Scope，不新增命名参数映射；Host 必须从本次输入读取影响结果的表单数据并完整声明不透明依赖，不能绕过输入视图读取其他时刻数据后仍要求引擎证明结果有效，见 [Host 调用输入](../extension-integration.md#host-input-contract)。依赖变化立即使旧结论失效并可登记本轮校验任务；是否立即请求 Host 由 blur、显式 validate、submit 或待固化的自动策略决定。给出自动增量路径，不等于冻结所有外部校验每次输入都请求；watch 不描述 URL、请求策略或回调时机。
+External Constraint 的 `watch: DataReference[]` 显式声明 Host 内部不透明的 Data 输入，与可选 `when` 的静态可见读取合并为失效依赖。当前协议没有 External Payload 字段，不据来源稿中的候选描述新增字段。2026-10-21 已确认采用本次调用的数据读取快照及 Scope，不新增命名参数映射；Host 必须从本次输入读取影响结果的表单数据并完整声明不透明依赖，不能绕过输入视图读取其他时刻数据后仍要求引擎证明结果有效，见 [Host 调用输入](../extension-integration.md#host-input-contract)。依赖变化立即使旧结论失效并可登记本轮校验任务；请求在 Flush 结束后的统一校验批次按适用性和同步前置发起，独立规则不串行等待网络；没有 Reaction 时有独立校验入口。普通增量覆盖命中任务及前置，完整校验覆盖全部适用规则；watch 不描述 URL 或网络重试。
 
 **字段迁移：**现行草案将原 `dependsOn` 改为 `watch`，引用值保持不变；旧字段仅保留在历史来源中。现行 Canonical 不接收旧字段或双字段混用。正式协议版本号、旧版识别与迁移工具尚待发布规范固化，本次不虚构版本号或宣称兼容已发布数据。Reaction.watch 的语义保持不变。
 
 **有限前置与消息覆盖 · 设计方向**
 
-校验前置在本轮 Constraint 链中检查、必要重排序，不增加校验结果反向 PubSub 或通用异步 DAG。来源的 `requires` 只是语法占位：字段有效性已确认按前置完成后该字段无错误判断；字段 / 规则两种引用能力已明确；2026-10-21 确认按具体 Scope ID 唯一实例绑定，本期不增加 or / any 等集合能力，仅允许等待同步前置，多步异步封装在同一个 Host Validator。后续完整草案确认字段前置是 Schema + 相关适用 Internal 的同步资格，明确不包括 External，不代表完整有效性；正式语法与 Prepared 字段按已确认原则实施整合，见 [首期前置范围](../l3-validation.md#prerequisite-scope-contract)。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
+校验前置在本轮 Constraint 链中检查、必要重排序，前置执行不依赖结果反向 PubSub 或通用异步 DAG；显式 ValidationWatch 只消费已发布的对外状态，不替代 requires。来源的 `requires` 只是语法占位：字段有效性已确认按前置完成后该字段无错误判断；字段 / 规则两种引用能力已明确；2026-10-21 确认按具体 Scope ID 唯一实例绑定，本期不增加 or / any 等集合能力，仅允许等待同步前置，多步异步封装在同一个 Host Validator。后续完整草案确认字段前置是 Schema + 相关适用 Internal 的同步资格，明确不包括 External，不代表完整有效性；正式语法与 Prepared 字段按已确认原则实施整合，见 [首期前置范围](../l3-validation.md#prerequisite-scope-contract)。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
 
 ## 校验状态与提交 Readiness 的协议边界 {#validation}
 
@@ -211,9 +216,9 @@ L1 声明完整标准 Schema 和业务 Constraint，不在 Form Definition 中�
 
 普通增量只覆盖本轮命中规则，显式完整校验需覆盖全部适用 Constraint。Submit Readiness 不要求历史 Reaction 成功，依赖当前数据的 Schema / 内部约束和全部当前适用的异步校验。完整结果需区分当前通过、业务失败、未完成 / 配置或执行异常、输入已过期，不能以“队列空 / 未知 / 请求失败 / 无 Issue”冒充通过；具体 valid / invalid / incomplete / stale 编码与等待 API 未冻结。完整证明须与所验证输入关联，不同于单个外部请求的局部有效性。
 
-正常校验在同步联动收敛后执行，异步不纳入 Reaction Flush 等待。已退出局部 Health / 受损范围传播；Reaction 错误不自动阻止提交；整体熔断暂停联动，保留填写和独立完整校验，通过后可由 Host 提交对应快照。恢复 API 与完整结果接口仍待 [完成契约](../l3-validation.md#validation-completeness) 固化，不建立失败下游禁用。真实保存、权限与提交归 Host。
+正常校验在同步联动收敛后执行，异步不纳入 Reaction Flush 等待。已退出局部 Health / 受损范围传播；Reaction 错误不自动阻止提交；整体熔断仅终止当前轮、清空剩余 Reaction，后续新有效触发正常建轮；保留填写和独立完整校验，通过后可由 Host 提交对应快照。Outcome 与完整结果接口仍待 [完成契约](../l3-validation.md#validation-completeness) 固化，不建立失败下游禁用。真实保存、权限与提交归 Host。
 
-Constraint 随 FormRuntime / Scope 激活，不随 View 挂载或隐藏建立、注销。初始化与主动校验有明确入口，不依赖先发生数据变化，subscribe 不隐含首次执行。Context 保留现行 Host 提供 / 表达式只读 / Data-only Command 与 Watch 契约，不由完整结果新鲜度要求推导新 Context 触发协议。
+Constraint 随 FormRuntime / Scope 激活，不随 View 挂载或隐藏建立、注销。初始化与主动校验有明确入口，不依赖先发生数据变化，subscribe 不隐含首次执行。Context 保留现行 Host 提供 / 表达式只读 / Data-only Command 与普通数据观察契约（Reaction 的显式 ValidationWatch 另见命令与联动主题），Host 可显式替换 Context，并保守失效呈现及校验；该实例管理入口不自动触发 Reaction，见 [Context 交接](../extension-integration.md#host-context-update)。
 
 > **与 View 的关系已经定稿**
 >

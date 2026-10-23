@@ -30,4 +30,4 @@ export interface ContractValidationResult {
 }
 
 /** 未发布交换格式身份；后续 Runtime 必须显式支持，不能据此认为已有可用消费端。 */
-export const PREPARED_FORMAT_VERSION = 'form-engine.prepared/1';
+export const PREPARED_FORMAT_VERSION = 'form-engine.prepared/2';

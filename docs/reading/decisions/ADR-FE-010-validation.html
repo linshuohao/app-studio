@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=bd375cbbd539">
+  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="../assets/knowledge-index.js?v=d11523570cc6" defer></script>
+  <script src="../assets/knowledge-index.js?v=191b7209bbca" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -61,6 +61,9 @@
 <a href="ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a>
 <a href="ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a>
 <a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a>
+<a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
+<a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
+<a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -95,10 +98,15 @@
 <section class="section" id="adr-010-open"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>推荐实现与未决边界</h2></div></div>
 
 <p>按 Source 保存、字段索引派生、同步原子替换、聚合内容变化才通知、默认消息模板加局部覆盖为推荐。过期 / 已销毁实例返回不能提交是必要正确性，具体代次 / token 实现为推荐。Issue、消息覆盖、多语言、Source / SDK 均未冻结。</p>
-<p>2026-10-19 确认：仅 B 初始入队时补齐 A，使用本轮前置结论，不复用历史通过结果；A 输入变化通过编译补全的依赖使 B 失效，不建立结果 PubSub。依赖补全不等于立即请求 Host，自动 / 失焦 / 主动策略、异步资格撤销、字段 Schema 资格范围和跨 Scope 绑定仍待固化。Reaction 显式 Watch 原则保持不变。<code>requires</code> / <code>validationMessages</code> 未作为当前候选 Canonical 字段发布，不通过本 ADR 自动加入。</p>
-<p>无 Issue 不证明通过。完整返回需表达业务失败、不完备和输入过期，全部适用校验仍须完成；业务输出由 Host 转换和检查；Reaction 错误不自动阻止提交，联动熔断后仍可独立完整校验，通过后 Host 可提交对应快照；准确 valid / invalid / incomplete / stale 编码、等待范围、Context 证明与恢复接口仍待固化。Web Ajv / Dart 是 Adapter 方向，不宣称现有 Dart 库已通过；性能必须实测。</p>
+<p>2026-10-19 确认：仅 B 初始入队时补齐 A，使用本轮前置结论，不复用历史通过结果；A 输入变化通过编译补全的依赖使 B 失效，不建立结果 PubSub。请求不在 Command 内立即发出，2026-10-22 已确认在 Flush 结束后的统一批次按同步前置执行内外校验；字段资格与唯一实例沿用现行基线，异步资格 / 通知 SDK 及实现待完成。Reaction 显式 Watch 原则保持不变。<code>requires</code> / <code>validationMessages</code> 未作为当前候选 Canonical 字段发布，不通过本 ADR 自动加入。</p>
+<p>无 Issue 不证明通过。完整返回需表达业务失败、不完备和输入过期，全部适用校验仍须完成；业务输出由 Host 转换和检查；Reaction 错误不自动阻止提交，联动熔断后仍可独立完整校验，通过后 Host 可提交对应快照；四类结果语义与全部适用任务等待已定，结构由维护者整合；Context 替换见 ADR-FE-019，当前轮熔断与后续新触发见 ADR-FE-018，具体 SDK 尚未实现。Web Ajv / Dart 是 Adapter 方向，不宣称现有 Dart 库已通过；性能必须实测。</p>
 </section>
-<section class="section" id="adr-010-sources"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>来源、演进与关联</h2></div></div>
+<section class="section" id="2026-10-22统一校验批次与结果整理"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>2026-10-22：统一校验批次与结果整理</h2></div></div>
+
+<p>用户明确内部与外部校验共用 Flush 之后的执行流程：先根 Schema，再按稳定顺序与同步前置执行就绪规则。发起 External 后不串行等待网络，独立规则继续；普通增量覆盖命中任务及前置，完整校验覆盖全部适用义务。无 Reaction 时仍独立启动，不要求额外失焦或显式请求才执行外部校验。旧自动 / 失焦策略未冻结的描述至此收敛，不扩展异步前置 DAG。</p>
+<p>完整结果语义不再重开讨论，具体结构由维护者按 <a href="../l3-validation.html#validation-result-contract" rel="noopener noreferrer">信息模型</a>整理；Host 显式 Context 替换使旧完整证明 / 外部任务失效，再经统一入口校验。来源见 <a href="../source-map.html#src-l3-baseline" rel="noopener noreferrer">SRC-L3BASELINE</a>。</p>
+</section>
+<section class="section" id="adr-010-sources"><div class="section-head"><div class="kicker">05 · FORM ENGINE</div><div class="section-title"><h2>来源、演进与关联</h2></div></div>
 
 <ul>
 <li>当前完整规范：<a href="../l3-validation.html" rel="noopener noreferrer">L3 校验全文</a>、<a href="../l1/03-expression-validation.html#constraint" rel="noopener noreferrer">L1 Constraint / Readiness</a>。</li>
@@ -124,7 +132,7 @@
 <h3 id="2026-10-21同步字段资格与消息覆盖收敛">2026-10-21：同步字段资格与消息覆盖收敛</h3>
 <p>用户确认字段前置明确表示 Schema + 相关适用 Internal 完成且无相关错误的同步资格，不包括 External、不冒充完整通过；规则前置指向 External 时拒绝，多前置全部满足，自包含诊断不静默排除自身。此处明确收窄此前“字段有效”的宽泛表述，完整校验仍等待全部适用同步 / 异步规则。</p>
 <p>消息采用 Constraint 局部覆盖及 Schema 声明位置 + keyword 覆盖，text / key 两类，资源解析归 Host；专属覆盖 → Host 默认模板 → 通用回退，缺失资源不能吞掉错误，不新增数据路径通配符。实现按<a href="../l3-validation.html#prerequisite-scope-contract" rel="noopener noreferrer">同步资格</a>与<a href="../l3-validation.html#validation-message-contract" rel="noopener noreferrer">消息契约</a>整合，不将旧候选字段当正式类型。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐</p><nav class="decision-path"><a href="#adr-010-context">背景、约束与原有方案</a><span>→</span><a href="#adr-010-decision">已收敛选择</a><span>→</span><a href="#adr-010-open">推荐实现与未决边界</a><span>→</span><a href="#adr-010-sources">来源、演进与关联</a></nav></section>
+        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐</p><nav class="decision-path"><a href="#adr-010-context">背景、约束与原有方案</a><span>→</span><a href="#adr-010-decision">已收敛选择</a><span>→</span><a href="#adr-010-open">推荐实现与未决边界</a><span>→</span><a href="#2026-10-22统一校验批次与结果整理">2026-10-22：统一校验批次与结果整理</a><span>→</span><a href="#adr-010-sources">来源、演进与关联</a></nav></section>
         
         
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
@@ -135,8 +143,9 @@
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#adr-010-context" data-to="adr-010-context" title="背景、约束与原有方案"><span class="nav-num">01</span><span>背景、约束与原有方案</span></a>
 <a href="#adr-010-decision" data-to="adr-010-decision" title="已收敛选择"><span class="nav-num">02</span><span>已收敛选择</span></a>
 <a href="#adr-010-open" data-to="adr-010-open" title="推荐实现与未决边界"><span class="nav-num">03</span><span>推荐实现与未决边界</span></a>
-<a href="#adr-010-sources" data-to="adr-010-sources" title="来源、演进与关联"><span class="nav-num">04</span><span>来源、演进与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-010</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M10">M10 Schema Adapter</a></li><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li></ul></details><details><summary>相关正文与历史 · 11</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="../source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="../source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
+<a href="#2026-10-22统一校验批次与结果整理" data-to="2026-10-22统一校验批次与结果整理" title="2026-10-22：统一校验批次与结果整理"><span class="nav-num">04</span><span>2026-10-22：统一校验批次与结果整理</span></a>
+<a href="#adr-010-sources" data-to="adr-010-sources" title="来源、演进与关联"><span class="nav-num">05</span><span>来源、演进与关联</span></a></nav>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-010</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认编译依赖补全与前置共同入队；引用 / 资格 / 异步契约待固化，存储 / 消息为推荐</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M10">M10 Schema Adapter</a></li><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 11</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="../source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="../source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="../source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
       </aside>
       </div>
     </div>

@@ -12,11 +12,16 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-020
+  - ADR-FE-019
+  - ADR-FE-018
   - ADR-FE-006
   - ADR-FE-007
   - ADR-FE-008
-  - ADR-FE-009
 sources:
+- SRC-REACTIONSTATE
+- SRC-RUNTIMEOVERVIEW
+- SRC-L3BASELINE
 - SRC-V04
 - SRC-V05
 - SRC-V06
@@ -24,7 +29,7 @@ sources:
 navigation:
   group: 04 · L3 运行时
   order: 50
-last_reviewed: '2026-10-19'
+last_reviewed: '2026-10-23'
 reading_next: DESIGN-L3-DATA
 relocated_sections:
 - source: docs/design/architecture.md
@@ -35,6 +40,112 @@ relocated_sections:
 # L3 运行时总览与 Flush
 
 L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Command 与 Reaction Flush。数据 / Scope 与 Trace 分别维护在[数据与身份](l3-data-scope.md)和[诊断与 Trace](l3-observability.md)。本篇按模型、数据修改、生命周期、执行和错误展开；校验另见[校验与结果](l3-validation.md)。
+
+## 运行时、调度与外部能力全景 {#runtime-overview}
+
+这张总图贯穿 L1 声明、L2 准备、L3 运行和 L4 呈现，重点展开 Runtime 的状态、指令、依赖分发、联动与校验。左侧区分物料 / 纯函数的契约及实现，右侧按接入点放置 Host 的 Command、Validator 和物料请求 / 事件；分区表示职责，不增加新的执行层，也不要求 UI 调用按 L1–L4 逐跳转发。
+
+```diagram
+{
+  "id":"figure-runtime-overview",
+  "title":"运行时全景 · 四层核心、能力资产与 Host 接入",
+  "canvas":[1870,1920],
+  "rows":[
+    [
+      {"title":"能力资产 · 静态契约","body":"","position":[30,140,285,595],"kind":"group"},
+      {"title":"Material · 物料资产","body":"","position":[31,190,280,45],"kind":"label"},
+      {"title":"Manifest / 契约","body":"Props / Bindings\nSlots / Events / Requests\n端口 Schema · 版本","position":[31,238,280,180],"kind":"label"},
+      {"title":"Pure Function","body":"纯函数签名 / 契约\n名称 · 输入 / 输出类型\n版本 · 平台实现契约","position":[31,430,280,170],"kind":"label"},
+      {"title":"L2 检查契约","body":"","position":[31,610,280,45],"kind":"label"},
+      {"title":"L2 检查签名与引用","body":"","position":[31,655,280,45],"kind":"label"},
+      {"title":"Pure Function","body":"","position":[30,770,285,665],"kind":"asset"},
+      {"title":"同步纯计算实现","body":"内置函数 / 领域计算\n无网络与数据写入","position":[31,835,280,160],"kind":"label"},
+      {"title":"L3 绑定确定实现","body":"由统一表达式求值调用","position":[31,1050,280,130],"kind":"label"},
+      {"title":"签名与实现分开","body":"绑定到当前 Runtime","position":[31,1270,280,120],"kind":"label"},
+      {"title":"Material · 平台实现","body":"平台组件实现\nInput / Select / 上传物料\n容器与领域组件\nReact / Flutter 实现\nL4 装配并连接端口","position":[30,1470,285,260],"kind":"asset"},
+      {"title":"检查","body":"","position":[315,265,85,45],"kind":"label"},
+      {"title":"绑定","body":"","position":[315,1330,90,45],"kind":"label"},
+      {"title":"装配","body":"","position":[315,1515,85,45],"kind":"label"}
+    ],
+    [
+      {"title":"L1 · 协议与领域声明","body":"数据模型 · Scope · 表达式 / 纯函数引用 · 规则 / 约束 · 物料 / 视图","position":[400,140,1060,110],"kind":"layer"},
+      {"title":"L2 · 静态编译与准备","body":"检查定义与能力契约 → 补全依赖 / 同步前置 → 生成兼容 PreparedForm","position":[400,275,1060,110],"kind":"layer"},
+      {"title":"L3 · Runtime / 唯一 Working Data · 受控修改 · 统一观察","body":"","position":[400,425,1060,1010],"kind":"group"},
+      {"title":"对外接口  dispatch / read / snapshot / subscribe","body":"","position":[430,490,1000,75],"kind":"layer"},
+      {"title":"① Command","body":"保留显式顺序与次数","position":[430,600,270,110],"kind":"node"},
+      {"title":"② Data + Scope","body":"同步、一致更新","position":[730,600,320,110],"kind":"node"},
+      {"title":"③ Reactive Engine","body":"匹配依赖，比较观察值","position":[1080,600,350,110],"kind":"node"},
+      {"title":"④ Reaction Pending","body":"按实例去重，合并触发来源\n首次延迟启动；执行中追加本轮","position":[450,785,455,130],"kind":"reaction"},
+      {"title":"⑤ 同步 Flush","body":"取出实例 → 读取最新状态\n执行命令 / host.emit，持续消费\n队列空 → idle；超限中止并清队列","position":[450,950,455,170],"kind":"reaction"},
+      {"title":"Validation Pending","body":"根 Schema 待校验标记\nConstraint 实例去重集合","position":[970,785,460,130],"kind":"validation"},
+      {"title":"⑥ 校验执行","body":"完整根 Schema → 补齐同步前置\n去重、重排，按本轮资格执行\n无 Reaction / 主动校验也可进入","position":[970,950,460,170],"kind":"validation"},
+      {"title":"③ → 数据 / 动态属性通知","body":"按实际依赖变化通知消费者","position":[450,1180,455,110],"kind":"node"},
+      {"title":"⑦ 发布校验结果","body":"资格检查 → 来源 / 字段一致发布","position":[970,1180,460,110],"kind":"validation"},
+      {"title":"写回继续本轮；正常收敛后进入校验","body":"","position":[440,1120,490,45],"kind":"label"},
+      {"title":"就绪 → 字段观察 / 联动","body":"","position":[1205,1120,240,45],"kind":"label"},
+      {"title":"L3 共享基础 · 被上述模块共同使用","body":"","position":[425,1300,1000,45],"kind":"label"},
+      {"title":"统一表达式 / 纯函数求值","body":"","position":[430,1350,316,65],"kind":"state"},
+      {"title":"Data / Context / Scope","body":"","position":[759,1350,317,65],"kind":"state"},
+      {"title":"Issues / 注册 / Trace","body":"","position":[1089,1350,341,65],"kind":"state"},
+      {"title":"状态通知 → 重读与呈现","body":"","position":[750,1433,400,45],"kind":"label"},
+      {"title":"L4 · Renderer / 共用 Material Adapter","body":"物料装配 · Binding / Props / Issues · UI 生命周期","position":[400,1500,1060,120],"kind":"layer"},
+      {"title":"Request Bridge","body":"","position":[1120,1550,300,45],"kind":"label"},
+      {"title":"物料值变化 → Binding → Command；物料业务事件 → Host；Request 返回值不自动写入 Data。","body":"","position":[398,1625,1070,45],"kind":"label"},
+      {"title":"物料 requests ↔ Host；外部请求由 Host 管理。","body":"","position":[398,1670,1070,45],"kind":"label"},
+      {"title":"虚线：契约检查、实现接入；实线：运行期数据与调用","body":"","position":[398,1715,1070,45],"kind":"label"},
+      {"title":"横向契约 · 贯穿 L1–L4","body":"依赖 / Scope · 校验 / 完成 · 受控扩展 · 诊断 / Trace · 兼容 / 交付","position":[30,1785,1810,115],"kind":"layer"}
+    ],
+    [
+      {"title":"Host · 业务应用","body":"提供 Context / 导入数据\n观察数据 / 接收业务事件\n普通 Command 写回\nBaseline / 保存 / 提交","position":[1530,140,310,415],"kind":"host"},
+      {"title":"需改值时经受控入口","body":"","position":[1530,465,300,45],"kind":"label"},
+      {"title":"⑤ Host 行为 · host.emit","body":"按 watch / when 触发\n同步交付，不等待异步任务\n取消 / 过期 / 防覆盖归 Host\n有效结果经 Command 写回","position":[1530,590,310,240],"kind":"host"},
+      {"title":"Host 接入 · Validator","body":"Validator：执行外部校验\n任务 / 取消 / 缓存 / 重试\n当前有效结果回报 Runtime","position":[1530,955,310,325],"kind":"host"},
+      {"title":"外部 I/O","body":"","position":[1530,855,300,45],"kind":"label"},
+      {"title":"由 Host / 平台实现承接","body":"","position":[1530,900,300,45],"kind":"label"},
+      {"title":"Host 业务服务","body":"查询 / 上传 / 保存 / 提交\n网络 / 鉴权 / 请求错误\nBackend / 外部系统","position":[1530,1310,310,175],"kind":"host"},
+      {"title":"Host 接入 · 请求 / 事件","body":"Request：物料业务请求\nEvent：承接业务意图\n结果经 Adapter 返回物料\n选择 / 确认后再写 Command","position":[1530,1510,310,220],"kind":"host"},
+      {"title":"指令","body":"","position":[1460,485,70,45],"kind":"label"},
+      {"title":"调用","body":"","position":[1460,1010,70,45],"kind":"label"},
+      {"title":"回报","body":"","position":[1460,1235,70,45],"kind":"label"}
+    ]
+  ],
+  "edges":[
+    {"points":[[930,250],[930,275]]},
+    {"points":[[930,385],[930,425]]},
+    {"points":[[610,565],[610,600]]},
+    {"points":[[700,655],[730,655]]},
+    {"points":[[1050,655],[1080,655]]},
+    {"points":[[1245,710],[1245,740],[675,740],[675,785]]},
+    {"points":[[1265,710],[1265,785]]},
+    {"points":[[675,915],[675,950]]},
+    {"points":[[450,1030],[420,1030],[420,735],[565,735],[565,710]]},
+    {"points":[[905,1030],[943,1030],[943,930],[1090,930],[1090,950]]},
+    {"points":[[1200,915],[1200,950]]},
+    {"points":[[1200,1120],[1200,1180]]},
+    {"points":[[677,1290],[677,1310],[413,1310],[413,1470],[700,1470],[700,1500]]},
+    {"points":[[1200,1290],[1200,1310],[1447,1310],[1447,1470],[1130,1470],[1130,1500]]},
+    {"points":[[315,330],[400,330]],"binding":true},
+    {"points":[[315,1382],[430,1382]],"binding":true},
+    {"points":[[315,1570],[400,1570]],"binding":true},
+    {"points":[[1530,530],[1430,530]]},
+    {"points":[[1430,1050],[1530,1050]]},
+    {"points":[[1530,1235],[1430,1235]]},
+    {"points":[[1430,1580],[1530,1580]],"both":true},
+    {"points":[[1700,1280],[1700,1310]]},
+    {"points":[[1700,1510],[1700,1485]]}
+  ],
+  "note":"以职责分区和就近接入保留完整说明。Data / Scope 在每条 Command 内即时更新；Reaction 延迟启动一次，随后同步执行至结束；校验按有效结果就绪更新来源并通知实际变化的聚合。Host 网络不进入同步 Flush，⑤ 可同步发出 host.emit；⑦ 一致发布后通知显式 Validation 观察（含 Reaction）。Context 只读且由独立宿主入口管理。调度阶段 / SDK 名称仍依现行契约固化；当前轮超限清队列，后续新有效失效正常建立新轮次。"
+}
+```
+
+读图时先看中间主链，再看左右接入与底部共享基础：
+
+- **即时修改与分发：**View / Host / Reaction 共用 Command 入口；Data 与 Scope 同步一致更新，依赖索引定位候选后比较观察值，分别登记 Reaction / Validation Pending 与订阅通知。显式 Command 次数不合并。
+- **联动调度：**Pending 按 Reaction 实例去重，执行读取最新状态；首次延迟启动，执行中新增联动或同步回调写回继续当前轮，不重新等待启动边界。队列空后结束本轮；超限中止并清空本轮剩余任务，按现行 [ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)处理后续新触发，不恢复旧持续暂停方案。
+- **校验与通知：**正常联动收敛后先完整根 Schema，再从本轮 Pending 递归补齐同步前置、去重并重排，按本轮前置资格执行；外部任务交 Host，独立规则不等待网络。就绪 → 字段观察 / 联动就更新其来源和字段聚合，有变化就通知对应消费者，不等待全部异步任务结束才展示；完整校验仍须覆盖并等待全部适用义务。
+- **状态与外部能力：**Working Data、只读 Context、Scope / 规则 / 订阅、能力绑定和校验状态各有所有权；Flush 计数、预算与受限 Trace 只属于本轮。物料和纯函数契约供 L2 检查，实现分别在 L4 与 L3 绑定；Request 结果返回物料，业务值经 Binding / Command 写入。Context 替换使用独立受控入口，不是 Data Command，也不触发 Reaction。
+
+局部机制继续见[整体领域骨架](#l3-domain-model)、[状态所有权](#l3-ownership)、[Flush 生命周期](#l3-flush)、[校验与结果](l3-validation.md#validation-round)及[物料 / Host 接入](extension-integration.md#materials)。总图不替代这些完整设计，也不表示生产 Runtime / SDK 已实现。
 
 ## L3 · Runtime：状态、身份与内部执行 {#runtime}
 
@@ -50,6 +161,54 @@ L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Comman
 | Validation / Readiness | Schema、内部约束、外部义务、Issues 和有效性 | 不执行远程校验或替代 Host 提交许可 |
 | Flush Outcome / Diagnostics | 本轮执行结果、临时 Trace、整体预算和异常报告 | 不做局部 Health / 影响链传播，不逐步保存生产全量快照 |
 | Instance Lifecycle | 实例装载、真实 Scope / 规则新建、替换与销毁 | runOnActivate 仅新实例；业务编辑 / 恢复策略归 Host |
+
+### 整体领域骨架与协作入口 {#l3-domain-model}
+
+2026-10-22 用户确认先整理完整 L3 领域，再逐模块补齐可实现契约。FormRuntime 是运行实例的统一入口：消费兼容 PreparedForm、初始数据、确定纯函数实现、Host 能力及只读 Context，交付数据 / Scope 读取、求值、订阅、修改、联动结果、校验结果和诊断。下表为协作与状态所有权，不要求建立同等数量的包、基类或独立引擎。
+
+| 协作模块 | 输入、主要功能与输出 | 状态所有权 |
+| --- | --- | --- |
+| 装载与实例生命周期 | 核对 Prepared / 能力，接管输入，初始化、替换和销毁；建立或结束其余模块 | Runtime 身份 / 代次、生命周期、能力装配 |
+| 数据与 Scope | 接收受控修改，提供稳定读、快照、成员身份及位置解析 | 当前不可变 Root、数据修订身份、Scope 登记；一次结构操作一致发布 |
+| 引用与表达式求值 | 使用读取视图与词法绑定解释 Reference / Expression / ValueSpec，调用确定纯函数，返回值或求值错误 | 静态可复用准备及临时调用上下文；不持有另一份业务数据 |
+| 统一观察机制 | 消费 Prepared watch 或明确引用，查候选、比较前后观察值、通知各消费者 | 活跃订阅与依赖索引；释放随消费者 / Scope 生命周期 |
+| Command 执行 | 解析目标与调用值、检查结构、修改 Data / Scope、完成本条变化检测 | 临时 ChangeContext 与单条执行结果；有序 batch 保留逐条事实 |
+| Reaction / Flush | 绑定规则实例，去重 Pending，读取最新数据执行，同轮级联与预算停止 | Reaction 实例、Pending、调度阶段、临时 Flush Context |
+| Validation | Schema、同步前置、Internal / External 执行，来源 / 字段聚合及完整校验 | Constraint 实例、Pending、来源结果、任务代次、完整调用与输入证明 |
+| 诊断与 Trace | 接收真实执行事实，记录受限来源、错误及中止原因，交付 Host / Devtools | 本轮受限记录及提取报告；不参与调度许可 |
+
+| 核心关系 | 身份与生命周期 |
+| --- | --- |
+| Runtime → Data / Context / Scope | Data 与 Context 各有输入身份；真实替换 / 销毁使旧实例代次失效，晚到调用不能借新实例发布 |
+| 词法绑定 → 数据位置 / 成员身份 | Binder 名称不是 ScopeId；不同别名可绑定同一底层成员，根级规则有唯一根上下文 |
+| 规则声明 + 真实绑定上下文 → 规则实例 | Reaction / Constraint 还要结合声明身份，不能只用下标或 ScopeId 混同同项多条规则 |
+| Command → ChangeContext → 消费者失效 | 前后 Data / Scope 读取视图只服务本条比较，检测后释放，不进入 Pending 或异步任务 |
+| Snapshot / 调用读取视图 → 确定输入 | 数据快照稳定；异步调用还须保留对应 Scope 与 Context 读取视图，成员移动后不能按新位置读旧输入 |
+| Constraint 实例 → 来源结果 / 执行任务 | 来源归属稳定；每次任务有独立代次，同值往返不能复活旧请求 |
+| 完整校验调用 → 整体输入与覆盖集合 | 单任务适用性与整表证明分别判断，普通增量没有整表完备性含义 |
+
+```diagram
+{
+  "id":"figure-l3-domain-flow",
+  "title":"L3 模型、修改、联动与校验的贯穿流程",
+  "rows":[
+    [{"title":"兼容 Prepared + 初始 Data + 能力 + Context","body":"装载检查 → 建立 Runtime / Scope / 规则；保留 Host 初值优先与真正缺失默认值语义"}],
+    [{"title":"Host / View → Command","body":"统一求值、检查结构、不可变修改；本条 Data / Scope 一致发布","major":true}],
+    [{"title":"统一观察","body":"候选定位 → 前后逻辑值比较 → 生命周期处理；各消费者分别响应"}],
+    [{"title":"Reaction / Flush","body":"Pending 去重，执行读最新值；Command 写回继续当前轮；超限清空剩余任务"},{"title":"View / Host","body":"通知重读当前状态；首次读 / 订阅安全交接，呈现节奏由 L4 决定"}],
+    [{"title":"统一 Validation","body":"Flush 结束后先根 Schema，再按同步前置执行内外校验；独立规则不等待网络，无 Reaction 时独立启动"}],
+    [{"title":"结果与交付","body":"核对任务 / Scope / 输入资格 → 来源替换及字段聚合；完整调用覆盖全部适用义务后交付对应快照"}]
+  ],
+  "arrows":["↓","↓","↓","↓","↓"],
+  "note":"初始化 / 新实例与显式完整校验有独立入口；异步不计入同步 Flush。诊断贯穿各步。Context 替换由 Host 显式管理，失效呈现与校验但不自动触发 Reaction。"
+}
+```
+
+对外能力按创建 / 替换 / 销毁、read / snapshot、Scope 查询、Prepared 求值、dispatch、数据 / 校验订阅、Flush 结果观察、局部 / 完整校验、执行事件与诊断分组。数据读取须区分值、Missing 和无效 Scope；订阅返回可释放关系，通知表达重读当前状态，不要求重放事件形成另一份数据。DataWatch 不涵盖执行事件或校验 Issue；显式 ValidationWatch 使用独立字段状态源，共用观察注册与生命周期。
+
+三个完成边界分别交付：Command 返回表示本条数据修改完成；Flush Outcome 表示联动正常结束、带错误结束或预算中止；完整校验结果表示确定输入的适用义务是否全部通过。三者均不等于 UI 已绘制或 Host 已提交。
+
+后续顺序是整体骨架 → Data / Snapshot / Scope → 引用与求值 → Command / 观察 → Reaction / Flush → Validation → 生命周期及 Host / L4 接缝联验，再排代码交付。每个模块统一输出输入输出、状态、步骤、失败 / 清理和验收。已有原则直接整理；接口名称、容器、类型组织由维护者细化，只有新可观察行为或真实冲突才重新讨论。这里没有声明生产 SDK 已冻结或 Runtime 已实现。
 
 ### State Store：数据与状态如何分开
 
@@ -114,14 +273,14 @@ Form Instance
 | 依赖追踪 | 消费 L2 静态 Dependency Plan，统一按状态来源、引用与实例匹配；定义缓存失效 |
 | 全量与增量 | 初始化建立业务观察关系，L4 按挂载激活 View；首次校验与读取有独立入口 |
 | watch / when | Reaction 只用显式 watch；Constraint 按使用位置合并 when / assert 或 external watch；失效不等于请求 |
-| then 顺序 | 同步、有序 Command；同目标后写覆盖，不默认引入 priority 或冲突仲裁 DSL |
+| then 顺序 | 同步、有序 Command / host.emit；同目标后写覆盖，不默认引入 priority 或冲突仲裁 DSL |
 | Reaction 交付 | 最新状态收敛；同实例 pending 合并，执行后再次失效可重新入队；每次执行读取最新 Data |
 | 循环与成本 | 纯表达式环尽早诊断；同值短路、单实例与本轮次数保护；潜在规则环不等于死循环 |
 | 等值与索引 | 一次对象替换命中已有观察子树，再比较前后观察值；Object.is / Trie 模板为推荐，索引命中不等于失效 |
 
 纯表达式本身不写数据，因此不能沿用最初稿“多个纯派生规则写同目标一律报错”的假设。对 Command / Reaction 的潜在写入可以做诊断，但合理的有序覆盖不能自动当作非法协议。
 
-L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。正式状态引用、Prepared Expression 求值和快照协议仍待固化，不据此向 L1 增加 Validation Reference。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。
+L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。正式状态引用、Prepared Expression 求值和快照协议仍待固化，L1 已加入只读 ValidationReference 与显式 ValidationWatch，见[状态观察](l1/04-command-reaction.md#reaction-state-host)；具体 Runtime SDK 仍待固化。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。
 
 ### Command & Flush：即时修改与独立收敛边界
 
@@ -135,7 +294,7 @@ L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope�
     [{"title":"延迟启动同步 Flush","body":"逐 Command 检测与 pending 去重；执行时读最新 Data / Scope，内部写回留在本轮"},{"title":"收敛或保护停止","body":"同值短路、次数预算；可隔离错误继续独立行为；超限整体停止，保留已写数据"},{"title":"追踪 / 通知 / 释放","body":"临时有序事实与 Change 来源；异常提取报告；同步回调写回归本轮","major":true}]
   ],
   "arrows":["↓"],
-  "note":"取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列实现与熔断恢复接口仍待固化。"
+  "note":"取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列实现与轮次结果 SDK 仍待固化。"
 }
 ```
 
@@ -147,7 +306,7 @@ Command 保留修改意图、顺序与次数。两次添加被保人不能因为
 
 应验证即时读取与旧快照稳定、单次结构操作的身份一致、pending 合并、同轮级联、显式动作次数、预算停止及异常恢复。默认 batch 与 then[] 有序实时写入，不默认整体回滚，允许存在尚未联动完成的工作态；业务不合法由 Validation 报告，不能当作结构性执行失败。可隔离错误不自动阻断后续独立子命令和规则，后续触发只看真实 Change / 自身 Watch，不检查上游成功状态；精确错误类型和接口继续固化。
 
-外部 I/O 由 Host 管理。`array.insert` / `array.move` 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；正式字段与错误 SDK 仍待固化。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；熔断后暂停自动联动、保留填写和独立校验已确认，恢复接口仍待固化，详见 [错误与整体熔断](l3-reactive-engine.md#l3-errors)。
+外部 I/O 由 Host 管理。`array.insert` / `array.move` 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；正式字段与错误 SDK 仍待固化。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；当前轮中止清队列、后续新触发正常执行已确认，保留填写和独立校验，轮次结果 SDK 仍待固化，详见 [错误与整体熔断](l3-reactive-engine.md#l3-errors)。
 
 ### Validation：合法性不能只依赖 UI {#validation}
 
@@ -192,7 +351,7 @@ Host 管异步加载和防止迟到输入覆盖编辑；Runtime 只装载明确�
 
 核心路径是：外部 Operation 发出 Command → Working Data 即时更新 → Dependency Index 定位 Watch 候选 → 比较前后观察值 → 无有效变化则跳过，有变化才使对应 Reaction 入队 → 合并 pending → 延迟启动 Flush，执行至队列清空或安全停止。Reaction 写回继续进入当前 Flush；前轮结束后到达的 Host 异步结果形成新的失效和轮次。
 
-当前规范按状态所有权、数据 / Scope、执行、错误、追踪和消费者顺序展开，讨论总账单独放在[设计演进](design-history.md)。非原子修改、Scope、Host 编辑边界和错误 / Trace 的背景分别见 [ADR-006](decisions/ADR-FE-006-command-flush.md)、[007](decisions/ADR-FE-007-scope-comparison.md)、[008](decisions/ADR-FE-008-host-editing.md)、[009](decisions/ADR-FE-009-errors-trace.md)。未闭合的异常完成 / Pending、旧值防御及正式接口在[审查问题](design-review.md#consistency-findings)与[路线 T02 / T04](governance.md#design-roadmap)集中跟进，不改变本篇已确认基线。
+当前规范按状态所有权、数据 / Scope、执行、错误、追踪和消费者顺序展开，讨论总账单独放在[设计演进](design-history.md)。非原子修改、Scope、Host 编辑边界和错误 / Trace 的背景分别见 [ADR-006](decisions/ADR-FE-006-command-flush.md)、[007](decisions/ADR-FE-007-scope-comparison.md)、[008](decisions/ADR-FE-008-host-editing.md)、[018](decisions/ADR-FE-018-flush-round-protection.md)。仍需整理的 Outcome / 完整结果 SDK、旧值防御及实际验收在[审查问题](design-review.md#consistency-findings)与[路线 T02 / T04](governance.md#design-roadmap)集中跟进，不改变本篇已确认基线。
 
 | 状态 | 内容 |
 | --- | --- |
@@ -200,7 +359,7 @@ Host 管异步加载和防止迟到输入覆盖编辑；Runtime 只装载明确�
 | 已确认方向 | Devtools 可独立观察并保存执行历史，开启与关闭不改变语义 |
 | 推荐 | Object.is 观察值比较、Trie / 模板组合、局部旧 ScopeReadView、位置型匹配；稳定队列顺序、静态 SCC 算法、Trace 头尾截断和编译 Source Map |
 | 已确认 · 现行职责边界 | 每条 Command 前后 Root / Scope 检测；常规 Reaction 只响应有效 Watch 变化；runOnActivate 仅新实例首次激活；字段无业务所有权；稳定 snapshot；整数组替换重建成员身份；Dirty / 业务 Baseline / Reset 策略归 Host，不绕过 Watch 重跑已有实例 |
-| 待讨论 / 固化 | 首次激活字段形状、实例建立 / 替换与稳定快照 SDK；队列实现、熔断恢复 / Pending 接口、完整校验结果接口、错误分类及 ABI；业务 Dirty / Reset 策略不再作为 Runtime 未决项 |
+| 待讨论 / 固化 | 首次激活字段形状、实例建立 / 替换与稳定快照 SDK；队列实现、当前轮清队列 / 新触发验收、完整校验结果接口、错误分类及 ABI；业务 Dirty / Reset 策略不再作为 Runtime 未决项 |
 | 待实现标定 | 局部旧 Scope 视图、共享对象防御、Trie / 模板 / Scope 解析性能；执行次数、耗时、记录容量和上报限频阈值 |
 | 延期 | 时间切片 / 优先级、全量或局部 Hash、高级因果图分析、历史 Snapshot 恢复与确定性 Replay |
 
@@ -229,7 +388,7 @@ Host 普通对象导入：{ age: 25, premium: 80 }
 
 “无有效变化不新增入队”不取消先前变化已经登记的 pending。逐条 Command 的 age 25→26→25 发生了两次有效观察值变化，同实例可合并执行一次；它与“从头到尾 age 都是 25、仅 premium 被覆盖”不同。Flush 的队列处理仍以已登记失效为依据，不通过业务结果正确性或上次执行参数猜测是否运行。
 
-Context 的当前契约：Command 只修改 Data，Reaction.watch 仍为 DataReference[]，Context 对表单表达式只读且由 Host 提供。Context 不属于 L1 Command 的写入目标，也不因此新增 Context Watch 或强制重算。
+Context 的当前契约：Command 只修改 Data，Reaction.watch 仍为 DataReference[]，Context 对表单表达式只读且由 Host 提供。Context 不属于 L1 Command 的写入目标，也不因此新增 Context Watch 或强制重算。Host 可通过显式替换快照更新 Context，并保守失效挂载动态表达式及校验；它属于实例管理操作，不自动触发 Reaction，见 [Context 交接](extension-integration.md#host-context-update)。
 
 以下是后续实现的边界验收，不是现有候选探针通过记录：
 
@@ -242,7 +401,7 @@ Context 的当前契约：Command 只修改 Data，Reaction.watch 仍为 DataRef
 | B05 | 新建规则实例，随后仅重挂 View 或恢复同一实例数据 | 首次按策略运行；后两者不会再次当作该实例首次激活 |
 | B06 | Host 自选快照与字段定义 Dirty / 保存 / Reset | Runtime 无 isDirty、markClean、resetToBaseline 或用户 / 派生字段分类 |
 | B07 | age25→26→25 在 Flush 前先后发生 | 两次有效失效保留语义，pending 可合并；不因最终值等于旧值撤销既有任务 |
-| B08 | 尝试将 Context 当作 L1 Command 目标或新 Watch 类别 | 维持现行只读 Context / Data-only Watch，不因本次修订放宽 |
+| B08 | 尝试将 Context 当作 L1 Command 目标或新 Watch 类别 | 维持只读 Context，Context 不是 watch 来源；显式 ValidationWatch 按 ADR-FE-020 另行处理 |
 
 ## 概念与状态所有权 {#l3-ownership}
 
@@ -285,7 +444,7 @@ Runtime 实例只根据兼容 PreparedForm 建立，按 Prepared Observation 匹
     [{"title":"释放本轮 Context","body":"正常不留生产完整历史；异常先向 Host 提取报告；Devtools 自行保存"}]
   ],
   "arrows":["↓","↓","↕","↓"],
-  "note":"Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；队列实现与中止后恢复接口仍待固化。"
+  "note":"Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；当前轮清队列和后续新触发已确认，队列实现与结果 SDK 待固化。"
 }
 ```
 
@@ -313,7 +472,7 @@ Runtime 实例只根据兼容 PreparedForm 建立，按 Prepared Observation 匹
 
 Pending 按具体 Reaction 实例去重，执行时读取最新输入；取出执行后再次被有效变化命中仍可重新入队。不承诺任意冲突配置都与顺序无关，也不改变同一 then[] 内显式 Command 的有序语义。同步回调写回归当前轮已确认，具体队列容器与调用栈处理留给实现验收。
 
-Reaction 仅承担协议内同步联动，不理解网络请求、取消、重试、超时或业务结果适用性。Host 自主管理报价等异步能力：观察所需数据、合并业务任务、管理请求及乱序返回，再通过普通 Command 写回。Reaction Pending 去重只针对 Reaction 实例；Host 请求是否合并由 Host 决定，不强制共用队列，也不新增异步 Reaction 或通用宿主任务调度协议。既有语义事件与 External Validation 接入职责不因此扩展为 Reaction 请求执行器。
+Reaction 可通过 host.emit 同步发起 Host 行为，不等待其异步完成。Host 负责报价请求、取消、过期与防覆盖，适用结果通过普通 Command 写回；Reaction Pending 去重与 Host 请求合并分别处理，显式两次 emit 保留两次交付。具体观察与出口见[状态响应](l1/04-command-reaction.md#reaction-state-host)。
 
 Reaction 是最新状态驱动的收敛行为。年龄和产品在执行前各变化一次，同一个保费实例只保留一份 pending，执行时读取最终年龄与产品；追踪保留两条失效来源。需要每次点击都新增一条记录的业务，使用明确 Command / Host 事件表达，不依赖 Reaction 的触发计数。
 
@@ -384,7 +543,7 @@ Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 
 2026-10-19 已确认：Reaction 错误只表示相应联动未完成，不自动阻止提交；独立规则继续，已写 Data 不回滚。代码异常报告交 Host，用于正确用户提示与监控告警；网络失败由 Host 提示 / 重试。业务校验不通过与校验执行异常分别表达，必要校验无法完成不能放行。非关键辅助操作失败不阻断主流程。
 
-整体预算熔断停止整个当前 Reaction Flush，并暂停该实例后续 Reaction 自动执行；剩余任务不得自动跨轮续跑，后续输入也不自动重启联动，须显式恢复或重建。恢复入口、剩余队列物理清理与重建规则仍待固化。保留当前 Data、填写 / Command、读取 / 快照与独立完整校验能力，Host 提示自动联动已暂停。这里“整体停止”针对联动执行，不表示数据和校验能力全部失效，不建立局部 Health 或失败下游传播。
+整体预算熔断只停止整个当前 Reaction Flush，清空剩余待执行 Reaction；保留已写 Data、填写 / Command、读取 / 快照与独立完整校验。旧 Pending 不跨轮转移或自动重试，当前轮真正结束后的下一次外部交互或 Host 新操作若产生有效 Watch 失效，按正常流程建立新轮次与新预算。无有效变化不伪造入队，不补跑被清空任务，不重新激活已有实例，也不需要显式恢复入口。开发端报告可定位错误，生产交 Host 监控告警及业务承接；继续填写不保证未执行的业务计算已经完成，必须成立的关系仍由 Constraint 检查。不建立局部 Health 或失败下游传播。2026-10-22 本轮决定替代原持续暂停方案，见 [ADR-FE-018](decisions/ADR-FE-018-flush-round-protection.md)。
 
 Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Reaction，也不要求历史 Reaction 成功。Schema 与全部适用同步 / 异步 Constraint 通过后，可提交该次证明对应的数据快照。必须成立的业务关系应表达为校验约束，不能只依靠联动成功维护。联动 Outcome 与完整校验结论分别报告；校验通过不把熔断改记为正常收敛。若数据已无法可靠读取或校验机制不可用，则无法证明合规，不允许据此提交。
 
@@ -393,13 +552,13 @@ Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Re
 | 合法多轮收敛 | 正常结束，不持久上报完整轨迹 | 不将次数多直接判错 |
 | 疑似往复写入 / 持续覆盖 | 如实记录实际是否收敛，可报告异常模式 | 分类、阈值与上报限频 |
 | Function / Command 可隔离错误 | 记录并报告，不回滚其他成功修改；后续独立 Command 继续尝试，其他 Reaction 按实际 Change 响应 | 错误类型、诊断、门控求值失败等具体继续条件与 API |
-| 单实例 / 本轮执行数超限 | 中止整个当前 Flush，不做局部链路熔断 | 暂停后续自动联动；恢复入口与队列清理细节待固化 |
+| 单实例 / 本轮执行数超限 | 中止整个当前 Flush，清空剩余 Reaction，不做局部链路熔断 | 下一次新操作产生有效失效时正常建新轮；旧任务不自动续跑，阈值 / Outcome SDK 待固化 |
 | 耗时异常 | 执行边界判断并报告，无法抢占正在执行的同步函数 | 阈值和边界处理 |
 | Scope 已删除 | 正常取消过期实例任务，回收关联 | 不作为业务错误上报 |
 
 Reaction 没有执行控制意义的父子关系：A 修改数据使 B 失效，B 不检查 A 的成功状态，只检查自身 Scope、watch 与运行条件。某条命令失败，不自动禁用“下游”，不回滚其他成功修改；后续命令依次读取执行时的最新数据。可隔离错误与预算超限分别处理，安全预算到达时终止整轮，不能把“继续独立行为”理解成忽略保护。
 
-整体停止的最小约束：保留已写 Data；不把停止伪装为正常收敛；清理 Context 前提取真实错误 / 超限类型与临时路径，交给 Host 报告；不自动无限重启同一批遗留任务。熔断后暂停后续 Reaction 自动执行，直到显式恢复或重建；保留填写、快照和独立完整校验，恢复 API 与队列清理细节仍待固化。
+整体停止的最小约束：保留已写 Data；不把停止伪装为正常收敛；清理 Context 前提取真实错误 / 超限类型与临时路径，交给 Host 报告；不自动无限重启同一批遗留任务。清空剩余 Reaction，不以旧任务安排新轮；后续新操作按有效失效正常触发。保留填写、快照与独立完整校验，清队列及新轮预算须实际验收。
 
 曾保留“局部不可信范围、长期 Health、相关规则恢复后清除标记、利用依赖计划传播影响”的候选，为降低状态机与影响链成本明确替代该方向：不做父子 Reaction 状态、失败下游禁用、局部熔断或链级恢复。解释异常的 Trace 不参与调度和权限决策；Validation 的 Issues / 新鲜度仍按自身契约管理。旧约束完整留在 [整合前正文](../history/README.md#protocol-runtime-v05-integration)。
 
@@ -412,13 +571,13 @@ Reaction 没有执行控制意义的父子关系：A 修改数据使 B 失效，
 | Reaction | 合并 pending 与来源 | 读取最新 Data；有效写入归当前轮 |
 | Root Schema | 有效 Data Change 登记待校验标记 | 正常联动收敛后完整根校验一次，不自动拆成 Keyword 单元 |
 | Internal Validation | 旧结论失效，实例 ID 去重入校验 Pending | 执行本轮前置整理后的 Constraint；按来源替换、字段聚合 |
-| External Validation | 旧结论失效，撤销过期来源 Issue；取消由 Host 负责 | 请求时机按策略；返回成功 / 异常都核对请求、Scope、实例与输入有效性 |
+| External Validation | 旧结论失效，撤销过期来源 Issue；取消由 Host 负责 | Flush 结束后同批执行，满足同步前置即发起；独立任务不等待网络，返回成功 / 异常均核对有效性 |
 | Renderer | 获知最新状态变化 | 读取 Data / Props 与字段 Issue 聚合，不要求消费同步校验的每个中间状态 |
 | Submit | 显式完整校验覆盖全部适用约束与输出，不要求 Reaction 成功 | 无 Issue 不等于完备；熔断后仍可校验，完整通过后由 Host 提交 |
 
 已明确正常路径：共享依赖匹配登记校验 Pending，Reaction 收敛后执行完整根 Schema 与本轮 Constraint 链，结果按 Source 保存、字段聚合。没有 Reaction 时校验也有独立入口；初始化 / 主动完整校验不能等待第一次修改。L2 补全可推导依赖，L3 递归补齐本轮前置并按实例去重；requires 语法与完整返回仍待固化，不引入前置结果 PubSub。
 
-完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断暂停联动，仍保留填写与独立完整校验，通过后 Host 可提交对应快照。Outcome / 恢复接口仍待固化。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 [L3 校验专题](l3-validation.md)。
+完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断停止当前轮并清队列，后续新触发正常执行；保留填写与独立完整校验，通过后 Host 可提交对应快照。Outcome 与完整结果 SDK 仍需固化。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 [L3 校验专题](l3-validation.md)。
 
 微任务启动 Flush 可能仍发生在浏览器绘制前，耗时同步纯函数会阻塞主线程，这是当前接受的简化取舍。未来可以替换 Scheduler，但需保持数据写入、收敛、身份及异常契约。
 
@@ -442,12 +601,12 @@ Reaction 没有执行控制意义的父子关系：A 修改数据使 B 失效，
 | C14 | 记录预算满 | Trace 先于执行保护达到上限 | 停止详细采集 / 截断，保护仍工作 |
 | C15 | 异步 Host 操作 | 前轮结束后 Host 写入 | 新轮次，不复用旧执行计数 |
 | C16 | 同步重入 | 通知回调再次同步 dispatch | Data 即时更新；新联动归当前轮，去重 / 计数 / 熔断不重置；无新增延迟启动，验证调用栈不失控 |
-| C17 | 整体熔断后再触发 | 本轮中止后又出现外部修改 | 不回滚已写 Data；暂停自动 Reaction，外部修改仍可填写但不重启联动；独立完整校验通过可提交，恢复 / 清队列接口待固化 |
+| C17 | 整体熔断后再触发 | 当前轮中止后又出现外部修改 | 不回滚已写 Data；清空剩余 Reaction，旧任务不自重试；新有效失效建立新 Flush / 预算，无变化不入队；独立完整校验通过可提交 |
 | C18 | Devtools 关闭 | 开关 Devtools 运行同表单 | Reaction 输出和调度语义一致 |
 
-这些是未来 Runtime 的设计验收，当前候选协议检查与有界探针不实现真实 Flush / Trace / 整体熔断，不能将其通过计数当成本表已经通过。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的恢复接口继续固化。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 [12 个跨层场景](dependency-reactivity.md#dependency-v05-acceptance)。
+这些是未来 Runtime 的设计验收，当前候选协议检查与有界探针不实现真实 Flush / Trace / 整体熔断，不能将其通过计数当成本表已经通过。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的当前轮清队列及后续新触发已确认，实际实现待验收。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 [12 个跨层场景](dependency-reactivity.md#dependency-v05-acceptance)。
 
-下一步以 [逐 Command 数据 / Scope 检测的 16 个场景](l3-data-scope.md#l3-v06-acceptance) 与 [现行边界验收](#l3-runtime-host-boundary) 验证稳定快照、新实例激活、已有实例同值不重跑、普通恢复 Command、替换 / Dispose、通知重入与精确排序。熔断后的恢复 / 队列接口与完整校验 SDK 继续补齐；正常路径已纳入 [校验专题](l3-validation.md#validation-completeness)。随后固化 Trace / 参数 / 错误接口，以动态数组与高频输入标定预算。可隔离错误继续与整轮熔断不再重开为局部传播设计。正式类型、Schema、Prepared ABI、Runtime 与适配器按落地任务建立，不将本篇概念结构当成生产发布包。
+下一步以 [逐 Command 数据 / Scope 检测的 16 个场景](l3-data-scope.md#l3-v06-acceptance) 与 [现行边界验收](#l3-runtime-host-boundary) 验证稳定快照、新实例激活、已有实例同值不重跑、普通恢复 Command、替换 / Dispose、通知重入与精确排序。当前轮清队列 / 后续新触发及 Context 交接继续做实现验收，完整校验 SDK 继续补齐；正常路径已纳入 [校验专题](l3-validation.md#validation-completeness)。随后固化 Trace / 参数 / 错误接口，以动态数组与高频输入标定预算。可隔离错误继续与整轮熔断不再重开为局部传播设计。正式类型、Schema、Prepared ABI、Runtime 与适配器按落地任务建立，不将本篇概念结构当成生产发布包。
 
 
 ### 数据交付与 Host 输出边界
@@ -459,3 +618,11 @@ Reaction 没有执行控制意义的父子关系：A 修改数据使 B 失效，
 外部输入的对象 / 数组值进入引擎时复制，解除 Host 原对象与内部数据的可变别名；内部以不可变 Root 和结构共享更新。read / snapshot 返回只读契约，不在生产环境为每次读取深拷贝或默认增加代理。开发环境递归冻结引擎持有的业务数据，捕获误写，不冻结 Host 原对象、Scope Index、Pending 或其他内部可变管理结构。Command 必须先构造修改路径上的新容器再写入，不能原地修改冻结的旧对象或数组；新数据发布前冻结，未变化且已保护的共享子树可复用。生产环境违反只读契约属于错误使用，不保证绕过 Command 修改后的状态正确。
 
 比较按观察位置执行，基本值与存在性、对象 / 数组引用分别处理，不默认全表深比较。冻结不替代 Command 路径复制，不妨碍内部队列 / Scope 索引按既有职责更新。
+
+## 校验观察与 Host 行为的调度交接 {#runtime-state-actions}
+
+Reaction 仍由 Runtime / Scope 激活，watch 可显式匹配 Data 或 Validation 发布；只观察 Data 的规则不会因 Issues 改变而运行。执行 then 时，Command 走既有写入入口，host.emit 同步求值并交付已注册 Host 行为，不等待 Promise，不消费 Host 返回值。重复显式 emit 保留次数，Host 请求合并与防覆盖独立。
+
+View 更新与校验展示共享观察注册 / 通知 / 释放框架，分源匹配；先一致更新状态并完成内部失效登记，再同步通知外部回调重读。校验发布命中新 Reaction 时登记 Pending，不能递归执行 Runner；活动 Flush 的交接继续消费新工作，无活动轮则延迟启动，沿 ADR-FE-018 的预算与重入约束。完整校验的输入资格仍需核对，不能把发布后新 Command 改变的输入说成旧调用已验证。
+
+[统一观察](dependency-reactivity.md#state-observation)、[L1 响应项](l1/04-command-reaction.md#reaction-state-host)、[逐结果发布](l3-validation.md#validation-state-observation)共同约束该链路；不新增通用异步队列。

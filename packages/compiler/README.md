@@ -30,7 +30,7 @@ tests/
   fixtures.ts
 ```
 
-入口只组织流程；分析与编译模块各自负责其领域，公共导出保持集中。测试独立于 src，生产与测试分别进行类型检查；已有 engineering 入口保留在 src 根用于工程联验。
+入口只组织流程；分析与编译模块各自负责其领域，公共导出保持集中。测试独立于 src，生产与测试分别进行类型检查；跨包验证消费真实公共入口，不保留初始化标记链或演示子入口。
 
 阅读实现时先看 pipeline/compile.ts，再沿 input → capability / analysis → rules / view → output 阅读。ExpressionAnalyzer 一次返回结果模型、可能读取和已知静态值；ReferenceAnalyzer 统一解析根 / Scope / Event；ValueCompiler 负责递归值形状与逐表达式包装。规则和视图使用相同事实；Catalog 也已统一物料与纯函数的自检、缓存、平台核对及双摘要锁。
 

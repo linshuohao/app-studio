@@ -9,19 +9,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json",
-    "./engineering": {
-      "development": "./src/engineering.tsx",
-      "types": "./dist/engineering.d.ts",
-      "import": "./dist/engineering.js"
-    }
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
@@ -54,11 +49,7 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./package.json": "./package.json",
-      "./engineering": {
-        "types": "./dist/engineering.d.ts",
-        "import": "./dist/engineering.js"
-      }
+      "./package.json": "./package.json"
     }
   }
 }

@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test';
-test('built application integrates workspace renderer and shadcn controls', async ({
-  page,
-  request,
-}) => {
+test('built Playground supports local input controls and API access', async ({ page, request }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '动态表单引擎 · 工程验证' })).toBeVisible();
-  const input = page.getByRole('textbox', { name: '工程输入' });
+  await expect(page.getByRole('heading', { name: '动态表单引擎 · Playground' })).toBeVisible();
+  const input = page.getByRole('textbox', { name: '示例输入' });
   await input.fill('工作区接入正常');
   await expect(page.getByRole('status')).toHaveText('当前输入：工作区接入正常');
   await expect(input).toHaveCSS('border-style', 'solid');

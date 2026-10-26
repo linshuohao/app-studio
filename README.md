@@ -6,6 +6,8 @@
 
 日常使用：`pnpm install --frozen-lockfile`、`pnpm dev`、`pnpm dev:api`、`pnpm check`。浏览器测试先运行 `pnpm build`，再运行 `pnpm test:e2e`；新环境先安装 Playwright 浏览器。文档环境按下方维护入口准备。
 
+研发使用[五类项目工作流](docs/reading/workflows.html)：实现前核对契约和验收，按行为增量交付，复杂变更还原执行逻辑并进行深度审查，最终以实际测试 / 轨迹核对契约。可直接用自然语言提出任务；单独只读审查可使用仓库辅助技能 `form-deep-review`。决策权限、产物及裁剪规则统一维护在工作流正文。
+
 设计者按以下顺序阅读：
 
 1. [整体架构](docs/reading/architecture.html)：目标、完整层级图、责任边界与交互主线。

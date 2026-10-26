@@ -10,12 +10,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json",
-    "./engineering": {
-      "development": "./src/engineering.ts",
-      "types": "./dist/engineering.d.ts",
-      "import": "./dist/engineering.js"
-    }
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -44,11 +39,7 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./package.json": "./package.json",
-      "./engineering": {
-        "types": "./dist/engineering.d.ts",
-        "import": "./dist/engineering.js"
-      }
+      "./package.json": "./package.json"
     }
   }
 }

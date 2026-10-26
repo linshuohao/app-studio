@@ -5,7 +5,7 @@ export const allowed = {
   protocol: [],
   compiler: ['protocol'],
   runtime: ['protocol', 'pure-functions'],
-  'pure-functions': [],
+  'pure-functions': ['protocol'],
   'renderer-react': ['runtime', 'protocol'],
   'materials-react': ['protocol', 'renderer-react'],
 };

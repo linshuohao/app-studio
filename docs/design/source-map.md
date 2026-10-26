@@ -12,13 +12,14 @@ related:
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
 - SRC-REVIEW
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-25'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -46,6 +47,20 @@ status_note: 本地资料范围的来源索引与覆盖记录
 **覆盖声明：**完成本地现行主题的整理与交叉审查，建立本地历史文件及 ZIP 成员的完整可重复盘点，重要决策按下表定位。历史快照采用主题 / 替代链核对，未对每份重复快照的每句话重新作语义证明；代码 / 样本附件按其证据边界检查。因此不能称为“所有历史讨论逐句全量重写”或“生产设计 / 实现全量验收”。本地不存在的完整原始对话仍为来源缺口；后续新增资料必须增量核对。
 
 ## 来源编号与精确定位 {#source-register}
+
+### SRC-RUNTIMEIMPLEMENTATION：L3 按场景实现与图示 Review 授权 {#src-runtime-implementation}
+
+2026-10-26 当前对话中，用户提出完整调用加入现有校验队列、调整未执行任务并去重，随后明确授权统一入口、有效在途任务复用和文档更新。确认保留已完成外部结果重新校验能力；结果缓存、字段查询索引目前无必要，仅保留后续优化候选及评估指标。现行 [调用合并](l3-validation.md#validation-work-coalescing)、[ADR-FE-021](decisions/ADR-FE-021-validation-work-coalescing.md)及[演进](design-history.md#validation-work-coalescing-confirmed)说明职责、性能动机、取舍与实施证据；本次没有授权实现缓存 / 全字段树或宣称生产性能通过。未保存逐字会话附件。
+
+2026-10-25 后续错误路径 Review 中，用户明确要求 Reaction / Validation 错误报告必须有完整触发快照和具体 Reaction / 校验器身份，并认可完整现场的信息要求；随后澄清存储可以是 local storage 或其他介质，阶段性或逐次交付属于实现选择，不把常驻 Runtime 内存作为前提。Devtools 可收集更多信息以呈现完整路径。现行[异常现场](l3-observability.md#l3-error-evidence)与[演进](design-history.md#complete-error-evidence-confirmed)记录本次确认；事件字段、采集后端、完整 Devtools 与自动 Replay 未因此完成，先前上下文 / 关联算法草案也不整体提升为共识。未保存逐字会话附件。
+
+2026-10-25 当前对话中，用户明确倾向数组 + 哈希索引，理由是查询多于插删、结构新增通常在尾部。归档范围限于 [Scope 容器选择](l3-data-scope.md#l3-scope-index)及其读写取舍，沿用父 Scope + 相对位置与旧视图契约；不扩大为本轮编码授权、全流程 O(1) 保证或诊断 / 上报候选的确认。选择演进见 [记录](design-history.md#scope-array-hash-choice)；未保存逐字会话附件。
+
+2026-10-24 用户继续代码 Review，指出 Journal 跨调度轮次共享的生命周期问题，确认拆分单轮执行上下文 / 临时记录和实例诊断出口，并明确要求“帮忙改一下”。按此授权落实每轮创建 / 封存 / 释放，关联调度前来源与异步启动事件，保留兼容的有界最近事件查询；同步修订 [Trace 生命周期](l3-observability.md#l3-trace-budget)和 [本批实现](l3-reactive-engine.md#runtime-implementation)。轻量接口仍供 Review，完整 Trace、字节预算及生产报告策略保持剩余状态，无新增 ADR。
+
+2026-10-23 当前对话中，用户明确要求先建立框架 / 目录及用例，再逐模块实现并由用户 review 代码；要求总图和分模块局部图说明初始化、编辑 / 视图 / 联动校验、校验结果触发行为、成功 / 失败四类场景中各环节影响、组合来源及方法功能。由此进入现行开发交付流程，不再以字段命名或常规实现选择反复索取设计决策。
+
+事实入口为 [L3 本批实现](l3-reactive-engine.md#runtime-implementation)和 `packages/runtime/README.md` 的代码阅读图。Runtime / 纯函数核心和真实 Compiler 消费用例属于本批实现证据；React 实际交互、Flutter、目标设备性能、初值默认值策略及最终公共 SDK 仍有剩余范围。没有把用户的编码授权扩大为全部新接口的架构确认，没有新增 ADR；未保存逐字会话附件。
 
 ### SRC-REACTIONSTATE：Reaction 行为出口、状态观察与协议更新确认 {#src-reaction-state}
 
@@ -140,6 +155,8 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 ### SRC-ENGINEERING：工程工具链确认与官方命令依据 {#src-engineering}
 
+2026-10-23 用户指出各包 engineering.ts 没有业务含义，并明确要求清理冒烟测试代码。按该授权移除六包标记 / 演示及其导出、构建、测试和专用样式；Playground 演示留在应用内部，工程验收使用现有真实协议、纯函数、Compiler 和 Runtime。现行范围见[实施记录](engineering.md#engineering-implementation)，保留初始化验收的历史事实，不把已移除示例或未实现 Renderer / 物料当成当前能力，无新增架构 ADR。
+
 2026-10-20 本次对话中用户指定 Next.js / NestJS，确认 A 定制优先与上一版工程工具组合，限定 Playground 轻量，并授权整理完整文档，要求通过 pnpm latest 安装及官方脚手架初始化。确认与未决范围见[演进记录](design-history.md#engineering-toolchain-confirmed)，有效方案见[工程主题](engineering.md)及 [ADR-FE-014](decisions/ADR-FE-014-engineering-toolchain.md)。命令依据为工程主题各节链接的 pnpm、Next、Nest、tsdown、shadcn、ESLint、Playwright、Husky、Changesets 等官方文档，查阅日期为 2026-10-20；未保存或伪造逐字会话 / 官方网页快照。首次归档时命令未实跑；后续实际初始化、兼容处理及本地验收见[实施记录](engineering.md#engineering-implementation)与[演进](design-history.md#engineering-initialized)，不作为生产引擎语义完成证据。用户随后明确要求开发模式直接消费工作区源码，并授权实施；又明确 Playground 的应用控件统一使用 shadcn/ui；条件 exports、源码监听与生产打包入口隔离的实际配置和验收同步在工程主题，未改变模块职责或提升核心实现状态。
 
 ### SRC-PROTOCOL：协议结构源与校验路线确认 {#src-protocol-source}
@@ -165,6 +182,8 @@ status_note: 本地资料范围的来源索引与覆盖记录
 ### SRC-WORKFLOWS：项目工作流确认与调研依据 {#src-workflows}
 
 2026-10-20 本次对话中用户要求兼顾效率、可靠性和持续演进，以真实任务理解流程后，明确要求按五类建设说明文档与工作流；第三方 skill / 工具先说明，由用户决定是否安装。现行说明见 [项目工作流](workflows.md)，执行入口位于仓库 `.agents/skills/`，演进见 [工作流建设记录](design-history.md#workflow-established)。未保存或伪造逐字对话快照。
+
+2026-10-24 本次会话用户提供 AI 辅助研发的方法论材料，讨论后明确要求“按照这个理论去对我们的整个工作流和整个项目的规范规则做调整”。据此确认以现行契约为权威，补强行为影响决策分级、只读预检、行为切片、深度审查及契约 / 实现 / 运行证据关联，统一更新规则、五类流程、辅助审查 skill 与工程要求；不把材料中的运行时示意、工具清单或外部厂商观点转成业务协议或必装项。实际范围与验证局限见[演进](design-history.md#workflow-contract-evidence-adopted)。本次核对[官方 Skills 说明](https://developers.openai.com/plugins/concepts/skills)的指引 / 资源定位；项目流程由用户授权决定，官方说明不证明项目提效或宿主已发现新技能。
 
 调研用于选型参考，不将厂商案例或研究直接提升为项目共识：[SDD 层次分析](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html)、[SDD 实践研究（2026-10-15 修订）](https://arxiv.org/abs/2608.25202v4)、[长任务 harness](https://www.anthropic.com/engineering/harness-design-long-running-apps)、[DORA](https://dora.dev/research/2025/dora-report/)、[METR 更新](https://metr.org/blog/2026-02-24-uplift-update/)。仓库 skill 发现机制依据 [官方文档](https://learn.chatgpt.com/docs/build-skills)。查阅日期为 2026-10-20；这些资料不证明本项目已提效，候选第三方工具未安装。
 

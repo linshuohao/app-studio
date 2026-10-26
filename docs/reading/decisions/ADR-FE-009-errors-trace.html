@@ -8,7 +8,7 @@
   <title>ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="../assets/knowledge-index.js?v=191b7209bbca" defer></script>
+  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
   
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -64,6 +64,7 @@
 <a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
+<a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -90,6 +91,7 @@
 <p>可隔离单 Command 错误记录后，后续独立命令和规则继续，已写 Data 不回滚。Reaction 不检查上游健康，只按自身 Watch / Scope / when 响应。执行预算超限停止整个当前 Flush，不维护父子规则控制、失败下游禁用、局部熔断或链级 Health。</p>
 <p>保护采用同值过滤、pending 去重和本轮总数 / 单实例计数，阈值待标定。L2 的潜在环诊断不替代运行保护；SCC 具体算法为推荐。默认逐步全表 Hash / 热路径因果图被排除，局部指纹和高级图分析延期。取舍是以有限执行和可定位异常替代形式化终止证明和复杂影响链状态机。</p>
 <p>Trace 是有序执行事实、实际 Change 与 triggeredBy 来源；首次 Reaction 入队建立临时 Context，正常轮结束释放，异常先提取受限报告，Devtools 自行持久保存。执行预算与记录预算独立，Trace 截断不能停止保护；同一规则多次执行有不同 executionId。</p>
+<p>2026-10-24 生命周期实现细化：上述“首次入队建立”要求首先保留触发起点，不要求此时就分配执行计数与 Journal。用户确认将 scheduled 来源暂存与实际 drain 的 FlushContext / Journal 分开，结束后封存只读报告并释放；实例诊断出口只保留有界最近事件及独立错误。此细化保留起因采集与单轮所有权，不把记录延后到起因丢失，也不宣称完整 Trace 和生产预算已完成。</p>
 </section>
 <section class="section" id="adr-009-open"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>未决边界与影响</h2></div></div>
 

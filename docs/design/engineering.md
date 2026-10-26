@@ -12,6 +12,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-WORKFLOWS
 - SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERIOTYPES
 - SRC-PROTOCOLIMPLEMENTATION
@@ -20,7 +21,7 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 30
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-24'
 status_note: 工程 / Protocol 已有本地证据；Compiler 已接入表达式依赖与运行准备，性能 / 消费联验、Runtime 与远端 CI 未完成
 ---
 
@@ -176,7 +177,7 @@ pnpm dlx shadcn@latest add button input label --cwd apps/playground
 
 使用已存在的 Next 项目，不让 shadcn 再生成一套 Monorepo 或额外 UI 包；选择 CSS Variables。实施细化采用当前 CLI 默认的 Base UI / base-nova，已通过按钮、Label、受控输入及三浏览器联验；这只是当前默认组件实现，不扩展为新协议语义。引入图标、类名合并与变体工具时沿用脚手架实际生成的依赖，通过 pnpm 更新，不预先重复安装另一套。
 
-Playground 的页面控件统一使用本地 shadcn/ui 组件（包括 Input、Button、Label），不以物料包的工程样例输入控件充当应用组件库；物料包及独立 CSS 的交付能力继续通过包测试和隔离消费者验证。当前只初始化轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。[shadcn CLI](https://ui.shadcn.com/docs/cli)
+Playground 的页面控件统一使用本地 shadcn/ui 组件（包括 Input、Button、Label），演示布局也由应用自身负责。初始化物料示例及专用 CSS 已移除，物料 / 独立 CSS 的交付验证随真实物料实现恢复，不为通过检查保留演示 API。当前只有轻量 UI 基础。默认物料开发时在 materials-react 内按同一基础组织源码及样式，不从 apps 反向导入，不新增公共 UI 包；记录生成来源与本地修改。Tailwind / PostCSS 配置沿用最新 Next 脚手架，避免复制旧版配置样板。[shadcn CLI](https://ui.shadcn.com/docs/cli)
 
 ### 4.6 测试、Hook 与版本工具初始化
 
@@ -221,7 +222,7 @@ pnpm outdated -r
 | pnpm boundaries | 依赖图、禁止导入及清单 / exports 边界检查 |
 | pnpm test / test:integration | Vitest 单次运行 / 跨包用例，watch 另设 test:watch |
 | pnpm test:e2e | Playwright，CI 使用生产构建，管理服务启动和清理 |
-| pnpm packages:check | pack 后隔离安装，验证 JS / d.ts / exports / CSS / 框架外置 |
+| pnpm packages:check | pack 后隔离安装，验证协议 / 纯函数 / Compiler → Runtime 的 JS、d.ts、exports 与 Schema；物料 / CSS 待真实实现 |
 | pnpm docs:check | 现有 Python 构建 --check；文档环境按 docs/README 准备 |
 | pnpm check | format:check、lint、boundaries、typecheck、test、integration、build、packages:check、docs:check；E2E 在 CI 另设必需任务 |
 
@@ -254,7 +255,7 @@ packages/<package>/
 
 src 不混放测试文件；Vitest 从 tests 发现包内测试。测试可以通过包内相对路径引用 src，但跨包仍经包名和 exports。生产 tsconfig 只包含 src，测试 tsconfig 继承生产规则并按需补 Node / 测试库类型，包 typecheck 同时执行两项。测试数据与测试辅助函数放在 tests，不进入生产导出。
 
-统一的是源码、测试、工具和交付物的边界，不要求所有包复制同一套业务目录。Protocol 保留 definition / capability / prepared；Compiler 按下表组织；Runtime 等占位包在实际职责落地时再建立相应模块，不先创建空层次。包根保留配置与 README；src 根可保留公共类型和已有 engineering 联验入口。内部模块直接导入所需文件，不为每个目录增加无用途的转导出入口。
+统一的是源码、测试、工具和交付物的边界，不要求所有包复制同一套业务目录。Protocol 保留 definition / capability / prepared；Compiler 按下表组织；其他包在实际职责落地时建立相应模块，不先创建空层次。包根保留配置与 README；src 根可保留公共类型，初始化标记链和演示子入口已清理。跨包验收通过 tests / tools 消费真实公共入口；内部模块直接导入所需文件，不为每个目录增加无用途的转导出入口。
 
 | Compiler 目录 | 当前职责 |
 | --- | --- |
@@ -308,7 +309,7 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 | pre-commit | lint-staged 对暂存文件检查 / 格式化，不全仓编译和 E2E |
 | commit-msg | commitlint |
 | PR 必需检查 | frozen install、格式、Lint、类型、依赖边界、单元 / 集成、构建、产物消费、文档同步 |
-| PR 关键链路 | 真实浏览器 E2E，API 启动 / 请求，依赖图受影响范围覆盖消费者；首期规模小先全量执行 |
+| PR 关键链路 | 真实浏览器 E2E，API 启动 / 请求，依赖图受影响范围覆盖消费者；首期规模小先全量执行；复杂行为按下方契约审查闭环验收 |
 | 发布前 | 完整回归、Changesets / API / 兼容与制品检查；只有存在真实发布流程才启用发布 |
 
 质量任务失败阻止合并，取消或跳过不等于通过；统一汇总必需结果，避免路径过滤导致必需检查永久 pending 或误通过。Next build 不承担独立 Lint 门禁。CI 优先 GitHub Actions，实际托管未确认时不声称分支保护已设置。部署、数据库、鉴权、Platform 状态管理、完整监控、Storybook 和远程缓存不作为本轮底座前置。
@@ -319,6 +320,19 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 
 现有 Python 文档环境继续按 [维护说明](../README.md)准备；不能由 Node 安装替代。协议样例有变更另跑 run_validation.py，当前工程文档变化不修改样例。
 
+### 契约、行为理解与审查收口 {#engineering-contract-review}
+
+2026-10-24 用户确认按契约驱动与证据验证调整协作规则；执行步骤及产物以[项目工作流](workflows.md#workflow-contract-evidence)为唯一流程正文。工程任务先引用现行模块契约做[只读预检](workflows.md#implementation-preflight)，明确本轮行为、不变量、反例、消费者、验证入口与真实阻塞，再按可观察行为小批实现。内部方案是否自主决定取决于是否改变对外语义，不由文件或类名判断。
+
+- 复杂状态、调度、异步、跨层一致性、权限 / 数据正确性改动及用户单独要求的审查，使用辅助 `form-deep-review`；普通修改做针对性差异和适用检查，不强制完整图表 / 报告。按[深度审查](workflows.md#deep-review)固定提交 / 工作区基线，纳入暂存、未暂存、未跟踪、生成物及必要未修改调用方 / 消费者；逐文件记录去向，按跨文件行为路径审查。
+- 还原关键入口、状态所有权、执行 / 通知顺序、错误传播、取消 / 失效和清理；图表标明源码推导或实际运行。依赖边界检查只约束导入 / 清单，类型检查只约束类型，均不能证明联动收敛、稳定通知或异步资格正确。
+- 重要契约按[关联表](workflows.md#contract-verification)连接实现符号、正反例和真实结果。异步时序可控；验证通知应检查观察者所见状态和顺序，不能只查最终数据。新增 / 修复行为先确认测试能捕获缺失或原故障，再在实现后复验；不为低影响文档 / 样式修改生成只重复实现的测试。
+- 源码事实、运行结果、分析推断和未验证项分别标注。记录实际命令、结果、环境限制及适用代码基线；检查失败不因属于已有问题而隐去，也不能宣称由本次改动引入。文档构建、候选探针、代码覆盖率和 AI 解释各自有范围，不构成全引擎正确性证明。
+- 高风险改动在既有授权和能力支持下优先独立上下文审查，从原始契约与源码取证后再核对作者说明；没有独立能力时如实披露自审与残余风险。只读审查不改业务代码、测试或规范；修复交 W3 / W4，完成后在最终基线复核相关路径与发现。
+- 交付同时报告已验证范围、未覆盖高风险条件、问题与合并建议。P0 / P1 未关闭、必需门禁失败 / 未执行或重要契约偏差未解决时暂缓合并；无发现不等于无缺陷。沿用既有本地 / CI 门禁，不新增名义通过的 AI 检查脚本，不宣称远端分支保护已经启用。
+
+审查发现反向进入既有流程：实现违反契约直接修复并加回归，公共行为真实缺口集中讨论、确认后归档；重复缺陷优先落实为反例测试或静态规则。重要权衡记录在当前任务 / PR，必要设计变化回所属主题及 ADR，不另建长期契约副本或逐函数台账。不自动提交、合并或发布，不因检查通过推导外部操作授权。
+
 ## 9. 实施批次、验收与未决项 {#engineering-acceptance}
 
 | 批次 | 交付 | 必须证明 |
@@ -328,7 +342,7 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 | E3 UI / 测试 / 约束 | shadcn、Tailwind、Vitest、Playwright、边界、Hook、Changesets | UI 轻量样例、真实输入、跨包 watch、故意违规能被门禁识别 |
 | E4 CI / 文档 | 统一脚本、必需任务与开发说明 | 干净环境复跑全部检查，失败证据可定位，初始化记录与锁同步 |
 
-工程底座完成须同时满足：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。先用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。
+初始化阶段的工程底座验收包括：Next 消费一个工作区库；Nest 通过真实依赖注入 / 请求；库更新反馈到应用；隔离 React Host 能加载物料和 CSS，Node 消费 Compiler / Manifest 不加载 React；exports 与声明可用。当时用明确标注的工程样例验证，不要求凭空实现完整 L1–L4，也不把模板默认测试通过计为引擎行为验收。初始化标记与示例清理后，继续验证已有真实能力；工作区 UI 包、物料与 CSS 的接入随正式实现验收，不为维持历史检查重新制造占位 API。
 
 协议结构源后续已确认原生 TS 类型 + JSDoc → 自动生成 JSON Schema，Compiler 使用 Ajv，见 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。具体生成器、严格生成配置与正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
 
@@ -341,7 +355,9 @@ Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文
 
 根清单使用 pnpm init；Next 使用 create-next-app；Nest 使用 Nest CLI；六个库使用 create-tsdown（四个 minimal、两个 React 模板）；ESLint / Playwright / Husky / Changesets 使用官方初始化器。dependency-cruiser 初始化器识别已有配置后保留本项目规则；没有为它生成第二套配置。移除模板重复 Playground、占位发布身份和不采用的检查工具，保留生成配置并按框架要求整合。
 
-所有包当前 private，根生产入口保持空导出。跨包验证示例在 `./engineering` 子入口；它们只验证工程接入，不定义 Definition / Prepared 或假设生产 Runtime 已实现。materials-react 独立导出 styles.css，使用 tsdown 原生 copy，开发脚本显式监听 src；源样式无需 Host 的 Tailwind 扫描。React 库构建保留 use client，React 本身外置。
+初始化时所有包设为 private，根生产入口保持空导出，跨包验证示例放在 `./engineering` 子入口；它们只验证工程接入。初始 materials-react 通过 tsdown 原生 copy 独立导出示例 styles.css，开发脚本监听 src，源样式无需 Host 的 Tailwind 扫描。React 库构建保留 use client，React 本身外置。
+
+2026-10-23 用户明确要求移除这些冒烟占位代码。六包中的 engineering.ts / engineering.tsx、对应导出 / 构建入口、React 示例测试及专用样式已清理；Playground 保留本地 shadcn 控件和语义容器，移除仅为演示建立的工作区 UI 包依赖与转译声明。Protocol、纯函数、Compiler 和 Runtime 使用真实公共入口验收；独立打包验证实际编译、联动、稳定快照、完整校验与只读类型。Renderer / Materials 尚无正式实现，主入口仍为空，不以重新命名演示组件冒充正式 API。必要工具链检查保留在 tests / tools，不新增架构 ADR。
 
 脚手架调用的版本 / 选项由执行日志核对：create-next-app 16.4.2、Nest CLI 通过 latest 调用（首次缓存输出 12.0.8，项目 CLI 后续已更新）、create-tsdown 0.23.1、ESLint create-config 3.0.0、create-playwright 1.17.139、shadcn CLI 4.22.1。以下表格是安装后的**事实记录**，不是人工预填的依赖声明；清单与锁由 pnpm 生成。
 
@@ -374,7 +390,7 @@ pnpm check
 pnpm test:e2e
 ```
 
-`pnpm dev` 直接启动 Next，默认应用端口 3000；不预构建六包、不启动库 watch。六包 exports 的 development 条件先于 types / import，指向 src 的公开入口；CSS 也按条件解析到源样式。Next 通过 transpilePackages 编译工作区源码，TypeScript 的 customConditions 与 Vitest 的 resolve.conditions 使用 development。生产应用构建不启用此条件，继续读取 dist。pnpm pack 通过 publishConfig.exports 覆盖为纯产物入口，避免下游应用开发时误找未发布的 src；隔离 tarball 消费同时验证默认与 development 两种条件。此机制依据 [pnpm publishConfig](https://github.com/pnpm/pnpm/blob/main/pnpm/docs/package_json.md#publishconfig)。若本机其他项目占用端口，可执行 `PORT=3210 pnpm dev`；Turbo 显式传递 PORT / API_PORT / HOST。API 默认回环 3001，可用 `API_PORT=3211 pnpm dev:api` 修改。`dev:all` 显式联调；不会隐式连接 Platform 或外部服务。退出使用 Ctrl+C，子任务随 Turbo 清理。
+`pnpm dev` 直接启动 Next，默认应用端口 3000；不预构建六包、不启动库 watch。六包 exports 的 development 条件先于 types / import，指向 src 的公开入口。TypeScript 的 customConditions 与 Vitest 的 resolve.conditions 使用 development；Next 接入真实工作区依赖时按实际依赖声明 transpilePackages，当前演示页清理后不引用工作区 UI 包。生产应用构建不启用此条件，继续读取 dist。pnpm pack 通过 publishConfig.exports 覆盖为纯产物入口，避免下游应用开发时误找未发布的 src；隔离 tarball 消费同时验证默认与 development 两种条件。此机制依据 [pnpm publishConfig](https://github.com/pnpm/pnpm/blob/main/pnpm/docs/package_json.md#publishconfig)。若本机其他项目占用端口，可执行 `PORT=3210 pnpm dev`；Turbo 显式传递 PORT / API_PORT / HOST。API 默认回环 3001，可用 `API_PORT=3211 pnpm dev:api` 修改。`dev:all` 显式联调；不会隐式连接 Platform 或外部服务。退出使用 Ctrl+C，子任务随 Turbo 清理。
 
 Nest 的 dev / start:dev / start:debug 使用 Node --watch、--conditions=development 和 services/api/dev-loader.mjs。加载器用已安装的 @swc/core 转换 TS / TSX，保留旧式装饰器和元数据，并将源码内部的相对 .js import 解析到对应 .ts；这只用于开发，不接入生产启动。生产仍由 nest build 生成 dist/main.js，再用 Node 执行。Nest 的开发类型检查使用独立 tsconfig.dev.json，生产 tsconfig.build.json 保持产物解析。后端新增工作区依赖仍须在 package.json 正式声明，不能因根工作区能够解析就省略。
 

@@ -8,7 +8,7 @@
   <title>L3 诊断与 Trace · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="assets/knowledge-index.js?v=191b7209bbca" defer></script>
+  <script src="assets/knowledge-index.js?v=8af0c4a57478" defer></script>
   
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -64,6 +64,7 @@
 <a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
 <a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
+<a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -151,7 +152,7 @@ Reaction A · Execution #17 · triggeredBy [#16]
 </section>
 <section class="section" id="l3-trace-budget"><div class="section-head"><div class="kicker">02 · FORM ENGINE</div><div class="section-title"><h2>记录预算、参数与异常上报</h2></div></div>
 
-<p>执行预算与记录预算独立：前者停止无限联动，后者限制事件条数及字节数。Trace 满了可停止详细采集或截断，但计数与循环保护必须继续。合并来源、参数副本等附属记录也需计入容量，不能通过大 <code>triggeredBy</code> 绕过记录预算。</p>
+<p>执行预算与记录预算独立：前者停止无限联动，后者限制辅助 Trace 的事件条数及字节数。Trace 满了可停止辅助详细采集或截断，但计数与循环保护必须继续。合并来源、参数副本等附属记录也需计入容量，不能通过大 <code>triggeredBy</code> 绕过记录预算。下方异常现场的必需信息不得按辅助 Trace 截断策略静默省略；完整性、采集载体和资源成本须分别处理。</p>
 <p>推荐在正常容量内保留完整本轮，溢出时保留初始来源与最近一段，并标记 <code>truncated</code>；仅保留尾部是替代方案，最终策略仍待决策。截断造成的缺失引用必须如实表达，不能伪造完整因果链。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -189,8 +190,42 @@ Reaction A · Execution #17 · triggeredBy [#16]
 </tr>
 </tbody>
 </table></div>
-<p>保存可变 Context / 外部对象引用不能证明历史参数；需要审计时必须明确受限副本或摘要形成的时点。正常结束释放生产完整记录，异常先提取报告；Devtools 可自行长期保留。异常报告至少应定位 Definition / 发布身份、Reaction / Scope / Path、轮次结果、保护原因及截断信息，具体字段、脱敏映射和限频待固化。注册能力、Runtime 和平台的版本信息也影响可解释范围。</p>
-<p>报告交给 Host / 配置平台去重、限频，不能成为正常 Data 写入的等待或许可条件；Devtools 的历史保存与事件消费 API 在实现阶段确定。临时记录从首次入队建立到本轮结束释放，不以异常为由给生产 Runtime 增加所有正常轮次的长期历史。</p>
+<p>上表的摘要和不逐步复制策略适用于辅助 Trace，不替代执行异常报告的完整输入要求。保存可变 Context / 外部对象引用不能证明历史参数；必须固定所记录输入的时点，使用稳定快照或可完整取回的记录。正常结束释放 Runtime 不再需要的临时记录，异常先提取完整现场；Host / Devtools 可另行保存，采集介质不限定在 Runtime 内存。</p>
+<h3 id="l3-error-evidence">执行异常的完整现场与 Devtools 轨迹</h3>
+<p>2026-10-25 用户明确要求：Reaction 或 Validation 执行错误上报必须有完整触发数据和准确执行对象，才能复现对应输入并追溯错误来源；随后确认信息可保存到 local storage 或其他地方，逐次或阶段性交付均属实现选择。核心要求是信息完整、关联准确、可供复现与溯源，不将全部历史常驻 Runtime 内存作为前提。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>必需信息</th>
+<th>内容与一致性要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整输入现场</td>
+<td>对应触发时的整份 Data 与 Host Context、输入版本及 Scope 绑定；不是只记录版本号、摘要、变化字段或当前行</td>
+</tr>
+<tr>
+<td>实际执行对象</td>
+<td>Reaction ID；Internal / External 的 Constraint ID；External 另有 Host Validator 注册名，Schema 校验记录对应 Schema 身份；同时定位本次执行 / 任务、轮次和 Scope 实例</td>
+</tr>
+<tr>
+<td>配置及实现身份</td>
+<td>Definition / Prepared 与相关能力制品身份，使报告能找到当时使用的配置和实现，不能仅凭可能已变更的同名规则定位</td>
+</tr>
+<tr>
+<td>错误及触发关系</td>
+<td>出错阶段、错误信息与可取得的调用栈，以及对应 Operation / Change / 校验发布等触发来源；实际可读的校验投影、Event / Payload 或相关外部结果须有对应现场或可完整取回的稳定关联</td>
+</tr>
+</tbody>
+</table></div>
+<p>触发入队、实际调用及出错处理是不同时间点。排队合并或前序动作写入使输入不同时，应保留相应完整快照及关联，不能用后来状态冒充早先输入；相同输入可共享一份稳定快照。Reaction 部分动作成功后另一个动作失败时，还需定位失败动作和对应输入。异步 Validator 使用发起任务时捕获的完整输入，不能在拒绝处理时读取最新表单替代。现场应在可重入通知或清理丢失关联前固定。</p>
+<p>完整错误信息可以在内存中短暂交接，也可以由 Host / Devtools 保存到 local storage 或其他存储；可以逐次交付或阶段性收集后上报。本轮不选定存储产品、缓存实现或发送批次，也不要求 Runtime 自带持久化和网络能力。外置快照时，关联必须能够完整取回对应内容；只有 ID、摘要或失效引用不算完整。容量和交付失败必须如实暴露，不能静默删除必需现场后仍宣称完整；上报不能成为数据写入或执行清理的等待条件。</p>
+<p>Devtools 可额外保存更完整的执行顺序、实际变化、输入状态及跨轮关联，用于呈现从触发到失败的整条路径。基础 Trace 的有界记录与 Devtools 扩展采集分开，存储位置不改变各自信息要求。完整路径呈现必须有对应证据，记录缺失或截断时明确表示不能完整恢复，不能用推断补成事实。完整现场不等于已经实现自动或确定性 Replay；相关边界见<a href="#l3-devtools" rel="noopener noreferrer">复现层次</a>。</p>
+<p>2026-10-25 本批 Runtime 已交付 <code>Diagnostic.evidence</code> 的触发 / 调用输入、执行对象、Prepared 身份、阶段与错误堆栈；错误独立交付，不受辅助 Trace 容量抑制。异步任务捕获启动现场，完整校验按调用身份收集诊断，结束释放收集器。字段和实际用例见 <a href="../../packages/runtime/README.md" rel="noopener noreferrer">Runtime Review 入口</a>及包内 diagnostics 测试；持久化、完整 Devtools 路径和生产容量仍未实现，不据此宣称本章全部验收通过。</p>
+<p>最初归档仅固化信息要求；上述 TS Runtime 实施已补齐对应调用边界的完整现场，仍不冻结跨端 SDK、采集后端或提高 M16 整体完成度。2026-10-26 任务合并进一步区分启动身份与消费关联：<code>execution.callId</code> / <code>origin</code> 保留真实执行来源，<code>relatedCalls</code> 关联正在等待共享任务的完整调用，确保新调用能够收集复用任务的异常。调用结束解除关联、封存收集器，任务只保留必要输入与编号，不持有已结束的调用 / Flush 上下文。规则见 <a href="l3-validation.html#validation-work-coalescing" rel="noopener noreferrer">调用合并</a>。来源见 <a href="source-map.html#src-runtime-implementation" rel="noopener noreferrer">SRC-RUNTIMEIMPLEMENTATION</a>。</p>
+<p>报告交给 Host / 配置平台去重、限频，不能成为正常 Data 写入的等待或许可条件；Devtools 的历史保存与事件消费 API 在实现阶段确定。首次入队前后的触发信息需采集并接入本轮；执行上下文与 Journal 在实际调度开始时建立，结束后先封存并交付记录再释放。信息可由外部采集设施承接，不以异常为由给生产 Runtime 增加所有正常轮次的长期历史。</p>
+<p>2026-10-24 用户确认并授权落实该生命周期拆分。当前代码中，FlushContext 持有本轮预算计数、停止标志和临时 Journal；DiagnosticReporter 是实例诊断出口及有限最近事件查询，异步交付封存轮次报告和独立事件。异步 Host / Validator 仅持有启动来源编号，迟到回报不会追加到旧 Journal 或冒充其他同步轮次事件。代码入口及局部图见 <code>packages/runtime/README.md</code>。本批实现条数截断与来源关联，但完整 Command / Change 因果事件、字节预算、脱敏和生产报告阈值仍待交付，不因生命周期回归通过而整体标记 Trace 完成。</p>
 </section>
 <section class="section" id="l3-devtools"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>Devtools 因果分析与复现的三种层次</h2></div></div>
 
@@ -221,6 +256,7 @@ Reaction A · Execution #17 · triggeredBy [#16]
 </tr>
 </tbody>
 </table></div>
+<p>上述历史恢复 / Replay 边界不减免<a href="#l3-error-evidence" rel="noopener noreferrer">执行异常完整现场</a>的必需采集与交付。Devtools 完整路径是扩展采集和呈现目标，不以当前有界事件尾部已存在而声称完成。</p>
 <p>异常可定位不等于时间旅行。Devtools 关闭也必须得到同样的 Reaction 输出与调度结果。</p></section>
         
         <nav class="reading-continuation" aria-label="继续阅读"><a href="l4-renderer.html">下一步 · L4 呈现与交互适配</a></nav>
@@ -233,7 +269,7 @@ Reaction A · Execution #17 · triggeredBy [#16]
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#l3-trace" data-to="l3-trace" title="Trace：事实、来源与记录边界"><span class="nav-num">01</span><span>Trace：事实、来源与记录边界</span></a>
 <a href="#l3-trace-budget" data-to="l3-trace-budget" title="记录预算、参数与异常上报"><span class="nav-num">02</span><span>记录预算、参数与异常上报</span></a>
 <a href="#l3-devtools" data-to="l3-devtools" title="Devtools 因果分析与复现的三种层次"><span class="nav-num">03</span><span>Devtools 因果分析与复现的三种层次</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-DIAGNOSTICS</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 5</summary><ul><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li></ul></details><details><summary>相关正文与历史 · 10</summary><ul><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-DIAGNOSTICS</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 6</summary><ul><li><a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li></ul></details><details><summary>相关正文与历史 · 12</summary><ul><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 6</summary><ul><li><a href="source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

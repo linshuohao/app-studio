@@ -8,8 +8,8 @@
   <title>L3 校验与结果 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
   
-  <script src="assets/knowledge-index.js?v=191b7209bbca" defer></script>
-  
+  <script src="assets/knowledge-index.js?v=8af0c4a57478" defer></script>
+  <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -64,6 +64,7 @@
 <a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a>
 <a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
+<a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -451,7 +452,7 @@ ordered = []
 <p>Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Reaction，也不要求历史 Reaction 成功。Schema 与全部适用同步 / 异步 Constraint 通过后，可提交该次证明对应的数据快照。必须成立的业务关系应表达为校验约束，不能只依靠联动成功维护。联动 Outcome 与完整校验结论分别报告；校验通过不把熔断改记为正常收敛。若数据已无法可靠读取或校验机制不可用，则无法证明合规，不允许据此提交。</p>
 <p>正常自动增量在联动收敛后统一执行内外校验；当前轮熔断后仍允许独立完整校验，后续新触发正常执行。异步不纳入同步 Flush；完整结果语义已定，结构由维护者按下方信息模型整合，具体 SDK、通知与实际验收尚未完成。</p>
 <h3 id="validation-result-contract">完整结果的信息结构与组合</h3>
-<p>完整结果的四类语义已经确定，用户授权维护者整理结构，不再逐字段重开决策。下表是 SDK 应承载的信息模型，具体 TS 名称与表示尚未实现，不向可序列化 L1 / Prepared 增加实例字段。</p>
+<p>完整结果的四类语义已经确定，用户授权维护者整理结构，不再逐字段重开决策。下表是 SDK 承载的信息模型；TS Runtime 已提供对应结构与无界面用例，完整跨端 / UI 验收仍未完成，不向可序列化 L1 / Prepared 增加实例字段。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -487,7 +488,57 @@ ordered = []
 </tbody>
 </table></div>
 <p>组合表达按输入资格优先：输入或调用资格已失效为 stale；否则存在必要校验未完成、缺能力或执行异常为 incomplete；否则存在业务错误为 invalid；全部适用义务完成且通过才为 valid。前置已明确业务失败导致后置按契约跳过时，保留该阻断原因并汇总真实业务错误，不伪造后置业务失败，也不单因这次正常跳过改记 incomplete；前置未完成或异常造成的阻断则不能证明完备。业务错误与异常可同时保留，即使总体只给一个状态也不能丢弃证据。when=false 是本次正常不适用；when 求值失败是执行异常。</p>
-<p>每次完整调用固定本次输入身份与覆盖范围，不自动追赶后续编辑，也不为提交额外触发 Reaction。Host 如需等待已安排联动结束，可先观察其 Outcome，再对当前状态发起完整校验。等待期间输入改变使旧调用成为 stale；仍有独立资格的异步任务可以继续更新自己的来源，不能据此把旧完整调用恢复为当前通过。具体取消 / 替换返回与通知交接随 SDK 整理，不把本段当作已实现能力。</p>
+<p>每次完整调用固定本次输入身份与覆盖范围，不自动追赶后续编辑，也不为提交额外触发 Reaction。Host 如需等待已安排联动结束，可先观察其 Outcome，再对当前状态发起完整校验。等待期间输入改变使旧调用成为 stale；仍有独立资格的异步任务可以继续更新自己的来源，不能据此把旧完整调用恢复为当前通过。TS Runtime 的调用过期与任务复用验收见下节；跨端、实际 UI 提交及生产性能仍须独立验证。</p>
+<h3 id="validation-work-coalescing">完整调用合并与在途任务复用</h3>
+<p>2026-10-26 用户确认：自动增量与外部完整调用共用队列和唯一同步执行入口，运行中新增需求只补充未执行工作；补齐同步前置并按来源实例去重。新完整调用使旧调用返回 stale，仍有效的在途任务由新调用继续等待，不因调用被取代就撤销重发。当前实现已从每次 <code>validate()</code> 独立 <code>run(true)</code> 改为登记完整覆盖需求，再交给统一入口。决策理由与取舍见 <a href="decisions/ADR-FE-021-validation-work-coalescing.html" rel="noopener noreferrer">ADR-FE-021</a>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>所有者</th>
+<th>保存内容与生命周期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source</td>
+<td>某个 Schema / Constraint + Scope 的当前状态、Issues、输入代次和网络句柄；按依赖或实例生命周期失效</td>
+</tr>
+<tr>
+<td>ValidationWork</td>
+<td>此来源当前的一份排队 / 执行 / 在途工作，以及该工作封存结果；不保存整份已完成输入历史</td>
+</tr>
+<tr>
+<td>ValidationCall</td>
+<td>本次完整调用的输入身份、快照、覆盖工作与结果等待；被新调用取代或输入改变时 stale，不拥有共享任务的取消权</td>
+</tr>
+<tr>
+<td>FlushContext</td>
+<td>当前同步联动及校验反馈预算；异步工作不持有它，也不能靠合并请求重置它</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="architecture-diagram mermaid-figure"><figcaption>Mermaid 图示</figcaption><pre class="mermaid">flowchart TB
+  I[增量失效] --&gt; Q[登记来源工作并去重]
+  C[外部 validate 捕获输入与覆盖] --&gt; Q
+  Q --&gt; R[唯一同步入口：Schema / 同步前置 / 规则]
+  R --&gt; E[复用有效在途任务或启动新任务]
+  E --&gt; S[按来源发布结果并通知字段]
+  S --&gt; F[最新完整调用等待要求的工作全部终结]
+  C --&gt; O[旧完整调用 stale：共享任务继续按资格执行]
+</pre><p class="mermaid-error" hidden>图表未能渲染；完整源码保留在下方。</p><details><summary>查看 Mermaid 源码</summary><pre><code>flowchart TB
+  I[增量失效] --&gt; Q[登记来源工作并去重]
+  C[外部 validate 捕获输入与覆盖] --&gt; Q
+  Q --&gt; R[唯一同步入口：Schema / 同步前置 / 规则]
+  R --&gt; E[复用有效在途任务或启动新任务]
+  E --&gt; S[按来源发布结果并通知字段]
+  S --&gt; F[最新完整调用等待要求的工作全部终结]
+  C --&gt; O[旧完整调用 stale：共享任务继续按资格执行]
+</code></pre></details></figure>
+<p>尚在队列或同步执行中的同来源工作合并；已启动网络任务在实例、代次和依赖资格有效时复用，同时重新核对本次适用性与同步前置。不同数组成员各有独立工作，绝不能仅按规则名去重。队列只负责选择工作，来源中的任务资格才决定结果能否发布；A→B→A 不能按值相同恢复旧请求。</p>
+<p>同一次执行中已经完成的同步前置可以复用；新的完整调用允许重跑已完成的外部来源，保留用户重试及服务端新鲜度语义。结果发布期间视为终态正在封存，业务回调主动重试时建立新工作，避免把它错误合并回旧失败。只合并需求时不清旧 Issues、不重复发布 pending；真正失效或重跑时仍只更新该来源贡献，不清空其他来源。</p>
+<p>完整结果不能只 <code>Promise.all</code> 登记当时已出现的网络任务：重入时有些必需工作还在队列中。调用固定要求覆盖的工作，只有它们全部终结，才根据正常跳过、业务阻断、错误与输入资格形成四类结论。共享任务的错误保留启动时完整输入和 origin，<code>relatedCalls</code> 记录等待该任务的完整调用；收集器按这些关联路由，调用结束立即解除，不能把旧调用或整个 Journal 留在任务里。技术异常在状态通知前先采集并关联错误现场，避免回调修改输入或发起重试时，旧调用已经封存而丢失已发生的错误。Schema 通知若产生新输入，先交接完成新的根 Schema 工作，再继续未执行规则。</p>
+<p>一次同步入口消费当前交接批次；通知或输入变化新增的工作交回现有 Scheduler，继续受同轮反馈预算约束。没有增加协程、全局异步 DAG 或跨 Constraint 的异步前置等待，也没有改变独立异步请求发起后继续执行其他规则的行为。</p>
+<p><strong>后续优化候选，尚未实施：</strong>已完成结果缓存、字段查询 / Issue 派生索引。用户确认目前无必要，先保留方向；未来有真实重复计算或扫描瓶颈，再比较 Host 校验器启动及 cancel 次数、Schema / 规则执行次数、来源发布 / 查询量、内存与耗时。缓存须另行明确重试和服务端结果新鲜度；索引须验证多目标 Issue、成员移动 / 删除及通知一致性。此处不选定缓存策略、阈值或新公共 API，也不建立全字段状态树。</p>
 </section>
 <section class="section" id="validation-layers"><div class="section-head"><div class="kicker">10 · FORM ENGINE</div><div class="section-title"><h2>跨层交付、替代方案与取舍</h2></div></div>
 
@@ -642,6 +693,7 @@ ordered = []
 </section>
 <section class="section" id="validation-state-observation"><div class="section-head"><div class="kicker">12 · FORM ENGINE</div><div class="section-title"><h2>字段状态观察与逐结果通知</h2></div></div>
 
+<p>执行异常报告遵循<a href="l3-observability.html#l3-error-evidence" rel="noopener noreferrer">完整现场契约</a>：保留对应完整触发 / 调用输入、Constraint 与 Validator / Schema 身份、Scope、配置身份和错误阶段；异步失败使用任务发起时快照，不以当前数据替代。现场采集与存储介质、上报批次分开，由 Host / Devtools 承接可选持久化；不能因 Trace 截断省略必需现场。该要求不改变业务 Issue、技术未完成与完整校验证明的分别表达，2026-10-25 本批 Runtime 的诊断 SDK 已实现该错误现场与按完整调用收集的接口，回归入口见 <a href="../../packages/runtime/README.md" rel="noopener noreferrer">Runtime Review 入口</a>；这不表示完整 Devtools 或持久化已交付。</p>
 <p>字段校验展示与 Reaction 采用同一观察目标描述：source=validation，field 为 DataReference，observe 为 issues / status / state。View / Host 可以订阅该描述，Reaction 在 watch 中声明该描述；不把 Validation State 当成可写 Data，不改变 Constraint 的数据依赖与同步 requires。</p>
 <p>发布顺序固定为：检查任务 / 输入 / Scope 资格 → 替换该来源贡献 → 一致更新受影响字段的 Issues 聚合与公开状态 → 登记命中的内部观察失效 → 通知对应外部订阅。通知回调读取到的是已完成发布的快照，不能看见新 Issues 配旧状态。来源结果每次就绪分别发布，不等全部外部任务完成；完整校验仍独立等待全部适用义务。</p>
 <p>投影决定变更比较：issues 关注问题内容，status 关注公开校验状态，state 关注整个对外字段快照。空问题列表从 pending 进入完成时，issues 不变但 status / state 可变化。完整状态的精确枚举、Issue 排序和 SDK 返回仍待固化；不能以没有 Issue 证明已完成。只发布对外状态的有效变化，不暴露 Runner 临时中间态。</p>
@@ -667,7 +719,7 @@ ordered = []
 <a href="#validation-layers" data-to="validation-layers" title="跨层交付、替代方案与取舍"><span class="nav-num">10</span><span>跨层交付、替代方案与取舍</span></a>
 <a href="#validation-acceptance" data-to="validation-acceptance" title="设计验收与下一步"><span class="nav-num">11</span><span>设计验收与下一步</span></a>
 <a href="#validation-state-observation" data-to="validation-state-observation" title="字段状态观察与逐结果通知"><span class="nav-num">12</span><span>字段状态观察与逐结果通知</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-VALIDATION</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M10">M10 Schema Adapter</a></li><li><a href="governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="governance.html#M13">M13 完整校验 / Submit 交接</a></li></ul></details><details open><summary>关联 ADR · 5</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 7</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-runtime-overview">SRC-RUNTIMEOVERVIEW · 运行时全景、外部能力与结果通知确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
+        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-VALIDATION</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M10">M10 Schema Adapter</a></li><li><a href="governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="governance.html#M13">M13 完整校验 / Submit 交接</a></li></ul></details><details open><summary>关联 ADR · 6</summary><ul><li><a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a></li><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 18</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 8</summary><ul><li><a href="source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-runtime-overview">SRC-RUNTIMEOVERVIEW · 运行时全景、外部能力与结果通知确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-prerequisites">SRC-PREREQUISITES · 前置引用、实例绑定与同步等待确认</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
       </aside>
       </div>
     </div>

@@ -19,6 +19,7 @@ related:
   - ADR-FE-007
   - ADR-FE-008
 sources:
+- SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
 - SRC-RUNTIMEOVERVIEW
 - SRC-L3BASELINE
@@ -29,7 +30,7 @@ sources:
 navigation:
   group: 04 · L3 运行时
   order: 50
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-24'
 reading_next: DESIGN-L3-DATA
 relocated_sections:
 - source: docs/design/architecture.md
@@ -38,6 +39,26 @@ relocated_sections:
 ---
 
 # L3 运行时总览与 Flush
+
+## 当前实现批次与 Review 路线 {#runtime-implementation}
+
+2026-10-23 用户授权先搭框架、编写场景用例，再逐模块实现，以总图和局部图审查。此处记录交付范围，不将实现选择提升为新的架构共识。实现入口为 `packages/runtime`；总图、局部图、目录、方法与四类场景的影响路径见 [Runtime 代码 Review 入口](../../packages/runtime/README.md)。生产代码只消费 Prepared /2，不反向调用 Compiler。测试使用真实 Compiler 生成输入。
+
+| 批次 | 文件与接口 | 验收 |
+| --- | --- | --- |
+| 1 数据与身份 | `data/store.ts`、`scope/registry.ts`；read / snapshot / bind / dispatch | 即时写、旧快照、成员移动 / 替换、逐命令比较、非法操作隔离 |
+| 2 求值与传播 | `expression/evaluator.ts`、`observation/registry.ts`、`reactions/scheduler.ts`；evaluate / observe / flush | 显式 watch、最新值去重、同步重入、次数保护、host.emit |
+| 3 校验与结果 | `validation/manager.ts`；getValidation / validate | 根 Schema、同步前置、来源隔离、逐结果发布、任务过期、四类完整结果 |
+| 4 接缝与交付 | `runtime.ts`、`tests/integration`；createRuntime / replaceContext / dispose | 初始化→编辑→结果反馈→Host 成功 / 失败，真实跨包输入输出与清理 |
+| 5 单轮记录生命周期 | `reactions/context.ts`、`diagnostics/journal.ts`、`diagnostics/reporter.ts`；onDiagnostic / diagnostics | 每轮新建和释放、前置来源、迟到任务引用、截断、销毁及出口异常隔离 |
+
+各批次先写有明确预期的失败用例，再实现并跑通；公共接口是本次代码 Review 的草案。既有干净特性分支上保留增量供用户审查，不自动提交或发布。检查覆盖类型、行为、边界与打包；React 物料实际交互、Flutter 等价和目标设备性能单独验收，不以无界面 Runtime 用例替代。
+
+上述核心模块已有无界面实现与场景用例，不再只有工程占位入口。正文中原有“待固化 / 待实现”仍描述完整设计及其验收，不能简单理解为本批毫无实现，也不能因本批通过就整体关闭：Scope 局部位置维护、依赖与字段聚合性能、生产预算、输入默认值策略、完整 Adapter / 物料交互及跨端一致性继续保留。format 目前按注解处理，未提供格式断言。SDK 字段状态与方法结构供用户 review，未新增架构 ADR 或冻结发布契约。
+
+初批本地证据曾覆盖 Runtime 41 个用例、纯函数 1 个用例、根级集成 5 个用例；后续增加类方法兼容回归及清理初始化标记链，根级集成保留 4 个真实用例。2026-10-24 按用户授权修正 Journal 生命周期后，Runtime 52 个用例及类型检查通过；10 个新增用例覆盖独立轮次、前置来源、异步回报、销毁、截断与同步 / 异步诊断出口异常。既有六包构建与打包消费证据不替代本批重新验证，也不包含真实表单 UI、Flutter 或设备性能验收。
+
+实例诊断出口与单轮执行记录已拆开：每次实际 drain 新建 FlushContext / Journal，结束后先封存不可变报告再释放，onDiagnostic 异步交付 Host。调度前仅暂存有界触发元数据；异步任务仅捕获启动事件编号，不捕获旧 Journal。具体字段与局部图见代码 Review 入口；逐 Command / Change 完整因果 Trace、字节预算及生产报告策略仍属剩余范围，无新增架构 ADR。
 
 L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Command 与 Reaction Flush。数据 / Scope 与 Trace 分别维护在[数据与身份](l3-data-scope.md)和[诊断与 Trace](l3-observability.md)。本篇按模型、数据修改、生命周期、执行和错误展开；校验另见[校验与结果](l3-validation.md)。
 
@@ -355,7 +376,7 @@ Host 管异步加载和防止迟到输入覆盖编辑；Runtime 只装载明确�
 
 | 状态 | 内容 |
 | --- | --- |
-| 已确认 | L3 只消费 PreparedForm；不可变 Working Data / 即时 Command / 非原子 batch；最新状态合并与同轮级联；延迟启动同步 Flush；可隔离错误继续独立命令和规则；超限整体熔断；临时线性 Trace 与最小来源；首次入队建立 Context；缺失值由业务规则处理 |
+| 已确认 | L3 只消费 PreparedForm；不可变 Working Data / 即时 Command / 非原子 batch；最新状态合并与同轮级联；延迟启动同步 Flush；可隔离错误继续独立命令和规则；超限整体熔断；临时线性 Trace 与最小来源；首次入队保留起点，实际执行建立本轮上下文；缺失值由业务规则处理 |
 | 已确认方向 | Devtools 可独立观察并保存执行历史，开启与关闭不改变语义 |
 | 推荐 | Object.is 观察值比较、Trie / 模板组合、局部旧 ScopeReadView、位置型匹配；稳定队列顺序、静态 SCC 算法、Trace 头尾截断和编译 Source Map |
 | 已确认 · 现行职责边界 | 每条 Command 前后 Root / Scope 检测；常规 Reaction 只响应有效 Watch 变化；runOnActivate 仅新实例首次激活；字段无业务所有权；稳定 snapshot；整数组替换重建成员身份；Dirty / 业务 Baseline / Reset 策略归 Host，不绕过 Watch 重跑已有实例 |
@@ -413,7 +434,7 @@ Context 的当前契约：Command 只修改 Data，Reaction.watch 仍为 DataRef
 | Reaction Instance | Reaction ID + 实际 Scope 身份 | 随 Form / Scope 激活，可在同轮多次执行 |
 | Pending | 按 ReactionInstanceKey 去重的待执行集合 | 属于 Reactive Engine，执行或中止时消费 / 处理 |
 | Flush | 一次消费待执行实例的过程，具有 Flush ID | 队列清空、执行错误处理或保护停止时结束 |
-| Flush Context | 本轮计数、来源、临时 Trace、预算和异常标志 | 首次 Reaction 入队建立；结束后释放 |
+| Flush Context | 本轮计数、来源、临时 Trace、预算和异常标志 | 首次入队开始收集来源，实际调度时建立执行上下文；结束后封存报告并释放 |
 | ChangeContext | 当前 Command 前后 Data / Scope ReadState 与局部 impact | 本次比较结束即释放，不进 pending 或后续轮次 |
 
 | 所有者 | 状态 | 释放 / 更新条件 |
@@ -438,8 +459,8 @@ Runtime 实例只根据兼容 PreparedForm 建立，按 Prepared Observation 匹
   "title":"即时写入与一轮联动收敛",
   "rows":[
     [{"title":"Operation → Command","body":"同步更新不可变 Root 与 Scope；按有效变化匹配依赖"}],
-    [{"title":"idle → scheduled","body":"首次出现 pending 后安排一次启动，并建立 Context 保存起点"}],
-    [{"title":"flushing · 取出实例","body":"从 pending 移除，读取最新 Data，求值 when，按序执行 then","major":true}],
+    [{"title":"idle → scheduled","body":"首次出现 pending 后安排一次启动，暂存有界触发来源以保留起点"}],
+    [{"title":"flushing · 建立本轮上下文","body":"接入前置来源；从 pending 取出实例，读取最新 Data，求值 when，按序执行 then","major":true}],
     [{"title":"当前轮继续","body":"内部有效修改追加失效；同实例执行后可再次入队"},{"title":"本轮结束 / 停止","body":"队列空或整轮预算停止；可隔离错误继续，真实结果与异常报告分别记录"}],
     [{"title":"释放本轮 Context","body":"正常不留生产完整历史；异常先向 Host 提取报告；Devtools 自行保存"}]
   ],
@@ -448,7 +469,7 @@ Runtime 实例只根据兼容 PreparedForm 建立，按 Prepared Observation 匹
 }
 ```
 
-延迟一次启动，然后在同一同步执行过程消费任务直至结束；不实现时间切片。微任务可作为启动方式，但精确启动契约仍待固化。确认首次 Reaction 入队、进入 scheduled 时建立临时 Context，保留首次有效变化及后续合并的来源，避免执行开始时才记录而丢失起因。
+延迟一次启动，然后在同一同步执行过程消费任务直至结束；不实现时间切片。首次 Reaction 入队、进入 scheduled 时即开始保留首次有效变化及后续合并来源，不能等执行开始才采集起因。2026-10-24 按用户确认将来源暂存与实际执行上下文分阶段实现：scheduled 阶段仅暂存有界元数据，实际 drain 时创建独立 FlushContext / Journal 并移交来源，结束后先封存只读报告再释放。微任务启动是当前实现选择；记录截断不影响调度预算。
 
 | 发生时机 | 数据 | Reaction 归属与状态 |
 | --- | --- | --- |
@@ -559,6 +580,8 @@ Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Re
 Reaction 没有执行控制意义的父子关系：A 修改数据使 B 失效，B 不检查 A 的成功状态，只检查自身 Scope、watch 与运行条件。某条命令失败，不自动禁用“下游”，不回滚其他成功修改；后续命令依次读取执行时的最新数据。可隔离错误与预算超限分别处理，安全预算到达时终止整轮，不能把“继续独立行为”理解成忽略保护。
 
 整体停止的最小约束：保留已写 Data；不把停止伪装为正常收敛；清理 Context 前提取真实错误 / 超限类型与临时路径，交给 Host 报告；不自动无限重启同一批遗留任务。清空剩余 Reaction，不以旧任务安排新轮；后续新操作按有效失效正常触发。保留填写、快照与独立完整校验，清队列及新轮预算须实际验收。
+
+Reaction 执行错误的报告必须保留完整触发 / 调用输入、具体 Reaction 与 Scope 实例、配置身份及错误阶段，遵循[完整现场契约](l3-observability.md#l3-error-evidence)。记录可由 Host / Devtools 保存到外部介质，不要求完整历史常驻 Runtime；受限 Trace 不得替代必需现场。此要求不改变执行隔离与熔断规则，当前轻量错误记录仍需补齐验证。
 
 曾保留“局部不可信范围、长期 Health、相关规则恢复后清除标记、利用依赖计划传播影响”的候选，为降低状态机与影响链成本明确替代该方向：不做父子 Reaction 状态、失败下游禁用、局部熔断或链级恢复。解释异常的 Trace 不参与调度和权限决策；Validation 的 Issues / 新鲜度仍按自身契约管理。旧约束完整留在 [整合前正文](../history/README.md#protocol-runtime-v05-integration)。
 

@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 50,
+    "current-markdown": 51,
     "documentation-tooling": 13,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 404,
-  "unique_byte_contents": 365,
+  "total_entries": 405,
+  "unique_byte_contents": 366,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -176,8 +176,8 @@
       "path": "README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 2145,
-      "sha256": "0de6c85ee29635e56b543d7e23d1cd30f178b63995719591928dfc50f36a1e87",
+      "bytes": 2545,
+      "sha256": "25f7fc9a63f1716195c1b496ce65a3a9b11ca636aa7346da7e438f0377fb59fd",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 19018,
-      "sha256": "598fc5f6a7b43e0937d776dbb6da089668f24c3f9d9243322ea868c3723350c8",
+      "bytes": 19996,
+      "sha256": "b6d3cdd3e58860b2fe48fc0571fbea0798e80a83d959353703a7efd3e27340f2",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -821,8 +821,8 @@
       "path": "docs/design/decisions/ADR-FE-009-errors-trace.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 5750,
-      "sha256": "0055da4a11e65a9dec4b7911d8c67e7f0195678efbe255c6e899f518ccb8106b",
+      "bytes": 6231,
+      "sha256": "74d29a109f1a200eb0768bd3b3794a1d567b57ecbd603396f5725cc7d17e1885",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -861,8 +861,8 @@
       "path": "docs/design/decisions/ADR-FE-010-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 12170,
-      "sha256": "4a9817c90ad0c15a25c0a165cf0d701d19207fa4432cbb93586a71a3d10e3158",
+      "bytes": 12720,
+      "sha256": "224821121418db37c6da9130d01b8b94ec7cd5b16cfad60f961ffcaf80f39659",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1221,8 +1221,8 @@
       "path": "docs/design/decisions/ADR-FE-018-flush-round-protection.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4267,
-      "sha256": "f2bfbebe754bc31de238ea41715d6ce65867b469428cec6ae4ab968670c56d0d",
+      "bytes": 5375,
+      "sha256": "7f2c1038883350e75936bf94d8e8afe7a2d7196afbf33235e6822526a89d7955",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1319,6 +1319,41 @@
           "level": 2,
           "title": "收益、代价与状态",
           "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-021-validation-work-coalescing.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 5497,
+      "sha256": "7ce15381cd154660115902652fe2b397f40b98925a458f4d412bf6df2b68c72d",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-021：统一校验队列与有效在途任务复用",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与决策理由",
+          "anchor": "adr-021-context"
+        },
+        {
+          "level": 2,
+          "title": "已确认选择",
+          "anchor": "adr-021-decision"
+        },
+        {
+          "level": 2,
+          "title": "取舍与后续候选",
+          "anchor": "adr-021-tradeoffs"
+        },
+        {
+          "level": 2,
+          "title": "实现与验证范围",
+          "anchor": "adr-021-evidence"
         }
       ]
     },
@@ -1446,8 +1481,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 147923,
-      "sha256": "ebcbf02eee184886024d7b22c0287c4a37b6a90950e4e7cbda954e8180be8ea6",
+      "bytes": 154220,
+      "sha256": "18d918fd7625d8a5b6d0f6848e745e8aad3f39bbcde6f952f259828ad0ff51ac",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1519,6 +1554,11 @@
           "level": 2,
           "title": "V0.6 数据变更与 Scope 决策总账",
           "anchor": "l3-v06-decisions"
+        },
+        {
+          "level": 3,
+          "title": "2026-10-25：Scope 顺序采用数组与哈希索引",
+          "anchor": "scope-array-hash-choice"
         },
         {
           "level": 2,
@@ -1599,6 +1639,16 @@
           "level": 3,
           "title": "原贯穿案例的提交门槛（已被替代）",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-10-26：统一校验队列与在途工作复用",
+          "anchor": "validation-work-coalescing-confirmed"
+        },
+        {
+          "level": 3,
+          "title": "2026-10-25：执行异常完整现场与存储介质分离",
+          "anchor": "complete-error-evidence-confirmed"
         },
         {
           "level": 2,
@@ -1856,6 +1906,11 @@
           "anchor": "workflow-established"
         },
         {
+          "level": 3,
+          "title": "2026-10-24：契约驱动交付、行为理解与证据审查",
+          "anchor": "workflow-contract-evidence-adopted"
+        },
+        {
           "level": 2,
           "title": "2026-10-20：工程初始化与兼容联验",
           "anchor": "engineering-initialized"
@@ -2016,8 +2071,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 50554,
-      "sha256": "e90bd0f2cec6f3e7060a686ad8dbb1353993386bc9559e7592d612651c4d3025",
+      "bytes": 54713,
+      "sha256": "c4ed46eee2d7476fac5b4adce95082131d9f64c3f98de645cd919ec8e5471442",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2109,6 +2164,11 @@
           "level": 2,
           "title": "8. 质量门禁、测试与环境治理",
           "anchor": "engineering-gates"
+        },
+        {
+          "level": 3,
+          "title": "契约、行为理解与审查收口",
+          "anchor": "engineering-contract-review"
         },
         {
           "level": 2,
@@ -2236,8 +2296,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 38295,
-      "sha256": "f61543aa9d119013578b137bd49e33bf754fdfebf623c69c2b4947e3e3adbcf2",
+      "bytes": 40354,
+      "sha256": "267efb1800983fcd6c443e98e2f9f46916a248b3143e2caf16ac4e6858c6cd42",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2287,8 +2347,8 @@
         },
         {
           "level": 3,
-          "title": "项目工作流入口已建立，工程验收仍待实施",
-          "anchor": null
+          "title": "项目工作流与契约证据规则已建立",
+          "anchor": "项目工作流入口已建立工程验收仍待实施"
         },
         {
           "level": 3,
@@ -3346,8 +3406,8 @@
       "path": "docs/design/l3-data-scope.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 29579,
-      "sha256": "ef6110ecd0379df0d9d73656bc7aa7d26ae1e407fb80e1181d63d8ca3ee2ee8d",
+      "bytes": 32093,
+      "sha256": "84ebd37d7f05c16c98ad8a584fa2fff8d81efe5ce35420b4e7e896cb74502502",
       "mapping": "DESIGN-L3-DATA / 逐 Command 数据、快照、Scope 与完整行为验收迁移",
       "sections": [
         {
@@ -3416,8 +3476,8 @@
       "path": "docs/design/l3-observability.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 6415,
-      "sha256": "09557d11739b138cab6d92f4711c8c3ce63c9df0f0e41837cf89ee2891f825ce",
+      "bytes": 11781,
+      "sha256": "a24428b22122df1e91ddfc23112d02bebc7fcef9643b2d7efa2dde21feb888ee",
       "mapping": "DESIGN-L3-DIAGNOSTICS / 运行事实、Trace 与开发工具说明迁移",
       "sections": [
         {
@@ -3436,6 +3496,11 @@
           "anchor": "l3-trace-budget"
         },
         {
+          "level": 3,
+          "title": "执行异常的完整现场与 Devtools 轨迹",
+          "anchor": "l3-error-evidence"
+        },
+        {
           "level": 2,
           "title": "Devtools 因果分析与复现的三种层次",
           "anchor": "l3-devtools"
@@ -3446,14 +3511,19 @@
       "path": "docs/design/l3-reactive-engine.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 68257,
-      "sha256": "da6262ad8750512a34924a6ffd854669e40e66ee010863291ab720403ccc40ca",
+      "bytes": 72604,
+      "sha256": "2834e9cf5a34d1d45a62a4d980305d5c8999cdaea4c355ef2f8e21cd45c15976",
       "mapping": "SRC-V04 / SRC-V05 / SRC-V06 / SRC-HOST / K14–K24",
       "sections": [
         {
           "level": 1,
           "title": "L3 运行时总览与 Flush",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "当前实现批次与 Review 路线",
+          "anchor": "runtime-implementation"
         },
         {
           "level": 2,
@@ -3581,8 +3651,8 @@
       "path": "docs/design/l3-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 44211,
-      "sha256": "f39cc15b5307f5ffa6e215d1c6e8aa4c854560acaff6213dacb7a9bfd253d825",
+      "bytes": 49160,
+      "sha256": "bc1469cf4074b84e33327599be56a27ed87f3c354a3980ee8fd432e8c42e92e0",
       "mapping": "SRC-V07 / K25–K28",
       "sections": [
         {
@@ -3659,6 +3729,11 @@
           "level": 3,
           "title": "完整结果的信息结构与组合",
           "anchor": "validation-result-contract"
+        },
+        {
+          "level": 3,
+          "title": "完整调用合并与在途任务复用",
+          "anchor": "validation-work-coalescing"
         },
         {
           "level": 2,
@@ -4091,8 +4166,8 @@
       "path": "docs/design/workflows.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 15928,
-      "sha256": "985a1edc1c3a7723c0d92d17b19fdd0294360cbfcc3788a8ec081f92e917efcc",
+      "bytes": 28877,
+      "sha256": "86136ce66b738b6a7790472f83d6b756c1d741e0c92a843476cee92264046374",
       "mapping": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
       "sections": [
         {
@@ -4104,6 +4179,11 @@
           "level": 2,
           "title": "先选你要做的任务",
           "anchor": "workflow-selection"
+        },
+        {
+          "level": 2,
+          "title": "决策权限、契约与证据",
+          "anchor": "workflow-contract-evidence"
         },
         {
           "level": 2,
@@ -4119,6 +4199,21 @@
           "level": 2,
           "title": "W3 · 开发交付：把明确的能力做出来",
           "anchor": "workflow-delivery"
+        },
+        {
+          "level": 3,
+          "title": "实现预检：进入编码的条件",
+          "anchor": "implementation-preflight"
+        },
+        {
+          "level": 3,
+          "title": "理解与深度审查",
+          "anchor": "deep-review"
+        },
+        {
+          "level": 3,
+          "title": "契约验证与修复闭环",
+          "anchor": "contract-verification"
         },
         {
           "level": 2,

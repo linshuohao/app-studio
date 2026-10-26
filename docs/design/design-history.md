@@ -7,6 +7,8 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-WORKFLOWS
+- SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
 - SRC-COMPILERIMPLEMENTATION
@@ -26,10 +28,11 @@ sources:
 - SRC-V07
 related:
   decisions:
+  - ADR-FE-021
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-26'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -470,6 +473,12 @@ FormDefinition 与 PreparedForm 严格分工，L3 唯一消费兼容 PreparedFor
 | D25 | Trie 模板实例化的真实性能 | 实现验证 | 分别测试深层数组、集合 Move、大对象少量 Watch。 | 沿用原有确认 / 推荐 / 验证状态 |
 
 
+### 2026-10-25：Scope 顺序采用数组与哈希索引 {#scope-array-hash-choice}
+
+用户在 Review 当前 arrays / members 双 Map 与全树重建成本后，确认数组 + 哈希索引更符合表单读多写少、通常尾部新增的使用特点。现行 [Scope 索引](l3-data-scope.md#l3-scope-index)据此明确顺序数组为权威、哈希条目提供成员及相对位置定位；保留已确认的父 Scope + 相对位置、旧视图及一致提交约束，接受同集合受影响区间的线性维护，不采用链表或平衡顺序树。
+
+本轮确认容器选择及理由，不是 O(1) 整次 Command 承诺，也未确认具体字段 / 类名或旧视图物理表示。现实现全树重建与相对位置契约的偏差仍待对齐，M08 / T04 不关闭；数据数组复制、索引版本保存及通知成本需另行验收。属于既有 ADR-FE-007 内的实现选择，不新增或替代 ADR。来源见 [SRC-RUNTIMEIMPLEMENTATION](source-map.md#src-runtime-implementation)。
+
 ## V0.7 来源决策与现行处理 {#validation-decisions}
 
 以下编号属于 V0.7 自身命名空间，不与 L3 R01–R26、V0.5 / V0.6 的 D 编号混合。保留来源标题、说明与状态；“已收敛”表示设计意图，不等于 API 冻结。D06 的倾向须与 D14 的增量待验证状态一起阅读。
@@ -615,6 +624,18 @@ Host        → 执行已声明外部校验 → 上报结果
 Runtime     → 检查义务与依赖有效性 → Report / Readiness / Output
 Host        → 核对相关联动可信收敛、当前输出、校验与业务条件 → 实际提交
 ```
+
+### 2026-10-26：统一校验队列与在途工作复用 {#validation-work-coalescing-confirmed}
+
+用户先把订阅回调重复调用 validate 的重入反例归为低优先级优化，要求继续正常流程 Review 并集中整理候选；随后提出新需求加入当前队列、调整未执行顺序并去重。助手建议唯一同步入口、合并排队及有效在途工作，完整调用独立保存输入与覆盖等待；收紧最初“已完成也复用”的建议，保留已完成外部来源在新完整调用中的重试能力。用户最终明确授权按此实施、更新文档并保留决策思路。
+
+本次采用 [ADR-FE-021](decisions/ADR-FE-021-validation-work-coalescing.md)，细化 ADR-FE-010 而不替代其分层职责。统一队列处理任务，旧完整调用 stale 不等于撤销共享请求；来源状态与字段聚合、Scope / 输入代次、完整等待和必需错误现场保持。相较每次调用直接重启，目标是减少重叠需求的重复启动 / cancel / 发布；结果缓存会影响重试和外部新鲜度，字段查询索引会增加派生状态维护，因此用户认为现阶段无必要，只保留未来有实测瓶颈时评估的候选。未选择缓存时效、查询索引结构或新公共 API，未扩展为通用异步 DAG、Fiber 或生产性能保证。现行方案见 [L3 校验](l3-validation.md#validation-work-coalescing)，来源见 [SRC-RUNTIMEIMPLEMENTATION](source-map.md#src-runtime-implementation)。
+
+### 2026-10-25：执行异常完整现场与存储介质分离 {#complete-error-evidence-confirmed}
+
+用户要求 Reaction / Validation 错误报告包含完整触发数据快照及准确的 Reaction / 校验器身份，随后确认完整输入、实例 / 配置定位与错误来源用于复现和溯源。用户进一步澄清：不必把所有错误信息留在内存，可用 local storage 或其他介质，收集完成、阶段性或逐次上报均为实现选择；重要的是信息完整。Devtools 可额外保存执行路径所需的更多状态和关联。
+
+现行[完整现场](l3-observability.md#l3-error-evidence)据此区分异常必需信息与辅助有界 Trace，明确输入时点、异步捕获和外置记录必须可完整取回；不将原先参数摘要 / 截断建议用于删减必需现场。沿用执行预算独立、正常临时记录释放与 Host / Devtools 承接原则，补充 ADR-FE-018，不新增存储后端选型或核心网络 / 持久化职责。本轮只固化信息要求，未确认具体事件字段、上下文类层级及完整校验关联算法；自动 Replay、完整 Devtools 实现及 M16 验收仍未完成。来源见 [SRC-RUNTIMEIMPLEMENTATION](source-map.md#src-runtime-implementation)。
 
 ## 2026-10-19：Reaction 顺序与宿主任务边界 {#reaction-order-host-update}
 
@@ -1111,6 +1132,16 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 现行 [工作流说明](workflows.md)维护方案讨论、确认归档、开发交付、问题修复、流程改进五类入口、结束条件与衔接；仓库 `.agents/skills/` 提供五个对应 skill，AGENTS 与维护入口负责路由。开发采用持续规格维护与按范围验收，沿用已确认工程工具链，不复制另一套长期规范。小修改裁剪步骤，关键公共行为集中确认；有证据再增减流程，不以规则数或代码量衡量收益。
 
 第三方 Superpowers 为可选试用项，OpenSpec / Spec Kit 暂不引入；未安装、未执行工程初始化。流程入口的结构检查与真实任务效果分开，后者待后续使用验证。未改变协议、分层、包边界或模块完成状态，不为协作程序新建架构 ADR。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。
+
+### 2026-10-24：契约驱动交付、行为理解与证据审查 {#workflow-contract-evidence-adopted}
+
+用户提供关于设计到实现沟通、复杂代码理解及审查成本的方法论材料；核对现有 W3 已有契约整合 / 小批交付、W4 已有复现 / 回归后，用户明确要求据此统一调整整个项目工作流和规范规则。现行[工作流](workflows.md#workflow-contract-evidence)保留五类主入口，新增辅助 `form-deep-review`，将实现预检、按行为影响的决策权限、关键路径 / 状态模型、独立取证、契约验证与修复复验接入 W3 / W4；W1 保留确认边界与实现自由度，W2 保留关联和证据范围，W5 将重复问题优先转为可执行检查并观察成本。
+
+规则入口、五个既有 skill、辅助审查、工程门禁、治理和来源同步维护。A / B / C 按对外行为和不变量判断，不能把调度器内部算法一概视为自主事项；真实缺口仅暂停受影响部分。审查纳入暂存 / 未暂存 / 未跟踪与必要未修改消费者，在明确基线上区分源码事实、运行结果、分析推断及缺口；文件覆盖不代替行为覆盖，修复后旧结论需要复核。关键证据和重要权衡留在当前任务 / 既有 PR，不新增长期契约副本、每轮报告或通用 Trace 平台。
+
+预期减少无效确认、实现偏差与人工逐行理解成本，代价是任务内预检、证据关联和按风险展开的审查。普通修改裁剪，后续按真实任务观察收益，必要时合并 / 撤回无收益步骤。本次没有安装第三方、修改业务协议或新增架构 ADR，模块完成度及远端 CI 状态不因流程更新提升。当前会话已提供 Superpowers，现行工具表据实际可用情况修正，2026-10-20 的未安装记录仍保留历史身份。
+
+本次六个 skill 的结构、UI 元数据及流程锚点核对通过，文档生成 / 同步与搜索回归通过；本地 HTTP 阅读检查确认新章节、搜索跳转及 Mermaid / 放大显示。维护者在临时夹具实际观察到“最终状态正确但通知看到未稳定值”的反例，仅支持该示例行为。隔离基线演练已尝试，子代理因使用限额未能启动，没有得到行为评估结果；结构校验和维护者自查不能充当独立审查、前后效果对照或生产任务试用。新流程真实收益仍待后续状态 / 调度任务验证。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。
 
 
 ## 2026-10-20：工程初始化与兼容联验 {#engineering-initialized}

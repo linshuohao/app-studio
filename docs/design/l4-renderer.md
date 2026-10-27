@@ -8,6 +8,7 @@ modules:
 - M14
 tags: []
 sources:
+- SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-L4IMPLEMENTATION
 - SRC-REACTIONSTATE
@@ -17,6 +18,7 @@ sources:
 - SRC-DEP
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-022
   - ADR-FE-020
@@ -36,6 +38,8 @@ relocated_sections:
 # L4 呈现与交互适配
 
 L4 完整方案与四批实施已于 2026-10-26 经用户确认，已确认以组件 Adapter 订阅 Runtime、组装 Props、将事件转换为指令；共用接入、输入交付、组件生命周期和物料错误隔离已确认，行为专题已收敛；TS / React SDK、必要 Runtime 接缝及四批实现已有本地验证，正式物料库 / Host 应用、Flutter 与生产性能仍属后续范围。下文旧接口草图仅为来源追溯，不是现行 SDK 要求。完整模块方案对应 [T11](governance.md#T11)，本专题已收敛并有 React 主端纵切证据；当前待讨论的问题统一维护在[设计进展](governance.md#layer-progress)。
+
+2026-10-27 后续[正式物料 / 业务函数方案](extension-integration.md#first-assets)已确认，模板 / 版本工具先行，14 个物料和 7 个同步函数待实施；本轮只归档。现行 SDK、状态所有权、非原子交付和独立 DevTools 保持，具体交互及 Host 验收回到该资产专题，不再写作整套方案尚待讨论。
 
 ## L4 · Renderer：呈现与交互适配层 {#renderer}
 

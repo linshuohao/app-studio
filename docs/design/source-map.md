@@ -8,10 +8,12 @@ modules: []
 tags: []
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-ASSETDESIGN
 - SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
@@ -47,6 +49,12 @@ status_note: 本地资料范围的来源索引与覆盖记录
 **覆盖声明：**完成本地现行主题的整理与交叉审查，建立本地历史文件及 ZIP 成员的完整可重复盘点，重要决策按下表定位。历史快照采用主题 / 替代链核对，未对每份重复快照的每句话重新作语义证明；代码 / 样本附件按其证据边界检查。因此不能称为“所有历史讨论逐句全量重写”或“生产设计 / 实现全量验收”。本地不存在的完整原始对话仍为来源缺口；后续新增资料必须增量核对。
 
 ## 来源编号与精确定位 {#source-register}
+
+### SRC-ASSETDESIGN：首批正式资产、单资产目录及版本工具确认 {#src-asset-design}
+
+2026-10-27 当前会话基线 d2b1598。用户要求用 form-design 从已有业务场景提出首批正式物料 / 业务纯函数完整草案，本轮只在对话讨论。草案覆盖家庭短期出行投保单、14 个物料、7 个函数、输入和请求交付、测试批次及 Host 路线；随后用户提出每资产独立目录、平铺 / 分层、能力与包版本，以及模板和 CLI / npm scripts 编排。后续方案采用包内平铺、tests 镜像、单一 Manifest、独立能力版本 / 包汇总分发、Changesets 加资产薄层和先工具后资产路线。用户最终明确“可以，就按照这个草案去生成正式的文档吧”。
+
+确认归档见 [首批资产正文](extension-integration.md#first-assets)、[工程工具](engineering.md#asset-tooling)、[ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)与[演进](design-history.md#first-assets-confirmed)。业务数值只为本期验收假设，真实费率和 Host 业务契约留后续；本次不自动授权编码、安装、版本应用、提交或发布。未保存逐字会话附件；归档命令结果不能证明物料 / 函数 / CLI 已实现。
 
 ### SRC-DEVTOOLS：独立工具与无业务装配确认 {#src-devtools}
 

@@ -8,12 +8,14 @@ modules: []
 tags: []
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-021
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-RUNTIMEIMPLEMENTATION
 - SRC-WORKFLOWS
@@ -57,7 +59,7 @@ module_layers:
 
 ## 按层看进展与讨论入口 {#layer-progress}
 
-当前并行进行设计讨论、规范细化与已授权范围的核心实现，各模块状态以本篇矩阵及所属主题的实际证据为准。L1 / L2 / L3 已有较多主体设计，L4 只有部分边界；Platform 和 Studio 尚未展开完整专题，不能用已有 L2 发布约束替代整个平台方案。
+当前基线 d2b1598：L1–L3 核心、React L4 本期开发 / review / 修复及独立 DevTools 已有本地证据；正式物料、业务纯函数、模板与版本工具于 2026-10-27 确认设计并授权本轮归档，均待实现。真实 Host、全端和生产性能仍待验收。Platform / Studio 的候选产品方案不因本期资产工具确认而自动转为已确认。
 
 | 范围 | 目前能读到什么 | 接下来需要讨论什么 | 问题与交付入口 |
 | --- | --- | --- | --- |
@@ -65,11 +67,13 @@ module_layers:
 | L2 · 预处理 | 已确认输入输出和本期 Compiler 完整设计；协议类型 / Schema 已同步 | 按四职责组、六阶段实施与实际消费验收；平台完整报告后置 | OD-08 / 10 / 11；T06 |
 | L3 · 数据与执行 | 整体领域骨架、不可变数据 / Scope、Watch、同轮 Flush 与当前轮熔断 | 按已确认原则整理 SDK、快照 / 身份及新触发验收 | OD-03 / 04 / 06 / 07；T02 / T04 |
 | L3 · 校验 | Flush 后统一内外校验、同步前置、异步有效性、完整结果语义与 Context 替换 | 实例绑定、资格撤销、Issue / 完整结果 SDK 与 Submit 实际联验 | OD-01 / 02 / 09 / 12 / 14；T01 / T05 |
-| L4 · 呈现 | 挂载订阅、物料与 UI 状态边界，首期 React 已选，SDK 待固化 | 完整模块、输入 / 快照 / 改绑 / 错误契约与主端验证 | OD-13 / 15；T11 → T07 |
+| L4 · 呈现 | React SDK / 共用 Adapter 与四批本地主端证据；正式资产完整设计已确认 | 先交付资产模板和版本工具，再实施正式物料 / 函数及真实 Host | OD-13 / 15；T11 → T07；[资产方案](extension-integration.md#first-assets) |
 | Platform | 部分资产、编译、发布责任与锁定原则 | 整体平台范围、用户流程、模块、数据、权限与 API | OD-16；T09 |
 | Studio | 编辑、预览、诊断、调试的建设方向 | 产品目标、创作流程、编辑模型、预览与 Runtime 接入 | OD-17；T10 |
 
 ## 下一次讨论从哪里开始 {#next-discussion}
+
+当前下一步为[首批正式资产及工程工具](extension-integration.md#first-assets)的 W3 交付准备：先模板 / 版本编排，再物料和业务函数，最后真实 Host。用户本轮只要求正式文档，尚未执行该实现路线；业务假设限定可控验收，真实服务和产品规则另承接。以下较早日期的推进记录保留为来源依据，不替代本段当前顺序。
 
 2026-10-22 用户已确认 [L3 整体领域骨架](l3-reactive-engine.md#l3-domain-model)、Flush 后统一内外校验、当前轮熔断清队列 / 后续新触发正常执行，以及 Host 显式替换 Context 的保守整体失效。2026-10-23 进一步授权按初始化、编辑传播、校验结果反馈、成功 / 失败四类场景先写用例再实现，以总图及局部图审查；[本批实现与 Review 入口](l3-reactive-engine.md#runtime-implementation)已有无界面核心代码和真实 Compiler 消费用例。下一步按该入口 review SDK 草案及实际路径，继续 Adapter / UI 接入与性能验证，不重复讨论命名和常规容器。Compiler I05 基准 / 浏览器消费与 I06 完整 Adapter 联验仍保留，不能把无界面消费扩大为全链路验收或公开 SDK 冻结。
 
@@ -79,16 +83,16 @@ module_layers:
 
 ## 纵向与横向完整性矩阵 {#design-status}
 
-以下为基于正文与附件的**审查判断**，L3 行已按 2026-10-22 本轮确认增量更新。模块 ID 用于检索，不宣称对应代码包已存在。“可开始”仅针对所列范围；所有生产模块都缺少正式端到端实现验收证据。阅读状态“已完成”只对应该行所限定的职责范围：M01 为分层责任、M17 为现有文档 / 候选工具，不表示整个引擎已经完成。“存在阻塞”表示相关公共行为仍需前置决策；其余主体已明确但契约未全闭环的行列为“部分完成”。
+以下为基于正文与附件的**审查判断**；本期受影响的资产 / L4 / 工具行已按 2026-10-27 方案确认更新，其余历史限制按各主题实际证据读取。模块 ID 用于检索，不宣称对应代码包已存在。“可开始”仅针对所列范围；现有本地核心和 React / DevTools 证据不替代正式物料与真实 Host 的生产验收。阅读状态“已完成”只对应该行所限定的职责范围：M01 为分层责任、M17 为现有文档 / 候选工具，不表示整个引擎已经完成。“存在阻塞”表示相关公共行为仍需前置决策；其余主体已明确但契约未全闭环的行列为“部分完成”。
 
 | 模块 ID / 范围 | 阅读状态 | 已确定内容及依据 | 尚未确定 / 阻塞项 | 设计闭环判断 | 可进入的工作 |
 | --- | --- | --- | --- | --- | --- |
 | M01 全局分层 | 已完成 | [四层与 Host / 扩展责任](architecture.md#architecture) | 不要求先决定物理包或部署 | 架构责任闭环；不等于每层契约闭环 | 可作为后续设计和包边界约束 |
 | M02 L1 数据 / 引用 / 词法 Scope | 部分完成 | [结构化引用、局部 Binder、Missing / null](l1/02-data-reference-scope.md#reference) | 严格结构与可证明兼容策略已确认；Union 形状、存在性与兼容子集；OD-05 / 06 / 11 | 主体语义收敛，正式规范未闭环 | 可固化类型 / 反例；不标正式协议可发布 |
-| M03 Expression / Pure Function | 部分完成 | [纯 AST、递归 ValueSpec、boolean assert](l1/03-expression-validation.md#expression) | 短名映射、签名、错误、跨端类型；OD-11 | 职责闭环；机器契约未闭环 | 可做纯求值与静态分析原型 |
-| M04 L1 View / Template / Binding | 部分完成 | [三类节点、端口、Slots、Typed Params](l1/05-view-material-host.md#view) | 端口子类型、组合 Schema 兼容；OD-11 | 声明模型收敛，类型证明未闭环 | 可固化 Canonical 和 Manifest 测试 |
+| M03 Expression / Pure Function | 部分完成 | [签名与求值](l1/03-expression-validation.md#function-evaluation-contract)、现有 core 实现及[七个业务函数设计](extension-integration.md#first-assets-functions) | 业务函数实现 / 正反例、跨端与真实领域规则待验证 | TS 核心与首批业务函数设计有依据；业务资产尚未落地 | 工具先行后实现业务函数，不重开 Missing / 短路原则 |
+| M04 L1 View / Template / Binding | 部分完成 | [三类节点与端口](l1/05-view-material-host.md#view)、React 消费及[14 个物料契约](extension-integration.md#first-assets-materials) | 正式 Manifest / 物料实现和契约消费验证；Binding 漏映射沿现有边界 | 声明及本期物料设计确认，不等于资产已实现 | 生成模板，建立无 React 契约入口，按批消费真实 Compiler / Runtime |
 | M05 L2 编译与诊断 | 部分完成 | [本期完整设计](l2/compiler.md)、四职责组 / 六阶段 / 检查策略与 SDK 已确认；协议类型已迁移 | I01–I04 编译主链、共享表达式依赖与 watch、规则 / 模板 / 交互已接入；完整基准与消费联验待完成，Context 类型证据 / 后期报告格式保留 | 本期模块设计已收敛；静态准备不等于 Runtime 性能或整体发布通过 | 已有真实依赖生成与规则 / 视图回归；继续 I05 基准 / 浏览器消费及 I06 联验 |
-| M06 能力与发布治理 | 部分完成 | [双流水线、不可变锁与回滚](l2-preparation.md#l2-release) | 摘要对象、兼容矩阵、Host 缺失分级；OD-08 / 10 / 11 | 原则闭环；发布接口未闭环 | 可设计发布契约；不能称有生产发布平台 |
+| M06 能力与发布治理 | 部分完成 | [确定锁与双摘要](l2-preparation.md#capability-digest-contract)、[单资产 / 包版本与 Changesets 编排](engineering.md#asset-tooling)已确认 | 生成、声明、计划 / 应用 / 检查待实现；真实制品留存 / 发布平台另验收 | 本期资产版本工程设计闭环；没有新工具或外部发布证据 | 先实施工具批次 0，不自动迁移 core 版本或改变旧 Release |
 | M07 数据 / Snapshot | 部分完成 | [即时不可变 Root、稳定读](l3-data-scope.md#l3-data) | 输入复制 / 读取只读 / 开发冻结已确认；Missing、snapshot SDK 与实际成本；OD-06 | 不变量明确，接入细节部分闭环 | 可验证结构共享、旧快照；不作稳定 SDK 承诺 |
 | M08 Scope / 变化索引 | 部分完成 | [逐 Command 比较、相对位置](l3-data-scope.md#l3-change-detection)；[数组 + 哈希容器已确认](l3-data-scope.md#l3-scope-index) | 等值、旧位置视图 / 性能；整数组替换即重建已确认；现实现全树绝对路径重建待对齐；OD-07 | 容器方向确认；相对索引落地、身份与观察验收未全闭环 | 对齐相对位置并验收增量维护、旧视图及成本；Trie 仍推荐 |
 | M09 Reaction / Flush / 错误 | 部分完成 | [整体领域骨架与正常 Flush](l3-reactive-engine.md#l3-domain-model)、错误隔离、当前轮熔断清队列 / 新触发已确认 | 队列实现、Outcome / 等待 SDK、同轮保护与清理验收；OD-03 / 04 | 核心行为已收敛；契约整理与实现未完成，不再以恢复决策阻塞 | 直接整理模块契约，验证旧任务不续跑、新有效失效建轮及独立完整校验 |
@@ -96,9 +100,9 @@ module_layers:
 | M11 Constraint 前置与增量 | 部分完成 | [同步资格、唯一实例与共同入队](l3-validation.md#prerequisite-scope-contract)、L2 有效 watch / requires 已确认 | Runtime 具体实例绑定、资格撤销 / 通知与实际消费；OD-01 / 02 | 原则已收敛；不把尚未实现误标为新架构决策 | 按 Prepared 整理运行契约，验证前置传递、兄弟隔离及在途资格撤销 |
 | M12 异步校验 / Issues | 部分完成 | [有效性保护、来源与字段聚合](l3-validation.md#validation-results) | Source / Issue、token、通知 / 前置撤销；OD-02 / 09 / 12 | 正确性约束明确；接口未闭环 | 可做来源隔离与乱序验证原型 |
 | M13 完整校验 / Submit 交接 | 部分完成 | [四类结果语义与信息结构](l3-validation.md#validation-result-contract)、全适用等待、Reaction / Submit 分离及 Context 身份已确认 | 具体结果 SDK、覆盖 / 任务交接、快照证明与 Host 实际联验；OD-03 / 09 / 12 / 14 | 核心语义已收敛；结构由维护者整合，未完成生产验收 | 输出接口与正反例，Host 真实提交 / 输出转换另实现 |
-| M14 L4 / Material Adapter | 部分完成 | [React SDK、挂载 / Profile / 生命周期及四批证据](l4-renderer.md#react-implementation) | 共用 Hook、表达式级 watch、输入 / 清理 / 旧调用拒绝、局部隔离及 TS SDK 已有本地主端验证；正式物料库 / Host 应用、其他目标端和生产性能仍待验收 | TS / React 本期设计及实现闭环；不提升为全部目标端生产完成 | 按确认顺序进入正式物料与业务纯函数设计，再做真实 Host 应用装配 |
-| M15 Host / 实例生命周期 | 部分完成 | [三路径、业务编辑归 Host](l1/06-lifecycle-profiles.md#lifecycle) | 创建 / 替换 / 销毁、能力映射、缺失等级；OD-06 / 08 / 09 | 责任闭环；接入未闭环 | 可设计业务恢复与请求保护，待 SDK 对齐 |
-| M16 Trace / Devtools | 部分完成 | [临时线性事实、预算分离](l3-observability.md#l3-trace-budget)；[异常完整现场已确认](l3-observability.md#l3-error-evidence) | 必需输入与执行对象尚待实现；辅助 Trace 截断、事件协议与阈值；存储 / 发送为实现选择；OD-04 / 12 | 信息要求明确，观测接口及 Devtools 未闭环 | 补齐完整输入、身份与错误关联并验证；Devtools 可扩展外置轨迹，自动 Replay 延期 |
+| M14 L4 / Material Adapter | 部分完成 | [React SDK 与四批证据](l4-renderer.md#react-implementation)、[首批正式资产](extension-integration.md#first-assets)已确认 | 正式物料 / 函数与工具未实现，真实 Host、其他端和生产性能未完成 | TS / React 本期闭环；正式资产设计确认待交付 | 工具批次 0 → 四批物料 / 函数纵切 → 真实 Host |
+| M15 Host / 实例生命周期 | 部分完成 | [三路径](extension-integration.md#capabilities)、现有 SDK / 可控 Host 及[真实装配路线](extension-integration.md#first-assets-delivery) | 真实查询、核保、费率、持久化、输出 / 提交及业务恢复验收 | 责任与本期装配路线确认，不等于真实应用完成 | 先可控服务联验，再接真实契约，不新增 host-sdk |
+| M16 Trace / Devtools | 部分完成 | [独立工具边界](l3-observability.md#independent-devtools)与[本地扩展证据](engineering.md#devtools-implementation) | 全端、完整因果轨迹、生产阈值及自动重放未完成 | 独立只读工具本期落地；不等于所有观测能力完成 | 随正式表单验证工具连接不改变业务，不把工具嵌回物料 |
 | M17 文档与候选验证工具 | 已完成 | [复现入口和明确证据边界](../validation/README.md#reproduce) | 不覆盖 Prepared / 真正 Runtime / 跨端 | 已有可执行工具；覆盖范围有限 | 可继续维护和复跑，结果不能外推生产能力 |
 | M18 Platform 整体平台 | 待设计 | [资产与发布责任边界](platform-studio.md#platform-studio-status) | 整体范围、流程、模块、数据、权限和接口；OD-16 | 只有局部边界，未形成整体设计 | 先讨论最小平台范围；T09 |
 | M19 Studio 创作工具 | 待设计 | [编辑 / 预览 / 诊断建设方向](platform-studio.md#tooling) | 作者角色、编辑模型、工作流与预览交互；OD-17 | 尚未专题设计 | 先明确作者场景与原型验收；T10 |
@@ -125,7 +129,7 @@ OD 是本次建立的跨主题问题编号。以下选项只有明确注明“�
 | OD-10 / B | Prepared ABI、版本兼容、求值 / 订阅 / 首次读与改绑交接 | 已确认 JSON、首阶段格式精确匹配、Error 无执行制品且编辑分析可返回；保留领域结构、共享模板、完整表达式级就地 watch、默认输入和资源闭包；外部一次装载检查保持；类型 / Schema 已迁移，本期详细设计与目标 SDK 已确认，算法和消费联验待实施 | 依赖 T01–T05 的最小消费契约；影响 M05 / 06 / 14；T06 / T07 |
 | OD-11 / B | 正式类型 / Schema、内置签名别名、Manifest / 锁 / Schema Adapter 等价范围 | 已确认未知字段拒绝、保留标记须转义、静态连接无法证明兼容即拒绝；已确认 Binding 类型 Schema 且不区分读写、Slot 只声明名称、Event Payload 契约；原生 TS + JSDoc 为源、生成 Schema、Compiler 使用 Ajv；常用结构兼容子集、Schema 签名、有限内置短路与双摘要已确认；首批类型与生成适配已实现并有结构验收；具体内置签名 / 类型连接算法随所属包消费实现，不宣称已有发布版本或 Dart 工具选型 | 依赖 M02–M06 / M10；影响全层；T03 / T06 / T08 |
 | OD-12 / B | Issue、完整结果、Source 通知和 Trace 事件最小公共结构 | 消息已确认局部 / Schema 声明位置覆盖与 Host 资源解析；异常完整输入及 Reaction / 校验器和实例定位已确认，不能用辅助 Trace 摘要替代；存储介质 / 发送批次为实现选择，具体事件字段、完整校验关联及观测 API 随所属包固化 | 依赖 OD-03 / 04 / 09；影响 M12 / 13 / 16；T05 / T07 / T08 |
-| OD-13 / B | 输入解析失败、组合端口、UI 临时值的交付边界 | 已确认普通输入含非法工作值写入 Runtime，确认型交互内部管理，编辑结束展示 Runtime；不增临时数据层 / Codec 生命周期，物料与跨端接入验收待完成 | 依赖 OD-10 / 11；影响 M02 / 07 / 14；用非法数字与输入法组合态推演，T07 |
+| OD-13 / B | 输入解析失败、组合端口、UI 临时值的交付边界 | 已确认普通输入含非法工作值写入 Runtime，确认型交互内部管理，编辑结束展示 Runtime；不增临时数据层 / Codec 生命周期，物料与跨端接入验收待完成 | 依赖 OD-10 / 11；影响 M02 / 07 / 14；正式资产交互已确认，按[输入契约](extension-integration.md#first-assets-input)实施及验收，T07 |
 | OD-14 / B | Normalized Output 的转换归属、类型、验证和失败 / 新鲜度 | 已解决归属：转换 / 输出检查全部归 Host，引擎只交付已校验数据快照，不新增核心输出流水线，见 ADR-FE-012 | 依赖 OD-09 / 11 / 13 的相关输入约束；影响 M02 / 13 / 15；REV-10 已解释；Host 自行定义请求契约，T05 仅保留校验数据交付 SDK |
 | OD-15 / B | L4 如何从已有边界推进为完整模块设计？ | 完整 React SDK、模块与四批交付已确认，见 ADR-FE-022；FormRenderer / 共用 Hook、请求、Runtime 消费接口及本地主端验证已有实现；正式物料库 / Host 应用与其他端验收仍待推进 | M14；T11 本专题收敛，T07 已有测试夹具纵切，后续正式应用接入 |
 | OD-16 / B | Platform 的整体目标、最小范围与模块边界是什么？ | 只有资产 / 编译 / 发布分责；不等于平台产品方案，具体模块选项尚未讨论 | 已提供 Platform 完整草案 P1–P4，先统一审阅后确认；M18；T09 |
@@ -237,8 +241,8 @@ A 表示应先解决的跨模块架构行为；B 表示方向明确但需模块�
 | T04 / 高 / B+C | 逐 Command 前后比较、相对位置及数组 + 哈希容器已确认；待对齐增量索引、旧视图与防御 / 实现成本 | T03 相关命令和生命周期；M07 / 08 / 12 / 14 | 输出观察 / 身份契约及最小原型证据；01–16 与 B01–B08 对应稳定行为，连续 move/remove/insert 无串项，旧 snapshot 不变；Trie / 旧视图存法依据测量选定 |
 | T05 / 高 / B | 已有 Host 三路径与来源 / 字段聚合；能力名称 / 降级 / Host 输出归属已确认；剩余为请求 / 结果 SDK、Context 证明 | T01 / T02 相关行为、T03 能力契约；与 T07 的输入边界交叉验证；M06 / 12 / 13 / 15 | 输出 Requirements / 注册 / token / Issue / 完整结果及已校验数据快照交付契约；相同能力多规则、A→B→A、无关字段变化、销毁后成功与异常、缺必需能力、输入过期、转换失败均有验收，表单校验证明对应交付数据，Host 输出检查不混入引擎证明 |
 | T06 / 高 / B | 两份结构 / 独立 ABI 保留；ADR-FE-017 输入输出和协议类型 / Schema 已同步：领域结构、模板共享、精确表达式 watch、默认入口；本期 Compiler 模块 / 校验策略与目标 SDK 已确认，按 I01–I06 实施；2026-10-27 已确认成功产物深度只读及受控验证复用，生产性能仍待 T08 | T01–T05 最小消费需求；M05 / 06 / 14 | 输出可序列化 Prepared / Format 精确匹配契约、能力锁、诊断及来源关联；同锁定输入可复现、多实例隔离、Profile 不裁剪共享规则、不兼容拒绝且不回退 L1 |
-| T11 / 高 / B | L4 完整 SDK / 模块 / 生命周期与四批实施已确认并有 TS / React 本地证据，见 react-implementation；正式物料库与应用接入随后推进 | T04 / T05 / T06 的相关最小消费契约；模块边界可先讨论，M14 | 输出 Renderer / Binding / Scope / 平台生命周期的职责、输入输出、订阅读写时序、解析失败和卸载边界；用首次读 / 改绑、条件子树、复合端口、输入法与非法输入推演，未定接口显式保留，不以概念代码代替方案 |
-| T07 / 中 / B | 主链职责已知；未知为框架首次读 / 订阅交接和解析失败 | T02 / T04 / T05 / T06 / T11；M07–M15 | 输出主端 Adapter、一个完整业务纵切及失败轨迹；覆盖挂载 / 改绑同时修改、父条件创建子树、复合端口不重复写、非法数字 / 输入法、移动后 Issue 跟随同一人、完整校验再由 Host 提交 |
+| T11 / 高 / B | L4 SDK / 四批 TS React 实现已有本地证据，本专题收敛；正式资产设计于 2026-10-27 确认 | 既有 Runtime / Compiler 消费接缝；M14 | SDK 后续回归沿现有测试；资产实施交 T07，不把正式物料待实现重标为 SDK 待设计 |
+| T07 / 中 / B | React SDK / 夹具纵切已有证据；正式资产与工程工具设计已确认 | T02 / T04 / T05 / T06 / T11 的已有消费接缝；M03 / M04 / M06 / M07–M15 | 按[工具 0 → 资产 1–4 → 真实 Host](extension-integration.md#first-assets-delivery)交付；覆盖非法输入、确认、成员、请求、试算、完整校验和失败轨迹 |
 | T08 / 中 / C，部分 B | 已有边界验收和性能目标；未知为跨端等价、真实性能 / Trace / 发布门槛 | T07；全层 | 输出 Web / Dart 共享向量、目标设备基准、Trace 截断 / 脱敏契约、迁移 / 回滚验证；V01–V16、C01–C18及跨层场景有实现证据，阈值有测量依据；未达成项继续公开，不假定全部模块可发布 |
 | T09 / 高 / B | Platform 整体设计尚未展开；已有部分注册、编译、不可变发布原则 | G01 / G12；与核心行为设计并行澄清范围，M18 | 先梳理谁管理什么、从草稿到交付的最小场景；输出范围、职责图、资产与发布流程、候选模块 / 数据 / API 和未知清单；验收为每个操作有所有者、输入输出与失败边界，不能仅有功能名 |
 | T10 / 高 / B | Studio 专题未展开；已有编辑、预览、诊断、调试方向 | T09 的平台范围、L1 语言和 L2 诊断边界；M19 | 先选最小作者场景；输出创作流程、编辑模型、预览隔离与契约原型；验收为编辑→诊断→预览→保存的完整轨迹可说明，撤销 / 协作等范围须明确取舍，不默认全做 |
@@ -325,3 +329,12 @@ T04 / T05 / T07 继续落实 Runtime 观察注册与安全初读、分源匹配�
 ### 独立 DevTools 首期边界确认 {#devtools-status}
 
 2026-10-26 用户确认 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md) 并授权落地独立工具包与浏览器扩展入口。M14 不再承担技术诊断界面，M16 增加开发态发现 / 查询 / 订阅与只读工具首期；必要异常完整现场继续保留。OD-12 中完整因果轨迹、字节预算 / 生产报告阈值、全端和自动重放不因此关闭；M18 / M19、正式物料和 Host 应用状态不变。实际检查与扩展宿主范围见工程证据，不从目录建立推导发布完成。
+
+
+## 首批正式资产与工程工具确认 {#first-assets-status}
+
+2026-10-27 用户确认完整草案及目录 / 版本 / 模板工具调整并授权正式归档。依据 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，现行方案在[扩展主题](extension-integration.md#first-assets)与[工程工具](engineering.md#asset-tooling)。14 个物料、7 个业务函数、家庭短期出行验收表单和 Host 路线已明确；单资产目录包内平铺、tests 镜像、Manifest 单一源，能力版本与包版本独立，先工具再资产。
+
+M03 / M04 / M06 / M14 / M15 / M17 的本期设计信息补齐，不因归档升级为实现完成；T07 承接工具 0 及资产 1–4 批。真实费率 / 服务契约是后续 Host 业务验收前置，不是基础资产实施的统一阻塞。原子双端口、整弹层回滚、多版本共存和外部发布不在确认范围；如需改变另议，不默认为内部实现。Platform / Studio、全端和生产性能状态不变。
+
+本次只归档，不创建生产目录、工具或新的包版本，不执行发布。实际构建 / 阅读检查只支持文档一致性；资产工具及产品行为证据在后续实施记录中补齐。

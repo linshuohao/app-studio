@@ -11,11 +11,12 @@ related:
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-ASSETDESIGN
 - SRC-L3BASELINE
 navigation:
   group: 09 · 决策与追溯
   order: 150
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-27'
 ---
 
 # 术语与语义边界
@@ -137,6 +138,18 @@ _Avoid_：泛称 Function 而省略纯计算约束、把异步业务操作归入
 
 **Capability Catalog**：编译时可查询的 Material 与 Pure Function 契约集合；Host 静态契约可以作为可选补充。
 _Avoid_：将契约目录等同于可执行代码或统一业务执行器。
+
+**Capability Asset（能力资产）**：一个有稳定逻辑 ID、Manifest 和实现的正式物料或纯函数。源码单目录维护，测试在 tests 镜像；资产目录不等于独立分发包。
+_Avoid_：把每个目录当 npm 包，或用目录层级决定能力身份。
+
+**Capability Version（能力版本）**：单资产公开契约与行为的版本，独立于包含它的包版本。新增正式资产采用三段号，兼容性按可观察行为判断，实际实现另由制品身份锁定。
+_Avoid_：包升级导致全部能力自动升级，或把版本号 / Schema 相同当作行为等价证明。
+
+**Package Version（包版本）**：一组代码的分发版本；一个包可包含不同能力版本，多个能力可共享同一制品摘要。
+_Avoid_：替代 Protocol / Prepared / 能力版本，或证明实际字节未变化。
+
+**Release Plan（版本计划）**：工程工具基于明确基线与待发布声明汇总的资产 / 包 / 依赖升级计划；只读预览，输入变化即须重新核对。工具设计已确认待实现。
+_Avoid_：把计划当不可变 Form Release，或把应用版本等同外部发布授权。
 
 **Capability Lock**：一次表单发布在指定平台与 Profile 下选定的能力版本及不可变制品身份。
 _Avoid_：以最新版本指针代替发布锁定。

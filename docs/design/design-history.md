@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-WORKFLOWS
 - SRC-RUNTIMEIMPLEMENTATION
@@ -29,6 +30,7 @@ sources:
 - SRC-V07
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-021
   - ADR-FE-020
@@ -1299,3 +1301,14 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 2026-10-27 用户在 L4 Review 中质疑逐层校验、复制与诊断准备的成本，确认先沿编译、装载、物料输入、执行、写入、通知链审查再优化。源码及隔离探针确认对象 set 多次接管、内部规则重走外部入口、渲染时重复摘要及辅助 Trace 关闭后序列化等工作；调用次数不等于生产耗时。用户随后明确选择 Compiler 成功产物深度只读、修改前先克隆，补齐原验证复用原则所需的不可变边界。
 
 实现共用结构接收与 JSON 接管凭据，凭据不序列化；内部已确认动作共用执行链，外部命令和实际注册继续检查。数据写入保留独立替换、Scope 身份、通知时序、任务资格和异常现场。此项落实既有分层与制品接收原则，并明确 Compiler 返回值的只读行为，不替代既有 ADR，也不扩大为常量折叠、代码生成、全量求值计划或生产性能完成声明。
+
+
+## 2026-10-27：首批正式物料、业务函数及版本工具确认 {#first-assets-confirmed}
+
+用户在 d2b1598 基线上说明 L1–L3 核心、React L4 本期开发 / review / 修复及独立 DevTools 已完成，要求先用 form-design 给完整草案，不提前保存候选。方案用家庭短期出行投保单倒推 14 个正式物料和 7 个同步函数，覆盖非法工作值、确认日期、搜索、成员身份、校验展示、合成试算及 Host 完整快照交付。外部请求仍归 Host，DevTools 独立。
+
+后续用户提出每个物料 / 函数独立目录并讨论平铺及版本。原按 controls / presentation / layout / composite 分组的源码建议调整为包内平铺的单资产目录；职责分类保留，测试遵守现有 tests 镜像约定，纠正对话中曾把测试放 src 的目录示意。能力语义版本、包版本及实际制品分离，不拆逐资产 npm 包或复制 v1 / v2 源码。
+
+用户再要求模板生成和 CLI / npm scripts 进行版本工程化。方案复用已初始化 Changesets，用一份待发布声明关联资产及包，提供生成、检查、计划和集中应用入口；先完成工具，再用首个真实资产跑通演练。不是再建一套版本工具替代 Changesets，也不让版本应用隐式发布。
+
+用户明确“可以，就按照这个草案去生成正式的文档吧”，授权统一归档。现行完整方案进入 [扩展主题](extension-integration.md#first-assets)和[工程主题](engineering.md#asset-tooling)，新增 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，来源 SRC-ASSETDESIGN。验收业务假设随本期方案确认，不扩展为真实保险产品规则。正式资产和工具为设计确认待实现；没有编码、包版本变更或外部发布，不将文档构建当业务验收。

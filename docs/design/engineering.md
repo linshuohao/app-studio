@@ -6,12 +6,16 @@ status: active
 layer: 系统
 modules:
 - M01
+- M06
+- M14
 - M17
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-ASSETDESIGN
 - SRC-WORKFLOWS
 - SRC-COMPILERIMPLEMENTATION
 - SRC-COMPILERIOTYPES
@@ -22,7 +26,7 @@ navigation:
   group: 01 · 架构全貌
   order: 30
 last_reviewed: '2026-10-27'
-status_note: 工程 / Protocol 已有本地证据；Compiler 已接入表达式依赖与运行准备，性能 / 消费联验、Runtime 与远端 CI 未完成
+status_note: 工程与 TS 核心 / React / DevTools 已有本地证据；资产模板和版本编排设计已确认待实现，真实 Host、全端性能与远端 CI 未完成
 ---
 
 # 工程工具链与初始化方案
@@ -300,6 +304,79 @@ chore(tooling): 初始化工作区
 破坏性变更使用 `!` 或 BREAKING CHANGE，PR 标题同样检查，保证 Squash 后历史有效。commit-msg 由本地 commitlint 检查，CI 校验 PR 标题及必要提交信息；Hook 可绕过，因此不能代替 CI。[规范](https://www.conventionalcommits.org/en/v1.0.0/)、[commitlint](https://commitlint.js.org/guides/local-setup.html)
 
 Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文档改动允许明确无包发布影响。应用 / 服务保持 private；需要维护应用发布身份时另行定义。包版本不替代 L1 / Prepared / 能力锁的独立兼容规则；初始生成版本不表示已发布。发布工作流以后单独授权接入凭证与发布，不把 build 自动等同 npm publish。
+
+### 资产模板与版本编排 {#asset-tooling}
+
+2026-10-27 用户确认将资产生成与版本工程化纳入[首批物料 / 函数交付](extension-integration.md#first-assets)，并授权本轮正式文档归档。见 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)。以下为待实现的命令和行为设计，不是当前可执行入口；现有 Changesets 只有安装 / 初始化证据，不能据此宣称完整版本编排已建成。
+
+先在 tools/engineering 中实现仓库内脚本，通过 pnpm scripts 暴露；日常复用锁定工具，不每次下载 latest，不新增独立 CLI 包或工程框架。未来有真实外部分发需求再判断是否发布 CLI。
+
+| 规划命令 | 行为 | 修改范围 |
+| --- | --- | --- |
+| `pnpm asset:new material --id date-range` | 生成一个物料模板 | 源码目录、镜像测试、Manifest 汇总和公开导出 |
+| `pnpm asset:new function --id travel.personPremium` | 生成一个函数模板 | 同上，函数目录带语义前缀 |
+| `pnpm asset:change --id date-range --bump patch` | 收集理由、兼容影响与迁移说明 | 一份待发布变更声明 |
+| `pnpm assets:check` | 核对资产完整、契约入口及变更遗漏 | 只读；后续接入 pnpm check |
+| `pnpm release:plan` | 展示资产、包、依赖升级及风险 | 只读；支持机器可读结果 |
+| `pnpm release:apply` | 按已核对计划应用版本与变更日志 | Manifest、package.json、相应日志和待发布声明 |
+| `pnpm release:check` | 检查声明 / 升级 / 发布准备的一致性 | 只读；不发布 |
+
+命令参数的进一步拆分属契约内实现细化，实施前先核对当前 Changesets API / 配置，不通过直接执行 version / publish 探索行为。当前 private 库也要能做受控版本演练，应用 / 服务继续 private，npm 发布独立启用。
+
+#### 模板内容与安全生成
+
+每个公开资产目录包含实现、manifest.ts、必要类型及 README；测试放 `tests/<asset>/`，不混入 src。分类不固定为源码层级，内部共享放 _internal；不为简单资产预建空 types / utils / index。Manifest 是机器契约唯一源，JSON 按需导出，不维持第二份手写副本。
+
+生成器检查 ID / 目录 / 导出名，拒绝重复、路径越界和覆盖已有资产。支持 --dry-run 列出计划变更，检查全部目标后再写；失败只撤销本次写入，保护已有或无关修改，不留下半套资产。更新集中汇总 / 导出时按受控结构处理，不能粗暴重写用户代码。模板版本随仓库固定，生成内容要明确未实现行为，不能用固定成功返回冒充完成资产。
+
+编译入口 materials-react/manifests 不导入 React、组件实现或样式；根入口提供运行装配。模板测试包括有代表性的正常 / 非法工作值及状态交接，不生成只证明文件存在的名义测试。shared 类型就近归属，不能让模板创建新的 Store、专属 Adapter 或公开通用 shared 包。
+
+#### 单一变更声明与两级版本
+
+复用 Changesets 管包版本；仓库薄层补足资产级版本和关联检查。标准 .changeset 文件保留包变更声明，在正文附工具可读的资产变更段，记录资产 ID、升级级别、理由和必要迁移。具体正文编码在实现时验证；不在 Changesets 包名 Frontmatter 中混入资产 ID，不另建平行长期资产发布台账，不要求同一修改手抄两份说明。
+
+工具由资产找到所属包并汇总声明，维护者判断公开行为影响。包公开 API 的其他变更也进入同一流程；内部依赖更新复用 Changesets。不能根据 commit 类型、Schema diff 或目录修改自动证明语义兼容。
+
+| 情况 | 版本行为 |
+| --- | --- |
+| 同一资产多份待发布声明 | 相对同一发布基线取最高影响，升级一次，不逐声明连加 |
+| 同包多个资产变更 | 按最高直接公开影响汇总包版本，并与 Changesets 依赖计划合并 |
+| 新增资产 | 初始 Manifest 版本作为首发目标，包计划表达新增影响，不在应用时把初始能力版本再递增一次 |
+| 包其他公开 API 或依赖变更 | 与资产影响共同参与；不能仅看资产清单 |
+| 共享实现改变多个资产行为 | 显式覆盖受影响资产；代码关系可提示，不能静默认定无影响 |
+| 仅文档、测试或内部无公开影响整理 | 可明确无发布影响，不机械升级能力 |
+
+能力版本、包版本、Manifest 摘要和实际制品摘要独立。新增正式资产三段号：PATCH 恢复已声明行为，MINOR 兼容可选扩展，MAJOR 不兼容端口 / 必需输入 / 默认交付时机 / 计算口径。当前新增 Request 要求页面补映射，通常不兼容。已发布 id + version 固定契约；代码字节变更生成新制品身份。既有 core 版本标识本次不自动迁移，工具不得因此破坏当前能力锁。
+
+#### 计划、应用与制品顺序
+
+开发阶段记录声明，不每次编辑 Manifest 都直接升包版本。发布准备统一执行：行为测试 → 变更声明 → 版本计划 → 集中应用 → 构建 / 完整检查 → 确定制品及能力锁。示意：date-range 1.0.0→1.0.1、remote-select 1.0.0→1.1.0，包 0.3.0→0.4.0，其他能力版本保持；这些数字不是当前发布事实。
+
+基线必须明确可追溯，例如调用者指定的提交 / 发布标记；工具不能猜测某个 latest 或任取标签。计划关联基线、待发布声明与相关文件内容。输入变更后拒用过期计划，重复应用不能再次升级。写入前校验目标和冲突，失败须给出可恢复状态，不能部分消费声明并丢失原始依据；具体临时计划 / 恢复表示是实现细化，不另造长期规范。
+
+应用版本和计算制品摘要分开：先更新版本，再构建，最后对实际交付字节计算摘要。源码哈希不能冒充最终制品摘要。旧表单使用旧锁及可取得的旧制品，不因包升级自动换实现；回滚不能靠当前源码重编猜原字节。现行 Registry 同 ID 只选择一个确定版本，首期不实现同表单多版本共存、在线版本仓库或范围解析。
+
+apply 不隐式 commit、tag、push 或 npm publish，也不更改外部发布入口。首次实施只完成本地 / CI 可检查的版本工程；外部发布需要另行授权与凭证接入，不因检查通过推导发布授权。
+
+#### 工程门禁、工具测试与维护成本
+
+assets:check 核对 ID、目录 / 汇总 / 导出遗漏、契约结构和开发类型 / 注册关联，以及 Manifest 入口是否加载 UI。相对指定基线检查公开契约变化是否有声明、声明是否覆盖资产 / 包、计划与应用是否一致；release:check 结合既有装配 / 打包检查核对实际锁与制品。能够静态发现的删除端口、新必需输入及 Request 增加给出版本影响错误 / 风险，不能宣称算法能证明所有行为兼容。
+
+检查纳入现有 pnpm check，不维护平行质量总入口。工具自身必须覆盖重复生成不覆盖、非法 ID 不写、预览无修改、失败保护旧文件、多声明合并、同包只升一次、首发不二次递增、共享实现影响、过期计划拒绝、重复应用幂等、private 库演练及旧锁不变。使用临时目录 / 可控工作区，不以真实发布验证工具。
+
+```text
+tools/engineering/assets/
+  templates/
+  create.mjs
+  change.mjs
+  check.mjs
+tools/engineering/release/
+  plan.mjs
+  apply.mjs
+  check.mjs
+```
+
+以上为职责落点，普通文件拆分可随实现精简。先交付工具，再让首个真实资产跑通一次生成 / 修改 / 版本演练；工具检查、隔离场景和真实使用效率分别报告。无收益的包装可合并，但生成完整性、明确版本影响和不可变交付约束不能靠重复人工提醒替代。
 
 ## 8. 质量门禁、测试与环境治理 {#engineering-gates}
 

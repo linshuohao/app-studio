@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 53,
+    "current-markdown": 54,
     "documentation-tooling": 13,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 407,
-  "unique_byte_contents": 368,
+  "total_entries": 408,
+  "unique_byte_contents": 369,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 19996,
-      "sha256": "b6d3cdd3e58860b2fe48fc0571fbea0798e80a83d959353703a7efd3e27340f2",
+      "bytes": 20161,
+      "sha256": "36b4ff9bb91912bc87d0a2178803c4548f579ad99f7e0bab487833ade29fef6b",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13005,
-      "sha256": "fe0dde8baf743a3141539739210cea26717cef98f081c89e068d1f902f3709a4",
+      "bytes": 14194,
+      "sha256": "8da53020938a0f1c8841c36532c9898245a84c7c76711f9bf7edc6e83ba9bcc7",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -271,8 +271,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 46716,
-      "sha256": "4a22ae057e0c40cdf269b0e2b39c05d65d7804d6c64adaea9321364c645758e8",
+      "bytes": 47259,
+      "sha256": "c6cbdad7ffa429709c0f3e88234879a9173eb12a0356e429e457ba68aedaf1c6",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -401,8 +401,8 @@
       "path": "docs/design/capability-map.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10112,
-      "sha256": "f1fa551da3be4f83bdcafd989b566e1009cd021256e85bf32ad72a56d00bbbaf",
+      "bytes": 10296,
+      "sha256": "ef7e1ff37ab53a1d2084fd3b928e72ba4826ea895810f56bf5b2372875248cce",
       "mapping": "MAP-CAPABILITIES / 已有纵向职责与横向契约的阅读关系",
       "sections": [
         {
@@ -1413,6 +1413,41 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-024-first-assets-tooling.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 4667,
+      "sha256": "21631791d1566b7bc5ab0506f6f8d842aa7fc3685801f4b6337a4c7ee617e652",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-024：首批正式资产与版本工程",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与确认范围",
+          "anchor": "adr-024-context"
+        },
+        {
+          "level": 2,
+          "title": "已确认决策与理由",
+          "anchor": "adr-024-decision"
+        },
+        {
+          "level": 2,
+          "title": "延续关系与代价",
+          "anchor": "adr-024-impact"
+        },
+        {
+          "level": 2,
+          "title": "实施和证据边界",
+          "anchor": "adr-024-evidence"
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
@@ -1536,8 +1571,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 157266,
-      "sha256": "b7e60e495b28d5cb4e3783ae4ee9840b840f1904d77228f729ff66d6132c5d9a",
+      "bytes": 159140,
+      "sha256": "56f31a5ef0531fbe804a9b9800a2579b418420d0591f737fa8553367cfef79fa",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -2049,6 +2084,11 @@
           "level": 2,
           "title": "编译产物只读与运行时检查收敛",
           "anchor": "runtime-check-convergence"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-27：首批正式物料、业务函数及版本工具确认",
+          "anchor": "first-assets-confirmed"
         }
       ]
     },
@@ -2141,8 +2181,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 62106,
-      "sha256": "b6f60534797f1729d4215d0675a1f064b9d560059b4b807071404d8a102a005a",
+      "bytes": 70082,
+      "sha256": "3836dce8bbf0864e9a2457a91530ffce13a8d1f6de196fe425ae26238c477398",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2231,6 +2271,31 @@
           "anchor": "engineering-git"
         },
         {
+          "level": 3,
+          "title": "资产模板与版本编排",
+          "anchor": "asset-tooling"
+        },
+        {
+          "level": 4,
+          "title": "模板内容与安全生成",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "单一变更声明与两级版本",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "计划、应用与制品顺序",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "工程门禁、工具测试与维护成本",
+          "anchor": null
+        },
+        {
           "level": 2,
           "title": "8. 质量门禁、测试与环境治理",
           "anchor": "engineering-gates"
@@ -2306,8 +2371,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17095,
-      "sha256": "c6dae2d5d494b6952694adae380686011f595adc7ab259f8a519b0d8e28598d4",
+      "bytes": 41446,
+      "sha256": "bdeef5ae239f8daf090191955bc61eae90ed7a2215283947cbc3eed21c3cd22b",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -2374,6 +2439,46 @@
           "level": 3,
           "title": "React 首期实际接入",
           "anchor": "react-integration-sdk"
+        },
+        {
+          "level": 2,
+          "title": "首批正式资产与整体验收",
+          "anchor": "first-assets"
+        },
+        {
+          "level": 3,
+          "title": "目标表单、业务假设与范围",
+          "anchor": "first-assets-scenario"
+        },
+        {
+          "level": 3,
+          "title": "物料职责与五类契约",
+          "anchor": "first-assets-materials"
+        },
+        {
+          "level": 3,
+          "title": "配置示例与 Scope 组合",
+          "anchor": "first-assets-examples"
+        },
+        {
+          "level": 3,
+          "title": "输入、确认、请求及校验呈现",
+          "anchor": "first-assets-input"
+        },
+        {
+          "level": 3,
+          "title": "复用 core 与新增同步函数",
+          "anchor": "first-assets-functions"
+        },
+        {
+          "level": 3,
+          "title": "资产目录、包入口及版本",
+          "anchor": "first-assets-organization"
+        },
+        {
+          "level": 3,
+          "title": "批次、验收与 Host 路线",
+          "anchor": "first-assets-delivery"
         }
       ]
     },
@@ -2381,8 +2486,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 42075,
-      "sha256": "a72a8a8d6442727da65fc7532ba88c1422a3b58105a3dac910331aa555d2cf1b",
+      "bytes": 44222,
+      "sha256": "c8b0215665e9a531a0e1d20764beebceae8c6e6ba5ccadf7e350add85b3c1952",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2469,6 +2574,11 @@
           "level": 3,
           "title": "独立 DevTools 首期边界确认",
           "anchor": "devtools-status"
+        },
+        {
+          "level": 2,
+          "title": "首批正式资产与工程工具确认",
+          "anchor": "first-assets-status"
         }
       ]
     },
@@ -3301,8 +3411,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 69129,
-      "sha256": "e8d5a33466e0609dd30e3d85827b3ef289a60292e286dea0f3b8a3705d4e694e",
+      "bytes": 69485,
+      "sha256": "3c4c49e62e1c7ab588b1e56ddcfe068d33616d827c4747bd128bed819666c845",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -3901,8 +4011,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 43277,
-      "sha256": "9ffc382ed900315cff12056fad119c65a88bf16c3e9151fde40d1388d185c351",
+      "bytes": 43672,
+      "sha256": "647120168a3569a873ec8147f1b994dedf64b5f150b84e8dbdfef00a01511027",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {

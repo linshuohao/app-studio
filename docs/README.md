@@ -11,7 +11,7 @@
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
 - [L1 协议](design/l1/README.md)：模型 → 数据 / 引用 / Scope → 表达式 / 校验 → 命令 / 联动 → 视图 → 生命周期 → 示例与类型。八份主题分别生成 HTML，不再合成长页。
 - [L2 预处理](design/l2-preparation.md)与[Compiler 详细设计 / 实施](design/l2/compiler.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。
-- [跨层依赖](design/dependency-reactivity.md)、[物料 / Host](design/extension-integration.md)：横向能力的主要契约。
+- [跨层依赖](design/dependency-reactivity.md)、[物料 / Host](design/extension-integration.md)：横向能力契约，以及已确认的首批正式物料 / 业务函数与整体验收方案；资产模板和版本编排见[工程工具](design/engineering.md#asset-tooling)，均待实施。
 - [Platform / Studio](design/platform-studio.md)：已有范围与待设计工作；尚未形成整体产品、模块或接口方案。
 
 继续讨论统一进入[设计进展与待讨论事项](design/governance.md)，按层看缺口、选具体问题、按前置推进。取舍背景、旧方案与决策总账在[独立设计演进](design/design-history.md)及 `design/decisions/`；[约束与审查证据](design/design-review.md)、[来源映射](design/source-map.md)按需查阅，不与主阅读顺序混排。

@@ -9,6 +9,7 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-019
   - ADR-FE-018
@@ -26,6 +27,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
@@ -36,7 +38,7 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 10
-last_reviewed: '2026-10-22'
+last_reviewed: '2026-10-27'
 status_note: 分层与主体语义已确认，公开接口与生产实现未完成
 relocated_sections:
 - source: docs/design/platform-studio.md
@@ -342,6 +344,8 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 | packages/renderer-react | React 呈现、共用 Adapter、物料装配、Binding / Props / Event 接入、Scope 关联、订阅清理与局部错误隔离 | 消费 Runtime 公开接口，不保存第二份权威业务状态；各物料共用 React Adapter，不要求未来 Vue / Flutter 复用源码，暂不建通用 renderer-core |
 | packages/materials-react | React 基础字段、容器和展示物料及具体 Manifest | 与 Renderer 分开，业务方可选择自有物料；Manifest 与 UI 实现可分别消费，编译侧不能被迫加载 React 组件；后续物料集按实际分发需要再拆 |
 | packages/pure-functions | TS 基础同步确定性纯函数与签名，运行端注册实现，编译侧读取确定契约 | 不依赖 UI、网络或 Runtime 可变内部；签名与实现归具体函数集，通用 Manifest 结构归 protocol，Compiler 不执行函数 |
+
+2026-10-27 已确认[首批资产方案](extension-integration.md#first-assets)：materials-react / pure-functions 内公开资产按单目录平铺，测试放 tests 镜像，Manifest 静态入口与运行实现分开；不按职责分类强制分层或拆逐资产 npm 包。[模板与版本工具](engineering.md#asset-tooling)先于正式资产交付，能力版本与包版本独立，复用 Changesets，不改变本节依赖方向。正式资产、工具和真实 Host 尚未实现，见 ADR-FE-024。
 
 **接入与开发支持的归属：**不另建 host-sdk 包。实例与 Host 能力注册接口归 Runtime，呈现装配归 renderer-react，查询 / 上传 / 保存 / 提交 / 业务恢复归 Host 应用。capabilities 保留能力总称，UI 物料与纯函数分别组织构建与交付。testkit 先作为内部测试支持，出现真实外部消费者后再判断公开发布；现有 docs/validation 不直接提升为生产协议或 testkit。
 

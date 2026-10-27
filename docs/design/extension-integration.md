@@ -6,9 +6,13 @@ status: active
 layer: 跨层
 modules:
 - M04
+- M03
+- M06
+- M14
 - M15
 tags: []
 sources:
+- SRC-ASSETDESIGN
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
 - SRC-CONTRACTS
@@ -16,10 +20,11 @@ sources:
 - SRC-L1
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-27'
 navigation:
   group: 06 · 横向能力
   order: 71
@@ -36,6 +41,8 @@ relocated_sections:
 # 物料扩展与 Host 集成
 
 本篇说明核心四层如何与 UI 物料、纯函数及业务宿主协作。物料与 Host 是横向协作边界，不增加新的执行层。
+
+2026-10-27 首批正式物料、业务纯函数、单资产目录与版本工具方案已由用户整体确认并授权归档，完整方案见[首批资产与整体验收](#first-assets)。本次仅归档设计：正式物料包仍为空入口，业务函数、生成器和版本编排尚未实现；现有 React SDK / 独立 DevTools 的完成范围不扩张为真实业务验收。
 
 ## Material：物料体系与 UI 扩展 {#materials}
 
@@ -195,3 +202,295 @@ Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端
 ### React 首期实际接入 {#react-integration-sdk}
 
 L4 已落实 [React SDK](l4-renderer.md#react-implementation)：物料内部共用 Hook 提供 values / validation / props / slots 与 set / command / emit / request；Host 事件及校验仍注册在 Runtime，物料 Request 通过 Renderer 注册桥接。observeScope 的失效通知与即时资格查询覆盖成员删除及实例销毁；模板形参不携带调用方别名，所属挂载资格另外保留。按 [独立工具契约](l3-observability.md#independent-devtools)，开发扩展自动发现并展示装配遗漏，业务应用不再传 diagnosticMode；业务页面保留友好降级和 Host 结构化错误上报。以上为本地实现范围，正式物料库 / 真实服务 / Host 应用仍未因此完成。
+
+## 首批正式资产与整体验收 {#first-assets}
+
+本节是 2026-10-27 用户确认的本期设计，源码基线 `d2b1598`，决策见 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，来源见 [SRC-ASSETDESIGN](source-map.md#src-asset-design)。职责、契约和交付顺序已确认；业务假设只限定验收样例，不作为真实保险产品规则。归档不授权本轮编码、安装或发布。
+
+### 目标表单、业务假设与范围 {#first-assets-scenario}
+
+以“家庭短期出行投保录入单”串起现有多被保人、监护人条件、目的地查询、动态试算及外部资格校验场景。
+
+| 分区 | 数据 / 交互 | 验收用途 |
+| --- | --- | --- |
+| 投保人 | 姓名、联系电话 | 文本、字段标签与非空错误 |
+| 出行信息 | 国家、城市、开始 / 结束日期、方案 | 固定选项、远程搜索、父条件变化、双端口确认 |
+| 被保人列表 | 姓名、出行时年龄、证件号码、监护人姓名；新增、移至首位、删除 | each Scope、非法数字、条件字段、成员身份 |
+| 摘要 | 成员试算、出行天数、总试算 | 动态 Props、对象子树 Issues、显式联动 |
+| 确认与操作 | 信息确认、保存草稿、提交申请 | 勾选、Host 事件、完整校验与对应快照 |
+
+验收假设：被保人 1–5 人；手工申报出行开始日的周岁年龄，整数 0–80；未满 18 岁须填监护人姓名；公历日期含首尾，最长 30 天；方案为 basic / plus；国家为固定选项，城市由 Host 查询。证件先录号码并接外部资格校验，不实现真实证件识别或完整证件规则。草稿允许保存未通过完整校验的数据，提交必须使用当前有效的完整通过结果。
+
+数据位置为 `/applicant/name`、`/applicant/phone`、`/travel/countryCode`、`/travel/city`、`/travel/startDate`、`/travel/endDate`、`/plan`、`/insureds`、`/acknowledged`、`/estimatedTotalMinor`。成员包含 name / age / idNumber / guardianName。输入可以是非法工作值，由业务 Schema / Constraint 判断，不因目标类型拦截受控写入。
+
+桌面 Profile 平铺成员字段，窄屏用摘要和编辑弹层呈现同一成员，共享业务执行部分、数据和规则；切换不重放初始化。保费为固定合成费率的“试算金额”。真实产品规则、查询服务、核保、报价、持久化、输出和提交由后续 Host 承接。
+
+本期覆盖 React 物料 / Manifest、同步业务函数、契约测试、可控 Host 验收页及资产工具。上传、支付、真实承保定价、审批、Studio 属性面板、远程市场和其他框架留后续。DevTools 不进入业务装配和运行前置。
+
+### 物料职责与五类契约 {#first-assets-materials}
+
+首批 14 个物料。基础控件处理输入，field 统一字段呈现，布局容器组织 Slots，复合物料封装明确交付边界的交互。分类用于说明，不作为目录层级。重复列表用 ScopeNode，字段组用 Typed Template，不增加 Repeat、子表单 Store 或物料专属 Adapter。
+
+表中 `?` 为可选 Props，JSON 为 `schema:true`，Option 为 `{id:string,label:string}`，MinorAmount 为整数分。Binding Schema 仅描述静态预期，不能把当前工作值断言为合法类型。未列出的 Events / Requests / Slots 不声明。
+
+| 物料 | Props（默认值） | Bindings | Events / Requests / Slots |
+| --- | --- | --- | --- |
+| text-input | placeholder?:string；disabled?:boolean=false；readOnly?:boolean=false；maxLength?:integer；inputMode?:text/tel | value:string/null | 均无 |
+| number-input | placeholder?:string；disabled?=false；readOnly?=false；inputMode?:numeric/decimal | value:number/null | 均无 |
+| checkbox | label:string；disabled?=false | value:boolean | 均无 |
+| select | options:Option[]；placeholder?:string；disabled?=false；clearable?=true | value:string/null | 均无 |
+| button | label:string；disabled?=false；variant?:primary/secondary/danger | 无 | Event activate，无 Payload；无 Request / Slot |
+| field | label:string；help?:string；requiredMark?=false | value:JSON | Slots: default；无 Event / Request |
+| value-display | value:JSON；format?:text/integer/moneyMinor；emptyText?:string="—" | 无 | 均无 |
+| section | title?:string；description?:string；collapsible?=false；defaultExpanded?=true | 无 | Slots: default / actions；无 Event / Request |
+| grid | columns?:1/2/3=2；gap?:small/medium/large | 无 | Slots: default；无 Event / Request |
+| condition | visible:boolean | 无 | Slots: default；无 Event / Request |
+| dialog-editor | title:string；triggerLabel?:string="编辑"；disabled?=false | 无 | Slots: summary / content；无 Event / Request |
+| remote-select | placeholder?:string；disabled?=false；clearable?=true；filterKey?:string/null | value:Option/null | Request search，latest；无 Event / Slot |
+| date-range | label:string；startLabel?:string；endLabel?:string；disabled?=false | start:string/null；end:string/null | 均无；内部呈现两端标签与校验 |
+| insured-summary | premiumMinor:MinorAmount/null；emptyName?:string="未填写姓名" | insured:object | 均无 |
+
+disabled / readOnly / clearable / collapsible / defaultExpanded / requiredMark 均为 boolean。value-display 默认 text；grid 窄屏收为单列。section.defaultExpanded 只初始化该次挂载的 UI 状态，物料默认值不自动写 Data。其余视觉缺省在契约内实现，不新增业务语义。value-display.moneyMinor 首期固定 CNY，整数分显示为元和两位小数；不适合所选格式的值用明确占位，不默认输出对象技术 JSON。输入限制和 requiredMark 不替代 Schema / Constraint。
+
+field 与子控件分别显式绑定同一位置，不隐式继承。私有 FieldFrame / React Context 只连接 DOM ID、标签和错误描述，不保存业务值或独立校验状态。日期范围分别关联标签并分组。基础控件可消费 validation 设置无障碍属性，不重复渲染错误列表。
+
+复合物料只调用自身 useMaterialAdapter。不能直接嵌入另一注册物料并让其在同一挂载上下文调用另一份契约的 Hook；共享无 Hook 的内部组件，或由 Renderer 构造 Slots。insured-summary 读取成员及子树 Issues，不计算保费、不修改成员或核验资格。insured-fields 是带 insured 类型参数的视图模板。
+
+remote-select.search 输入为 `{query:string,filterKey:string|null}`，成功业务结果为 `{items:Option[]}`，不含桥接状态包装。首期无分页、自动选中或回填。选择后整体写 `{id,label}`：id 为业务标识，label 为选中时展示快照，不能视为服务端权威名称。
+
+### 配置示例与 Scope 组合 {#first-assets-examples}
+
+| 物料 | 使用示例 |
+| --- | --- |
+| text-input | value → `/applicant/name`，或模板内 insured 的 `/idNumber` |
+| number-input | value → insured 的 `/age` |
+| checkbox | value → `/acknowledged`，label 为信息确认文案 |
+| select | value → `/plan`，options 为 basic / plus；国家另绑 `/travel/countryCode` |
+| button | activate → 数组 Command，或保存 / 提交 host.emit |
+| field | value 与姓名输入同位置，default Slot 放输入 |
+| value-display | value 为天数表达式，或读取总试算按 moneyMinor 展示 |
+| section | title 为投保人 / 出行信息 / 被保人，default 放字段，actions 放操作 |
+| grid | columns=2，default 放姓名和电话 |
+| condition | visible 为 requiresGuardian 表达式，default 放监护人字段 |
+| dialog-editor | summary 放 insured-summary，content 放 insured-fields Template |
+| remote-select | value → `/travel/city`，filterKey 读国家；search 映射 travel.searchCities |
+| date-range | start / end → `/travel/startDate`、`/travel/endDate` |
+| insured-summary | insured → 当前成员根；premiumMinor 为当前成员试算表达式 |
+
+普通字段不配置 on.change 二次写入：
+
+```json
+{
+  "material": "field",
+  "props": { "label": "姓名", "requiredMark": true },
+  "bindings": { "value": { "source": "data", "path": "/applicant/name" } },
+  "slots": { "default": [{
+    "material": "text-input",
+    "props": { "placeholder": "请输入姓名" },
+    "bindings": { "value": { "source": "data", "path": "/applicant/name" } }
+  }] }
+}
+```
+
+日期及远程搜索使用既有多端口和请求映射：
+
+```json
+{
+  "material": "section",
+  "props": { "title": "出行信息" },
+  "slots": { "default": [
+    {
+      "material": "date-range",
+      "props": { "label": "出行日期" },
+      "bindings": {
+        "start": { "source": "data", "path": "/travel/startDate" },
+        "end": { "source": "data", "path": "/travel/endDate" }
+      }
+    },
+    {
+      "material": "remote-select",
+      "props": {
+        "placeholder": "搜索目的地城市",
+        "filterKey": { "$expr": { "ref": { "source": "data", "path": "/travel/countryCode" } } }
+      },
+      "bindings": { "value": { "source": "data", "path": "/travel/city" } },
+      "requests": { "search": { "type": "host.request", "request": "travel.searchCities" } }
+    }
+  ] }
+}
+```
+
+模板形参 insured 已声明时，监护人条件如下。Missing 显式经固定短路转 null，不交给注册函数：
+
+```json
+{
+  "material": "condition",
+  "props": { "visible": { "$expr": {
+    "op": "travel.requiresGuardian",
+    "args": [
+      { "op": "core.if", "args": [
+        { "op": "core.exists", "args": [{ "ref": { "source": "data", "scope": "insured", "path": "/age" } }] },
+        { "ref": { "source": "data", "scope": "insured", "path": "/age" } },
+        null
+      ] },
+      { "literal": { "minAge": 0, "maxAge": 80, "adultAge": 18 } }
+    ]
+  } } },
+  "slots": { "default": [{
+    "material": "text-input",
+    "bindings": { "value": { "source": "data", "scope": "insured", "path": "/guardianName" } }
+  }] }
+}
+```
+
+成员保费表达式直接放模板词法作用域，不用全局具名表达式隐式捕获 insured。dialog-editor.content 使用 `$use: insured-fields` 并显式传当前成员 Reference。数组操作用 button.activate → form.command，ScopeHandle 定位成员；新增次数不依赖 Reaction 执行次数。
+
+```json
+{
+  "material": "button",
+  "props": { "label": "提交申请", "variant": "primary" },
+  "on": { "activate": { "type": "host.emit", "event": "travel.submitRequested" } }
+}
+```
+
+片段不是可直接发布的完整 Definition；实施时补齐 Schema、规则、模板、确定 Catalog / 锁及 Host 契约后真实编译。当前 Compiler 只检查已配置 Binding 的名称和兼容性，不检查消费端口全部映射；Adapter 对漏映射和目标数据缺失都可能给 missing。不新增 requiredBindings，不虚称漏 Binding 已能编译失败；正式用例检查映射完整，写入失败沿既有返回和诊断。Request 漏映射仍由 Compiler 报 Error。
+
+### 输入、确认、请求及校验呈现 {#first-assets-input}
+
+物料消费 props / values / validation / slots，使用 set / command / emit / request。表达式由 Runtime 求值，不解析原始 AST、不读内部 Store、不保存第二份权威业务值。
+
+| 交互 | 交付规则 | 编辑结束 |
+| --- | --- | --- |
+| 文本 | 普通输入交付字符串；清空为 `""`；不默认 trim | Runtime 当前文本 |
+| 数字 | 完整十进制转有限数；空输入为 null；`-` / `1.` 等保留文本 | 合法数可规范显示；非法文本继续显示和报错 |
+| 勾选 | 用户切换交付 boolean；missing / 非法值不自动写 false | 按 Runtime 展示，非法态可辨识 |
+| 固定选项 | 选择交付 ID，清空为 null | 未知 ID 显示选项不可用，不静默换值 |
+| 远程选项 | 搜索不写；选择后交付 Option，清空为 null | Runtime 选中值 |
+| 日期范围 | 暂存未确认选择，确认交付，取消不写 | Runtime 当前两端 |
+
+数字使用文本输入配合键盘提示；首期不接受指数、分组逗号或隐式空白转换。不安全解析时保留文本，不静默舍入。输入法组合态局部管理，结束交付最终文本。编辑缓存只服务当前交互；Host 改值时接受新值，不在后续失焦覆盖回旧缓存。
+
+date-range 单个日期确认为严格 YYYY-MM-DD 或 null；无法解析的草稿留在弹层提示修正。两端合法但倒序可交付，由 Constraint 报错。打开期间 Host 改任一端，整组草稿重置到最新 Runtime 并提示再确认。
+
+双端口连续两次 set，沿用即时、非原子语义，都检查 kind 及 executed.result.ok。第一端成功、第二端失败不能显示整体成功，应重读并报告局部失败。Adapter 不公开 Binding DataReference，不承诺物料自行拼通用批量端口 API。dialog-editor 内普通 Slot 输入实时写 Runtime；完成 / 关闭 / Escape 只关视图，没有整组回滚，不提供含糊的取消编辑承诺。
+
+query / filterKey 改变时 cancel 旧调用、清空旧候选、拒绝排队的旧 UI 更新。桥接只管理请求交付资格，不管已展示列表。网络、防抖、鉴权、缓存、重试归 Host；error 不改选中值，discarded 不冒充网络故障。国家变化清城市由 Definition 显式 Reaction 写 city=null，导入数据的城市 / 国家一致性仍由约束或 Host 校验覆盖。
+
+field 直接消费已发布 Issues，不新增 touched / dirty / submitted 系统。unverified 尚未校验，pending 进行中且可同时有 Issues，invalid 展示错误，incomplete 提示未完成，blocked 提示前置未满足，valid 仅为当前字段聚合有效。对象子树 Issues 可用于摘要，但根 Schema 来源也可能影响 status，不能作为成员完整证明。消息沿现有规则，技术异常不伪造 Constraint Issue。
+
+### 复用 core 与新增同步函数 {#first-assets-functions}
+
+已有 core.eq / ne 用于标量比较，gt / gte / lt / lte 用于确定数值，add / sub / mul / div 用于普通计算，and / or / not / if 用于固定逻辑 / 短路，exists 显式处理 Missing，length 用于长度 / 人数。不重复增加这些能力；金额和领域费率封装边界语义。
+
+| 新函数及有序参数 | 输出 | 边界 |
+| --- | --- | --- |
+| text.isNonBlank(value:JSON) | boolean | 去除约定空白后非空字符串才为 true，不改原文本 |
+| travel.isEligibleAge(age:JSON, agePolicy) | boolean | 范围内整数才为 true；0 合法，字符串 `"18"` 不转换 |
+| travel.requiresGuardian(age:JSON, agePolicy) | boolean | 有效年龄低于成年阈值为 true；非法年龄 false，由年龄约束报错 |
+| date.inclusiveDays(start:JSON, end:JSON) | integer/null | 含首尾；同日 1；非法、空值、倒序 null |
+| travel.isTripRangeAllowed(start:JSON, end:JSON, maxDays:integer) | boolean | 两端合法且天数在 1–maxDays 内为 true |
+| travel.personPremium(age:JSON, plan:JSON, days:JSON, ratePolicy) | MinorAmount/null | 尚不能试算为 null；合法输入按合成费率计算 |
+| travel.totalPremium(insureds:JSON, plan:JSON, days:JSON, ratePolicy) | MinorAmount/null | 人数及所有年龄可试算才汇总，否则 null，不返回部分金额 |
+
+接受 JSON 的参数真实声明 schema:true，不能先声明 number 再指望函数处理字符串。agePolicy 为 `{minAge,maxAge,adultAge}`；ratePolicy 含 agePolicy、最大天数、人数上限和 basic / plus 的成人 / 未成年人日费率。政策 / 费率是受约束配置；结构与自洽性要验证，错误配置抛求值错误。maxDays 为正整数，金额 / 计数检查安全整数。
+
+用户普通非法工作值按上述 false / null 退化；错误政策、非法费率、溢出抛求值错误。Missing 由 core.exists / core.if 显式处理。不读时钟、时区、网络、可变 Runtime 或隐含配置，不返回 Promise、NaN、Infinity 或 BigInt。
+
+日期采用公历 0001–9999 年，严格 YYYY-MM-DD，检查真实月份 / 闰年，不宽松进位、不按经过毫秒数算天数。金额为 CNY 整数分，不隐式转字符串；单人及总价共用内部算法。试算只依赖年龄、方案、天数和政策；姓名 / 证件 / 监护人合法性与外部资格独立校验。
+
+| 合成测试费率 | 未成年人每天 | 成年人每天 |
+| --- | --- | --- |
+| basic | 150 分 | 100 分 |
+| plus | 250 分 | 180 分 |
+
+basic、2 天、1 成人 + 1 未成年人为 500 分，不代表真实价格。非空、年龄、日期范围用于 Internal Constraint；监护人显示和必填分别使用相同判断；天数可用根级具名表达式，成员保费在模板局部 Props 计算。
+
+总试算 Reaction 显式 watch 起止日期、方案、整个 insureds 数组，runOnActivate=true，写 estimatedTotalMinor。不能试算写 null 清旧价，不只跳过。固定政策用 Definition 显式 Literal，不藏 Context 后期待 Context 替换触发 Reaction。另以 Internal Constraint 检查保存总价与当前计算一致：同值导入不自动重跑 Reaction，导入旧价或外部覆盖不能伪装正确。真实报价和适用性由 Host 管理。
+
+### 资产目录、包入口及版本 {#first-assets-organization}
+
+公开资产在各包内平铺，每个物料 / 函数独立目录，含实现、manifest.ts、必要类型及 README。不按基础 / 展示 / 布局 / 复合强制分层；分类交叉，新增位置不依赖主观归类。函数目录带语义前缀，如 date-inclusive-days → date.inclusiveDays，逻辑身份由 Manifest 决定。目录移动不改 ID。
+
+源码 `src/<asset>/`，测试按现有约定放 `tests/<asset>/`，不混入 src。简单资产不预建空 types / utils / index。内部共享放 _internal，不注册成公开资产；跨包测试仍在根 tests。每目录不等于 npm 包，不按目录数量预设拆包阈值。
+
+```text
+packages/materials-react/
+  src/
+    date-range/
+      manifest.ts
+      date-range.tsx
+      README.md
+    remote-select/
+      manifest.ts
+      types.ts
+      remote-select.tsx
+      README.md
+    _internal/
+    manifests.ts
+    contracts.ts
+    index.ts
+    styles.css
+  tests/
+    date-range/date-range.test.tsx
+    remote-select/remote-select.test.tsx
+
+packages/pure-functions/
+  src/
+    date-inclusive-days/
+      manifest.ts
+      inclusive-days.ts
+      README.md
+    travel-person-premium/
+      manifest.ts
+      person-premium.ts
+      README.md
+    _internal/
+    manifests.ts
+    index.ts
+  tests/
+    date-inclusive-days/inclusive-days.test.ts
+    travel-person-premium/person-premium.test.ts
+```
+
+manifest.ts 是机器契约唯一源，JSON 按需导出，不手工维护同内容 TS / JSON。README 说明交互和边界，工具图标 / 分类按需另加，不塞进严格 Manifest 未知字段。materials-react/manifests 为无 React 静态入口，根入口组织 React 实现 / 开发契约 / 显式注册，styles.css 由 Host 加载。纯函数有签名入口与显式实现注册，createCoreFunctions 不自动混业务函数。
+
+Materials 只依赖 Protocol / Renderer 公共接入，不从 apps 反向导入，不增 host-sdk / shared / renderer-core。UI 日期解析与领域算法分别拥有内部实现，用相同向量对齐，不为少量复用突破依赖。样式与组件基础沿用[现有工程 UI 路线](engineering.md)，不另建公开 UI 包。
+
+资产能力版本、包版本、实际制品身份分开；多个资产可共用包制品，不要求一起升能力版本。新增正式资产采用三段号：修复既定行为 PATCH，兼容可选扩展 MINOR，不兼容端口 / 必需输入 / 默认交付时机 / 计算口径 MAJOR。新增当前必须映射的 Request 通常不兼容，不能只按字段新增算 MINOR。版本不证明兼容，仍要测试和 review。
+
+已发布 id + version 固定契约；交付代码变化产生新制品身份 / 摘要。目录维护当前源码，Git 追溯，旧 Manifest / 制品 / 锁保留不可变交付，不建 v1 / v2 / v3 源码副本。既有 core 版本不在本次重编号，工具不能追溯改变现有锁。
+
+新 Catalog 经重检 / 重编进入新会话；旧表单不自动换实现，回滚必须取得旧制品，不只靠 Git 重编猜旧字节。现行 Registry 同 ID 选一个确定版本，不预建同表单多版本共存。生成器及资产 / 包编排见[工程工具方案](engineering.md#asset-tooling)。
+
+### 批次、验收与 Host 路线 {#first-assets-delivery}
+
+| 批次 | 交付 | 验收 |
+| --- | --- | --- |
+| 0 工程能力 | 模板、单一变更声明、资产检查、版本计划 / 应用 | 用首个资产跑生成与版本演练，不自动发布 |
+| 1 输入呈现 | 文本 / 数字 / 勾选 / 固定选项、field / value-display / button | 真实输入、非法态、错误、Host 改值、不重复写 |
+| 2 组合成员 | section / grid / condition / dialog-editor / insured-summary、模板与数组操作 | 多成员、移动删除、条件、摘要编辑、Profile、标签焦点 |
+| 3 复合交互 | date-range / remote-select、类型贯通的可控 Host | 确认取消、部分失败、乱序、父条件及卸载 |
+| 4 业务纵切 | 七函数、规则联动、目标表单、可控外部校验 | 试算一致、清旧价、完整结果与快照交付 |
+| 后续 Host | 真实查询 / 核保 / 报价 / 草稿 / 提交 | 服务契约、权限、适用性、恢复和真实业务验收 |
+
+验收页放现有 Playground；/l4 保留 Renderer 夹具回归。测试材料含成人单人、成人 + 未成年人、五人上限、空白草稿、非法值、缺失字段、未知选项、错误导入总价、双 Profile、可控成功 / 拒绝 / 技术失败 / 乱序 / 取消 Host，以及固定日期费率 Golden 数据。故障物料只作隔离测试。
+
+| 正反例 | 预期 |
+| --- | --- |
+| 年龄 12 → `-` → 18；0 岁 | 数字 / 字符串 / 数字；非法报错；0 不当空且需监护人 |
+| 姓名仅空白 | 保留原文本，非空 Constraint 失败 |
+| 2028-02-28 至 2028-03-01；2027-02-29 | 3 天；无效日期 |
+| 同日 / 倒序 / 超 30 天 | 1 天 / 非法 / 超限 |
+| 日期取消 / 第二端失败 / 打开时 Host 改值 | 无写 / 不宣称整体成功 / 重置草稿重新确认 |
+| 弹层关闭 / 隐藏监护人 | 已写值保留 / 不自动删值或取消规则 |
+| 搜索 A 后 B，A 晚到 / 国家变化 | 不恢复旧列表 / 撤销旧搜索，业务清空由规则做 |
+| B 移首再删 / 删除后旧返回 | 不误删 A / 不更新新成员或重建旧组件 |
+| 试算失效 / 导入旧总价 | 写 null / 一致性约束发现错误 |
+| 无 Issue 但必要外部校验未完成 / 等待时数据变 | 不视作提交就绪 / 完整结果 stale |
+| 物料抛错 / DevTools 未连接 | 局部降级其他可用 / 业务结果不变 |
+
+验证含函数 Golden、React 真实交互、真实 Compiler / Runtime 集成、浏览器端到端、无 React 契约消费者和隔离打包消费者。不能用直接 Command 代替输入验收。每批运行适用类型、测试、lint、构建、边界、打包与浏览器检查，复杂路径按 W3 深度审查；实际结果在交付时记录，本节不证明测试已通过。
+
+Host 路线：固定 Catalog 编译 / 注册匹配能力 → 创建 Runtime → Renderer 挂载 → Request 候选 / External Constraint 核验 → host.emit 保存报价提交意图 → 必要同步收敛后完整 validate → 只用有效通过证明 snapshot 构造输出 → Host 检查报价适用性、权限和条件后提交。转换失败不改写引擎校验结论；外部任务新鲜度及取消归 Host，DevTools 保持独立只读。
+
+本期无须重开 L1–L4；未来若要求双端口原子交付或整弹层取消回滚，另议对应行为，不能作为内部细化加入。真实产品 / 服务契约是后续业务验收前置，不阻塞已确认基础资产和可控场景交付。

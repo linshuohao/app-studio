@@ -8,12 +8,13 @@ modules:
 - M01
 tags: []
 sources:
+- SRC-ASSETDESIGN
 - SRC-EARLY
 - SRC-L1
 - SRC-L2
 - SRC-DEP
 related: {}
-last_reviewed: '2026-10-20'
+last_reviewed: '2026-10-27'
 navigation:
   group: 01 · 架构全貌
   order: 20
@@ -80,7 +81,7 @@ relocated_sections:
 | 能力范围 | 深入阅读 |
 | --- | --- |
 | 四层引擎 | 下方纵向图谱及 L1–L4 专题 |
-| 物料 / 纯函数与 Host | [扩展与集成](extension-integration.md) |
+| 物料 / 纯函数与 Host | [扩展与集成](extension-integration.md)、[首批正式资产与验收](extension-integration.md#first-assets)；模板 / 版本工具见[工程主题](engineering.md#asset-tooling)，设计确认待实现 |
 | Platform / Studio | [范围与候选流程](platform-studio.md#platform-studio-status) |
 | Agent 场景与完整能力 | [赋能与接入规划](platform-studio.md#agent-capability-plan)、[Agent 八层覆盖](platform-studio.md#agent-eight-layers) |
 | 可观测性、监控与问题处理（已纳入蓝图，可后置建设） | [运行保障与 Agent 辅助处理](architecture.md#blueprint-operations) |

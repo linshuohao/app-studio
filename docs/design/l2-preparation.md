@@ -10,12 +10,14 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-024
   - ADR-FE-020
   - ADR-FE-017
   - ADR-FE-004
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-ASSETDESIGN
 - SRC-REACTIONSTATE
 - SRC-COMPILERDESIGN
 - SRC-COMPILERIOTYPES
@@ -364,6 +366,8 @@ L1 可以声明不带版本的逻辑能力 ID，不要求每个 ViewNode 手写�
 以上字段、版本及摘要均为示意。后续已确认分别锁定 Manifest 与实际实现制品，具体见[双摘要契约](#capability-digest-contract)；内置函数集也需关联可核对的不可变 SDK / 制品身份。
 
 能力升级不能自动改变已发布表单；回滚读取旧 Release Artifact，不能根据当前最新 Catalog 重新组装。静态可发现的 Port 移除、参数类型变化触发重新检查 / 编译；运行时代码语义兼容性还依赖版本策略、契约测试和灰度验证。`latest` 或 `^1.2.0` 单独不足以复现旧发布。
+
+2026-10-27 新增[单资产版本与包版本工程](engineering.md#asset-tooling)实施方案，见 ADR-FE-024。复用本节确定 Catalog / 双摘要，不在 L2 中新增在线范围解析或多版本搜索；版本应用后构建，再计算实际字节摘要，旧 Release 不自动换实现。工具尚未实现。
 
 ### 首期双摘要锁定 {#capability-digest-contract}
 

@@ -8,7 +8,7 @@
   <title>物料扩展与 Host 集成 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
 
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -67,6 +67,7 @@
 <a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
+<a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -82,7 +83,8 @@
       </header>
       <div class="reading-layout">
       <main class="content" id="top">
-        <header class="hero"><div class="eyebrow">FORM ENGINE · DESIGN</div><h1>物料扩展与 Host 集成</h1><div class="desc">本篇说明核心四层如何与 UI 物料、纯函数及业务宿主协作。物料与 Host 是横向协作边界，不增加新的执行层。</div></header>
+        <header class="hero"><div class="eyebrow">FORM ENGINE · DESIGN</div><h1>物料扩展与 Host 集成</h1><div class="desc">本篇说明核心四层如何与 UI 物料、纯函数及业务宿主协作。物料与 Host 是横向协作边界，不增加新的执行层。</p>
+<p>2026-10-27 首批正式物料、业务纯函数、单资产目录与版本工具方案已由用户整体确认并授权归档，完整方案见<a href="#first-assets" rel="noopener noreferrer">首批资产与整体验收</a>。本次仅归档设计：正式物料包仍为空入口，业务函数、生成器和版本编排尚未实现；现有 React SDK / 独立 DevTools 的完成范围不扩张为真实业务验收。</div></header>
         <hr class="hero-line">
         <section class="section" id="materials"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>Material：物料体系与 UI 扩展</h2></div></div>
 
@@ -367,7 +369,555 @@
 <h3 id="请求类型贯通与接入完整性">请求类型贯通与接入完整性</h3>
 <p>物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">L1 请求开发接入</a>。</p>
 <h3 id="react-integration-sdk">React 首期实际接入</h3>
-<p>L4 已落实 <a href="l4-renderer.html#react-implementation" rel="noopener noreferrer">React SDK</a>：物料内部共用 Hook 提供 values / validation / props / slots 与 set / command / emit / request；Host 事件及校验仍注册在 Runtime，物料 Request 通过 Renderer 注册桥接。observeScope 的失效通知与即时资格查询覆盖成员删除及实例销毁；模板形参不携带调用方别名，所属挂载资格另外保留。按 <a href="l3-observability.html#independent-devtools" rel="noopener noreferrer">独立工具契约</a>，开发扩展自动发现并展示装配遗漏，业务应用不再传 diagnosticMode；业务页面保留友好降级和 Host 结构化错误上报。以上为本地实现范围，正式物料库 / 真实服务 / Host 应用仍未因此完成。</p></section>
+<p>L4 已落实 <a href="l4-renderer.html#react-implementation" rel="noopener noreferrer">React SDK</a>：物料内部共用 Hook 提供 values / validation / props / slots 与 set / command / emit / request；Host 事件及校验仍注册在 Runtime，物料 Request 通过 Renderer 注册桥接。observeScope 的失效通知与即时资格查询覆盖成员删除及实例销毁；模板形参不携带调用方别名，所属挂载资格另外保留。按 <a href="l3-observability.html#independent-devtools" rel="noopener noreferrer">独立工具契约</a>，开发扩展自动发现并展示装配遗漏，业务应用不再传 diagnosticMode；业务页面保留友好降级和 Host 结构化错误上报。以上为本地实现范围，正式物料库 / 真实服务 / Host 应用仍未因此完成。</p>
+</section>
+<section class="section" id="first-assets"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>首批正式资产与整体验收</h2></div></div>
+
+<p>本节是 2026-10-27 用户确认的本期设计，源码基线 <code>d2b1598</code>，决策见 <a href="decisions/ADR-FE-024-first-assets-tooling.html" rel="noopener noreferrer">ADR-FE-024</a>，来源见 <a href="source-map.html#src-asset-design" rel="noopener noreferrer">SRC-ASSETDESIGN</a>。职责、契约和交付顺序已确认；业务假设只限定验收样例，不作为真实保险产品规则。归档不授权本轮编码、安装或发布。</p>
+<h3 id="first-assets-scenario">目标表单、业务假设与范围</h3>
+<p>以“家庭短期出行投保录入单”串起现有多被保人、监护人条件、目的地查询、动态试算及外部资格校验场景。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分区</th>
+<th>数据 / 交互</th>
+<th>验收用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>投保人</td>
+<td>姓名、联系电话</td>
+<td>文本、字段标签与非空错误</td>
+</tr>
+<tr>
+<td>出行信息</td>
+<td>国家、城市、开始 / 结束日期、方案</td>
+<td>固定选项、远程搜索、父条件变化、双端口确认</td>
+</tr>
+<tr>
+<td>被保人列表</td>
+<td>姓名、出行时年龄、证件号码、监护人姓名；新增、移至首位、删除</td>
+<td>each Scope、非法数字、条件字段、成员身份</td>
+</tr>
+<tr>
+<td>摘要</td>
+<td>成员试算、出行天数、总试算</td>
+<td>动态 Props、对象子树 Issues、显式联动</td>
+</tr>
+<tr>
+<td>确认与操作</td>
+<td>信息确认、保存草稿、提交申请</td>
+<td>勾选、Host 事件、完整校验与对应快照</td>
+</tr>
+</tbody>
+</table></div>
+<p>验收假设：被保人 1–5 人；手工申报出行开始日的周岁年龄，整数 0–80；未满 18 岁须填监护人姓名；公历日期含首尾，最长 30 天；方案为 basic / plus；国家为固定选项，城市由 Host 查询。证件先录号码并接外部资格校验，不实现真实证件识别或完整证件规则。草稿允许保存未通过完整校验的数据，提交必须使用当前有效的完整通过结果。</p>
+<p>数据位置为 <code>/applicant/name</code>、<code>/applicant/phone</code>、<code>/travel/countryCode</code>、<code>/travel/city</code>、<code>/travel/startDate</code>、<code>/travel/endDate</code>、<code>/plan</code>、<code>/insureds</code>、<code>/acknowledged</code>、<code>/estimatedTotalMinor</code>。成员包含 name / age / idNumber / guardianName。输入可以是非法工作值，由业务 Schema / Constraint 判断，不因目标类型拦截受控写入。</p>
+<p>桌面 Profile 平铺成员字段，窄屏用摘要和编辑弹层呈现同一成员，共享业务执行部分、数据和规则；切换不重放初始化。保费为固定合成费率的“试算金额”。真实产品规则、查询服务、核保、报价、持久化、输出和提交由后续 Host 承接。</p>
+<p>本期覆盖 React 物料 / Manifest、同步业务函数、契约测试、可控 Host 验收页及资产工具。上传、支付、真实承保定价、审批、Studio 属性面板、远程市场和其他框架留后续。DevTools 不进入业务装配和运行前置。</p>
+<h3 id="first-assets-materials">物料职责与五类契约</h3>
+<p>首批 14 个物料。基础控件处理输入，field 统一字段呈现，布局容器组织 Slots，复合物料封装明确交付边界的交互。分类用于说明，不作为目录层级。重复列表用 ScopeNode，字段组用 Typed Template，不增加 Repeat、子表单 Store 或物料专属 Adapter。</p>
+<p>表中 <code>?</code> 为可选 Props，JSON 为 <code>schema:true</code>，Option 为 <code>{id:string,label:string}</code>，MinorAmount 为整数分。Binding Schema 仅描述静态预期，不能把当前工作值断言为合法类型。未列出的 Events / Requests / Slots 不声明。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>物料</th>
+<th>Props（默认值）</th>
+<th>Bindings</th>
+<th>Events / Requests / Slots</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text-input</td>
+<td>placeholder?:string；disabled?:boolean=false；readOnly?:boolean=false；maxLength?:integer；inputMode?:text/tel</td>
+<td>value:string/null</td>
+<td>均无</td>
+</tr>
+<tr>
+<td>number-input</td>
+<td>placeholder?:string；disabled?=false；readOnly?=false；inputMode?:numeric/decimal</td>
+<td>value:number/null</td>
+<td>均无</td>
+</tr>
+<tr>
+<td>checkbox</td>
+<td>label:string；disabled?=false</td>
+<td>value:boolean</td>
+<td>均无</td>
+</tr>
+<tr>
+<td>select</td>
+<td>options:Option[]；placeholder?:string；disabled?=false；clearable?=true</td>
+<td>value:string/null</td>
+<td>均无</td>
+</tr>
+<tr>
+<td>button</td>
+<td>label:string；disabled?=false；variant?:primary/secondary/danger</td>
+<td>无</td>
+<td>Event activate，无 Payload；无 Request / Slot</td>
+</tr>
+<tr>
+<td>field</td>
+<td>label:string；help?:string；requiredMark?=false</td>
+<td>value:JSON</td>
+<td>Slots: default；无 Event / Request</td>
+</tr>
+<tr>
+<td>value-display</td>
+<td>value:JSON；format?:text/integer/moneyMinor；emptyText?:string="—"</td>
+<td>无</td>
+<td>均无</td>
+</tr>
+<tr>
+<td>section</td>
+<td>title?:string；description?:string；collapsible?=false；defaultExpanded?=true</td>
+<td>无</td>
+<td>Slots: default / actions；无 Event / Request</td>
+</tr>
+<tr>
+<td>grid</td>
+<td>columns?:1/2/3=2；gap?:small/medium/large</td>
+<td>无</td>
+<td>Slots: default；无 Event / Request</td>
+</tr>
+<tr>
+<td>condition</td>
+<td>visible:boolean</td>
+<td>无</td>
+<td>Slots: default；无 Event / Request</td>
+</tr>
+<tr>
+<td>dialog-editor</td>
+<td>title:string；triggerLabel?:string="编辑"；disabled?=false</td>
+<td>无</td>
+<td>Slots: summary / content；无 Event / Request</td>
+</tr>
+<tr>
+<td>remote-select</td>
+<td>placeholder?:string；disabled?=false；clearable?=true；filterKey?:string/null</td>
+<td>value:Option/null</td>
+<td>Request search，latest；无 Event / Slot</td>
+</tr>
+<tr>
+<td>date-range</td>
+<td>label:string；startLabel?:string；endLabel?:string；disabled?=false</td>
+<td>start:string/null；end:string/null</td>
+<td>均无；内部呈现两端标签与校验</td>
+</tr>
+<tr>
+<td>insured-summary</td>
+<td>premiumMinor:MinorAmount/null；emptyName?:string="未填写姓名"</td>
+<td>insured:object</td>
+<td>均无</td>
+</tr>
+</tbody>
+</table></div>
+<p>disabled / readOnly / clearable / collapsible / defaultExpanded / requiredMark 均为 boolean。value-display 默认 text；grid 窄屏收为单列。section.defaultExpanded 只初始化该次挂载的 UI 状态，物料默认值不自动写 Data。其余视觉缺省在契约内实现，不新增业务语义。value-display.moneyMinor 首期固定 CNY，整数分显示为元和两位小数；不适合所选格式的值用明确占位，不默认输出对象技术 JSON。输入限制和 requiredMark 不替代 Schema / Constraint。</p>
+<p>field 与子控件分别显式绑定同一位置，不隐式继承。私有 FieldFrame / React Context 只连接 DOM ID、标签和错误描述，不保存业务值或独立校验状态。日期范围分别关联标签并分组。基础控件可消费 validation 设置无障碍属性，不重复渲染错误列表。</p>
+<p>复合物料只调用自身 useMaterialAdapter。不能直接嵌入另一注册物料并让其在同一挂载上下文调用另一份契约的 Hook；共享无 Hook 的内部组件，或由 Renderer 构造 Slots。insured-summary 读取成员及子树 Issues，不计算保费、不修改成员或核验资格。insured-fields 是带 insured 类型参数的视图模板。</p>
+<p>remote-select.search 输入为 <code>{query:string,filterKey:string|null}</code>，成功业务结果为 <code>{items:Option[]}</code>，不含桥接状态包装。首期无分页、自动选中或回填。选择后整体写 <code>{id,label}</code>：id 为业务标识，label 为选中时展示快照，不能视为服务端权威名称。</p>
+<h3 id="first-assets-examples">配置示例与 Scope 组合</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>物料</th>
+<th>使用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text-input</td>
+<td>value → <code>/applicant/name</code>，或模板内 insured 的 <code>/idNumber</code></td>
+</tr>
+<tr>
+<td>number-input</td>
+<td>value → insured 的 <code>/age</code></td>
+</tr>
+<tr>
+<td>checkbox</td>
+<td>value → <code>/acknowledged</code>，label 为信息确认文案</td>
+</tr>
+<tr>
+<td>select</td>
+<td>value → <code>/plan</code>，options 为 basic / plus；国家另绑 <code>/travel/countryCode</code></td>
+</tr>
+<tr>
+<td>button</td>
+<td>activate → 数组 Command，或保存 / 提交 host.emit</td>
+</tr>
+<tr>
+<td>field</td>
+<td>value 与姓名输入同位置，default Slot 放输入</td>
+</tr>
+<tr>
+<td>value-display</td>
+<td>value 为天数表达式，或读取总试算按 moneyMinor 展示</td>
+</tr>
+<tr>
+<td>section</td>
+<td>title 为投保人 / 出行信息 / 被保人，default 放字段，actions 放操作</td>
+</tr>
+<tr>
+<td>grid</td>
+<td>columns=2，default 放姓名和电话</td>
+</tr>
+<tr>
+<td>condition</td>
+<td>visible 为 requiresGuardian 表达式，default 放监护人字段</td>
+</tr>
+<tr>
+<td>dialog-editor</td>
+<td>summary 放 insured-summary，content 放 insured-fields Template</td>
+</tr>
+<tr>
+<td>remote-select</td>
+<td>value → <code>/travel/city</code>，filterKey 读国家；search 映射 travel.searchCities</td>
+</tr>
+<tr>
+<td>date-range</td>
+<td>start / end → <code>/travel/startDate</code>、<code>/travel/endDate</code></td>
+</tr>
+<tr>
+<td>insured-summary</td>
+<td>insured → 当前成员根；premiumMinor 为当前成员试算表达式</td>
+</tr>
+</tbody>
+</table></div>
+<p>普通字段不配置 on.change 二次写入：</p>
+<div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"field"</span><span class="syn-p">,</span>
+<span class="syn-w">  </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"label"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"姓名"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"requiredMark"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-kc">true</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nt">"bindings"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"value"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/applicant/name"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nt">"slots"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"default"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[{</span>
+<span class="syn-w">    </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"text-input"</span><span class="syn-p">,</span>
+<span class="syn-w">    </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"placeholder"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"请输入姓名"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">    </span><span class="syn-nt">"bindings"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"value"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/applicant/name"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">  </span><span class="syn-p">}]</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>日期及远程搜索使用既有多端口和请求映射：</p>
+<div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"section"</span><span class="syn-p">,</span>
+<span class="syn-w">  </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"title"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"出行信息"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nt">"slots"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"default"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[</span>
+<span class="syn-w">    </span><span class="syn-p">{</span>
+<span class="syn-w">      </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"date-range"</span><span class="syn-p">,</span>
+<span class="syn-w">      </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"label"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"出行日期"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">      </span><span class="syn-nt">"bindings"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">        </span><span class="syn-nt">"start"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/travel/startDate"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">        </span><span class="syn-nt">"end"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/travel/endDate"</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">      </span><span class="syn-p">}</span>
+<span class="syn-w">    </span><span class="syn-p">},</span>
+<span class="syn-w">    </span><span class="syn-p">{</span>
+<span class="syn-w">      </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"remote-select"</span><span class="syn-p">,</span>
+<span class="syn-w">      </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">        </span><span class="syn-nt">"placeholder"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"搜索目的地城市"</span><span class="syn-p">,</span>
+<span class="syn-w">        </span><span class="syn-nt">"filterKey"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"$expr"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"ref"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/travel/countryCode"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">      </span><span class="syn-p">},</span>
+<span class="syn-w">      </span><span class="syn-nt">"bindings"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"value"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/travel/city"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">      </span><span class="syn-nt">"requests"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"search"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"type"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"host.request"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"request"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"travel.searchCities"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">    </span><span class="syn-p">}</span>
+<span class="syn-w">  </span><span class="syn-p">]</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>模板形参 insured 已声明时，监护人条件如下。Missing 显式经固定短路转 null，不交给注册函数：</p>
+<div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"condition"</span><span class="syn-p">,</span>
+<span class="syn-w">  </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"visible"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"$expr"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span>
+<span class="syn-w">    </span><span class="syn-nt">"op"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"travel.requiresGuardian"</span><span class="syn-p">,</span>
+<span class="syn-w">    </span><span class="syn-nt">"args"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[</span>
+<span class="syn-w">      </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"op"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"core.if"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"args"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[</span>
+<span class="syn-w">        </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"op"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"core.exists"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"args"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[{</span><span class="syn-w"> </span><span class="syn-nt">"ref"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"scope"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"insured"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/age"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}]</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">        </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"ref"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"scope"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"insured"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/age"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">        </span><span class="syn-kc">null</span>
+<span class="syn-w">      </span><span class="syn-p">]</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">      </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"literal"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"minAge"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-mi">0</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"maxAge"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-mi">80</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"adultAge"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-mi">18</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">    </span><span class="syn-p">]</span>
+<span class="syn-w">  </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nt">"slots"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"default"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">[{</span>
+<span class="syn-w">    </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"text-input"</span><span class="syn-p">,</span>
+<span class="syn-w">    </span><span class="syn-nt">"bindings"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"value"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"source"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"data"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"scope"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"insured"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"path"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"/guardianName"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-w">  </span><span class="syn-p">}]</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>成员保费表达式直接放模板词法作用域，不用全局具名表达式隐式捕获 insured。dialog-editor.content 使用 <code>$use: insured-fields</code> 并显式传当前成员 Reference。数组操作用 button.activate → form.command，ScopeHandle 定位成员；新增次数不依赖 Reaction 执行次数。</p>
+<div class="code-box"><div class="code-head"><span>JSON</span><button class="copy" type="button">复制</button></div><pre><code><span class="syn-p">{</span>
+<span class="syn-w">  </span><span class="syn-nt">"material"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"button"</span><span class="syn-p">,</span>
+<span class="syn-w">  </span><span class="syn-nt">"props"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"label"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"提交申请"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"variant"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"primary"</span><span class="syn-w"> </span><span class="syn-p">},</span>
+<span class="syn-w">  </span><span class="syn-nt">"on"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"activate"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-p">{</span><span class="syn-w"> </span><span class="syn-nt">"type"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"host.emit"</span><span class="syn-p">,</span><span class="syn-w"> </span><span class="syn-nt">"event"</span><span class="syn-p">:</span><span class="syn-w"> </span><span class="syn-s2">"travel.submitRequested"</span><span class="syn-w"> </span><span class="syn-p">}</span><span class="syn-w"> </span><span class="syn-p">}</span>
+<span class="syn-p">}</span>
+</code></pre></div>
+<p>片段不是可直接发布的完整 Definition；实施时补齐 Schema、规则、模板、确定 Catalog / 锁及 Host 契约后真实编译。当前 Compiler 只检查已配置 Binding 的名称和兼容性，不检查消费端口全部映射；Adapter 对漏映射和目标数据缺失都可能给 missing。不新增 requiredBindings，不虚称漏 Binding 已能编译失败；正式用例检查映射完整，写入失败沿既有返回和诊断。Request 漏映射仍由 Compiler 报 Error。</p>
+<h3 id="first-assets-input">输入、确认、请求及校验呈现</h3>
+<p>物料消费 props / values / validation / slots，使用 set / command / emit / request。表达式由 Runtime 求值，不解析原始 AST、不读内部 Store、不保存第二份权威业务值。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>交互</th>
+<th>交付规则</th>
+<th>编辑结束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文本</td>
+<td>普通输入交付字符串；清空为 <code>""</code>；不默认 trim</td>
+<td>Runtime 当前文本</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>完整十进制转有限数；空输入为 null；<code>-</code> / <code>1.</code> 等保留文本</td>
+<td>合法数可规范显示；非法文本继续显示和报错</td>
+</tr>
+<tr>
+<td>勾选</td>
+<td>用户切换交付 boolean；missing / 非法值不自动写 false</td>
+<td>按 Runtime 展示，非法态可辨识</td>
+</tr>
+<tr>
+<td>固定选项</td>
+<td>选择交付 ID，清空为 null</td>
+<td>未知 ID 显示选项不可用，不静默换值</td>
+</tr>
+<tr>
+<td>远程选项</td>
+<td>搜索不写；选择后交付 Option，清空为 null</td>
+<td>Runtime 选中值</td>
+</tr>
+<tr>
+<td>日期范围</td>
+<td>暂存未确认选择，确认交付，取消不写</td>
+<td>Runtime 当前两端</td>
+</tr>
+</tbody>
+</table></div>
+<p>数字使用文本输入配合键盘提示；首期不接受指数、分组逗号或隐式空白转换。不安全解析时保留文本，不静默舍入。输入法组合态局部管理，结束交付最终文本。编辑缓存只服务当前交互；Host 改值时接受新值，不在后续失焦覆盖回旧缓存。</p>
+<p>date-range 单个日期确认为严格 YYYY-MM-DD 或 null；无法解析的草稿留在弹层提示修正。两端合法但倒序可交付，由 Constraint 报错。打开期间 Host 改任一端，整组草稿重置到最新 Runtime 并提示再确认。</p>
+<p>双端口连续两次 set，沿用即时、非原子语义，都检查 kind 及 executed.result.ok。第一端成功、第二端失败不能显示整体成功，应重读并报告局部失败。Adapter 不公开 Binding DataReference，不承诺物料自行拼通用批量端口 API。dialog-editor 内普通 Slot 输入实时写 Runtime；完成 / 关闭 / Escape 只关视图，没有整组回滚，不提供含糊的取消编辑承诺。</p>
+<p>query / filterKey 改变时 cancel 旧调用、清空旧候选、拒绝排队的旧 UI 更新。桥接只管理请求交付资格，不管已展示列表。网络、防抖、鉴权、缓存、重试归 Host；error 不改选中值，discarded 不冒充网络故障。国家变化清城市由 Definition 显式 Reaction 写 city=null，导入数据的城市 / 国家一致性仍由约束或 Host 校验覆盖。</p>
+<p>field 直接消费已发布 Issues，不新增 touched / dirty / submitted 系统。unverified 尚未校验，pending 进行中且可同时有 Issues，invalid 展示错误，incomplete 提示未完成，blocked 提示前置未满足，valid 仅为当前字段聚合有效。对象子树 Issues 可用于摘要，但根 Schema 来源也可能影响 status，不能作为成员完整证明。消息沿现有规则，技术异常不伪造 Constraint Issue。</p>
+<h3 id="first-assets-functions">复用 core 与新增同步函数</h3>
+<p>已有 core.eq / ne 用于标量比较，gt / gte / lt / lte 用于确定数值，add / sub / mul / div 用于普通计算，and / or / not / if 用于固定逻辑 / 短路，exists 显式处理 Missing，length 用于长度 / 人数。不重复增加这些能力；金额和领域费率封装边界语义。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>新函数及有序参数</th>
+<th>输出</th>
+<th>边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text.isNonBlank(value:JSON)</td>
+<td>boolean</td>
+<td>去除约定空白后非空字符串才为 true，不改原文本</td>
+</tr>
+<tr>
+<td>travel.isEligibleAge(age:JSON, agePolicy)</td>
+<td>boolean</td>
+<td>范围内整数才为 true；0 合法，字符串 <code>"18"</code> 不转换</td>
+</tr>
+<tr>
+<td>travel.requiresGuardian(age:JSON, agePolicy)</td>
+<td>boolean</td>
+<td>有效年龄低于成年阈值为 true；非法年龄 false，由年龄约束报错</td>
+</tr>
+<tr>
+<td>date.inclusiveDays(start:JSON, end:JSON)</td>
+<td>integer/null</td>
+<td>含首尾；同日 1；非法、空值、倒序 null</td>
+</tr>
+<tr>
+<td>travel.isTripRangeAllowed(start:JSON, end:JSON, maxDays:integer)</td>
+<td>boolean</td>
+<td>两端合法且天数在 1–maxDays 内为 true</td>
+</tr>
+<tr>
+<td>travel.personPremium(age:JSON, plan:JSON, days:JSON, ratePolicy)</td>
+<td>MinorAmount/null</td>
+<td>尚不能试算为 null；合法输入按合成费率计算</td>
+</tr>
+<tr>
+<td>travel.totalPremium(insureds:JSON, plan:JSON, days:JSON, ratePolicy)</td>
+<td>MinorAmount/null</td>
+<td>人数及所有年龄可试算才汇总，否则 null，不返回部分金额</td>
+</tr>
+</tbody>
+</table></div>
+<p>接受 JSON 的参数真实声明 schema:true，不能先声明 number 再指望函数处理字符串。agePolicy 为 <code>{minAge,maxAge,adultAge}</code>；ratePolicy 含 agePolicy、最大天数、人数上限和 basic / plus 的成人 / 未成年人日费率。政策 / 费率是受约束配置；结构与自洽性要验证，错误配置抛求值错误。maxDays 为正整数，金额 / 计数检查安全整数。</p>
+<p>用户普通非法工作值按上述 false / null 退化；错误政策、非法费率、溢出抛求值错误。Missing 由 core.exists / core.if 显式处理。不读时钟、时区、网络、可变 Runtime 或隐含配置，不返回 Promise、NaN、Infinity 或 BigInt。</p>
+<p>日期采用公历 0001–9999 年，严格 YYYY-MM-DD，检查真实月份 / 闰年，不宽松进位、不按经过毫秒数算天数。金额为 CNY 整数分，不隐式转字符串；单人及总价共用内部算法。试算只依赖年龄、方案、天数和政策；姓名 / 证件 / 监护人合法性与外部资格独立校验。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>合成测试费率</th>
+<th>未成年人每天</th>
+<th>成年人每天</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>basic</td>
+<td>150 分</td>
+<td>100 分</td>
+</tr>
+<tr>
+<td>plus</td>
+<td>250 分</td>
+<td>180 分</td>
+</tr>
+</tbody>
+</table></div>
+<p>basic、2 天、1 成人 + 1 未成年人为 500 分，不代表真实价格。非空、年龄、日期范围用于 Internal Constraint；监护人显示和必填分别使用相同判断；天数可用根级具名表达式，成员保费在模板局部 Props 计算。</p>
+<p>总试算 Reaction 显式 watch 起止日期、方案、整个 insureds 数组，runOnActivate=true，写 estimatedTotalMinor。不能试算写 null 清旧价，不只跳过。固定政策用 Definition 显式 Literal，不藏 Context 后期待 Context 替换触发 Reaction。另以 Internal Constraint 检查保存总价与当前计算一致：同值导入不自动重跑 Reaction，导入旧价或外部覆盖不能伪装正确。真实报价和适用性由 Host 管理。</p>
+<h3 id="first-assets-organization">资产目录、包入口及版本</h3>
+<p>公开资产在各包内平铺，每个物料 / 函数独立目录，含实现、manifest.ts、必要类型及 README。不按基础 / 展示 / 布局 / 复合强制分层；分类交叉，新增位置不依赖主观归类。函数目录带语义前缀，如 date-inclusive-days → date.inclusiveDays，逻辑身份由 Manifest 决定。目录移动不改 ID。</p>
+<p>源码 <code>src/&lt;asset&gt;/</code>，测试按现有约定放 <code>tests/&lt;asset&gt;/</code>，不混入 src。简单资产不预建空 types / utils / index。内部共享放 _internal，不注册成公开资产；跨包测试仍在根 tests。每目录不等于 npm 包，不按目录数量预设拆包阈值。</p>
+<div class="code-box"><div class="code-head"><span>TEXT</span><button class="copy" type="button">复制</button></div><pre><code>packages/materials-react/
+  src/
+    date-range/
+      manifest.ts
+      date-range.tsx
+      README.md
+    remote-select/
+      manifest.ts
+      types.ts
+      remote-select.tsx
+      README.md
+    _internal/
+    manifests.ts
+    contracts.ts
+    index.ts
+    styles.css
+  tests/
+    date-range/date-range.test.tsx
+    remote-select/remote-select.test.tsx
+
+packages/pure-functions/
+  src/
+    date-inclusive-days/
+      manifest.ts
+      inclusive-days.ts
+      README.md
+    travel-person-premium/
+      manifest.ts
+      person-premium.ts
+      README.md
+    _internal/
+    manifests.ts
+    index.ts
+  tests/
+    date-inclusive-days/inclusive-days.test.ts
+    travel-person-premium/person-premium.test.ts
+</code></pre></div>
+<p>manifest.ts 是机器契约唯一源，JSON 按需导出，不手工维护同内容 TS / JSON。README 说明交互和边界，工具图标 / 分类按需另加，不塞进严格 Manifest 未知字段。materials-react/manifests 为无 React 静态入口，根入口组织 React 实现 / 开发契约 / 显式注册，styles.css 由 Host 加载。纯函数有签名入口与显式实现注册，createCoreFunctions 不自动混业务函数。</p>
+<p>Materials 只依赖 Protocol / Renderer 公共接入，不从 apps 反向导入，不增 host-sdk / shared / renderer-core。UI 日期解析与领域算法分别拥有内部实现，用相同向量对齐，不为少量复用突破依赖。样式与组件基础沿用<a href="engineering.html" rel="noopener noreferrer">现有工程 UI 路线</a>，不另建公开 UI 包。</p>
+<p>资产能力版本、包版本、实际制品身份分开；多个资产可共用包制品，不要求一起升能力版本。新增正式资产采用三段号：修复既定行为 PATCH，兼容可选扩展 MINOR，不兼容端口 / 必需输入 / 默认交付时机 / 计算口径 MAJOR。新增当前必须映射的 Request 通常不兼容，不能只按字段新增算 MINOR。版本不证明兼容，仍要测试和 review。</p>
+<p>已发布 id + version 固定契约；交付代码变化产生新制品身份 / 摘要。目录维护当前源码，Git 追溯，旧 Manifest / 制品 / 锁保留不可变交付，不建 v1 / v2 / v3 源码副本。既有 core 版本不在本次重编号，工具不能追溯改变现有锁。</p>
+<p>新 Catalog 经重检 / 重编进入新会话；旧表单不自动换实现，回滚必须取得旧制品，不只靠 Git 重编猜旧字节。现行 Registry 同 ID 选一个确定版本，不预建同表单多版本共存。生成器及资产 / 包编排见<a href="engineering.html#asset-tooling" rel="noopener noreferrer">工程工具方案</a>。</p>
+<h3 id="first-assets-delivery">批次、验收与 Host 路线</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>批次</th>
+<th>交付</th>
+<th>验收</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 工程能力</td>
+<td>模板、单一变更声明、资产检查、版本计划 / 应用</td>
+<td>用首个资产跑生成与版本演练，不自动发布</td>
+</tr>
+<tr>
+<td>1 输入呈现</td>
+<td>文本 / 数字 / 勾选 / 固定选项、field / value-display / button</td>
+<td>真实输入、非法态、错误、Host 改值、不重复写</td>
+</tr>
+<tr>
+<td>2 组合成员</td>
+<td>section / grid / condition / dialog-editor / insured-summary、模板与数组操作</td>
+<td>多成员、移动删除、条件、摘要编辑、Profile、标签焦点</td>
+</tr>
+<tr>
+<td>3 复合交互</td>
+<td>date-range / remote-select、类型贯通的可控 Host</td>
+<td>确认取消、部分失败、乱序、父条件及卸载</td>
+</tr>
+<tr>
+<td>4 业务纵切</td>
+<td>七函数、规则联动、目标表单、可控外部校验</td>
+<td>试算一致、清旧价、完整结果与快照交付</td>
+</tr>
+<tr>
+<td>后续 Host</td>
+<td>真实查询 / 核保 / 报价 / 草稿 / 提交</td>
+<td>服务契约、权限、适用性、恢复和真实业务验收</td>
+</tr>
+</tbody>
+</table></div>
+<p>验收页放现有 Playground；/l4 保留 Renderer 夹具回归。测试材料含成人单人、成人 + 未成年人、五人上限、空白草稿、非法值、缺失字段、未知选项、错误导入总价、双 Profile、可控成功 / 拒绝 / 技术失败 / 乱序 / 取消 Host，以及固定日期费率 Golden 数据。故障物料只作隔离测试。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>正反例</th>
+<th>预期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>年龄 12 → <code>-</code> → 18；0 岁</td>
+<td>数字 / 字符串 / 数字；非法报错；0 不当空且需监护人</td>
+</tr>
+<tr>
+<td>姓名仅空白</td>
+<td>保留原文本，非空 Constraint 失败</td>
+</tr>
+<tr>
+<td>2028-02-28 至 2028-03-01；2027-02-29</td>
+<td>3 天；无效日期</td>
+</tr>
+<tr>
+<td>同日 / 倒序 / 超 30 天</td>
+<td>1 天 / 非法 / 超限</td>
+</tr>
+<tr>
+<td>日期取消 / 第二端失败 / 打开时 Host 改值</td>
+<td>无写 / 不宣称整体成功 / 重置草稿重新确认</td>
+</tr>
+<tr>
+<td>弹层关闭 / 隐藏监护人</td>
+<td>已写值保留 / 不自动删值或取消规则</td>
+</tr>
+<tr>
+<td>搜索 A 后 B，A 晚到 / 国家变化</td>
+<td>不恢复旧列表 / 撤销旧搜索，业务清空由规则做</td>
+</tr>
+<tr>
+<td>B 移首再删 / 删除后旧返回</td>
+<td>不误删 A / 不更新新成员或重建旧组件</td>
+</tr>
+<tr>
+<td>试算失效 / 导入旧总价</td>
+<td>写 null / 一致性约束发现错误</td>
+</tr>
+<tr>
+<td>无 Issue 但必要外部校验未完成 / 等待时数据变</td>
+<td>不视作提交就绪 / 完整结果 stale</td>
+</tr>
+<tr>
+<td>物料抛错 / DevTools 未连接</td>
+<td>局部降级其他可用 / 业务结果不变</td>
+</tr>
+</tbody>
+</table></div>
+<p>验证含函数 Golden、React 真实交互、真实 Compiler / Runtime 集成、浏览器端到端、无 React 契约消费者和隔离打包消费者。不能用直接 Command 代替输入验收。每批运行适用类型、测试、lint、构建、边界、打包与浏览器检查，复杂路径按 W3 深度审查；实际结果在交付时记录，本节不证明测试已通过。</p>
+<p>Host 路线：固定 Catalog 编译 / 注册匹配能力 → 创建 Runtime → Renderer 挂载 → Request 候选 / External Constraint 核验 → host.emit 保存报价提交意图 → 必要同步收敛后完整 validate → 只用有效通过证明 snapshot 构造输出 → Host 检查报价适用性、权限和条件后提交。转换失败不改写引擎校验结论；外部任务新鲜度及取消归 Host，DevTools 保持独立只读。</p>
+<p>本期无须重开 L1–L4；未来若要求双端口原子交付或整弹层取消回滚，另议对应行为，不能作为内部细化加入。真实产品 / 服务契约是后续业务验收前置，不阻塞已确认基础资产和可控场景交付。</p></section>
 
 <nav class="reading-continuation" aria-label="继续阅读"><a href="platform-studio.html">下一步 · Platform 与 Studio：范围及待设计工作</a></nav>
 
@@ -377,8 +927,9 @@
         <div class="nav-caption">本页目录</div>
         <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#materials" data-to="materials" title="Material：物料体系与 UI 扩展"><span class="nav-num">01</span><span>Material：物料体系与 UI 扩展</span></a>
-<a href="#capabilities" data-to="capabilities" title="Host / View Adapter：外部能力与业务集成"><span class="nav-num">02</span><span>Host / View Adapter：外部能力与业务集成</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+<a href="#capabilities" data-to="capabilities" title="Host / View Adapter：外部能力与业务集成"><span class="nav-num">02</span><span>Host / View Adapter：外部能力与业务集成</span></a>
+<a href="#first-assets" data-to="first-assets" title="首批正式资产与整体验收"><span class="nav-num">03</span><span>首批正式资产与整体验收</span></a></nav>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 5</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M03">M03 Expression / Pure Function</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a></li><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 20</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 6</summary><ul><li><a href="source-map.html#src-asset-design">SRC-ASSETDESIGN · 首批正式资产、单资产目录及版本工具确认</a></li><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

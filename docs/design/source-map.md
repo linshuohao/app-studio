@@ -19,7 +19,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-25'
+last_reviewed: '2026-10-27'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -47,6 +47,18 @@ status_note: 本地资料范围的来源索引与覆盖记录
 **覆盖声明：**完成本地现行主题的整理与交叉审查，建立本地历史文件及 ZIP 成员的完整可重复盘点，重要决策按下表定位。历史快照采用主题 / 替代链核对，未对每份重复快照的每句话重新作语义证明；代码 / 样本附件按其证据边界检查。因此不能称为“所有历史讨论逐句全量重写”或“生产设计 / 实现全量验收”。本地不存在的完整原始对话仍为来源缺口；后续新增资料必须增量核对。
 
 ## 来源编号与精确定位 {#source-register}
+
+### SRC-DEVTOOLS：独立工具与无业务装配确认 {#src-devtools}
+
+2026-10-26 当前会话中，用户提出 DevTools 应作为独立包，优先浏览器扩展，类似 React / Vue DevTools，基于开发运行环境标记采集并展示，对业务开发无感知。完整边界草案解释标记发现、只读观测接缝、独立采集 / 分析 / UI、错误出口、生产默认关闭、连接生命周期和只读首期后，用户明确“可以，就按照这个方案去落地”。确认归档见 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md)及 [DevTools 契约](l3-observability.md#independent-devtools)。本次替代内嵌技术面板和 diagnosticMode，不删除业务错误隔离及必要异常现场；未授权发布浏览器商店或实现写入 / 时间旅行，未保存逐字会话附件。
+
+
+### SRC-L4IMPLEMENTATION：L4 完整方案与四批实施授权 {#src-l4-implementation}
+
+2026-10-26 当前对话中，用户要求完整 L4 草案，包括 Renderer、共用 Adapter Hook、模块功能和目录。整体阅读后明确“按照这个实施批次去执行”，并要求遵守工作流。确认范围为 [React SDK 契约](l4-renderer.md#react-sdk-delivery)与 [ADR-FE-022](decisions/ADR-FE-022-react-renderer-sdk.md)：四批实现及 Runtime 必要消费接口；正式物料库、业务纯函数和真实 Host 应用仍属后续阶段。未保存逐字会话附件；实现 / 检查证据按实际结果更新，不从授权推导生产验收完成。 四批 TS / React 实现入口为 packages/renderer-react，独立审查和修复反例见 [实施证据](l4-renderer.md#react-implementation)。验证页物料及 Host 为测试夹具，不替代随后正式专题。
+
+
+2026-10-27 同一会话中，用户在入口 Review 后明确要求修复本阶段问题，并统一优化 Runtime 对应变量名。授权覆盖非法配置根保护、上下文 / 装配命名、诊断发布与工具缓存分责及有证据的重复配置复制；保留公共 SDK 和必要输入接管，未授权按假定性能瓶颈重写执行语义。
 
 ### SRC-RUNTIMEIMPLEMENTATION：L3 按场景实现与图示 Review 授权 {#src-runtime-implementation}
 
@@ -89,6 +101,8 @@ status_note: 本地资料范围的来源索引与覆盖记录
 2026-10-22 用户审阅完整 Compiler HTML（需求、架构、模块、平台蓝图及实施情况），明确“我认可这一期的内容，我们可以去做归档和 git 提交。然后开始实现”。本期确认检查 / 静态准备、四职责组、六阶段、确定内存 compile、错误累计、范围与模块设计；后期独立分析报告、可视化及能力开发 / Registry 工具保留建设方向。现行 [Compiler 主题](l2/compiler.md)与 [L2 总览](l2-preparation.md)为权威；下载文件不充当长期规范。不将平台报告公共格式、Context Schema 新输入或生产 Runtime 实现写成已完成。
 
 ### SRC-COMPILERIOTYPES：编译输入输出协议类型同步授权与实现 {#src-compiler-io-types}
+
+2026-10-27 当前 Review 中，用户确认收敛运行时重复防御，并在明确现有可修改行为后选择“改为深度只读，修改前先克隆”。本轮据此落实 ReadonlyPreparedForm、共享结构接收与不可变验证复用；保留外部输入、实际能力、动态执行和完整异常现场检查。契约与理由分别见 [交付边界](l2-preparation.md#prepared-delivery)及 [Compiler 输出](l2/compiler.md)；实际回归以本轮执行证据为准。
 
 2026-10-21 用户在确认输入输出及默认易用性后，明确要求“先提交一下，然后把协议层相关的一些类型定义也调整一下”。设计提交为 bdec628；实际变更在 packages/protocol 的 definition / prepared 类型、自动派生 schemas、契约测试、公共消费和 README，记录见[工程实施](engineering.md#compiler-io-types)。本轮无 Compiler / Runtime 实现、真实依赖分析结果或精准更新性能证据；不将手写 Prepared 夹具作为编译器产物，也不伪造逐字会话存档。
 

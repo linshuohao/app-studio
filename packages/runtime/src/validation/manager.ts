@@ -24,7 +24,7 @@ import {
   type ReadView,
   type ScopeBinding,
 } from '../scope/registry.js';
-import { childPath, overlaps, ownJson, readAt } from '../data/json.js';
+import { childPath, overlaps, copyJson, readAt } from '../data/json.js';
 import { fieldLocation, currentFieldPath } from './fields.js';
 import { createSchemaCompiler, DATA_SCHEMA_BASE } from './schema.js';
 import { ValidationCall, ValidationWork } from './work.js';
@@ -749,7 +749,7 @@ export class ValidationManager {
       .then((result) =>
         this.deps.diagnostics.run(trace, () => {
           if (!eligible()) return;
-          const json = ownJson(result) as unknown as readonly ValidatorIssue[];
+          const json = copyJson(result) as unknown as readonly ValidatorIssue[];
           trace.parameters = json as unknown as import('../types.js').ReadonlyJson;
           if (!Array.isArray(json)) throw Error('validator: issues must be an array');
           const issues = json.map((issue) => {

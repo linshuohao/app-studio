@@ -1,9 +1,12 @@
+import { DEVTOOLS_ENABLED, registerDevtoolsSource, type DevtoolsSource } from './devtools/index.js';
+import { diagnosticSummary } from './devtools/diagnostic-summary.js';
 import type { JsonValue } from '@form-engine/protocol';
 import type {
   Command,
   DataReference,
   Expression,
   HostEventIntent,
+  InteractionIntent,
   ReactionAction,
   Reference,
   ValueSpec,
@@ -11,15 +14,17 @@ import type {
 import type {
   DataWatch,
   PreparedForm,
+  ReadonlyPreparedForm,
   PreparedReaction,
   PreparedReactionWatch,
   PreparedScopeDeclaration,
   PreparedValueSpec,
 } from '@form-engine/protocol/prepared';
-import { ownJson, readAt } from './data/json.js';
+import { captureJson, copyJson, readAt } from './data/json.js';
 import { DataStore } from './data/store.js';
 import {
   bindScopes,
+  bindingAlive,
   bindingKey,
   resolvePath,
   resolveLocation,
@@ -28,7 +33,12 @@ import {
 } from './scope/registry.js';
 import { Evaluator, MissingValue, type EvaluationFrame } from './expression/evaluator.js';
 import { executeCommand, ownScope } from './commands/execute.js';
-import { loadPrepared, validCommand } from './lifecycle/load.js';
+import { checkExecution, type SchemaRoot } from './lifecycle/view.js';
+import { loadCompiledForm, validCommand } from './lifecycle/load.js';
+import {
+  capturePreparedForm,
+  PreparedStructureError,
+} from '@form-engine/protocol/internal/prepared';
 import { observeRejection } from './lifecycle/async.js';
 import { ObserverRegistry } from './observation/registry.js';
 import { ReactionScheduler } from './reactions/scheduler.js';
@@ -72,35 +82,38 @@ interface CommandExecution {
 
 /** 组合各领域模块，串联 Command → 观察失效 → Reaction → 校验；对外提供实例 API。 */
 class Runtime implements FormRuntime {
+  #inspectionSource?: DevtoolsSource;
+  readonly #functionSchemas: Readonly<Record<string, readonly SchemaRoot[]>>;
+  readonly #scopeInvalidationListeners = new Set<() => void>();
   // 固定输入与模块依赖；生命周期策略仍由各模块负责。
   /** 已接管并校验的编译产物，提供规则、表达式与锁定能力需求。 */
-  readonly #prepared: PreparedForm;
+  readonly #compiledForm: PreparedForm;
   /** L3 使用的 Host 事件 / 校验器注册表快照；物料 Request 由 Adapter 接入。 */
-  readonly #host: HostCapabilities;
+  readonly #hostCapabilities: HostCapabilities;
   /** 是否冻结引擎持有的 Data / Context；不改变只读 API 契约。 */
   readonly #freeze: boolean;
   /** 实例诊断出口与有限事件查询；单轮 Journal 由 Scheduler 的 FlushContext 创建。 */
-  readonly #diagnostics: DiagnosticReporter;
+  readonly #diagnosticReporter: DiagnosticReporter;
   /** Working Data 与配套 Scope 索引的唯一写入入口。 */
-  readonly #store: DataStore;
+  readonly #dataStore: DataStore;
   /** 在显式 EvaluationFrame 中求值引用 / 表达式，不自行修改状态。 */
-  readonly #evaluator: Evaluator;
+  readonly #expressionEvaluator: Evaluator;
   /** 观察候选筛选、前后值比较与内外通知顺序。 */
-  readonly #observers: ObserverRegistry;
+  readonly #observerRegistry: ObserverRegistry;
   /** 联动入队去重、延迟启动和本轮熔断预算。 */
-  readonly #scheduler: ReactionScheduler;
+  readonly #reactionScheduler: ReactionScheduler;
   /** 校验来源状态、前置依赖、异步任务资格与完整校验证明。 */
-  readonly #validation: ValidationManager;
+  readonly #validationManager: ValidationManager;
 
   // 可变实例状态；业务数据本身只由 DataStore 持有。
   /** Host 提供并由 Runtime 接管的环境输入，通过 replaceContext 整体替换。 */
-  #context: JsonValue;
+  #hostContext: JsonValue;
   /** 每次替换 Context 递增，供完整校验识别输入过期；不等于 Data revision。 */
-  #contextRevision = 0;
+  #hostContextRevision = 0;
   /** 生命周期终止标记；销毁后禁止继续读取 / 修改业务状态。 */
   #disposed = false;
   /** 活跃的规则 + Scope 实例及其订阅；待执行任务另由 Scheduler 持有。 */
-  readonly #reactions = new Map<string, ReactionInstance>();
+  readonly #reactionInstances = new Map<string, ReactionInstance>();
 
   /** 校验装载输入、连接模块、建立规则实例，并预约初始联动 / 校验，不等待异步任务。 */
   constructor(options: RuntimeOptions) {
@@ -115,11 +128,14 @@ class Runtime implements FormRuntime {
       throw Error('load: invalid execution limits');
 
     this.#freeze = options.freeze ?? true;
-    this.#diagnostics = new DiagnosticReporter(
+    this.#diagnosticReporter = new DiagnosticReporter(
       traceCapacity,
       options.onDiagnostic,
-      () => this.#prepared,
+      () => this.#compiledForm as unknown as ReadonlyPreparedForm,
       () => this.#diagnosticInput(),
+      DEVTOOLS_ENABLED
+        ? (report) => this.#inspectionSource?.publish('diagnostic', diagnosticSummary(report))
+        : undefined,
     );
     // 接管注册表；实例装载后不随 Host 注册字典的修改切换实现。
     const functions = Object.freeze(
@@ -128,8 +144,8 @@ class Runtime implements FormRuntime {
           id,
           Object.freeze({
             ...binding,
-            manifest: ownJson(binding.manifest) as unknown as typeof binding.manifest,
-            artifact: ownJson(binding.artifact) as unknown as typeof binding.artifact,
+            manifest: copyJson(binding.manifest) as unknown as typeof binding.manifest,
+            artifact: copyJson(binding.artifact) as unknown as typeof binding.artifact,
           }),
         ]),
       ),
@@ -142,52 +158,73 @@ class Runtime implements FormRuntime {
         ]),
       ),
     );
-    this.#prepared = loadPrepared(options.prepared, registeredFunctions);
-    this.#host = Object.freeze({
+    this.#compiledForm = loadCompiledForm(options.prepared, registeredFunctions);
+    this.#hostCapabilities = Object.freeze({
       events: Object.freeze({ ...options.host?.events }),
       validators: Object.freeze({ ...options.host?.validators }),
     });
-    this.#store = new DataStore(options.data, this.#freeze);
-    this.#context = ownJson(options.context === undefined ? {} : options.context, this.#freeze);
+    this.#dataStore = new DataStore(options.data, this.#freeze);
+    this.#hostContext = copyJson(
+      options.context === undefined ? {} : options.context,
+      this.#freeze,
+    );
     const boundFunctions = Object.freeze(
       Object.fromEntries(
-        Object.keys(this.#prepared.capabilityLock.pureFunctions).map((id) => [
+        Object.keys(this.#compiledForm.capabilityLock.pureFunctions).map((id) => [
           id,
           registeredFunctions[id]!,
         ]),
       ),
     );
-    this.#evaluator = new Evaluator(
-      this.#prepared.definition.expressions ?? {},
-      boundFunctions,
-      this.#prepared.resources.schemas,
+    this.#functionSchemas = Object.fromEntries(
+      Object.entries(boundFunctions).map(([id, { manifest }]) => {
+        const base = `https://form-engine.invalid/function/${encodeURIComponent(id)}`;
+        return [
+          id,
+          [
+            ...manifest.parameters.map((parameter, i) => ({
+              schema: parameter.schema,
+              uri: `${base}/parameter/${i}`,
+            })),
+            ...(manifest.restParameter
+              ? [{ schema: manifest.restParameter.schema, uri: `${base}/parameter/rest` }]
+              : []),
+            { schema: manifest.returns, uri: `${base}/returns` },
+          ],
+        ];
+      }),
     );
-    this.#observers = new ObserverRegistry(
-      () => this.#store.capture(),
+    this.#expressionEvaluator = new Evaluator(
+      this.#compiledForm.definition.expressions ?? {},
+      boundFunctions,
+      this.#compiledForm.resources.schemas,
+    );
+    this.#observerRegistry = new ObserverRegistry(
+      () => this.#dataStore.capture(),
       (watch, scope, view) => this.#readWatch(watch, scope, view),
       (error) =>
-        this.#diagnostics.error(
+        this.#diagnosticReporter.error(
           'observer.error',
           error,
-          this.#diagnostics.captureExecution('observer.effect'),
+          this.#diagnosticReporter.captureExecution('observer.effect'),
         ),
       {
         maximum: maxExecutions,
-        consume: (generation) => this.#scheduler.consumeNotification(generation),
-        abort: () => this.#scheduler.abortNotifications(),
+        consume: (generation) => this.#reactionScheduler.consumeNotification(generation),
+        abort: () => this.#reactionScheduler.abortNotifications(),
       },
       (callback, scope) => {
-        const trace = this.#diagnostics.execution(
+        const trace = this.#diagnosticReporter.execution(
           'observer',
-          this.#diagnosticInput(this.#frame(scope)),
+          this.#diagnosticInput(this.#createEvaluationFrame(scope)),
         );
-        this.#diagnostics.run(trace, () => {
+        this.#diagnosticReporter.run(trace, () => {
           try {
-            const origin = this.#diagnostics.capture('observer.start');
+            const origin = this.#diagnosticReporter.capture('observer.start');
             const returned: unknown = callback();
             observeRejection(returned, (error) => {
               if (!this.#disposed)
-                this.#diagnostics.error(
+                this.#diagnosticReporter.error(
                   'observer.error',
                   error,
                   trace,
@@ -197,25 +234,30 @@ class Runtime implements FormRuntime {
                 );
             });
           } catch (error) {
-            this.#diagnostics.error('observer.error', error, trace, 'callback');
+            this.#diagnosticReporter.error('observer.error', error, trace, 'callback');
           }
         });
       },
     );
-    this.#scheduler = new ReactionScheduler(
+    this.#reactionScheduler = new ReactionScheduler(
       maxExecutions,
       () => this.#afterReactions(),
-      this.#diagnostics,
+      this.#diagnosticReporter,
     );
-    this.#validation = new ValidationManager(this.#prepared, this.#evaluator, {
-      view: () => this.#store.capture(),
-      contextRevision: () => this.#contextRevision,
-      frame: (scope) => this.#frame(scope),
+    this.#validationManager = new ValidationManager(this.#compiledForm, this.#expressionEvaluator, {
+      view: () => this.#dataStore.capture(),
+      contextRevision: () => this.#hostContextRevision,
+      frame: (scope) => this.#createEvaluationFrame(scope),
       observe: (watch, scope, callback) =>
-        this.#observers.add(watch, scope, callback, true).dispose,
+        this.#observerRegistry.add(watch, scope, callback, true).dispose,
       publish: (paths, origin) => {
-        const entry = this.#diagnostics.record('validation.change', undefined, undefined, origin);
-        this.#diagnostics.withTrigger(
+        const entry = this.#diagnosticReporter.record(
+          'validation.change',
+          undefined,
+          undefined,
+          origin,
+        );
+        this.#diagnosticReporter.withTrigger(
           {
             origin: {
               sequence: entry.sequence,
@@ -224,49 +266,157 @@ class Runtime implements FormRuntime {
             input: this.#diagnosticInput(),
           },
           () => {
-            if (this.#observers.validationChanged(paths) && !this.#disposed)
-              this.#diagnostics.addTrigger(entry);
+            if (this.#observerRegistry.validationChanged(paths) && !this.#disposed)
+              this.#diagnosticReporter.addTrigger(entry);
           },
         );
       },
-      schedule: () => this.#scheduler.schedule(),
-      captureOrigin: (kind, ruleId) => this.#diagnostics.capture(kind, ruleId),
-      diagnostics: this.#diagnostics,
-      diagnosticInput: (scope) => this.#diagnosticInput(this.#frame(scope)),
-      deferEffect: (effect) => this.#observers.deferEffect(effect),
-      host: this.#host,
+      schedule: () => this.#reactionScheduler.schedule(),
+      captureOrigin: (kind, ruleId) => this.#diagnosticReporter.capture(kind, ruleId),
+      diagnostics: this.#diagnosticReporter,
+      diagnosticInput: (scope) => this.#diagnosticInput(this.#createEvaluationFrame(scope)),
+      deferEffect: (effect) => this.#observerRegistry.deferEffect(effect),
+      host: this.#hostCapabilities,
     });
+    if (DEVTOOLS_ENABLED)
+      this.#inspectionSource = registerDevtoolsSource(
+        this,
+        {
+          kind: 'runtime',
+          label: this.#compiledForm.definition.id,
+          formId: this.#compiledForm.definition.id,
+        },
+        () => ({
+          data: this.#dataStore.capture().root,
+          context: this.#hostContext,
+          dataRevision: this.#dataStore.capture().revision,
+          contextRevision: this.#hostContextRevision,
+          prepared: this.#compiledForm,
+          // 仅轻量查询尾部，不把错误现场中的完整输入隐式广播。
+          diagnostics: this.#diagnosticReporter
+            .read()
+            .map(({ evidence: _evidence, ...entry }) => entry),
+        }),
+      );
     this.#bindPublicMethods();
     this.#report('runtime.initialize', undefined, undefined, undefined, true);
     this.#refreshRuleInstances();
-    this.#scheduler.schedule();
+    this.#reactionScheduler.schedule();
     // 公共方法保持不可覆盖；原生私有字段仍能维护实例状态。
     Object.freeze(this);
   }
 
   /** 从当前输入解析引用，将缺失 / 读取异常包装为结果；不会触发 flush。 */
   read(reference: Reference, scope: ScopeBinding = {}): ReadResult {
-    return this.#readResult(() => this.#evaluator.reference(reference, this.#frame(scope)));
+    return this.#captureReadResult(() =>
+      this.#expressionEvaluator.reference(reference, this.#createEvaluationFrame(scope)),
+    );
+  }
+
+  /** 兼容接入只比较执行内容；新视图不得带入未锁定函数或另一套规则。 */
+  checkView(input: ReadonlyPreparedForm): ReturnType<FormRuntime['checkView']> {
+    try {
+      this.#assertAlive();
+      const candidateForm = capturePreparedForm(input);
+      if (candidateForm.preparedFormatVersion !== this.#compiledForm.preparedFormatVersion)
+        throw Error('view: invalid Prepared format');
+      checkExecution(this.#compiledForm, candidateForm, this.#functionSchemas);
+      return { compatible: true };
+    } catch (error) {
+      return {
+        compatible: false,
+        error:
+          error instanceof PreparedStructureError
+            ? 'Error: view: invalid Prepared format'
+            : String(error),
+      };
+    }
+  }
+
+  /** 成员删除即失效，不等待 React 清理。 */
+  isScopeAlive(scope: ScopeBinding = {}): boolean {
+    try {
+      return !this.#disposed && bindingAlive(this.#dataStore.capture(), ownScope(scope));
+    } catch {
+      return false;
+    }
+  }
+
+  /** 独立生命周期观察，不改变普通 Data / Validation 订阅的销毁语义。 */
+  observeScope(
+    scope: ScopeBinding,
+    invalidated: () => void,
+  ): ReturnType<FormRuntime['observeScope']> {
+    const binding = ownScope(scope);
+    if (!this.isScopeAlive(binding))
+      return Object.freeze({ alive: false, dispose: () => undefined });
+    let active = true;
+    let disposeObservation = () => {};
+    const dispose = () => {
+      if (!active) return;
+      active = false;
+      this.#scopeInvalidationListeners.delete(invalidate);
+      disposeObservation();
+    };
+    const invalidate = () => {
+      if (!active || this.isScopeAlive(binding)) return;
+      dispose();
+      try {
+        invalidated();
+      } catch (error) {
+        this.#diagnosticReporter.error('scope.observer.error', error);
+      }
+    };
+    disposeObservation = this.#observerRegistry.add([], binding, invalidate).dispose;
+    this.#scopeInvalidationListeners.add(invalidate);
+    return Object.freeze({ alive: true, dispose });
+  }
+
+  /** 同一事件快照既供命令求值，也供 Host 通知，不绕过 Runtime 的诊断路径。 */
+  interact(intent: InteractionIntent, scope: ScopeBinding = {}, event?: JsonValue): CommandResult {
+    if (intent.type === 'form.command') return this.dispatch(intent.command, scope, event);
+    try {
+      this.#assertAlive();
+      const binding = ownScope(scope);
+      if (!this.isScopeAlive(binding)) throw Error('interaction: inactive Scope');
+      const ok = this.#emitHostEvent(
+        copyJson(intent) as unknown as HostEventIntent,
+        binding,
+        undefined,
+        event === undefined ? undefined : copyJson(event),
+      );
+      return Object.freeze({
+        ok,
+        changed: false,
+        errors: Object.freeze(ok ? [] : ['interaction: Host event failed']),
+      });
+    } catch (error) {
+      this.#diagnosticReporter.error('interaction.error', error);
+      return Object.freeze({ ok: false, changed: false, errors: Object.freeze([String(error)]) });
+    }
   }
 
   /** 返回调用时的数据根快照，不隐式 flush、等待校验或建立业务 Baseline。 */
   snapshot(): ReadonlyJson {
     this.#assertAlive();
-    return this.#store.capture().root;
+    return this.#dataStore.capture().root;
   }
 
   /** 按当前数据展开 Scope 声明，供 Host / 后续 Renderer 持有稳定成员绑定。 */
   bind(declaration?: PreparedScopeDeclaration, parent: ScopeBinding = {}): ScopeBinding[] {
     this.#assertAlive();
-    return bindScopes(this.#store.capture(), declaration, ownScope(parent));
+    return bindScopes(this.#dataStore.capture(), declaration, ownScope(parent));
   }
 
   /** 在当前 Data / Context 及本次 Scope / Event 中求值单个表达式，只读不写入。 */
   evaluate(expression: Expression, scope: ScopeBinding = {}, event?: JsonValue): ReadResult {
-    return this.#readResult(() =>
-      this.#evaluator.expression(
+    return this.#captureReadResult(() =>
+      this.#expressionEvaluator.expression(
         expression,
-        this.#frame(ownScope(scope), event === undefined ? undefined : ownJson(event)),
+        this.#createEvaluationFrame(
+          ownScope(scope),
+          event === undefined ? undefined : copyJson(event),
+        ),
       ),
     );
   }
@@ -277,10 +427,13 @@ class Runtime implements FormRuntime {
     scope: ScopeBinding = {},
     event?: JsonValue,
   ): ReadResult {
-    return this.#readResult(() =>
-      this.#evaluator.value(
+    return this.#captureReadResult(() =>
+      this.#expressionEvaluator.value(
         value,
-        this.#frame(ownScope(scope), event === undefined ? undefined : ownJson(event)),
+        this.#createEvaluationFrame(
+          ownScope(scope),
+          event === undefined ? undefined : copyJson(event),
+        ),
       ),
     );
   }
@@ -289,17 +442,17 @@ class Runtime implements FormRuntime {
   dispatch(command: Command, scope: ScopeBinding = {}, event?: JsonValue): CommandResult {
     const execution: CommandExecution = { changed: false, errors: [] };
     const binding = ownScope(scope);
-    const capturedEvent = event === undefined ? undefined : ownJson(event);
+    const capturedEvent = event === undefined ? undefined : copyJson(event);
     try {
       this.#executeCommand(
-        ownJson(command) as unknown as Command,
+        captureJson(command) as unknown as Command,
         binding,
         capturedEvent,
         execution,
       );
     } catch (error) {
       execution.errors.push(String(error));
-      this.#diagnostics.error('command.error', error);
+      this.#diagnosticReporter.error('command.error', error);
     }
     return Object.freeze({
       ok: !execution.errors.length,
@@ -315,8 +468,8 @@ class Runtime implements FormRuntime {
     scope: ScopeBinding = {},
   ): Observation {
     this.#assertAlive();
-    const owned = ownJson(watches) as unknown as typeof watches;
-    const subscription = this.#observers.add(owned, ownScope(scope), callback);
+    const owned = copyJson(watches) as unknown as typeof watches;
+    const subscription = this.#observerRegistry.add(owned, ownScope(scope), callback);
     return Object.freeze({
       values: Object.freeze(
         subscription.values.map((value): ReadResult =>
@@ -329,48 +482,50 @@ class Runtime implements FormRuntime {
 
   /** 等待已预约 / 正在执行的同步联动轮次结束，不等待 Host 请求与外部校验 Promise。 */
   flush(): Promise<FlushOutcome> {
-    return this.#scheduler.flush();
+    return this.#reactionScheduler.flush();
   }
 
   /** 聚合影响指定字段的当前校验来源，不发起新的校验。 */
   getValidation(field: DataReference, scope: ScopeBinding = {}): FieldValidation {
     this.#assertAlive();
-    return this.#validation.field(field, scope);
+    return this.#validationManager.field(field, scope);
   }
 
   /** 对本次捕获输入启动完整校验并等待结果；输入变化时返回 stale，不自动保存业务数据。 */
   validate(): Promise<FullValidationResult> {
     this.#assertAlive();
-    return this.#validation.validate();
+    return this.#validationManager.validate();
   }
 
   /** 整体替换 Host 环境输入，失效校验与外部读取；不伪造 Data 变化或触发 Data watch。 */
   replaceContext(input: unknown): void {
     this.#assertAlive();
-    this.#context = ownJson(input, this.#freeze);
-    this.#contextRevision++;
+    this.#hostContext = copyJson(input, this.#freeze);
+    this.#hostContextRevision++;
     this.#report('context.replace', undefined, undefined, undefined, true);
-    this.#observers.transaction(() => {
-      this.#validation.inputChanged(true);
-      this.#observers.contextChanged();
+    this.#observerRegistry.transaction(() => {
+      this.#validationManager.inputChanged(true);
+      this.#observerRegistry.contextChanged();
     });
   }
 
   /** 读取实例最近诊断事件，返回独立只读数组；销毁后仍可排查最后事件。 */
   diagnostics(): readonly Diagnostic[] {
-    return this.#diagnostics.read();
+    return this.#diagnosticReporter.read();
   }
 
   /** 幂等终止调度、解除订阅并撤销异步校验发布资格，保留诊断记录供排查。 */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    this.#scheduler.dispose();
-    this.#reactions.forEach((instance) => instance.dispose());
-    this.#reactions.clear();
-    this.#validation.dispose();
-    this.#observers.clear();
+    this.#reactionScheduler.dispose();
+    this.#reactionInstances.forEach((instance) => instance.dispose());
+    this.#reactionInstances.clear();
+    this.#validationManager.dispose();
+    for (const invalidate of [...this.#scopeInvalidationListeners]) invalidate();
+    this.#observerRegistry.clear();
     this.#report('runtime.dispose');
+    this.#inspectionSource?.dispose();
   }
 
   /** 展开 batch 并逐叶提交；有效修改后按顺序失效校验、更新规则实例、比较观察值。 */
@@ -379,60 +534,64 @@ class Runtime implements FormRuntime {
     scope: ScopeBinding,
     event: JsonValue | undefined,
     execution: CommandExecution,
+    source: 'external' | 'prepared' = 'external',
   ): void {
-    const trace = this.#diagnostics.execution(
+    const trace = this.#diagnosticReporter.execution(
       'command',
-      this.#diagnosticInput(this.#frame(scope, event)),
+      this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
     );
-    this.#diagnostics.run(trace, () => {
+    this.#diagnosticReporter.run(trace, () => {
       try {
         this.#assertAlive();
-        if (this.#scheduler.hasAborted()) return;
+        if (this.#reactionScheduler.hasAborted()) return;
         if (command.op === 'batch') {
           if (
-            Object.keys(command).some((key) => !['op', 'commands'].includes(key)) ||
-            !Array.isArray(command.commands)
+            source === 'external' &&
+            (Object.keys(command).some((key) => !['op', 'commands'].includes(key)) ||
+              !Array.isArray(command.commands))
           )
             throw Error('command: invalid batch');
-          for (const leaf of command.commands) this.#executeCommand(leaf, scope, event, execution);
+          for (const leaf of command.commands)
+            this.#executeCommand(leaf, scope, event, execution, source);
           return;
         }
-        if (!validCommand(command)) throw Error('command: invalid shape');
-        const before = this.#store.capture();
+        // 外部命令在此逐叶检查；Prepared 动作已在装载时接管并检查，动态执行保护仍共用。
+        if (source === 'external' && !validCommand(command)) throw Error('command: invalid shape');
+        const before = this.#dataStore.capture();
         const mutation = executeCommand(
-          this.#store,
-          this.#evaluator,
+          this.#dataStore,
+          this.#expressionEvaluator,
           command,
-          this.#frame(scope, event),
+          this.#createEvaluationFrame(scope, event),
         );
         if (!mutation.changed) return;
         execution.changed = true;
-        const change = this.#diagnostics.record(
+        const change = this.#diagnosticReporter.record(
           'data.change',
-          JSON.stringify(command),
+          this.#diagnosticReporter.capacity ? JSON.stringify(command) : undefined,
           undefined,
           undefined,
           true,
         );
-        this.#diagnostics.withTrigger(
+        this.#diagnosticReporter.withTrigger(
           {
             origin: {
               sequence: change.sequence,
               ...(change.round === undefined ? {} : { round: change.round }),
             },
-            input: this.#diagnosticInput(this.#frame(scope, event)),
+            input: this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
           },
           () =>
-            this.#observers.transaction(() => {
-              this.#validation.inputChanged();
-              if (this.#store.capture().topologyChanged) this.#refreshRuleInstances();
-              this.#observers.dataChanged(mutation.path, before);
+            this.#observerRegistry.transaction(() => {
+              this.#validationManager.inputChanged();
+              if (this.#dataStore.capture().topologyChanged) this.#refreshRuleInstances();
+              this.#observerRegistry.dataChanged(mutation.path, before);
             }),
         );
       } catch (error) {
         const message = String(error);
         execution.errors.push(message);
-        this.#diagnostics.error(
+        this.#diagnosticReporter.error(
           'command.error',
           error,
           trace,
@@ -445,68 +604,71 @@ class Runtime implements FormRuntime {
 
   /** 数据结构变化后重绑定规则；保留已有成员实例，只为新实例处理 runOnActivate。 */
   #refreshRuleInstances(): void {
-    this.#validation.refresh();
+    this.#validationManager.refresh();
     const keys = new Set<string>();
-    for (const rule of this.#prepared.definition.reactions ?? []) {
-      for (const scope of bindScopes(this.#store.capture(), rule.scope)) {
+    for (const rule of this.#compiledForm.definition.reactions ?? []) {
+      for (const scope of bindScopes(this.#dataStore.capture(), rule.scope)) {
         const key = `${rule.id}:${bindingKey(scope)}`;
         keys.add(key);
-        if (this.#reactions.has(key)) continue;
-        const dispose = this.#observers.add(
+        if (this.#reactionInstances.has(key)) continue;
+        const dispose = this.#observerRegistry.add(
           rule.watch,
           scope,
           () => this.#enqueueReaction(key),
           true,
         ).dispose;
-        this.#reactions.set(key, { rule, scope, dispose, triggers: new Map() });
+        this.#reactionInstances.set(key, { rule, scope, dispose, triggers: new Map() });
         if (rule.runOnActivate) this.#enqueueReaction(key);
       }
     }
-    for (const [key, instance] of this.#reactions) {
+    for (const [key, instance] of this.#reactionInstances) {
       if (keys.has(key)) continue;
       instance.dispose();
-      this.#reactions.delete(key);
-      this.#scheduler.remove(key);
+      this.#reactionInstances.delete(key);
+      this.#reactionScheduler.remove(key);
     }
   }
 
   /** 按实例键入队，多个 watch 失效可合并为一次待执行任务。 */
   #enqueueReaction(key: string): void {
-    const instance = this.#reactions.get(key);
+    const instance = this.#reactionInstances.get(key);
     if (instance) {
-      const trigger = this.#diagnostics.captureTrigger(
-        this.#diagnosticInput(this.#frame(instance.scope)),
+      const trigger = this.#diagnosticReporter.captureTrigger(
+        this.#diagnosticInput(this.#createEvaluationFrame(instance.scope)),
       );
       instance.triggers.set(trigger.origin.sequence, trigger);
     }
-    this.#scheduler.enqueue(key, () => this.#runReaction(key));
+    this.#reactionScheduler.enqueue(key, () => this.#runReaction(key));
   }
 
   /** 读取执行时最新数据判断 when，再按声明顺序执行响应项；已失效实例直接跳过。 */
   #runReaction(key: string): void {
-    const instance = this.#reactions.get(key);
+    const instance = this.#reactionInstances.get(key);
     if (!instance || this.#disposed) return;
-    const trace = this.#diagnostics.execution(
+    const trace = this.#diagnosticReporter.execution(
       'reaction',
-      this.#diagnosticInput(this.#frame(instance.scope)),
+      this.#diagnosticInput(this.#createEvaluationFrame(instance.scope)),
       { ruleId: instance.rule.id },
       [...instance.triggers.values()],
     );
     instance.triggers.clear();
-    this.#diagnostics.run(trace, () => {
+    this.#diagnosticReporter.run(trace, () => {
       try {
         this.#report('reaction.execute', undefined, instance.rule.id);
         if (
           instance.rule.when !== undefined &&
-          !this.#evaluator.boolean(instance.rule.when, this.#frame(instance.scope))
+          !this.#expressionEvaluator.boolean(
+            instance.rule.when,
+            this.#createEvaluationFrame(instance.scope),
+          )
         )
           return;
         for (const action of instance.rule.then) {
-          if (this.#disposed || this.#scheduler.hasAborted()) break;
+          if (this.#disposed || this.#reactionScheduler.hasAborted()) break;
           this.#executeReactionAction(action, instance.scope, instance.rule.id);
         }
       } catch (error) {
-        this.#diagnostics.error('reaction.error', error, trace, 'when');
+        this.#diagnosticReporter.error('reaction.error', error, trace, 'when');
       }
     });
   }
@@ -515,9 +677,10 @@ class Runtime implements FormRuntime {
   #executeReactionAction(action: ReactionAction, scope: ScopeBinding, ruleId: string): void {
     try {
       if ('type' in action) this.#emitHostEvent(action, scope, ruleId);
-      else this.dispatch(action, scope);
+      else
+        this.#executeCommand(action, scope, undefined, { changed: false, errors: [] }, 'prepared');
     } catch (error) {
-      this.#diagnostics.error(
+      this.#diagnosticReporter.error(
         'reaction.action.error',
         error,
         undefined,
@@ -528,25 +691,33 @@ class Runtime implements FormRuntime {
   }
 
   /** 捕获调用输入后同步交付 Host 事件；返回的异步任务只处理拒绝，不延长本轮 flush。 */
-  #emitHostEvent(action: HostEventIntent, scope: ScopeBinding, ruleId: string): void {
+  #emitHostEvent(
+    action: HostEventIntent,
+    scope: ScopeBinding,
+    ruleId?: string,
+    event?: JsonValue,
+  ): boolean {
     const callback =
-      this.#host.events && Object.hasOwn(this.#host.events, action.event)
-        ? this.#host.events[action.event]
+      this.#hostCapabilities.events && Object.hasOwn(this.#hostCapabilities.events, action.event)
+        ? this.#hostCapabilities.events[action.event]
         : undefined;
     if (!callback) {
       this.#report('host.event.missing', action.event, ruleId);
-      return;
+      return false;
     }
-    const input = this.#frame(scope);
-    const trace = this.#diagnostics.execution('host.event', this.#diagnosticInput(input), {
+    let ok = true;
+    const input = this.#createEvaluationFrame(scope, event);
+    const trace = this.#diagnosticReporter.execution('host.event', this.#diagnosticInput(input), {
       ruleId,
     });
-    this.#diagnostics.run(trace, () => {
+    this.#diagnosticReporter.run(trace, () => {
       let phase = 'payload';
-      const origin = this.#diagnostics.capture('host.event.start', ruleId);
+      const origin = this.#diagnosticReporter.capture('host.event.start', ruleId);
       try {
         const payload =
-          action.payload === undefined ? undefined : this.#evaluator.value(action.payload, input);
+          action.payload === undefined
+            ? undefined
+            : this.#expressionEvaluator.value(action.payload, input);
         trace.parameters = Object.freeze({
           event: action.event,
           ...(payload === undefined ? {} : { payload }),
@@ -561,14 +732,16 @@ class Runtime implements FormRuntime {
             scope,
             ...(payload === undefined ? {} : { payload }),
             read: (reference: DataReference) =>
-              this.#diagnostics.run(trace, () =>
-                this.#readResult(() => this.#evaluator.reference(reference, input)),
+              this.#diagnosticReporter.run(trace, () =>
+                this.#captureReadResult(() =>
+                  this.#expressionEvaluator.reference(reference, input),
+                ),
               ),
           }),
         );
         observeRejection(returned, (error) => {
           if (!this.#disposed)
-            this.#diagnostics.error(
+            this.#diagnosticReporter.error(
               'host.event.error',
               error,
               trace,
@@ -579,7 +752,8 @@ class Runtime implements FormRuntime {
         });
         this.#report('host.event.emit', action.event, ruleId);
       } catch (error) {
-        this.#diagnostics.error(
+        ok = false;
+        this.#diagnosticReporter.error(
           'reaction.action.error',
           error,
           trace,
@@ -589,12 +763,13 @@ class Runtime implements FormRuntime {
         );
       }
     });
+    return ok;
   }
 
   /** 每次联动队列排空后进入增量校验，结果变化可经观察器重新触发联动。 */
   #afterReactions(): boolean {
-    this.#validation.run();
-    return this.#validation.hasPending();
+    this.#validationManager.run();
+    return this.#validationManager.hasPending();
   }
 
   /** 读取观察投影：Data 值、数组成员顺序或字段校验状态，供 Registry 比较前后差异。 */
@@ -604,36 +779,42 @@ class Runtime implements FormRuntime {
     view: ReadView,
   ): JsonValue | undefined {
     if (watch.source === 'validation')
-      return this.#validationProjection(watch.observe, this.#validation.field(watch.field, scope));
+      return this.#validationProjection(
+        watch.observe,
+        this.#validationManager.field(watch.field, scope),
+      );
     const path = resolvePath(view, watch, scope);
     if (watch.aspect === 'structure') {
       const ids = view.scopes.membersOf(path);
-      return ids ? ownJson(ids) : undefined;
+      return ids ? copyJson(ids) : undefined;
     }
     const result = readAt(view.root, path);
     return result.kind === 'value' ? result.value : undefined;
   }
 
   /** 捕获本次求值的 Data / Context 输入；不是 flush 上下文，也不在表达式之间累计状态。 */
-  #frame(scope: ScopeBinding = {}, event?: JsonValue): EvaluationFrame {
+  #createEvaluationFrame(scope: ScopeBinding = {}, event?: JsonValue): EvaluationFrame {
     return {
-      view: this.#store.capture(),
-      context: this.#context,
+      view: this.#dataStore.capture(),
+      context: this.#hostContext,
       scope,
       ...(event === undefined ? {} : { event }),
       validation: (reference, binding) => {
         const value = this.#validationProjection(
           reference.observe,
-          this.#validation.field(reference.field, binding),
+          this.#validationManager.field(reference.field, binding),
         );
-        this.#diagnostics.noteRead({ reference: reference as unknown as ReadonlyJson, value });
+        this.#diagnosticReporter.noteRead({
+          reference: reference as unknown as ReadonlyJson,
+          value,
+        });
         return value;
       },
     };
   }
 
   /** 只捕获输入与当时物理路径，异步回报不重新读取当前 Store。 */
-  #diagnosticInput(frame = this.#frame()): DiagnosticInput {
+  #diagnosticInput(frame = this.#createEvaluationFrame()): DiagnosticInput {
     const paths: Array<[string, string]> = [];
     for (const [alias, location] of Object.entries(frame.scope)) {
       try {
@@ -645,7 +826,7 @@ class Runtime implements FormRuntime {
     return Object.freeze({
       runtimeId: frame.view.runtimeId,
       dataRevision: frame.view.revision,
-      contextRevision: this.#contextRevision,
+      contextRevision: this.#hostContextRevision,
       snapshot: frame.view.root,
       context: frame.context,
       scope: frame.scope,
@@ -664,7 +845,7 @@ class Runtime implements FormRuntime {
   }
 
   /** 统一只读入口的错误边界：Missing 独立返回，其他异常转为 error 而不抛给 Host。 */
-  #readResult(read: () => JsonValue): ReadResult {
+  #captureReadResult(read: () => JsonValue): ReadResult {
     try {
       this.#assertAlive();
       return { kind: 'value', value: read() };
@@ -687,12 +868,16 @@ class Runtime implements FormRuntime {
     origin?: DiagnosticOrigin,
     trigger = false,
   ): void {
-    this.#diagnostics.record(kind, message, ruleId, origin, trigger);
+    this.#diagnosticReporter.record(kind, message, ruleId, origin, trigger);
   }
 
   /** 绑定 this，使公开方法可解构或作为回调传递；构造后再冻结公开实例。 */
   #bindPublicMethods(): void {
     // 保留原入口方法可解构 / 直接作为回调传递的行为。
+    this.checkView = this.checkView.bind(this);
+    this.isScopeAlive = this.isScopeAlive.bind(this);
+    this.observeScope = this.observeScope.bind(this);
+    this.interact = this.interact.bind(this);
     this.read = this.read.bind(this);
     this.snapshot = this.snapshot.bind(this);
     this.bind = this.bind.bind(this);

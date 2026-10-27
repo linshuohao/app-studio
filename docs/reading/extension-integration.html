@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>物料扩展与 Host 集成 · 动态表单引擎</title>
-  <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
+
+  <script src="assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -363,10 +365,12 @@
 <p>物料请求是 <a href="l1/05-view-material-host.html#material-requests" rel="noopener noreferrer">L1 请求契约</a> 的一次输入输出交互，由共用 Adapter 连接 Host；不要求逐物料工厂。Host 业务函数返回 JSON 结果，候选项等由物料消费，选中值仍通过 Binding / Command 写入。共用桥接管理挂载身份、latest / parallel、discarded、可选取消与输入输出检查；具体网络及授权留给 Host。它只承担本通道交付有效性，不接管 Host 观察数据后主动执行的其他业务任务，也不进入校验 Pending。</p>
 <p>上方 Host 业务请求图仍描述 Host 自主管理的业务操作；物料 Request 另走“物料 → 已准备映射 → 共用 Adapter → Host 函数 → 有效性检查 → 物料”。旧 Material.services / Host.services 静态需求被该通道替代，Host 内部实现可继续使用 service，不再暴露为协议要求。</p>
 <h3 id="请求类型贯通与接入完整性">请求类型贯通与接入完整性</h3>
-<p>物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">L1 请求开发接入</a>。</p></section>
-        
-        <nav class="reading-continuation" aria-label="继续阅读"><a href="platform-studio.html">下一步 · Platform 与 Studio：范围及待设计工作</a></nav>
-        
+<p>物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 <a href="l1/05-view-material-host.html#request-development-contract" rel="noopener noreferrer">L1 请求开发接入</a>。</p>
+<h3 id="react-integration-sdk">React 首期实际接入</h3>
+<p>L4 已落实 <a href="l4-renderer.html#react-implementation" rel="noopener noreferrer">React SDK</a>：物料内部共用 Hook 提供 values / validation / props / slots 与 set / command / emit / request；Host 事件及校验仍注册在 Runtime，物料 Request 通过 Renderer 注册桥接。observeScope 的失效通知与即时资格查询覆盖成员删除及实例销毁；模板形参不携带调用方别名，所属挂载资格另外保留。按 <a href="l3-observability.html#independent-devtools" rel="noopener noreferrer">独立工具契约</a>，开发扩展自动发现并展示装配遗漏，业务应用不再传 diagnosticMode；业务页面保留友好降级和 Host 结构化错误上报。以上为本地实现范围，正式物料库 / 真实服务 / Host 应用仍未因此完成。</p></section>
+
+<nav class="reading-continuation" aria-label="继续阅读"><a href="platform-studio.html">下一步 · Platform 与 Studio：范围及待设计工作</a></nav>
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -374,7 +378,7 @@
         <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#materials" data-to="materials" title="Material：物料体系与 UI 扩展"><span class="nav-num">01</span><span>Material：物料体系与 UI 扩展</span></a>
 <a href="#capabilities" data-to="capabilities" title="Host / View Adapter：外部能力与业务集成"><span class="nav-num">02</span><span>Host / View Adapter：外部能力与业务集成</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 16</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-INTEGRATION</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 2</summary><ul><li><a href="governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="source-map.html#src-early">SRC-EARLY · 最初架构与抽象边界</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

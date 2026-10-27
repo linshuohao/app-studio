@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-021：统一校验队列与有效在途任务复用 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a class="active" aria-current="page" href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -109,9 +111,9 @@
 
 <p>TS Runtime 使用 <code>ValidationManager</code> 的唯一同步入口、按来源去重的 Pending、<code>ValidationWork</code> 与 <code>ValidationCall</code> 表达以上边界。反例与验收入口为 <code>packages/runtime/tests/validation-queue.test.ts</code>，覆盖连续完整调用、pending / Schema 发布重入、共享错误归属、已完成结果重试、成员隔离 / 删除及前置失效；运行方式和当前限制见 <a href="../../../packages/runtime/README.md" rel="noopener noreferrer">Runtime Review 入口</a>。用例通过不代表跨端、浏览器交互、生产网络和目标设备性能验收完成。</p>
 <p>来源及讨论演进见 <a href="../source-map.html#src-runtime-implementation" rel="noopener noreferrer">SRC-RUNTIMEIMPLEMENTATION</a>与<a href="../design-history.html#validation-work-coalescing-confirmed" rel="noopener noreferrer">本轮演进</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认统一登记需求、队列去重及在途复用；已完成外部结果保留重新校验能力，缓存和字段查询索引仅为后续候选</p><nav class="decision-path"><a href="#adr-021-context">背景与决策理由</a><span>→</span><a href="#adr-021-decision">已确认选择</a><span>→</span><a href="#adr-021-tradeoffs">取舍与后续候选</a><span>→</span><a href="#adr-021-evidence">实现与验证范围</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认统一登记需求、队列去重及在途复用；已完成外部结果保留重新校验能力，缓存和字段查询索引仅为后续候选</p><nav class="decision-path"><a href="#adr-021-context">背景与决策理由</a><span>→</span><a href="#adr-021-decision">已确认选择</a><span>→</span><a href="#adr-021-tradeoffs">取舍与后续候选</a><span>→</span><a href="#adr-021-evidence">实现与验证范围</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -121,7 +123,7 @@
 <a href="#adr-021-decision" data-to="adr-021-decision" title="已确认选择"><span class="nav-num">02</span><span>已确认选择</span></a>
 <a href="#adr-021-tradeoffs" data-to="adr-021-tradeoffs" title="取舍与后续候选"><span class="nav-num">03</span><span>取舍与后续候选</span></a>
 <a href="#adr-021-evidence" data-to="adr-021-evidence" title="实现与验证范围"><span class="nav-num">04</span><span>实现与验证范围</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-021</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认统一登记需求、队列去重及在途复用；已完成外部结果保留重新校验能力，缓存和字段查询索引仅为后续候选</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-021</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认统一登记需求、队列去重及在途复用；已完成外部结果保留重新校验能力，缓存和字段查询索引仅为后续候选</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li></ul></details></section>
       </aside>
       </div>
     </div>

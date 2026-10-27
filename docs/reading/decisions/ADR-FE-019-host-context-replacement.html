@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-019：Host 显式替换只读 Context 与统一失效 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a class="active" aria-current="page" href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -108,9 +110,9 @@
 <section class="section" id="来源"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>来源</h2></div></div>
 
 <p><a href="../source-map.html#src-l3-baseline" rel="noopener noreferrer">SRC-L3BASELINE</a>及<a href="../design-history.html#l3-domain-baseline-confirmed" rel="noopener noreferrer">设计演进</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">Host 更新与保守整体失效已确认；不新增 L1 Context Watch，Runtime / Adapter 接口尚未实现</p><nav class="decision-path"><a href="#问题与场景">问题与场景</a><span>→</span><a href="#已确认决定">已确认决定</a><span>→</span><a href="#取舍接缝与状态">取舍、接缝与状态</a><span>→</span><a href="#来源">来源</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">Host 更新与保守整体失效已确认；不新增 L1 Context Watch，Runtime / Adapter 接口尚未实现</p><nav class="decision-path"><a href="#问题与场景">问题与场景</a><span>→</span><a href="#已确认决定">已确认决定</a><span>→</span><a href="#取舍接缝与状态">取舍、接缝与状态</a><span>→</span><a href="#来源">来源</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -120,7 +122,7 @@
 <a href="#已确认决定" data-to="已确认决定" title="已确认决定"><span class="nav-num">02</span><span>已确认决定</span></a>
 <a href="#取舍接缝与状态" data-to="取舍接缝与状态" title="取舍、接缝与状态"><span class="nav-num">03</span><span>取舍、接缝与状态</span></a>
 <a href="#来源" data-to="来源" title="来源"><span class="nav-num">04</span><span>来源</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-019</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>Host 更新与保守整体失效已确认；不新增 L1 Context Watch，Runtime / Adapter 接口尚未实现</p></details><details><summary>关联模块 · 5</summary><ul><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-019</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>Host 更新与保守整体失效已确认；不新增 L1 Context Watch，Runtime / Adapter 接口尚未实现</p></details><details><summary>关联模块 · 5</summary><ul><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 4</summary><ul><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 4</summary><ul><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

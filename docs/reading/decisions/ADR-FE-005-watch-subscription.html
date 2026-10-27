@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-005：读取、触发与活跃订阅分离 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -110,9 +112,9 @@
 <section class="section" id="2026-10-23-的局部修订"><div class="section-head"><div class="kicker">05 · FORM ENGINE</div><div class="section-title"><h2>2026-10-23 的局部修订</h2></div></div>
 
 <p><a href="ADR-FE-020-reaction-state-host.html" rel="noopener noreferrer">ADR-FE-020</a> 局部替代本文中 Reaction 仅观察 Data、不能复用 Host 行为出口的限制：显式 watch 可含 ValidationWatch，then 可含既有 HostEventIntent。其余 Read / Watch / Subscription 分离、同步 Flush、Command 受控写入与去重原则继续有效。历史选择保留用于追溯，现行字段见<a href="../l1/04-command-reaction.html#reaction-state-host" rel="noopener noreferrer">Reaction</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，通知与计划 ABI 待固化</p><nav class="decision-path"><a href="#adr-005-context">背景与问题</a><span>→</span><a href="#adr-005-decision">已确认选择与备选</a><span>→</span><a href="#adr-005-consequences">影响与剩余边界</a><span>→</span><a href="#adr-005-sources">来源与关联</a><span>→</span><a href="#2026-10-23-的局部修订">2026-10-23 的局部修订</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，通知与计划 ABI 待固化</p><nav class="decision-path"><a href="#adr-005-context">背景与问题</a><span>→</span><a href="#adr-005-decision">已确认选择与备选</a><span>→</span><a href="#adr-005-consequences">影响与剩余边界</a><span>→</span><a href="#adr-005-sources">来源与关联</a><span>→</span><a href="#2026-10-23-的局部修订">2026-10-23 的局部修订</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -123,7 +125,7 @@
 <a href="#adr-005-consequences" data-to="adr-005-consequences" title="影响与剩余边界"><span class="nav-num">03</span><span>影响与剩余边界</span></a>
 <a href="#adr-005-sources" data-to="adr-005-sources" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a>
 <a href="#2026-10-23-的局部修订" data-to="2026-10-23-的局部修订" title="2026-10-23 的局部修订"><span class="nav-num">05</span><span>2026-10-23 的局部修订</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-005</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，通知与计划 ABI 待固化</p></details><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li></ul></details><details><summary>相关正文与历史 · 16</summary><ul><li><a href="ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-005</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，通知与计划 ABI 待固化</p></details><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li></ul></details><details><summary>相关正文与历史 · 16</summary><ul><li><a href="ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="../l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 4</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-dependency">SRC-DEP · 跨层依赖 V0.1</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li></ul></details></section>
       </aside>
       </div>
     </div>

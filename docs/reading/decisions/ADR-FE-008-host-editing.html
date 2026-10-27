@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -110,9 +112,9 @@
 <h3 id="2026-10-19首次激活默认不执行">2026-10-19：首次激活默认不执行</h3>
 <p>新 Reaction 实例默认不因建立而执行；只有显式开启首次激活执行时才在建立时入队。该默认值同时适用于引擎初始化、数组插入及整体替换后建立的新成员。初始化已有输入不伪造为新实例的一次 Watch 变化；建立之后的有效 Watch 变化仍正常触发。首次校验与首次视图读取有各自入口，不受此默认值控制。</p>
 <p>理由是装载输入不等于用户切换，默认运行清空 / 重置类规则可能破坏草稿；需要初始化计算的规则显式开启。正式字段与兼容仍待固化。讨论记录见 <a href="../design-history.html#reaction-activation-default-update" rel="noopener noreferrer">首次激活默认值</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，明确替代 V0.6 D07 / D08 的核心职责</p><nav class="decision-path"><a href="#adr-008-context">背景与原有结论</a><span>→</span><a href="#adr-008-decision">现行选择与取舍</a><span>→</span><a href="#adr-008-consequences">关键反例与影响</a><span>→</span><a href="#adr-008-sources">来源与关联</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>Runtime 自动业务 Baseline / Reset 主动重算</p><a href="../source-map.html#src-v06">SRC-V06</a></div><div><span class="status">已确认决策</span><p>业务编辑归 Host；已有实例只响应有效 Watch 变化</p><a href="../source-map.html#src-host">SRC-HOST</a></div></div></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">已确认，明确替代 V0.6 D07 / D08 的核心职责</p><nav class="decision-path"><a href="#adr-008-context">背景与原有结论</a><span>→</span><a href="#adr-008-decision">现行选择与取舍</a><span>→</span><a href="#adr-008-consequences">关键反例与影响</a><span>→</span><a href="#adr-008-sources">来源与关联</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>Runtime 自动业务 Baseline / Reset 主动重算</p><a href="../source-map.html#src-v06">SRC-V06</a></div><div><span class="status">已确认决策</span><p>业务编辑归 Host；已有实例只响应有效 Watch 变化</p><a href="../source-map.html#src-host">SRC-HOST</a></div></div></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -122,7 +124,7 @@
 <a href="#adr-008-decision" data-to="adr-008-decision" title="现行选择与取舍"><span class="nav-num">02</span><span>现行选择与取舍</span></a>
 <a href="#adr-008-consequences" data-to="adr-008-consequences" title="关键反例与影响"><span class="nav-num">03</span><span>关键反例与影响</span></a>
 <a href="#adr-008-sources" data-to="adr-008-sources" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-008</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，明确替代 V0.6 D07 / D08 的核心职责</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details><summary>相关正文与历史 · 12</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="../source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-008</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>已确认，明确替代 V0.6 D07 / D08 的核心职责</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details><summary>相关正文与历史 · 12</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="../source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

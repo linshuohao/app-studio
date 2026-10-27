@@ -19,7 +19,7 @@ export default defineConfig([
     files: [
       'packages/**/*.{ts,tsx,js,mjs,cjs}',
       'services/**/*.{ts,tsx,js,mjs,cjs}',
-      'tools/engineering/**/*.mjs',
+      'tools/engineering/**/*.{mjs,cjs}',
       'tools/config/**/*.{ts,mjs}',
       'tests/**/*.ts',
       '*.{ts,mjs,cjs}',

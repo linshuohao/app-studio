@@ -1,7 +1,7 @@
 import type { JsonValue } from '@form-engine/protocol';
 import { type ReadView } from '../scope/registry.js';
 import { ScopeIndex } from '../scope/index.js';
-import { ownJson, protect, readAt, updateAt, childPath } from './json.js';
+import { copyJson, protect, readAt, updateAt, childPath } from './json.js';
 
 /** 进程内的 Store 实例编号，用于给成员 ID 分配独立前缀。 */
 let runtimeSequence = 0;
@@ -30,7 +30,7 @@ export class DataStore {
     /** 是否冻结引擎拥有的数据；关闭后调用方仍必须遵守只读契约。 */
     private readonly freeze = true,
   ) {
-    const root = ownJson(input, freeze);
+    const root = copyJson(input, freeze);
     this.view = {
       runtimeId: this.prefix,
       root,
@@ -52,7 +52,7 @@ export class DataStore {
    * 替换范围内的数组成员重新建立身份，范围之外的既有成员保留身份。
    */
   write(path: string, value: unknown) {
-    const owned = ownJson(value, this.freeze);
+    const owned = copyJson(value, this.freeze);
     return this.commit(updateAt(this.view.root, path, owned), path);
   }
   /** 删除对象属性；不存在时返回 false，删除根或数组成员须走其他明确入口。 */
@@ -65,7 +65,7 @@ export class DataStore {
    */
   patch(path: string, input: unknown) {
     const current = this.read(path),
-      value = ownJson(input, this.freeze);
+      value = copyJson(input, this.freeze);
     if (
       current.kind !== 'value' ||
       current.value === null ||
@@ -125,7 +125,7 @@ export class DataStore {
       items.splice(operation.to, 0, items.splice(operation.from, 1)[0]!);
       ids.splice(operation.to, 0, ids.splice(operation.from, 1)[0]!);
     } else if (operation.kind === 'insert') {
-      items.splice(operation.to, 0, ownJson(operation.value, this.freeze));
+      items.splice(operation.to, 0, copyJson(operation.value, this.freeze));
       ids.splice(operation.to, 0, this.id());
     } else {
       items.splice(operation.from, 1);

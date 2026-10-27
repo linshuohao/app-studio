@@ -9,9 +9,9 @@ import type {
   DiagnosticEvidence,
   ReadonlyJson,
 } from '../types.js';
-import type { PreparedForm } from '@form-engine/protocol/prepared';
+import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { Journal, retainDiagnostic } from './journal.js';
-import { ownJson } from '../data/json.js';
+import { copyJson } from '../data/json.js';
 import { observeRejection } from '../lifecycle/async.js';
 
 /** 执行元信息只持有不可变输入；异步任务可保留它，不会保留已结束的调度上下文。 */
@@ -62,8 +62,9 @@ export class DiagnosticReporter {
   constructor(
     readonly capacity: number,
     private readonly output: ((report: RuntimeDiagnosticReport) => void) | undefined,
-    private readonly prepared: () => PreparedForm,
+    private readonly prepared: () => ReadonlyPreparedForm,
     private readonly input: () => DiagnosticInput,
+    private readonly tap?: (report: RuntimeDiagnosticReport) => void,
   ) {}
 
   /** 建立执行身份；子动作继承规则和完整调用，输入始终按实际调用点捕获。 */
@@ -125,7 +126,7 @@ export class DiagnosticReporter {
   }
   /** 接管实际读到的校验投影，避免公开诊断中的嵌套记录可被改写。 */
   noteRead(value: ReadonlyJson): void {
-    if (this.current) this.current.validationReads.push(ownJson(value));
+    if (this.current) this.current.validationReads.push(copyJson(value));
   }
 
   /** 调用独享收集窗口，容量只约束普通事件；错误保留全部。 */
@@ -281,6 +282,12 @@ export class DiagnosticReporter {
 
   /** Host 出口在微任务交付；异常只记轻量诊断，不递归调用失败的出口或影响调度。 */
   private emit(report: RuntimeDiagnosticReport): void {
+    // 开发工具只接收封存报告；不订阅业务观察，也不拦截 Host 原出口。
+    try {
+      this.tap?.(report);
+    } catch {
+      /* 工具错误被隔离。 */
+    }
     if (!this.output) return;
     const output = this.output;
     void Promise.resolve().then(() => {

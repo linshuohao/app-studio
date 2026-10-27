@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-020：Reaction 显式状态观察与 Host 行为出口 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a class="active" aria-current="page" href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -106,9 +108,9 @@
 
 <p>收益是配置能统一说明“监听谁、如何触发、触发什么”，并复用已有 Host 事件契约，避免自定义数据命令或独立业务任务 DSL。代价是需要独立 Validation 发布源、投影比较、状态一致性与跨轮反馈验收；业务仍需保证 Host 异步行为的适用性和收敛。</p>
 <p>本轮完成静态协议与编译衔接，不意味着 Runtime / Renderer 已执行验收。精确 SDK、Issue 最小字段 / 排序、校验状态枚举与各端订阅实现沿既有模块任务继续，不提高模块完成状态。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">观察与响应方向已确认；协议、Schema 和编译检查同步，Runtime 观察 SDK / 调度尚未实现</p><nav class="decision-path"><a href="#背景与确认范围">背景与确认范围</a><span>→</span><a href="#已确认选择">已确认选择</a><span>→</span><a href="#局部替代与延续">局部替代与延续</a><span>→</span><a href="#收益代价与状态">收益、代价与状态</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">观察与响应方向已确认；协议、Schema 和编译检查同步，Runtime 观察 SDK / 调度尚未实现</p><nav class="decision-path"><a href="#背景与确认范围">背景与确认范围</a><span>→</span><a href="#已确认选择">已确认选择</a><span>→</span><a href="#局部替代与延续">局部替代与延续</a><span>→</span><a href="#收益代价与状态">收益、代价与状态</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -118,7 +120,7 @@
 <a href="#已确认选择" data-to="已确认选择" title="已确认选择"><span class="nav-num">02</span><span>已确认选择</span></a>
 <a href="#局部替代与延续" data-to="局部替代与延续" title="局部替代与延续"><span class="nav-num">03</span><span>局部替代与延续</span></a>
 <a href="#收益代价与状态" data-to="收益代价与状态" title="收益、代价与状态"><span class="nav-num">04</span><span>收益、代价与状态</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-020</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>观察与响应方向已确认；协议、Schema 和编译检查同步，Runtime 观察 SDK / 调度尚未实现</p></details><details><summary>关联模块 · 7</summary><ul><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 5</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../compiler.html">Compiler 详细设计与实施</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="../l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-020</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>观察与响应方向已确认；协议、Schema 和编译检查同步，Runtime 观察 SDK / 调度尚未实现</p></details><details><summary>关联模块 · 7</summary><ul><li><a href="../governance.html#M03">M03 Expression / Pure Function</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="../governance.html#M11">M11 Constraint 前置与增量</a></li><li><a href="../governance.html#M12">M12 异步校验 / Issues</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 5</summary><ul><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../compiler.html">Compiler 详细设计与实施</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="../l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

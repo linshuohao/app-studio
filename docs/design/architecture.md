@@ -9,6 +9,7 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-023
   - ADR-FE-019
   - ADR-FE-018
   - ADR-FE-017
@@ -25,6 +26,7 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-DEVTOOLS
 - SRC-REACTIONSTATE
 - SRC-L3BASELINE
 - SRC-COMPILERIO
@@ -325,7 +327,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 }
 ```
 
-### 3. 首期六个 TS 包与依赖方向
+### 3. 首期 TS 包与依赖方向
 
 用户已确认 Web/TS 首期、React 呈现以及下列包目录。逻辑分层不机械对应发布包数量，目录存在只代表职责位置已建立；正式类型、公共入口、产物与发布元数据仍需随实现固化。决策见 [ADR-FE-013](decisions/ADR-FE-013-ts-react-packages.md)，原七项草案与候选比较保留在[设计演进](design-history.md#ts-react-package-layout)。
 
@@ -336,6 +338,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 | packages/protocol | 统一可交换协议结构源及 TS 绑定，供作者、Compiler、Runtime、创作工具消费；包含 Definition、Prepared、Material / Pure Function Manifest 通用结构 | definition / capability / prepared 三领域与公共入口已于 2026-10-21 确认，正式命名类型及组成类型按领域公开，具体 exports 随完整类型实施；Prepared 与 L1 格式版本独立，不把所有内部类型、Runtime API、平台 DTO、数据库模型、Agent 协议或组件实现集中进来 |
 | packages/compiler | L2 分析、静态检查、诊断、规范化与依赖准备，向 CLI、编辑预览和平台构建提供确定 Prepared | 不依赖 Runtime 执行实例，不导入 UI 物料实现；解析、检查和依赖准备先作为内部模块，不逐步骤拆包 |
 | packages/runtime | TS 数据 / Snapshot、Scope、表达式、Command / Reaction / Flush、校验、诊断与实例生命周期；提供公开读写、订阅、校验和 Host 注册接口 | 不依赖 React、网络或平台数据库；上述执行机制先内部模块化。内部实现可以采用正常 TS，不为未来 Dart 建跨语言执行框架 |
+| packages/devtools | 独立只读开发工具与浏览器扩展面板 | 消费 Runtime 开发观测，核心无反向依赖；没有业务写入、规则执行或默认持久化；见 ADR-FE-023 |
 | packages/renderer-react | React 呈现、共用 Adapter、物料装配、Binding / Props / Event 接入、Scope 关联、订阅清理与局部错误隔离 | 消费 Runtime 公开接口，不保存第二份权威业务状态；各物料共用 React Adapter，不要求未来 Vue / Flutter 复用源码，暂不建通用 renderer-core |
 | packages/materials-react | React 基础字段、容器和展示物料及具体 Manifest | 与 Renderer 分开，业务方可选择自有物料；Manifest 与 UI 实现可分别消费，编译侧不能被迫加载 React 组件；后续物料集按实际分发需要再拆 |
 | packages/pure-functions | TS 基础同步确定性纯函数与签名，运行端注册实现，编译侧读取确定契约 | 不依赖 UI、网络或 Runtime 可变内部；签名与实现归具体函数集，通用 Manifest 结构归 protocol，Compiler 不执行函数 |
@@ -343,6 +346,8 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 **接入与开发支持的归属：**不另建 host-sdk 包。实例与 Host 能力注册接口归 Runtime，呈现装配归 renderer-react，查询 / 上传 / 保存 / 提交 / 业务恢复归 Host 应用。capabilities 保留能力总称，UI 物料与纯函数分别组织构建与交付。testkit 先作为内部测试支持，出现真实外部消费者后再判断公开发布；现有 docs/validation 不直接提升为生产协议或 testkit。
 
 **依赖约束：**protocol 不依赖应用实现；Compiler / Runtime 分别消费协议入口，不互相依赖生产实现。Renderer 消费 Runtime 公共接口，物料通过接入契约协作，不直接访问 Store。应用在顶层装配物料、纯函数与 Host。跨包只用公开入口，禁止深层导入、核心反向导入 apps / services 和循环依赖。共享算法先明确所有者及必要性，不预建万能 shared / utils 包。当前不要求各包统一发布节奏；库版本不替代 Protocol / Prepared / 能力身份的独立兼容规则。
+
+**独立开发工具：**2026-10-26 确认 packages/devtools 及浏览器扩展宿主。核心只保留开发条件观测接缝，不依赖工具包；独立工具消费事实且首期只读，见 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md)。
 
 **运行保障：**Compiler、Runtime、Renderer 各自提供必要诊断 / Trace / 错误接入，Host 连接业务上报。平台监控、问题治理与 Agent 分析保留后续建设，不提前成为核心全局依赖包，不改变已有预算 / 脱敏 / 错误隔离原则。
 

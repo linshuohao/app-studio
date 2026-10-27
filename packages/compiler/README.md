@@ -2,6 +2,8 @@
 
 本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前已实现 I01–I04 的编译主链，包括表达式依赖和 watch 准备；保持 private / 0.0.0，稳定性 / 性能基准及 Runtime / Adapter 联验仍待完成。
 
+成功结果 prepared 为 ReadonlyPreparedForm，并递归冻结。修订时先 structuredClone(result.prepared) as PreparedForm，再编辑克隆；变更后重新进入检查。同进程 Runtime / Renderer 可复用真实检查入口登记的不可变产物，普通冻结、克隆或 JSON 往返不携带验证身份；格式、实际能力与执行兼容检查仍保留。
+
 目录遵循[全仓包组织约定](../../docs/design/engineering.md#package-source-layout)：
 
 ```text

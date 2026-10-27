@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>协议定义、结构与变化流程 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../reading/assets/documentation.css?v=91b5ad1ba585">
-  <link rel="stylesheet" href="../reading/assets/examples.css?v=3a8c14fec9bd">
-  <script src="../reading/assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../reading/assets/documentation.css?v=3e89ece3611b">
+<link rel="stylesheet" href="../reading/assets/examples.css?v=3a8c14fec9bd">
+  <script src="../reading/assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../reading/assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="../reading/decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="../reading/decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="../reading/decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="../reading/decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="../reading/decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../reading/architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../reading/usage-guide.html">使用与开发指南</a>
@@ -3804,9 +3806,9 @@ on.activate → host.emit
 ]</pre></details><p><a href="walkthroughs.json">契约说明数据</a></p></section><section class="section" id="checks"><div class="section-head"><div class="kicker">11 · FORM ENGINE</div><div class="section-title"><h2>验证记录</h2></div></div><p class="validation-status">候选结构/静态语义/Fixture：8/8 · 反例拦截：25/25 · 有界检查：40/40</p><details><summary>行为与语义检查明细</summary><table><tr><th>检查</th><th>结果</th></tr><tr><td>订单修改国家只清理城市</td><td>通过</td></tr><tr><td>嵌套成员只清理自身城市</td><td>通过</td></tr><tr><td>被保人地区联动</td><td>通过</td></tr><tr><td>三层理赔项联动不影响兄弟项</td><td>通过</td></tr><tr><td>超过保单额度的内部约束拒绝</td><td>通过</td></tr><tr><td>医疗类型无凭证时条件约束拒绝</td><td>通过</td></tr><tr><td>01 图例操作结果</td><td>通过</td></tr><tr><td>02 图例操作结果</td><td>通过</td></tr><tr><td>03 图例操作结果</td><td>通过</td></tr><tr><td>04 图例操作结果</td><td>通过</td></tr><tr><td>05 图例操作结果</td><td>通过</td></tr><tr><td>行金额 → 集合汇总 → 折扣 → 应付四级传播</td><td>通过</td></tr><tr><td>国家 → 城市 → 区县两级清空</td><td>通过</td></tr><tr><td>仅 when 依赖变化不触发 Reaction</td><td>通过</td></tr><tr><td>watch 命中但 when=false 不执行</td><td>通过</td></tr><tr><td>多 watch 为 OR，then 有序后写覆盖</td><td>通过</td></tr><tr><td>Host 回写 Command 继续同步联动</td><td>通过</td></tr><tr><td>日期样本内部通过，必需1/可选2外部义务</td><td>通过</td></tr><tr><td>出行日期变更重算生日资格</td><td>通过</td></tr><tr><td>同一生日因地区切换变为不满足已满周岁</td><td>通过</td></tr><tr><td>日期范围跨字段约束拒绝</td><td>通过</td></tr><tr><td>日期求值错误保持错误，不冒充 false/valid</td><td>通过</td></tr><tr><td>浅 Patch 替换嵌套对象，不做深合并</td><td>通过</td></tr><tr><td>Remove 删除属性，与 null 不同</td><td>通过</td></tr><tr><td>batch 有序命令和 $literal 原样保留</td><td>通过</td></tr><tr><td>Event Payload 进入受控 Command</td><td>通过</td></tr><tr><td>host.emit 组合 Event 与 Data 的 Payload</td><td>通过</td></tr><tr><td>Context 只读远程选项示例</td><td>通过</td></tr><tr><td>空根/空字段名/~1/~0/嵌套数组 ValueSpec/Literal</td><td>通过</td></tr><tr><td>ScopeHandle 指定当前项删除</td><td>通过</td></tr><tr><td>array.insert 位置语义未定，抽测器明确拒绝执行</td><td>通过</td></tr><tr><td>array.move 位置语义未定，抽测器明确拒绝执行</td><td>通过</td></tr><tr><td>01 有效样本内部约束通过</td><td>通过</td></tr><tr><td>02 有效样本内部约束通过</td><td>通过</td></tr><tr><td>03 有效样本内部约束通过</td><td>通过</td></tr><tr><td>04 有效样本内部约束通过</td><td>通过</td></tr><tr><td>05 有效样本内部约束通过</td><td>通过</td></tr><tr><td>06 有效样本内部约束通过</td><td>通过</td></tr><tr><td>07 有效样本内部约束通过</td><td>通过</td></tr><tr><td>08 有效样本内部约束通过</td><td>通过</td></tr></table></details><details><summary>反例明细</summary><table><tr><th>反例</th><th>结果</th></tr><tr><td>缺失字段引用</td><td>已拦截</td></tr><tr><td>未知物料</td><td>已拦截</td></tr><tr><td>不合法的 each 绑定</td><td>已拦截</td></tr><tr><td>Template 参数类型不兼容</td><td>已拦截</td></tr><tr><td>Manifest 端口类型冲突</td><td>已拦截</td></tr><tr><td>未注册 Host 事件</td><td>已拦截</td></tr><tr><td>禁止 view.present</td><td>已拦截</td></tr><tr><td>作用域别名不可见</td><td>已拦截</td></tr><tr><td>表达式非布尔断言</td><td>已拦截</td></tr><tr><td>重复 Constraint ID</td><td>已拦截</td></tr><tr><td>跨 Scope 读取不存在属性</td><td>已拦截</td></tr><tr><td>when 不能读取 Event</td><td>已拦截</td></tr><tr><td>命名表达式循环</td><td>已拦截</td></tr><tr><td>命名表达式不能捕获调用者 Scope</td><td>已拦截</td></tr><tr><td>禁止 Scope 别名遮蔽</td><td>已拦截</td></tr><tr><td>Context 只读，不能当写入目标</td><td>已拦截</td></tr><tr><td>非法 Pointer 转义</td><td>已拦截</td></tr><tr><td>禁止动态模板 ID</td><td>已拦截</td></tr><tr><td>保留 $expr 包装不能附带普通字段</td><td>已拦截</td></tr><tr><td>Event Payload 缺失字段</td><td>已拦截</td></tr><tr><td>Host Payload 类型不符</td><td>已拦截</td></tr><tr><td>Context 未声明字段</td><td>已拦截</td></tr><tr><td>旧 entry 包装不再是 Canonical</td><td>已拦截</td></tr><tr><td>External 旧 dependsOn 必须显式迁移</td><td>已拦截</td></tr><tr><td>External 不接受 watch 与 dependsOn 混用</td><td>已拦截</td></tr></table></details><p class="caption">测试抽测器采用有界 FIFO，未验证不可变 Snapshot、Reaction pending 合并、Prepared 唯一入口、真实 Flush、可隔离 Command 错误继续、整体熔断与再触发、Trace、持久身份跨重排与替换、真实异步竞态、提交 Readiness 或跨端渲染。<a href="../reading/l3-reactive-engine.html#l3-acceptance">L3 的 C01–C18</a> 及 <a href="../reading/dependency-reactivity.html#dependency-v05-acceptance">V0.5 的 12 个跨层场景</a> 及 <a href="../reading/l3-reactive-engine.html#l3-v06-acceptance">V0.6 的 16 个场景</a> 是设计验收，尚不计入通过统计；候选 Schema 未固化 runOnActivate，探针未实现前后 ScopeReadView、候选索引、相对位置比较、稳定 snapshot / 新实例激活和独立执行事件。<a href="../reading/l3-reactive-engine.html#l3-runtime-host-boundary">后续用户确认的 B01–B08</a> 以及 <a href="../reading/l3-validation.html#validation-acceptance">V0.7 校验 V01–V16</a> 也是设计验收；本轮前置、Schema Adapter 缓存、来源 / 字段聚合和完整结果 API 尚未由探针实现，requires / 消息覆盖尚未纳入候选 Schema；五态图不要求 UI 暴露每来源状态机。Dirty / 业务 Baseline / Reset 策略归 Host，Runtime 不保留 Reset 主动重算模式。日期地区规则为虚构测试规则。array.insert / array.move 的位置语法仍待固化，结构通过不表示可以完整执行。</p><details id="reproduce"><summary>复现与来源</summary><pre class="protocol">cd docs/validation
 python3 -m pip install -r requirements.txt
 python3 run_validation.py</pre><p><a href="report.json">机器报告</a> · <a href="validator/l1-candidate-structural.schema.json">候选 Schema</a> · <a href="manifests/materials.json">物料契约</a> · <a href="manifests/pure-functions.json">测试纯函数</a> · <a href="manifests/host-events.json">Host 契约</a> · <a href="../history/l1-protocol-validation-source.zip">来源归档</a></p></details></section>
-        
-        
-        
+
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -3824,7 +3826,7 @@ python3 run_validation.py</pre><p><a href="report.json">机器报告</a> · <a h
 <a href="#contracts" data-to="contracts" title="跨层契约补充"><span class="nav-num">10</span><span>跨层契约补充</span></a>
 <a href="#checks" data-to="checks" title="验证记录"><span class="nav-num">11</span><span>验证记录</span></a>
 <a href="#reproduce" data-to="reproduce" title="复现与来源"><span class="nav-num">12</span><span>复现与来源</span></a></nav>
-        
+
       </aside>
       </div>
     </div>

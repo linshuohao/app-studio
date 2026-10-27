@@ -22,7 +22,8 @@
     "check": "node tools/engineering/check.mjs",
     "prepare": "husky",
     "toolchain:update": "node tools/engineering/install-toolchain.mjs",
-    "protocol:schema:check": "pnpm --filter @form-engine/protocol schema:check"
+    "protocol:schema:check": "pnpm --filter @form-engine/protocol schema:check",
+    "test:e2e:devtools": "playwright test --config playwright.devtools.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -65,6 +66,8 @@
     "turbo": "^2.11.9",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "@form-engine/pure-functions": "workspace:*",
+    "@form-engine/devtools": "workspace:*"
   }
 }

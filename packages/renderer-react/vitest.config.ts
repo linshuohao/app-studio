@@ -1,1 +1,1 @@
-export { default } from '../../tools/config/vitest.react';
+export { default } from '../../tools/config/vitest.react.ts';

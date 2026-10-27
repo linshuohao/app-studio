@@ -13,41 +13,8 @@ export function canonicalJson(value: unknown): string {
   return JSON.stringify(value)!;
 }
 
-/**
- * 在输入边界复制接管纯 JSON，可选择递归冻结副本，不冻结 Host 的原对象。
- * 拒绝访问器、循环、非有限数、稀疏数组等非法输入；ancestors 仅跟踪当前递归链。
- */
-export function ownJson(input: unknown, freeze = true, ancestors = new Set<object>()): JsonValue {
-  if (input === null || typeof input === 'string' || typeof input === 'boolean') return input;
-  if (typeof input === 'number' && Number.isFinite(input)) return input;
-  if (typeof input !== 'object' || input === null) throw Error('json: unsupported value');
-  if (ancestors.has(input)) throw Error('json: cyclic value');
-  const array = Array.isArray(input);
-  if (
-    !array &&
-    Object.getPrototypeOf(input) !== Object.prototype &&
-    Object.getPrototypeOf(input) !== null
-  )
-    throw Error('json: plain objects required');
-  ancestors.add(input);
-  try {
-    const keys = Reflect.ownKeys(input).filter((key) => !(array && key === 'length'));
-    if (keys.some((key) => typeof key !== 'string')) throw Error('json: symbol key');
-    if (array && (keys.length !== input.length || keys.some((key, i) => key !== String(i))))
-      throw Error('json: sparse or extended array');
-    const entries = keys.map((key) => {
-      const descriptor = Object.getOwnPropertyDescriptor(input, key)!;
-      if (!('value' in descriptor) || !descriptor.enumerable)
-        throw Error('json: accessor or hidden property');
-      return [key as string, ownJson(descriptor.value, freeze, ancestors)] as const;
-    });
-    const value: JsonValue = array ? entries.map((entry) => entry[1]) : Object.fromEntries(entries);
-    if (freeze) Object.freeze(value);
-    return value;
-  } finally {
-    ancestors.delete(input);
-  }
-}
+// 所有引擎包复用同一份接管凭据；业务写入仍用独立复制，求值才允许复用只读子值。
+export { captureJson, copyJson } from '@form-engine/protocol/internal/json';
 
 /** 冻结内部已构造的数据树，跳过已冻结的共享子树；本函数不复制数据。 */
 export function protect<T extends JsonValue>(value: T, freeze: boolean): T {
@@ -141,4 +108,27 @@ export function updateAt(root: JsonValue, pointer: string, replacement?: JsonVal
     return copy;
   };
   return recurse(root, 0);
+}
+
+/** JSON 结构等值保留 Object.is 的标量语义，用于执行兼容而非序列化摘要。 */
+export function equalJson(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (
+    !a ||
+    !b ||
+    typeof a !== 'object' ||
+    typeof b !== 'object' ||
+    Array.isArray(a) !== Array.isArray(b)
+  )
+    return false;
+  const left = Object.keys(a),
+    right = Object.keys(b);
+  return (
+    left.length === right.length &&
+    left.every(
+      (key) =>
+        Object.hasOwn(b, key) &&
+        equalJson((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
+    )
+  );
 }

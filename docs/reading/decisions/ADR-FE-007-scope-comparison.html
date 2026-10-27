@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -113,9 +115,9 @@
 <p>数组插入 / 移动的目的位置同时支持数字下标与稳定成员锚点（成员之前 / 之后）。移动对象按稳定成员身份指定，数字只描述目的位置；位置在 Command 实际执行时按当时数组解析。移动的数字目的位置指移动后的最终下标，例如 [A,B,C] 中将 A 移到 2，结果为 [B,C,A]。长度为 n 的数组插入位置为整数 0…n，n 表示追加；已有成员在同一数组内移动的最终下标为整数 0…n−1。</p>
 <p>位置越界、非整数、目标锚点已删除或不属于目标数组等位置失效必须明确返回结构性失败，不自动夹到首尾，不回退追加或猜测其他成员。单次操作在解析 / 校验位置后再一致更新 Data 与 Scope，失败不留下半完成的移除状态；失败不回滚 batch 中先前已成功的其他 Command。锚点与数字位置共用同一结构执行机制，正式字段 / Union、错误编码及精确返回结构继续固化，不新增命令种类。</p>
 <p>双定位降低排序组件与稳定身份调用的接入转换成本，统一在内部执行；最终下标避免调用方补偿移除造成的位置偏移，明确失败避免静默改变调用意图。用户已确认三项方向，记录见 <a href="../design-history.html#array-position-update" rel="noopener noreferrer">数组位置</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">原则与整数组替换重建已确认；等值、索引实现为推荐</p><nav class="decision-path"><a href="#adr-007-context">背景与问题</a><span>→</span><a href="#adr-007-decision">已确认原则</a><span>→</span><a href="#adr-007-options">推荐方案与取舍</a><span>→</span><a href="#adr-007-sources">来源与关联</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">原则与整数组替换重建已确认；等值、索引实现为推荐</p><nav class="decision-path"><a href="#adr-007-context">背景与问题</a><span>→</span><a href="#adr-007-decision">已确认原则</a><span>→</span><a href="#adr-007-options">推荐方案与取舍</a><span>→</span><a href="#adr-007-sources">来源与关联</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -125,7 +127,7 @@
 <a href="#adr-007-decision" data-to="adr-007-decision" title="已确认原则"><span class="nav-num">02</span><span>已确认原则</span></a>
 <a href="#adr-007-options" data-to="adr-007-options" title="推荐方案与取舍"><span class="nav-num">03</span><span>推荐方案与取舍</span></a>
 <a href="#adr-007-sources" data-to="adr-007-sources" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-007</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>原则与整数组替换重建已确认；等值、索引实现为推荐</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="../governance.html#M08">M08 Scope / 变化索引</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-007</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>原则与整数组替换重建已确认；等值、索引实现为推荐</p></details><details><summary>关联模块 · 1</summary><ul><li><a href="../governance.html#M08">M08 Scope / 变化索引</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li></ul></details></section>
       </aside>
       </div>
     </div>

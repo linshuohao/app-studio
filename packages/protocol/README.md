@@ -2,6 +2,8 @@
 
 首期协议结构包。手写 TypeScript 类型和 JSDoc 是结构源，构建派生 JSON Schema 2020-12；库版本、Definition 的 protocolVersion、Prepared 的 preparedFormatVersion 是独立维度。本包仍为 private，不代表已发布稳定 ABI。
 
+Compiler 成功交付 ReadonlyPreparedForm 并递归冻结；修订前先克隆为 PreparedForm，变更后的 JSON 重新检查。三个领域入口仍只导出类型。internal/json 与 internal/prepared 是引擎包共用的实现接缝：接管纯 JSON、使用生成 Schema 验证结构，并以不可序列化的弱身份复用已确认对象；只有显式使用结构接缝才加载 Ajv。它们不提供调用方自报 trusted 的登记入口，不执行引用分析、业务校验、联动或组件渲染。
+
 ```ts
 import type { FormDefinition, SetCommand } from '@form-engine/protocol/definition';
 import type { MaterialManifest } from '@form-engine/protocol/capability';

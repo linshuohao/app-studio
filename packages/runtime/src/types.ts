@@ -4,9 +4,10 @@ import type {
   Reference,
   Expression,
   ValueSpec,
+  InteractionIntent,
 } from '@form-engine/protocol/definition';
 import type {
-  PreparedForm,
+  ReadonlyPreparedForm,
   DataWatch,
   PreparedReactionWatch,
   PreparedScopeDeclaration,
@@ -66,7 +67,7 @@ export interface DiagnosticEvidence {
   readonly input: DiagnosticInput;
   readonly invocationInput?: DiagnosticInput;
   readonly triggers: readonly DiagnosticTrigger[];
-  readonly prepared: PreparedForm;
+  readonly prepared: ReadonlyPreparedForm;
   readonly phase: string;
   readonly error: { readonly name: string; readonly message: string; readonly stack?: string };
   readonly action?: ReadonlyJson;
@@ -196,7 +197,7 @@ export interface HostCapabilities {
 /** 创建一个独立 Runtime 的输入，Data / Context 接管复制，能力实现按锁固定。 */
 export interface RuntimeOptions {
   /** Compiler 已编译的产物，装载时仍检查形状、格式与函数锁。 */
-  readonly prepared: PreparedForm;
+  readonly prepared: ReadonlyPreparedForm;
   /** Host 明确提供的业务初值，必须是纯 JSON，不隐式应用 Schema 默认值。 */
   readonly data: unknown;
   /** 只读环境输入，缺省为空对象，可通过独立入口整体替换。 */
@@ -232,6 +233,19 @@ export interface CommandResult {
 }
 /** 实例公共读写与生命周期入口；实现方法可解构使用，内部模块保持独立状态所有权。 */
 export interface FormRuntime {
+  /** 核对新视图与本实例执行部分及已锁定能力兼容，不修改运行实例。 */
+  checkView(
+    prepared: ReadonlyPreparedForm,
+  ): { readonly compatible: true } | { readonly compatible: false; readonly error: string };
+  /** 只读生命周期接入；只在成员 / 实例失效时交付一次，解除后不再交付。 */
+  observeScope(
+    scope: ScopeBinding,
+    invalidated: () => void,
+  ): { readonly alive: boolean; readonly dispose: () => void };
+  /** 即时检查实例和稳定成员资格，不把普通缺失字段判为失效。 */
+  isScopeAlive(scope?: ScopeBinding): boolean;
+  /** 视图事件的统一入口；Host 同步发起，异步完成不延长 Flush。 */
+  interact(intent: InteractionIntent, scope?: ScopeBinding, event?: JsonValue): CommandResult;
   /** 从当前输入读取引用，显式区分值、缺失及错误。 */
   read(reference: Reference, scope?: ScopeBinding): ReadResult;
   /** 取得当前数据根的稳定只读快照，不隐式 flush 或保存 Baseline。 */

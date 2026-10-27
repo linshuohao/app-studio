@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -112,9 +114,9 @@
 <p>同步订阅回调在 Flush 执行期间再次通过 Command 写入数据，写入立即生效，由此产生的联动直接归当前 Flush 处理，沿用本轮去重、执行计数与熔断预算；不另开一轮、不重置预算、不再次延迟启动。Flush 尚未开始时，Pending 用于汇集同步修改和快速交互的重复触发，再统一启动；当前轮真正结束后的新修改进入后续轮次。执行器内部的待执行集合只是当前轮的工作集合，不等于下一轮或一个新的调度阶段。</p>
 <p>不新增独立的“通知先入队、回调返回后再交付”机制要求，也不新增第二套通知熔断协议。实现验收须证明同步回调写回不绕过现有整轮保护、不因嵌套调用失控；具体内部容器和调用栈处理属于实现细节，不能把它重新列为未决业务行为。</p>
 <p>讨论记录见 <a href="../design-history.html#flush-callback-update" rel="noopener noreferrer">同轮写回</a>。</p></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">已由 ADR-FE-018 完整承接；持续暂停改为当前轮清队列、后续新触发正常执行</p><nav class="decision-path"><a href="#adr-009-context">背景与演进</a><span>→</span><a href="#adr-009-decision">已确认选择与代价</a><span>→</span><a href="#adr-009-open">未决边界与影响</a><span>→</span><a href="#adr-009-sources">来源、替代与关联</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>局部 Health 与失败影响链候选</p><a href="../source-map.html#src-v04">SRC-V04</a></div><div><span class="status">已确认决策</span><p>独立错误继续；整体 Flush 预算停止</p><a href="../source-map.html#src-v05">SRC-V05</a></div></div></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">已由 ADR-FE-018 完整承接；持续暂停改为当前轮清队列、后续新触发正常执行</p><nav class="decision-path"><a href="#adr-009-context">背景与演进</a><span>→</span><a href="#adr-009-decision">已确认选择与代价</a><span>→</span><a href="#adr-009-open">未决边界与影响</a><span>→</span><a href="#adr-009-sources">来源、替代与关联</a></nav><div class="decision-evolution"><div><span class="status">已替代</span><p>局部 Health 与失败影响链候选</p><a href="../source-map.html#src-v04">SRC-V04</a></div><div><span class="status">已确认决策</span><p>独立错误继续；整体 Flush 预算停止</p><a href="../source-map.html#src-v05">SRC-V05</a></div></div></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -124,7 +126,7 @@
 <a href="#adr-009-decision" data-to="adr-009-decision" title="已确认选择与代价"><span class="nav-num">02</span><span>已确认选择与代价</span></a>
 <a href="#adr-009-open" data-to="adr-009-open" title="未决边界与影响"><span class="nav-num">03</span><span>未决边界与影响</span></a>
 <a href="#adr-009-sources" data-to="adr-009-sources" title="来源、替代与关联"><span class="nav-num">04</span><span>来源、替代与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-009</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已替代</dd></dl><details><summary>状态范围</summary><p>已由 ADR-FE-018 完整承接；持续暂停改为当前轮清队列、后续新触发正常执行</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../l3-observability.html">L3 诊断与 Trace</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="../source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-009</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已替代</dd></dl><details><summary>状态范围</summary><p>已由 ADR-FE-018 完整承接；持续暂停改为当前轮清队列、后续新触发正常执行</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li></ul></details><details><summary>相关正文与历史 · 9</summary><ul><li><a href="ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../l3-observability.html">L3 诊断与 Trace</a></li><li><a href="../l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../../history/index.html">历史归档与收敛记录</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="../source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="../source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li></ul></details></section>
       </aside>
       </div>
     </div>

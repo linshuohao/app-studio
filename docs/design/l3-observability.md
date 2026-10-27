@@ -7,6 +7,7 @@ layer: L3
 modules:
 - M16
 sources:
+- SRC-DEVTOOLS
 - SRC-RUNTIMEIMPLEMENTATION
 - SRC-L3BASELINE
 - SRC-V04
@@ -15,6 +16,7 @@ sources:
 - SRC-HOST
 related:
   decisions:
+  - ADR-FE-023
   - ADR-FE-021
   - ADR-FE-019
   - ADR-FE-018
@@ -25,7 +27,7 @@ navigation:
   group: 04 · L3 运行时
   order: 54
 reading_next: DESIGN-L4
-last_reviewed: '2026-10-26'
+last_reviewed: '2026-10-27'
 relocated_sections:
 - source: docs/design/l3-reactive-engine.md
   anchor: l3-trace
@@ -93,6 +95,8 @@ interface DataChangeRecord {
 
 执行预算与记录预算独立：前者停止无限联动，后者限制辅助 Trace 的事件条数及字节数。Trace 满了可停止辅助详细采集或截断，但计数与循环保护必须继续。合并来源、参数副本等附属记录也需计入容量，不能通过大 `triggeredBy` 绕过记录预算。下方异常现场的必需信息不得按辅助 Trace 截断策略静默省略；完整性、采集载体和资源成本须分别处理。
 
+TS 实现中，辅助 Trace 容量为零时仍保留执行身份、触发关联、预算与完整异常报告，但不序列化成功 Command 的完整字符串；异常动作和对应输入继续独立交付。关闭辅助记录不能关闭运行保护或必需错误现场。
+
 推荐在正常容量内保留完整本轮，溢出时保留初始来源与最近一段，并标记 `truncated`；仅保留尾部是替代方案，最终策略仍待决策。截断造成的缺失引用必须如实表达，不能伪造完整因果链。
 
 | 对象 | 生产临时 Trace 方向 | Devtools 可选扩展 |
@@ -144,3 +148,49 @@ Devtools 可额外保存更完整的执行顺序、实际变化、输入状态�
 
 异常可定位不等于时间旅行。Devtools 关闭也必须得到同样的 Reaction 输出与调度结果。
 
+
+
+## 独立 DevTools：发现、采集与展示 {#independent-devtools}
+
+2026-10-26 用户确认 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md)：DevTools 独立成包，以浏览器扩展为主要入口，业务应用不导入工具、不添加调试组件、不传技术诊断展示开关。Runtime / Renderer 仅提供开发态观测接缝和本来就必须存在的结构化错误事实，业务执行不依赖工具。
+
+```diagram
+{
+  "id": "figure-independent-devtools",
+  "title": "独立工具消费运行事实，业务执行不依赖工具连接",
+  "rows": [
+    [{"title":"Runtime / Renderer","body":"权威状态、正确执行、错误隔离和必要诊断"}],
+    [{"title":"开发态观测接缝","body":"实例发现、只读查询、可释放的事实订阅"}],
+    [{"title":"DevTools 页面桥接","body":"版本握手、按需复制、连接租约；不创建生产 Hook"}],
+    [{"title":"独立工具与扩展面板","body":"目录、状态、请求、校验、轨迹和诊断呈现"}]
+  ],
+  "arrows": ["开发产物登记运行事实", "工具按需读取与订阅", "独立分析和展示；不反向控制业务执行"],
+  "note": "源码职责图。扩展发现标记不等于可以访问闭包内部状态，准确采集需要显式的观测接口。"
+}
+```
+
+### 观测接口与所有权
+
+Runtime 的 /devtools 子入口定义版本化 list / read / subscribe。目录区分 runtime、view、material，每次执行实例独立编号，parentId 关联业务实例与呈现关联；nodeId、Profile、occurrence 用于定位，不拿定义 ID 冒充运行实例 ID。共享 Symbol 仅用于同页引擎副本登记观测源，不暴露 Runtime 对象、业务指令、Host 函数或请求 cancel。
+
+list 只读取元数据，read 在开发者选中对象后复制当前展示数据。Runtime 提供当前 Data / Context / Prepared 与轻量诊断尾部；view 提供当前 Prepared 结构和装配 / 呈现诊断；material 提供已存在的投影缓存、Scope / owners、Binding 和在途请求元数据。工具查询不得重新求值表达式、发起校验或注册业务 observe。完整树结构可包含未挂载节点，material 目录只表示当前已挂载关联，两者不能混同。
+
+Renderer 的 DiagnosticEmitter 面向任意消费者，仅发布诊断和交接提交前记录，不同步业务状态、不保存工具历史。根建立开发与 Host 订阅后统一 flushPending，初次错误完整交付全部消费者。开发目录的 DiagnosticHistory 保存 100 条诊断及截断标记，弱关联根身份；Strict Mode 模拟清理 / 重连复用窗口，真实注销后不再对目录公开，避免为了工具历史在生产 Renderer 保留缓存。
+
+Working Data、成员身份和校验仍归 Runtime；当前投影归 Renderer；选择项、连接状态、轮询及显示缓存归 DevTools。开发者错误上报 onDiagnostic、业务错误降级与工具发现独立：更换上报 / 呈现回调不重建装配或撤销请求。
+
+### 环境与生命周期
+
+默认产物关闭发现注册；development 条件提供开发产物，工作区读取源码，安装包读取独立编译的开发入口。标记不存在时扩展保持等待，不往生产页注入引擎发现能力；构建器不能在生产发布时强制选择 development 条件。服务端不自动建立浏览器目录。
+
+注册在 Runtime 完成初始化、Renderer 提交挂载后建立；真实卸载 / 改绑注销，Strict Mode 的模拟清理允许重新登记同一关联。父实例销毁注销工具子树。连接可以早于或晚于业务实例，晚连接读取当前状态，不能补造连接前的历史。工具失败被隔离，通知经独立微任务交付，不进入业务 Flush 观察预算，不作为业务写入或清理的等待条件。
+
+连接断开释放工具订阅、快照和轨迹缓存；扩展丢失关闭通知时按 15 秒连接租约释放，单页面最多 8 个连接。引擎通知队列最多 200 条；工具客户端 / 页面面板缓冲各 100 条。展示副本限制深度、节点、字符和容器项数，并显式 truncated；丢弃事件另报数量。工具副本不是完整异常报告，不降低前文完整现场的交付要求。
+
+默认轨迹只发布执行、错误定位和请求终态元数据，不广播整份异常 Data / Context 或请求输入输出；当前数据仅在明确选择后读取，不默认持久化到 local storage 或网络。异常完整现场继续交 Host 原诊断出口。首期只读，不提供编辑、重放、时间旅行或重新执行入口。
+
+### 实现入口与验收边界
+
+核心接缝为 packages/runtime/src/devtools；Renderer 接入在 renderer-content.tsx、adapter/projection.ts 和 requests/bridge.ts；独立工具与扩展在 [DevTools README](../../packages/devtools/README.md)。浏览器桥接通过 inspectedWindow.eval 在页面世界执行自包含只读查询，不扫描 React 私有树。扩展本地解压加载，未发布浏览器商店；当前主 frame，其他宿主 / frame 仍待适配。
+
+验收覆盖无工具、晚连接、断开重连、工具异常、Strict Mode、业务请求稳定性、父实例释放、数据副本不可写与容量截断，并区分开发源码 / 开发包 / 默认生产包。实际结果见 [工程证据](engineering.md#devtools-implementation)；完整因果链、跨端与生产性能仍保持原有剩余范围。

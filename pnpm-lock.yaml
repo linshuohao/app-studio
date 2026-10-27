@@ -181,9 +181,15 @@ importers:
       '@form-engine/compiler':
         specifier: workspace:*
         version: link:packages/compiler
+      '@form-engine/devtools':
+        specifier: workspace:*
+        version: link:packages/devtools
       '@form-engine/protocol':
         specifier: workspace:*
         version: link:packages/protocol
+      '@form-engine/pure-functions':
+        specifier: workspace:*
+        version: link:packages/pure-functions
       '@form-engine/runtime':
         specifier: workspace:*
         version: link:packages/runtime
@@ -259,6 +265,18 @@ importers:
       '@base-ui/react':
         specifier: ^1.9.0
         version: 1.9.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@form-engine/compiler':
+        specifier: workspace:*
+        version: link:../../packages/compiler
+      '@form-engine/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@form-engine/renderer-react':
+        specifier: workspace:*
+        version: link:../../packages/renderer-react
+      '@form-engine/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -328,6 +346,28 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@26.6.5)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(yaml@2.9.1))
 
+  packages/devtools:
+    dependencies:
+      '@form-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      jsdom:
+        specifier: ^30.1.3
+        version: 30.1.3(@noble/hashes@1.8.0)
+      tsdown:
+        specifier: ^0.23.1
+        version: 0.23.1(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@26.6.5)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(yaml@2.9.1))
+
   packages/materials-react:
     devDependencies:
       '@testing-library/jest-dom':
@@ -368,13 +408,14 @@ importers:
         version: 5.0.5(@types/node@26.6.5)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@1.8.0))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/protocol:
+    dependencies:
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
     devDependencies:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
-      ajv:
-        specifier: ^8.20.0
-        version: 8.20.0
       ts-json-schema-generator:
         specifier: ^2.9.0
         version: 2.9.0
@@ -406,9 +447,18 @@ importers:
 
   packages/renderer-react:
     dependencies:
+      '@form-engine/protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@form-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@noble/hashes':
+        specifier: 1.8.0
+        version: 1.8.0
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^7.0.1

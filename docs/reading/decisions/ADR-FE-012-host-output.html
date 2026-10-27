@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>ADR-FE-012：Host 能力引用、降级与业务输出 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -110,9 +112,9 @@
 <li><a href="../l3-validation.html#validation-completeness" rel="noopener noreferrer">完整校验</a></li>
 <li><a href="../design-review.html#rev-05" rel="noopener noreferrer">审查</a>、<a href="../governance.html#open-decisions" rel="noopener noreferrer">治理</a></li>
 </ul></section>
-        <section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认职责与策略；引用字段、签名、SDK 尚未冻结</p><nav class="decision-path"><a href="#背景与方案比较">背景与方案比较</a><span>→</span><a href="#已确认决策">已确认决策</a><span>→</span><a href="#影响修订与未决边界">影响、修订与未决边界</a><span>→</span><a href="#来源与关联">来源与关联</a></nav></section>
-        
-        
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认职责与策略；引用字段、签名、SDK 尚未冻结</p><nav class="decision-path"><a href="#背景与方案比较">背景与方案比较</a><span>→</span><a href="#已确认决策">已确认决策</a><span>→</span><a href="#影响修订与未决边界">影响、修订与未决边界</a><span>→</span><a href="#来源与关联">来源与关联</a></nav></section>
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -122,7 +124,7 @@
 <a href="#已确认决策" data-to="已确认决策" title="已确认决策"><span class="nav-num">02</span><span>已确认决策</span></a>
 <a href="#影响修订与未决边界" data-to="影响修订与未决边界" title="影响、修订与未决边界"><span class="nav-num">03</span><span>影响、修订与未决边界</span></a>
 <a href="#来源与关联" data-to="来源与关联" title="来源与关联"><span class="nav-num">04</span><span>来源与关联</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-012</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认职责与策略；引用字段、签名、SDK 尚未冻结</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-012</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认职责与策略；引用字段、签名、SDK 尚未冻结</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="../governance.html#M02">M02 L1 数据 / 引用 / 词法 Scope</a></li><li><a href="../governance.html#M05">M05 L2 编译与诊断</a></li><li><a href="../governance.html#M13">M13 完整校验 / Submit 交接</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l3-validation.html">L3 校验与结果</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
       </aside>
       </div>
     </div>

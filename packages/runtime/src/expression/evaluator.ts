@@ -3,7 +3,7 @@ import type { JsonValue, JsonSchema } from '@form-engine/protocol';
 import type { Expression, Reference, ValueSpec } from '@form-engine/protocol/definition';
 import type { PreparedValueSpec } from '@form-engine/protocol/prepared';
 import { isCoreBinding, type FunctionRegistry } from '@form-engine/pure-functions';
-import { ownJson, readAt } from '../data/json.js';
+import { captureJson, copyJson, readAt } from '../data/json.js';
 import { resolvePath, type ReadView, type ScopeBinding } from '../scope/registry.js';
 import { createSchemaCompiler } from '../validation/schema.js';
 import { observeRejection } from '../lifecycle/async.js';
@@ -87,8 +87,8 @@ export class Evaluator {
    * core.if / and / or / exists 在此实现惰性求值，未选分支不会调用函数或读取引用。
    */
   expression(expression: Expression, frame: EvaluationFrame, stack = new Set<string>()): JsonValue {
-    if (expression === null || typeof expression !== 'object') return ownJson(expression);
-    if ('literal' in expression) return ownJson(expression.literal);
+    if (expression === null || typeof expression !== 'object') return copyJson(expression);
+    if ('literal' in expression) return captureJson(expression.literal);
     if ('ref' in expression) return this.reference(expression.ref, frame);
     if ('use' in expression) {
       const target = Object.hasOwn(this.named, expression.use)
@@ -140,20 +140,20 @@ export class Evaluator {
     if (observeRejection(returned)) {
       throw Error('expression: pure function must return JSON synchronously');
     }
-    const result = ownJson(returned);
+    const result = copyJson(returned);
     if (!signature.result(result)) throw Error('expression: return type');
     return result;
   }
-  /** 按 ValueSpec 递归解析 $expr / $literal，普通对象与数组重建为引擎拥有的 JSON。 */
+  /** 按 ValueSpec 构造值；只接管新容器和外部值，不重复复制已接管的只读子树。 */
   value(specification: ValueSpec | PreparedValueSpec, frame: EvaluationFrame): JsonValue {
-    if (specification === null || typeof specification !== 'object') return ownJson(specification);
+    if (specification === null || typeof specification !== 'object') return copyJson(specification);
     if (Array.isArray(specification))
-      return ownJson(specification.map((entry) => this.value(entry, frame)));
+      return captureJson(specification.map((entry) => this.value(entry, frame)));
     if ('$literal' in specification && specification.$literal !== undefined)
-      return ownJson(specification.$literal);
+      return captureJson(specification.$literal);
     if ('$expr' in specification && specification.$expr !== undefined)
       return this.expression(specification.$expr, frame);
-    return ownJson(
+    return captureJson(
       Object.fromEntries(
         Object.entries(specification).map(([key, entry]) => [key, this.value(entry!, frame)]),
       ),

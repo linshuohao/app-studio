@@ -60,3 +60,11 @@ export interface PreparedForm {
   capabilityLock: CapabilityLock;
   hostRequirements: HostRequirements;
 }
+
+/** 编译成功产物的深度只读视图；JSON 构造 / 克隆仍可使用 PreparedForm。 */
+type ReadonlyTree<T> = T extends readonly (infer Item)[]
+  ? readonly ReadonlyTree<Item>[]
+  : T extends object
+    ? { readonly [K in keyof T]: ReadonlyTree<T[K]> }
+    : T;
+export type ReadonlyPreparedForm = ReadonlyTree<PreparedForm>;

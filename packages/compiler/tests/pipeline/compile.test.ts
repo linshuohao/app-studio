@@ -37,8 +37,15 @@ describe('compile: first executable slice', () => {
     expect(result.prepared.resources).toEqual({ schemas: {}, requestSchemas: {} });
     expect(result.prepared.hostRequirements).toEqual({ validators: [], events: [], requests: [] });
     expect(source).toEqual(before);
-    result.prepared.definition.data.schema = false;
+    expect(Object.isFrozen(result.prepared)).toBe(true);
+    expect(Object.isFrozen(result.prepared.definition.data)).toBe(true);
+    expect(() => {
+      Object.assign(result.prepared.definition.data, { schema: false });
+    }).toThrow(TypeError);
+    const editable = structuredClone(result.prepared);
+    Object.assign(editable.definition.data, { schema: false });
     expect(source).toEqual(before);
+    expect(result.prepared.definition.data.schema).toEqual(before.definition.data.schema);
   });
 
   it('selects an explicit profile, ignores other-platform semantics, and only locks used materials', () => {

@@ -24,7 +24,7 @@ related:
 navigation:
   group: 03 · L2 预处理
   order: 41
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-27'
 status_note: 本期设计已确认；I01–I04 编译主链与表达式 watch 已实现，完整基准 / 浏览器消费及 Runtime / Adapter 联验待完成
 reading_next: DESIGN-L3-RUNTIME
 ---
@@ -222,6 +222,8 @@ PreparedForm
 ```
 
 build.platform 可省略，但各 artifact 的平台和不可变身份仍保留。Compiler 成功结果在同进程传入 Runtime 时不重复全量协议 Schema 检查；外部 JSON 在接收边界检查一次，格式 / 目标 / 能力和动态执行保护仍保留。
+
+成功结果的 prepared 使用 ReadonlyPreparedForm，并在运行时递归冻结；这是 2026-10-27 用户确认的对外行为。输入仍先复制，不能冻结调用者的 Definition / Catalog。需要构造修订时，先 structuredClone(result.prepared)，在 TS 中按可修改的 PreparedForm 表示编辑，再重新检查；结构克隆和 JSON 往返都不携带进程内验证身份。共享接收入口只登记真实检查成功的产物，不导出可伪造验证结果的注册函数，不把格式字符串视为验证凭据。详见 [Prepared 交付边界](../l2-preparation.md#prepared-delivery)。
 
 ## 整体架构与职责划分 {#architecture}
 

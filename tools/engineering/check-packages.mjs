@@ -36,7 +36,13 @@ try {
     import { readFileSync } from 'node:fs';
     import { compile, validateMaterialManifest } from '@form-engine/compiler';
     import { createRuntime } from '@form-engine/runtime';
+    import { getDevtoolsHook } from '@form-engine/runtime/devtools';
+    import { connectDevtools } from '@form-engine/devtools';
+    globalThis.window = globalThis; // Only the isolated consumer simulates a browser discovery realm.
     import { createCoreFunctions } from '@form-engine/pure-functions';
+    import { createElement } from 'react';
+    import { renderToString } from 'react-dom/server';
+    import { FormRenderer, useMaterialAdapter, defineMaterialContract, defineMaterial, createMaterialRegistry } from '@form-engine/renderer-react';
     const artifact = { id: 'consumer-build', platform: 'web', digest: 'sha256:' + '1'.repeat(64) };
     const functions = createCoreFunctions(artifact);
     assert.equal(functions['core.add'].invoke([2, 3]), 5);
@@ -55,24 +61,43 @@ try {
     });
     assert.equal(compiled.success, true, JSON.stringify(compiled.diagnostics));
     assert.equal(compiled.prepared.build.profile, 'only');
+    assert.equal(Object.isFrozen(compiled.prepared.definition.views.only), true);
+    assert.throws(() => { compiled.prepared.definition.id = 'mutated'; }, TypeError);
     assert.equal(compiled.prepared.definition.views.only.material, 'display');
     assert.deepEqual(compiled.prepared.definition.views.only.props.label.watch, [{ source: 'data', path: '/name' }]);
     assert.deepEqual(compiled.prepared.definition.constraints[0].watch, []);
     assert.deepEqual(JSON.parse(JSON.stringify(compiled.prepared)), compiled.prepared);
     assert.match(compiled.prepared.capabilityLock.materials.display.manifestDigest, /^sha256:[a-f0-9]{64}$/);
     const runtime = createRuntime({ prepared: compiled.prepared, data: { name: 'Ada', age: 20, total: 0 }, functions });
+    assert.equal(runtime.dispatch({ op: 'set', target: { source: 'data', path: '/missing/child' }, value: 1 }).ok, false);
+    assert.equal(runtime.diagnostics().find(entry => entry.kind === 'command.error').evidence.prepared, compiled.prepared, 'Packed Compiler and Runtime share the immutable artifact');
+    const development = process.execArgv.includes('--conditions=development');
+    assert.equal(Boolean(getDevtoolsHook()), development, 'Only development package conditions may register discovery');
+    if (development) {
+      const client = connectDevtools(getDevtoolsHook());
+      assert.equal(client.list().filter(source => source.kind === 'runtime').length, 1);
+      assert.ok(client.inspect(client.list()[0].id).value.data);
+      client.disconnect();
+    }
     const prior = runtime.snapshot();
     runtime.dispatch({ op: 'set', target: { source: 'data', path: '/name' }, value: 'Grace' });
     await runtime.flush();
     assert.deepEqual(prior, { name: 'Ada', age: 20, total: 0 });
     assert.deepEqual(runtime.snapshot(), { name: 'Grace', age: 20, total: 22 });
     assert.equal((await runtime.validate()).status, 'valid');
+    const displayContract = defineMaterialContract(material);
+    const Display = () => createElement('span', null, String(useMaterialAdapter(displayContract).props.label));
+    const registry = createMaterialRegistry([defineMaterial(displayContract, artifact, Display)]);
+    // 打包消费者的只读呈现冒烟，不声明 SSR 水合支持。
+    const markup = renderToString(createElement(FormRenderer, { prepared: compiled.prepared, runtime, materials: registry }));
+    assert.ok(markup.includes('>Grace</span>'));
     runtime.dispose();
+    assert.equal(getDevtoolsHook()?.list().length ?? 0, 0);
     const protocolSchema = JSON.parse(readFileSync(new URL(import.meta.resolve('@form-engine/protocol/schemas/form-definition.schema.json')), 'utf8'));
     assert.equal(protocolSchema.$schema, 'https://json-schema.org/draft/2020-12/schema');
     for (const domain of ['definition', 'capability', 'prepared'])
       assert.deepEqual(Object.keys(await import('@form-engine/protocol/' + domain)), []);
-    // Future Renderer / Material implementations must still have consumable main entries.
+    // 正式物料库仍待实现；Renderer 已通过真实 Prepared 的打包消费。
     await import('@form-engine/renderer-react');
     await import('@form-engine/materials-react');
     console.log('Isolated packed consumer: pure functions, Compiler → Runtime, exports and Schema passed');
@@ -94,6 +119,22 @@ import { compile, validatePureFunctionManifest } from '@form-engine/compiler';
 import type { CompileInput, CompileResult, Diagnostic } from '@form-engine/compiler';
 import { createRuntime, type FullValidationResult } from '@form-engine/runtime';
 import { createCoreFunctions, type FunctionRegistry } from '@form-engine/pure-functions';
+import { defineMaterialContract, defineRequest, defineHostRequests, useMaterialAdapter } from '@form-engine/renderer-react';
+const request = defineRequest<string, string[]>({ payloadSchema: { type: 'string' }, resultSchema: { type: 'array', items: { type: 'string' } } });
+const requestContracts = { search: request };
+const viewContract = defineMaterialContract<object, 'value', Record<string, never>, typeof requestContracts>({ id: 'typed-material', version: 'test', requests: requestContracts });
+function MaterialConsumer() {
+  const adapter = useMaterialAdapter(viewContract);
+  adapter.request('search', 'hello');
+  // @ts-expect-error Wrong request payload must remain an error in packed declarations.
+  adapter.request('search', 42);
+  // @ts-expect-error Unknown binding name must remain an error in packed declarations.
+  adapter.set('missing', 'value');
+}
+defineHostRequests({ lookup: request }, { lookup: input => [input] });
+// @ts-expect-error Required statically-known Host registration cannot be omitted.
+defineHostRequests({ lookup: request }, {});
+void MaterialConsumer;
 const reference: DataReference = { source: 'data', path: '/name' };
 const command: SetCommand = { op: 'set', target: reference, value: 'Ada' };
 const definition: FormDefinition = { protocolVersion: 'consumer-test', id: 'consumer', version: 'draft', data: { schema: { type: 'object' } }, views: { desktop: { material: 'input', bindings: { value: reference } } } };
@@ -104,7 +145,14 @@ const invalid: SetCommand = { op: 'set', target: { source: 'event', path: '/valu
 const compilerInput: CompileInput = { definition, catalog: { id: 'typed-catalog', materials: {}, pureFunctions: {} } };
 const compilerResult: CompileResult = compile(compilerInput);
 const diagnostics: Diagnostic[] = compilerResult.diagnostics;
-if (compilerResult.success) { const output: PreparedForm = compilerResult.prepared; void output; }
+if (compilerResult.success) {
+  const output: import('@form-engine/protocol/prepared').ReadonlyPreparedForm = compilerResult.prepared;
+  // @ts-expect-error Compiled artifacts are deeply readonly, including nested fields.
+  output.definition.data.schema = false;
+  const editable = structuredClone(output) as PreparedForm;
+  editable.definition.data.schema = false;
+  void editable;
+}
 else {
   // @ts-expect-error Failed compilation must not expose an executable Prepared.
   const invalidOutput: PreparedForm = compilerResult.prepared;

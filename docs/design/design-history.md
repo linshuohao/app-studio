@@ -7,6 +7,7 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-DEVTOOLS
 - SRC-WORKFLOWS
 - SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
@@ -28,11 +29,12 @@ sources:
 - SRC-V07
 related:
   decisions:
+  - ADR-FE-023
   - ADR-FE-021
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-26'
+last_reviewed: '2026-10-27'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -1275,3 +1277,25 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 拒绝以“Host 自行监听即可”省略运行时的触发配置；也未采用任意自定义数据 Command 或通用异步 Reaction Scheduler。新只读 ValidationReference 与写目标分开，Constraint 的同步 requires 不变；逐结果通知不等于完整校验提前完成。局部替代见 [ADR-FE-020](decisions/ADR-FE-020-reaction-state-host.md)，来源 SRC-REACTIONSTATE。
 
 协议 TypeScript、派生 Schema 与 Compiler 衔接同步维护，Prepared 格式升至 /2；Runtime / Adapter 仍待实现，字段状态枚举与 Issue SDK 仍在原任务内。此前来源中的“Data-only”保留历史语境，现行有效行为以对应主题及新 ADR 为准。
+
+
+## L4 React SDK 与实施批次确认 {#l4-react-sdk-confirmed}
+
+2026-10-26 用户提出 Renderer 组件与共用 Adapter Hook 的整体形态，要求模块、功能、目录完整草案；审阅后确认四批执行。现行 [L4 契约](l4-renderer.md#react-sdk-delivery)及 [ADR-FE-022](decisions/ADR-FE-022-react-renderer-sdk.md)记录 Hook 接入、Runtime 三类消费接缝、客户端首期与分批验证。不重开业务状态唯一来源、输入交付及错误隔离原则；文件拆分与命名留给实现。正式物料库及真实 Host 装配随后推进。
+
+
+本专题实施后的独立只读审查以真实 Compiler / Runtime 复现模板所属成员资格丢失和请求资源误入执行兼容两项反例。分别通过独立 ownership 资格链与执行资源引用闭包修复，并补写入 / 请求 / Profile 回归；不改变模板仅见形参、Runtime 唯一业务状态源等原原则。同步发现的 Object.is 快照压平也转成反例测试。独立上下文完成只读审查，修复复验由实现者完成，不声称修复后已再独立审查。
+
+
+## 2026-10-26：开发工具与业务呈现分离 {#independent-devtools-confirmed}
+
+用户在 L4 Review 后明确要求 DevTools 独立包 / 浏览器扩展，借鉴 React / Vue DevTools，运行环境标记发现，业务开发无感知。完整草案说明发现标记与观测接口区别、核心保留必要事实、技术 UI 外置、开发构建开关、工具生命周期及只读首期后，用户确认并授权落地。
+
+[ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md)替代 L4 首批内嵌面板 / diagnosticMode；保留 [ADR-FE-022](decisions/ADR-FE-022-react-renderer-sdk.md) 的两个主要入口、状态和生命周期。诊断回调变化导致物料关联重建的缺陷在此轮修复，不能把工具连接当作业务执行前置。完整异常现场、截断 / 敏感数据约束继续有效；未确认时间旅行、编辑和扩展商店发布。
+
+
+## 编译产物只读与运行时检查收敛 {#runtime-check-convergence}
+
+2026-10-27 用户在 L4 Review 中质疑逐层校验、复制与诊断准备的成本，确认先沿编译、装载、物料输入、执行、写入、通知链审查再优化。源码及隔离探针确认对象 set 多次接管、内部规则重走外部入口、渲染时重复摘要及辅助 Trace 关闭后序列化等工作；调用次数不等于生产耗时。用户随后明确选择 Compiler 成功产物深度只读、修改前先克隆，补齐原验证复用原则所需的不可变边界。
+
+实现共用结构接收与 JSON 接管凭据，凭据不序列化；内部已确认动作共用执行链，外部命令和实际注册继续检查。数据写入保留独立替换、Scope 身份、通知时序、任务资格和异常现场。此项落实既有分层与制品接收原则，并明确 Compiler 返回值的只读行为，不替代既有 ADR，也不扩大为常量折叠、代码生成、全量求值计划或生产性能完成声明。

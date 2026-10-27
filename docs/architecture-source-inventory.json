@@ -10,15 +10,15 @@
   ],
   "counts": {
     "candidate-validation-evidence": 36,
-    "current-markdown": 51,
+    "current-markdown": 53,
     "documentation-tooling": 13,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 405,
-  "unique_byte_contents": 366,
+  "total_entries": 407,
+  "unique_byte_contents": 368,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 12805,
-      "sha256": "718d33e44b23ef20a6520f4a8d596297b95b77f479aa759928acc2a6e354ead5",
+      "bytes": 13005,
+      "sha256": "fe0dde8baf743a3141539739210cea26717cef98f081c89e068d1f902f3709a4",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -271,8 +271,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 46234,
-      "sha256": "72c5400b50c8ab26f625d7b1a9cf027e109ebc8785598ec3d7dcf1bbafc36407",
+      "bytes": 46716,
+      "sha256": "4a22ae057e0c40cdf269b0e2b39c05d65d7804d6c64adaea9321364c645758e8",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -342,7 +342,7 @@
         },
         {
           "level": 3,
-          "title": "3. 首期六个 TS 包与依赖方向",
+          "title": "3. 首期 TS 包与依赖方向",
           "anchor": null
         },
         {
@@ -1358,6 +1358,61 @@
       ]
     },
     {
+      "path": "docs/design/decisions/ADR-FE-022-react-renderer-sdk.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2456,
+      "sha256": "e579152b39f0e476e988cd3ce2c0030504775780343bd0f5c9ab7f5a53d18889",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-022：React Renderer 与共用物料 Hook",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与选择",
+          "anchor": "adr-022-context"
+        },
+        {
+          "level": 2,
+          "title": "决策与约束",
+          "anchor": "adr-022-decision"
+        },
+        {
+          "level": 2,
+          "title": "实施与证据",
+          "anchor": "adr-022-evidence"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-023-independent-devtools.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2352,
+      "sha256": "43841a914c882fbb83204bc3f25f6451f8077ea21729eb4703d3078a0987f478",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-023：独立 DevTools 与开发态观测接缝",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与决定",
+          "anchor": "adr-023-context"
+        },
+        {
+          "level": 2,
+          "title": "约束与取舍",
+          "anchor": "adr-023-decision"
+        }
+      ]
+    },
+    {
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
@@ -1481,8 +1536,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 154220,
-      "sha256": "18d918fd7625d8a5b6d0f6848e745e8aad3f39bbcde6f952f259828ad0ff51ac",
+      "bytes": 157266,
+      "sha256": "b7e60e495b28d5cb4e3783ae4ee9840b840f1904d77228f729ff66d6132c5d9a",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -1979,6 +2034,21 @@
           "level": 2,
           "title": "2026-10-23：Reaction 状态观察与 Host 行为统一",
           "anchor": "reaction-state-evolution"
+        },
+        {
+          "level": 2,
+          "title": "L4 React SDK 与实施批次确认",
+          "anchor": "l4-react-sdk-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-26：开发工具与业务呈现分离",
+          "anchor": "independent-devtools-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "编译产物只读与运行时检查收敛",
+          "anchor": "runtime-check-convergence"
         }
       ]
     },
@@ -2071,8 +2141,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 54713,
-      "sha256": "c4ed46eee2d7476fac5b4adce95082131d9f64c3f98de645cd919ec8e5471442",
+      "bytes": 62106,
+      "sha256": "b6f60534797f1729d4215d0675a1f064b9d560059b4b807071404d8a102a005a",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2219,6 +2289,16 @@
           "level": 2,
           "title": "Compiler：共享分析与运行准备",
           "anchor": "compiler-static-analysis"
+        },
+        {
+          "level": 2,
+          "title": "React L4 首期实现与本地证据",
+          "anchor": "renderer-implementation"
+        },
+        {
+          "level": 2,
+          "title": "独立 DevTools 首期实现与验证",
+          "anchor": "devtools-implementation"
         }
       ]
     },
@@ -2226,8 +2306,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 16309,
-      "sha256": "9d952b408c2a5b295c4865ba248ac979e2cae688c209eb2ce947958821494fbb",
+      "bytes": 17095,
+      "sha256": "c6dae2d5d494b6952694adae380686011f595adc7ab259f8a519b0d8e28598d4",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -2289,6 +2369,11 @@
           "level": 3,
           "title": "请求类型贯通与接入完整性",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "React 首期实际接入",
+          "anchor": "react-integration-sdk"
         }
       ]
     },
@@ -2296,8 +2381,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 40354,
-      "sha256": "267efb1800983fcd6c443e98e2f9f46916a248b3143e2caf16ac4e6858c6cd42",
+      "bytes": 42075,
+      "sha256": "a72a8a8d6442727da65fc7532ba88c1422a3b58105a3dac910331aa555d2cf1b",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2374,6 +2459,16 @@
           "level": 2,
           "title": "状态观察与 Host 行为的增量状态",
           "anchor": "reaction-state-status"
+        },
+        {
+          "level": 2,
+          "title": "L4 四批交付授权",
+          "anchor": "l4-react-delivery-status"
+        },
+        {
+          "level": 3,
+          "title": "独立 DevTools 首期边界确认",
+          "anchor": "devtools-status"
         }
       ]
     },
@@ -2836,8 +2931,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 97593,
-      "sha256": "ab40e65e4ce6631dc651923f7d459a42d609b0cfcf1c90c407b61fde9d2a3f41",
+      "bytes": 98215,
+      "sha256": "8c436112a443f9c47e731351b3661daca11a8a393313f39adb8c08574cfcb9f1",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {
@@ -3206,8 +3301,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 68286,
-      "sha256": "5de9cad576ad46d52eedee4963d357c955b1a28272b929e14262ecd4c06e640f",
+      "bytes": 69129,
+      "sha256": "e8d5a33466e0609dd30e3d85827b3ef289a60292e286dea0f3b8a3705d4e694e",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -3406,8 +3501,8 @@
       "path": "docs/design/l3-data-scope.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 32093,
-      "sha256": "84ebd37d7f05c16c98ad8a584fa2fff8d81efe5ce35420b4e7e896cb74502502",
+      "bytes": 32857,
+      "sha256": "2d64a730cf6c003a71a8ce0f4993f355a20e69bee6ac6d01dd36ec5d8e5f3612",
       "mapping": "DESIGN-L3-DATA / 逐 Command 数据、快照、Scope 与完整行为验收迁移",
       "sections": [
         {
@@ -3476,8 +3571,8 @@
       "path": "docs/design/l3-observability.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 11781,
-      "sha256": "a24428b22122df1e91ddfc23112d02bebc7fcef9643b2d7efa2dde21feb888ee",
+      "bytes": 17513,
+      "sha256": "60b0f18bc5388bba09c82b1f6d28b343554c1e3f3d8448ef30fdcce0bfe5757f",
       "mapping": "DESIGN-L3-DIAGNOSTICS / 运行事实、Trace 与开发工具说明迁移",
       "sections": [
         {
@@ -3504,6 +3599,26 @@
           "level": 2,
           "title": "Devtools 因果分析与复现的三种层次",
           "anchor": "l3-devtools"
+        },
+        {
+          "level": 2,
+          "title": "独立 DevTools：发现、采集与展示",
+          "anchor": "independent-devtools"
+        },
+        {
+          "level": 3,
+          "title": "观测接口与所有权",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "环境与生命周期",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "实现入口与验收边界",
+          "anchor": null
         }
       ]
     },
@@ -3786,8 +3901,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 28302,
-      "sha256": "51529a656fdd43b645d7b83a57cc314318828e9e6fee7f2bccbaa6a1ba0f7c49",
+      "bytes": 43277,
+      "sha256": "9ffc382ed900315cff12056fad119c65a88bf16c3e9151fde40d1388d185c351",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {
@@ -3929,6 +4044,46 @@
           "level": 2,
           "title": "状态订阅的统一交接",
           "anchor": "renderer-state-subscription"
+        },
+        {
+          "level": 2,
+          "title": "React SDK 与四批实施确认",
+          "anchor": "react-sdk-delivery"
+        },
+        {
+          "level": 3,
+          "title": "公共入口与消费方式",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "装配、投影与生命周期",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Request 与错误",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "Runtime 最小消费接口",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "模块、目录与实施计划",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "TS / React 四批实现与证据",
+          "anchor": "react-implementation"
+        },
+        {
+          "level": 3,
+          "title": "实现目录与状态注释整理",
+          "anchor": "react-code-organization"
         }
       ]
     },
@@ -24339,8 +24494,8 @@
       "path": "tools/docs/templates/document.html",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 4256,
-      "sha256": "430d62ac75301d6d15bc21767813c79d22d6b8955ca184f23b52303095be5594",
+      "bytes": 4220,
+      "sha256": "7aed674b50f6313ecc4092835018a7efc8bb689141e103a30622df46241138ec",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": [
         {
@@ -24364,8 +24519,8 @@
       "path": "docs/reading/assets/documentation.css",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 26419,
-      "sha256": "91b5ad1ba5854106e0e0b30aa69a775a9a6da9f71bc68ba43b13b3c520b555ad",
+      "bytes": 26575,
+      "sha256": "3e89ece3611bcb186475227df76ba7266b803c5b53a32467f84f19f25ff54401",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

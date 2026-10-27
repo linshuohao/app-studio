@@ -1,0 +1,43 @@
+{
+  "name": "@form-engine/devtools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only developer inspector and browser extension for Form Engine",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown && tsdown --config tsdown.extension.config.ts && node build-extension.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "@form-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.23.1",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.5",
+    "jsdom": "^30.1.3",
+    "@types/node": "^26.6.5"
+  }
+}

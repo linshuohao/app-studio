@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
@@ -41,7 +41,10 @@
   },
   "private": true,
   "dependencies": {
-    "@form-engine/runtime": "workspace:*"
+    "@form-engine/runtime": "workspace:*",
+    "@form-engine/protocol": "workspace:*",
+    "@noble/hashes": "1.8.0",
+    "ajv": "8.20.0"
   },
   "publishConfig": {
     "exports": {

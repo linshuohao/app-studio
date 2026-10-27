@@ -2,6 +2,18 @@
 
 本包消费真实 Compiler 产出的 Prepared /2，提供无界面的数据、观察、联动和校验主链。设计依据为 [L3 总览](../../docs/design/l3-reactive-engine.md)、[数据与 Scope](../../docs/design/l3-data-scope.md)、[校验](../../docs/design/l3-validation.md)和 ADR-FE-018 / 019 / 020。下列 SDK 是本次实现的 review 草案；实现事实与剩余限制分别列出，不宣称已完成 React / Flutter 或生产性能验收。
 
+## 内部命名与公开契约
+
+实现中的编译产物统一使用 compiledForm，装载函数为 loadCompiledForm；协议类型 PreparedForm、RuntimeOptions.prepared 和公开方法名称保持兼容。JSON 接管区分 copyJson（独立复制）与 captureJson（复用已接管只读子值）。Protocol 的 internal/json 与 internal/prepared 为跨引擎包的实现接缝，不是业务 SDK；共享真实接管 / 验证结果，不提供 trusted 注册开关。Compiler 成功产物为深度只读，外部克隆重新检查。
+
+runtime.ts 的模块成员按职责命名：#compiledForm、#dataStore、#expressionEvaluator、#observerRegistry、#reactionScheduler、#validationManager、#diagnosticReporter、#hostCapabilities；Host 环境为 #hostContext / #hostContextRevision，活跃规则为 #reactionInstances，求值帧由 #createEvaluationFrame 建立。避免把配置、数据读视图、UI 环境或规则定义混为同一类 input / view。边界参数已有明确类型和职责时保留 input，不机械替换所有通用词。
+
+devtools/ 是开发观测接缝，不承载工具 UI。DiagnosticHistory 只保留开发视图的有界诊断窗口，弱关联到根身份，支持晚连接及模拟清理后的重新登记；普通事件仍只在有连接时缓冲。工具本体继续在独立 packages/devtools，生产默认不创建此窗口。
+
+## 本轮收敛的执行边界
+
+对象 set 在 Adapter 固定外部输入，Runtime 复用已接管的不可变值，DataStore 替换保留独立复制，避免改变对象观察与数组成员身份。内部规则动作不重走公开 dispatch 的接收检查，但仍执行路径 / Scope / 位置 / 预算保护，并保留逐条失败隔离。traceCapacity=0 不构建成功命令的完整字符串，错误仍有完整动作和触发输入。回归入口为 tests/ownership.test.ts、Renderer 的 adapter-performance.test.tsx，以及原有通知、异步和诊断用例；调用次数减少不代表整条编辑链显著提速。
+
 ## 总图与目录
 
 ```mermaid
@@ -106,7 +118,7 @@ classDiagram
 
 | 场景 | 调用路径 | 影响什么 | 组合影响来自哪里 |
 | --- | --- | --- | --- |
-| 1 初始化 | `compile → createRuntime → Runtime.constructor → loadPrepared → DataStore → #refreshRuleInstances → flush` | 初始 Root、数组身份、规则实例、初始校验；View 可立即首读 | Prepared + Host 初值 + Context + 锁定函数 / Host 能力；新 Reaction 仅按 runOnActivate 入队 |
+| 1 初始化 | `compile → createRuntime → Runtime.constructor → loadCompiledForm → DataStore → #refreshRuleInstances → flush` | 初始 Root、数组身份、规则实例、初始校验；View 可立即首读 | Prepared + Host 初值 + Context + 锁定函数 / Host 能力；新 Reaction 仅按 runOnActivate 入队 |
 | 2 编辑 / 显示 / 校验 | `dispatch → executeCommand → DataStore → dataChanged → enqueue → drain → ValidationManager.run` | 每条写入立即可读；命中观察的 View 重读、Reaction 入队、相关校验失效 | 显式 watch + 当前词法 Scope + 本条修改前后的逻辑值；Schema 不拦截业务非法工作态 |
 | 3 结果再触发行为 | `ValidatorTask.result → eligibility → change → validationChanged → enqueue → when / then` | 仅有效来源更新字段 Issues / status；显式观察校验状态的 Reaction 可写数据或 emit；Data-only Reaction 不因 Issue 单独变化而执行 | 来源贡献 + 稳定成员 + 任务代次 + 前置资格 + 所观察投影；异步报价等 Host 任务由 Host 自己防覆盖 |
 | 4 成功 / 失败 | `await flush → await validate → Host 保存已校验快照` | Flush 结果、完整证明和业务交付结果分别表达 | 当前输入身份 + 全部适用校验覆盖 + 业务错误 / 技术失败；Host 决定提示、告警、重试与提交 |

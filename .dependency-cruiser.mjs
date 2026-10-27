@@ -15,7 +15,7 @@ export default {
       severity: 'error',
       from: { path: core },
       to: {
-        path: '(apps/|services/|packages/(renderer-react|materials-react)/|node_modules/(react|next|@nestjs)/)',
+        path: '(apps/|services/|packages/(renderer-react|materials-react|devtools)/|node_modules/(react|next|@nestjs)/)',
       },
     },
     {

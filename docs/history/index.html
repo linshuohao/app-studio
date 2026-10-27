@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>历史归档与收敛记录 · 动态表单引擎</title>
-  <link rel="stylesheet" href="../reading/assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="../reading/assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="../reading/assets/documentation.css?v=3e89ece3611b">
+
+  <script src="../reading/assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="../reading/assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="../reading/decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="../reading/decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="../reading/decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="../reading/decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="../reading/decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../reading/architecture.html#glossary">术语与语义边界</a>
 <a class="active" aria-current="page" href="index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../reading/usage-guide.html">使用与开发指南</a>
@@ -503,9 +505,9 @@
 <li><a href="2026-10-16-before-v1-final/l1-round04-view-profile-material-interaction.html" rel="noopener noreferrer">l1-round04-view-profile-material-interaction.html</a></li>
 </ul>
 <p>历史台账记录的 V1.0 初始用户来源 SHA-256：<code>de1dce61f695e45d7a2a4355448b08a0fbc8f8c59fb0e0040c45abe28bd63593</code>。该记录不等同于既有站内阅读副本摘要；本次来源包保存的术语统一前副本 SHA-256 为 <code>bb93e9e90e5f251c20f9d3bf1a1f1a7023cde2f1d25d723a8233bdeacde0a510</code>。</p></section>
-        
-        
-        
+
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -524,7 +526,7 @@
 <a href="#archive-3" data-to="archive-3" title="样例阅读形式调整"><span class="nav-num">11</span><span>样例阅读形式调整</span></a>
 <a href="#profile-revision" data-to="profile-revision" title="Profile 与定义信息修订 · 2026.10.16"><span class="nav-num">12</span><span>Profile 与定义信息修订 · 2026.10.16</span></a>
 <a href="#archive-5" data-to="archive-5" title="来源与过程记录"><span class="nav-num">13</span><span>来源与过程记录</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>HISTORY-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>历史记录</dd></dl><details><summary>相关正文与历史 · 21</summary><ul><li><a href="../reading/decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../reading/decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="../reading/decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../reading/decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="../reading/decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="../reading/decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="../reading/decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="../reading/decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../reading/decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="../reading/decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../reading/decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="../reading/architecture.html">整体架构设计</a></li><li><a href="../reading/dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../reading/l2-preparation.html">L2 预处理与编译</a></li><li><a href="../reading/l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../reading/l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../reading/l3-validation.html">L3 校验与结果</a></li><li><a href="../reading/governance.html">设计进展与待讨论事项</a></li><li><a href="../reading/usage-guide.html">使用与开发指南</a></li><li><a href="../reading/design-history.html">设计决策与讨论演进</a></li><li><a href="../reading/source-map.html">来源映射与知识覆盖</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>HISTORY-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>历史记录</dd></dl><details><summary>相关正文与历史 · 21</summary><ul><li><a href="../reading/decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../reading/decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="../reading/decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../reading/decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="../reading/decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="../reading/decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="../reading/decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="../reading/decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="../reading/decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="../reading/decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="../reading/decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="../reading/architecture.html">整体架构设计</a></li><li><a href="../reading/dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../reading/l2-preparation.html">L2 预处理与编译</a></li><li><a href="../reading/l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="../reading/l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="../reading/l3-validation.html">L3 校验与结果</a></li><li><a href="../reading/governance.html">设计进展与待讨论事项</a></li><li><a href="../reading/usage-guide.html">使用与开发指南</a></li><li><a href="../reading/design-history.html">设计决策与讨论演进</a></li><li><a href="../reading/source-map.html">来源映射与知识覆盖</a></li></ul></details></section>
       </aside>
       </div>
     </div>

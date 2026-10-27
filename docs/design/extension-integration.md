@@ -190,3 +190,8 @@ Host 能力缺失按用途降级，开发 / 调试端明确报诊断，用户端
 ### 请求类型贯通与接入完整性
 
 物料请求需公开可复用输入输出类型及契约，Host 实现关联后得到参数 / 返回值检查；静态已知注册集合检查必需请求，动态配置由 Compiler / 装配兜底。实际页面物料的请求映射全部必需，漏映射编译失败；缺 Host 实现装配即显示对应物料错误，不等首次调用。加载未使用物料不要求注册。此规则收紧此前允许省略映射的边界，完整实现与验收见 [L1 请求开发接入](l1/05-view-material-host.md#request-development-contract)。
+
+
+### React 首期实际接入 {#react-integration-sdk}
+
+L4 已落实 [React SDK](l4-renderer.md#react-implementation)：物料内部共用 Hook 提供 values / validation / props / slots 与 set / command / emit / request；Host 事件及校验仍注册在 Runtime，物料 Request 通过 Renderer 注册桥接。observeScope 的失效通知与即时资格查询覆盖成员删除及实例销毁；模板形参不携带调用方别名，所属挂载资格另外保留。按 [独立工具契约](l3-observability.md#independent-devtools)，开发扩展自动发现并展示装配遗漏，业务应用不再传 diagnosticMode；业务页面保留友好降级和 Host 结构化错误上报。以上为本地实现范围，正式物料库 / 真实服务 / Host 应用仍未因此完成。

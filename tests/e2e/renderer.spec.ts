@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test';
+test('L4 真实浏览器输入、非法工作值、请求、Scope、局部故障及完整校验提交', async ({ page }) => {
+  await page.goto('/l4');
+  await page.getByRole('button', { name: '打开验证' }).click();
+  await expect(page.getByRole('textbox', { name: '姓名', exact: true })).toHaveValue('Alice');
+  expect(await page.evaluate(() => Object.hasOwn(globalThis, '__FORM_ENGINE_DEVTOOLS__'))).toBe(
+    false,
+  );
+  await expect(page.getByLabel('表单接入诊断')).toHaveCount(0);
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('暂时不可用');
+  await page.getByRole('textbox', { name: '年龄', exact: true }).fill('-');
+  await expect(page.getByTestId('snapshot')).toContainText('"age":"-"');
+  await expect(page.getByLabel('年龄校验')).toHaveText('invalid');
+  await page.getByRole('button', { name: '校验并提交' }).click();
+  await expect(page.getByTestId('saved')).toHaveText('invalid');
+  await page.getByRole('textbox', { name: '年龄', exact: true }).fill('25');
+  await page.getByRole('button', { name: '选择日期' }).click();
+  await page.getByLabel('预选日期').fill('2026-11-01');
+  await page.getByRole('button', { name: '取消日期' }).click();
+  await expect(page.getByTestId('confirmed-date')).toHaveText('2026-10-26');
+  await page.getByRole('button', { name: '选择日期' }).click();
+  await page.getByLabel('预选日期').fill('2026-11-01');
+  await page.getByRole('button', { name: '确认日期', exact: true }).click();
+  await expect(page.getByTestId('confirmed-date')).toHaveText('2026-11-01');
+  await page.getByRole('textbox', { name: '城市查询' }).fill('杭州');
+  await page.getByRole('button', { name: '查询城市' }).click();
+  await page.getByRole('button', { name: '杭州市', exact: true }).click();
+  await expect(page.getByTestId('snapshot')).toContainText('"city":"杭州市"');
+  await page.getByRole('button', { name: '移到首位 B' }).click();
+  await expect(page.getByTestId('insured-row').first()).toContainText('B');
+  await page.getByRole('button', { name: '删除 A' }).click();
+  await expect(page.getByTestId('insured-row')).toHaveCount(1);
+  await page.getByRole('textbox', { name: '姓名', exact: true }).fill('blocked');
+  await page.getByRole('button', { name: '校验并提交' }).click();
+  await expect(page.getByTestId('saved')).toHaveText('invalid');
+  await page.getByRole('textbox', { name: '姓名', exact: true }).fill('Bob');
+  await page.getByRole('button', { name: '校验并提交' }).click();
+  await expect(page.getByTestId('saved')).toContainText('"name":"Bob"');
+  await expect(page.getByTestId('saved')).toContainText('"age":25');
+  await expect(page.getByTestId('saved')).toContainText('"rows":[{"name":"B"}]');
+});

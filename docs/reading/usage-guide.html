@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>使用与开发指南 · 动态表单引擎</title>
-  <link rel="stylesheet" href="assets/documentation.css?v=91b5ad1ba585">
-  
-  <script src="assets/knowledge-index.js?v=8af0c4a57478" defer></script>
-  
+  <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
+
+  <script src="assets/knowledge-index.js?v=e63da71e98bf" defer></script>
+
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
 <a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a>
 <a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a>
 <a href="decisions/ADR-FE-021-validation-work-coalescing.html">ADR-FE-021：统一校验队列与有效在途任务复用</a>
+<a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
+<a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group" open><summary>10 · 使用与例证</summary><div><a class="active" aria-current="page" href="usage-guide.html">使用与开发指南</a>
@@ -360,9 +362,9 @@ B 的校验、订阅与 Trace 不能变成 A 的状态。
 </tbody>
 </table></div>
 <p>阅读样例的机器报告时，先看验证范围：当前候选结构验证和有界探针不是生产编译器、Flush 或跨端适配器的实现证明。若要评审或改变架构，转到 <a href="architecture.html" rel="noopener noreferrer">设计者指南</a> 的完整模型、图示、决策和交付路线；无需先把全部内部算法学完才能使用一个普通字段。</p></section>
-        
-        
-        
+
+
+
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
       </main>
       <aside class="context-sidebar" id="contextSidebar" aria-label="本页目录与关联">
@@ -376,7 +378,7 @@ B 的校验、订阅与 Trace 不能变成 A 的状态。
 <a href="#usage-integration" data-to="usage-integration" title="第五步：组合视图与接入业务应用"><span class="nav-num">06</span><span>第五步：组合视图与接入业务应用</span></a>
 <a href="#usage-diagnostics" data-to="usage-diagnostics" title="第六步：定位规则和接入问题"><span class="nav-num">07</span><span>第六步：定位规则和接入问题</span></a>
 <a href="#usage-contributing" data-to="usage-contributing" title="参与开发：从一个业务链路进入对应契约"><span class="nav-num">08</span><span>参与开发：从一个业务链路进入对应契约</span></a></nav>
-        <section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>GUIDE-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/07-examples.html#sample">完整示例与业务组合</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>GUIDE-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 1</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/07-examples.html#sample">完整示例与业务组合</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="l1-definition-protocol.html">L1 协议设计</a></li></ul></details><details open><summary>原始来源 · 5</summary><ul><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li><li><a href="source-map.html#src-v07">SRC-V07 · Validation V0.7</a></li></ul></details></section>
       </aside>
       </div>
     </div>

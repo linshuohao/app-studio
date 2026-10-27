@@ -26,7 +26,17 @@
       "types": "./dist/prepared/index.d.ts",
       "import": "./dist/prepared/index.js"
     },
-    "./schemas/*.json": "./schemas/*.json"
+    "./schemas/*.json": "./schemas/*.json",
+    "./internal/json": {
+      "development": "./src/internal/json.ts",
+      "types": "./dist/internal/json.d.ts",
+      "import": "./dist/internal/json.js"
+    },
+    "./internal/prepared": {
+      "development": "./src/internal/prepared.ts",
+      "types": "./dist/internal/prepared.d.ts",
+      "import": "./dist/internal/prepared.js"
+    }
   },
   "files": [
     "dist",
@@ -44,7 +54,6 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
-    "ajv": "^8.20.0",
     "ts-json-schema-generator": "^2.9.0",
     "tsdown": "^0.23.1",
     "typescript": "6.0.3",
@@ -69,7 +78,18 @@
         "types": "./dist/prepared/index.d.ts",
         "import": "./dist/prepared/index.js"
       },
-      "./schemas/*.json": "./schemas/*.json"
+      "./schemas/*.json": "./schemas/*.json",
+      "./internal/json": {
+        "types": "./dist/internal/json.d.ts",
+        "import": "./dist/internal/json.js"
+      },
+      "./internal/prepared": {
+        "types": "./dist/internal/prepared.d.ts",
+        "import": "./dist/internal/prepared.js"
+      }
     }
+  },
+  "dependencies": {
+    "ajv": "^8.20.0"
   }
 }

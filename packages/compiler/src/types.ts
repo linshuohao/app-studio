@@ -1,7 +1,7 @@
 import type { JsonSchema } from '@form-engine/protocol';
 import type { CompilerInputDefinition } from '@form-engine/protocol/definition';
 import type { CapabilityCatalogSnapshot } from '@form-engine/protocol/capability';
-import type { PreparedForm } from '@form-engine/protocol/prepared';
+import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 
 /** 核心仅接收已取得的固定快照与资源；Registry / 网络读取由调用环境负责。 */
 export interface CompileInput {
@@ -22,7 +22,7 @@ export interface Diagnostic {
 }
 /** 失败分支没有 prepared，调用者不能意外取得部分产物。 */
 export type CompileResult =
-  | { success: true; prepared: PreparedForm; diagnostics: Diagnostic[] }
+  | { success: true; prepared: ReadonlyPreparedForm; diagnostics: Diagnostic[] }
   | { success: false; diagnostics: Diagnostic[] };
 export interface ContractValidationResult {
   valid: boolean;

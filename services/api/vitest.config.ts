@@ -1,3 +1,4 @@
+import { fsModuleCachePath } from '../../tools/config/vitest-cache.js';
 import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
 export default defineConfig({
@@ -12,5 +13,11 @@ export default defineConfig({
       module: { type: 'es6' },
     }),
   ],
-  test: { globals: true, environment: 'node', include: ['src/**/*.spec.ts'], restoreMocks: true },
+  test: {
+    fsModuleCachePath,
+    globals: true,
+    environment: 'node',
+    include: ['src/**/*.spec.ts'],
+    restoreMocks: true,
+  },
 });

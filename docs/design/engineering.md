@@ -21,7 +21,7 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 30
-last_reviewed: '2026-10-24'
+last_reviewed: '2026-10-27'
 status_note: 工程 / Protocol 已有本地证据；Compiler 已接入表达式依赖与运行准备，性能 / 消费联验、Runtime 与远端 CI 未完成
 ---
 
@@ -429,7 +429,7 @@ pnpm --filter @form-engine/protocol test
 pnpm --filter @form-engine/protocol build
 ```
 
-生成文件集中在包内 schemas，不手改，不让 Prettier 另行重排；schema:check 比较确定性输出。根 pnpm check 在 build 前先执行 protocol:schema:check，避免构建自动刷新文件掩盖未同步的提交。Turbo build 缓存包含 schemas，打包 files / exports 包含三领域类型 / 空运行入口与 Schema 资源；消费类型不加载 Ajv / 生成器，二者只是开发依赖。生产源保持无 Node / UI 依赖，Node 测试使用独立 tsconfig.tests.json。
+生成文件集中在包内 schemas，不手改，不让 Prettier 另行重排；schema:check 比较确定性输出。根 pnpm check 在 build 前先执行 protocol:schema:check，避免构建自动刷新文件掩盖未同步的提交。Turbo build 缓存包含 schemas，打包 files / exports 包含三领域类型 / 空运行入口与 Schema 资源；消费类型不加载 Ajv / 生成器。首轮二者为开发依赖；2026-10-27 可选 internal/prepared 接缝在运行时执行共享结构检查，Ajv 已转为 Protocol 的运行依赖，生成器仍为开发依赖。三领域类型入口继续为空运行入口，不因类型消费加载检查器。生产源保持无 Node / UI 依赖，Node 测试使用独立 tsconfig.tests.json。
 
 pnpm check 已实际通过：格式、Lint、边界、全仓构建 / 类型 / 测试、跨包与 HTTP 集成、六包隔离 tarball 消费、文档同步。隔离消费者验证三领域的 JS / .d.ts、Schema 子路径、生产与 development 条件，并通过负类型样例拒绝 Event 作为命令写入目标。包内正反例覆盖递归 ValueSpec、Literal、严格 Union、数组位置、Authoring 隔离、嵌入 Schema、物料 / Host 和 Prepared。未改应用交互，本轮未运行浏览器 E2E；未修改 docs/validation 候选源或将其报告升级为正式契约证据。
 
@@ -475,3 +475,37 @@ Props 的每个完整 $expr 有独立 watch，内部递归节点不生成订阅�
 本次最终 pnpm check 已通过：Compiler 78 个用例、Protocol 48 个用例、八包构建 / 类型、格式 / Lint / 边界、HTTP 集成、六包生产 / development 隔离打包消费和文档同步。新补长 Schema 引用链预算、递归联合证明去重与预算，避免有限输入引发深递归或重复展开。另从 Compiler 正文提取完整保险 Definition / Catalog，使用 dist 的真实 compile 编译，逐项核对所有表达式 / 规则 watch 与人工契约样本一致、共享模板仅一份及 JSON 往返通过；不修改人工样本迁就实现。此结果不替代浏览器渲染或 Runtime / Adapter 性能验收。
 
 针对 68c223e 的后续代码审查复现并修复三类缺陷：混合动态 / 静态 Props 对 additionalProperties、nullable 容器及简单 anyOf 的静态值限制漏检；合法请求名 __proto__ 在普通对象赋值时丢失；请求资源 URI fragment 中的百分号未编码。值检查复用同一联合拆分和 Schema 子模型，分支试检隔离诊断、限制递归与次数，不把失败候选的错误带到合法分支；容器关键字只作用于实际值种类。请求字典改由 fromEntries 构造，引用先做 Pointer 转义再做 URI 编码。新增八个正反例，Compiler 共 86 个用例通过，修复后的完整 pnpm check 通过。公共协议 / SDK、模块职责、后续验收状态和 ADR 无变化。
+
+
+## React L4 首期实现与本地证据 {#renderer-implementation}
+
+2026-10-26 按用户确认的四批计划实现 packages/renderer-react、Runtime 公共消费接缝、Playground `/l4` 夹具与真实 UI 验收。源码入口、职责图、状态生命周期、API 和命令维护在 [Renderer README](../../packages/renderer-react/README.md)，本轮工作区基线为 29bb90d；本地检查不代表远端 CI、已发布 SDK、Flutter 或真实业务后端完成。
+
+- 首读 / Binding / Host 改值、表达式 / Validation / Scope / 模板、Interaction / Request / 清理、错误 / Profile / 端到端四批均使用真实 Compiler 与 Runtime。类型负例覆盖请求名 / 输入输出 / 必需注册与 Binding；打包消费者另验证构建后的 JS 呈现和 d.ts 负例。
+- 独立审查发现模板所属成员资格与请求专用 Schema 资源两项问题，维护者以行为反例复验并修复；Object.is 的负零与同内容替换也有回归。独立审查只证明其审查基线，修复后通过测试复验，不宣称第二轮独立审查。
+- Vitest 5 并行进程原先共享工作区 fs module cache，启动清理造成 ENOTEMPTY。统一由 tools/config/vitest-cache.ts 为每个工作目录提供独立 fsModuleCachePath，所有实际测试配置复用这一个规则；全仓并行测试作为故障复验，不用配置文本断言代替运行。
+- 离线接入时本地 pnpm store 不完整，已从现有全局 store 恢复锁文件环境；Renderer 使用现有 Ajv 8.20.0 / @noble/hashes 1.8.0，没有升级依赖。打包检查可在该机器用 npm_config_store_dir 指向已有缓存。测试浏览器缺失时仅将锁定 Playwright 版本下载到 /private/tmp/l4-playwright，运行时设置 PLAYWRIGHT_BROWSERS_PATH；未替换系统浏览器。
+- Next 首次沙箱构建的本机编译端口被限制；在允许本机端口环境清理可重建 .next 后重新构建。Nest HTTP 集成和浏览器服务也需要本机端口权限。这些环境失败不是成功验收记录，后续以实际重跑结果为准。
+
+最终检查使用 pnpm test / typecheck / lint / boundaries / protocol:schema:check / format:check / build / test:integration / packages:check，另运行三浏览器 test:e2e 和文档 build / --check。本轮最终基线 pnpm test 为 289 项通过（Renderer 22、Runtime 124）；test:integration 为根集成 4 项及 Nest HTTP 1 项通过；Chromium / Firefox / WebKit 的 L4 和既有页面共 6 项 E2E 通过。全仓类型、lint、边界、10 根 Schema 同步、格式、8 项构建任务及隔离打包 JS / d.ts 消费通过。文档构建与 --check 校验 52 页并通过，已实际查看 L4 阅读页与 /l4 生产预览及模拟提交；不外推生产性能。
+
+2026-10-27 按 Review 清单收敛重复接管、内部命令检查、物料契约摘要及关闭 Trace 后的成功命令序列化。用户明确确认 Compiler 成功产物深度只读、修改前先克隆；Protocol 的 internal/json 与 internal/prepared 为引擎包共享接管 / 结构检查，不增加业务 SDK 或运行规则职责，不把验证身份写入制品。数据替换、成员身份、通知、实际能力与完整异常现场继续保留。回归入口为 Protocol prepared-capture、Compiler 编译与类型契约、Runtime ownership、Renderer adapter-performance，以及既有跨包 / 浏览器消费；目标设备性能与跨端验收仍未完成。
+
+同日边界 Review 复现 falsy 抛出值越过局部 / 根边界，以及 Strict Mode 和呈现回调更新重复上报。修复采用 UI 失败标志与组件本地交付标记，未给业务执行链增加校验层。Renderer boundaries 回归同时检查异常格式化、相邻输入、真实重挂、新 Scope 和新装配关联，通用 DiagnosticEmitter 的完整初次交接及消费者隔离保持不变；Request 分类差异未纳入本批行为修改。
+
+## 独立 DevTools 首期实现与验证 {#devtools-implementation}
+
+2026-10-26 按 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md) 交付 packages/devtools 与本地 MV3 扩展；Runtime 的 /devtools 子入口提供发现 / 只读查询 / 订阅，Renderer 根连接、投影及请求发布元数据，核心无 DevTools 包依赖。业务页面移除 diagnosticMode 和技术面板，Host 错误上报及业务降级保持独立。使用与源文件导读见 [DevTools README](../../packages/devtools/README.md)。
+
+默认 dist 构建关闭开发注册，Runtime 另构建 dist/development，publishConfig 的 development 条件指向编译产物而非未发布源码。隔离打包消费者在模拟浏览器全局下，分别验证默认无标记、development 自动发现、只读检查和 Runtime 释放；扩展无法靠同名页面标记开启默认产物注册。
+
+真实开发页暴露此前未覆盖的 Turbopack .js 标识到工作区 .ts / .tsx 源码解析缺口。保留库的 ESM 写法，开发 loader 只处理 apps / packages 的 src，使用 AST 定位 import / export / 动态 import 标识，真实 .js 存在时保持原路径；不改业务字符串、第三方包或磁盘源码。源码解析正反例与真实开发浏览器联验覆盖该修复，生产仍消费 dist。
+
+验证入口：pnpm test、pnpm test:integration、pnpm typecheck、pnpm lint、pnpm format:check、pnpm boundaries、pnpm build、pnpm packages:check、pnpm test:e2e，以及新增 pnpm test:e2e:devtools。后者真实装载 Chromium MV3，通过 Chrome inspectedWindow.eval 自动发现、按需查看状态 / 请求轨迹、断开后继续填写并重连；测试宿主定位使用 Chromium 前端测试协议，不成为扩展产品依赖。常规三浏览器另验证默认生产页面无发现标记、无技术诊断面板。
+
+独立只读审查发现并以隔离探针复验关闭六项 P2：poll / inspect 丢轨迹、根装配失败不可见、长键截断未标记、初次 Host 错误交接误用工具限额、快速重连复活旧轮询链、原 Prepared 身份字段漂移导致重挂。仓库保留相应红绿回归；另覆盖查询不重算表达式 / 新增业务观察、工具副本字符预算及配置接管一致性。测试结果仅支持所覆盖范围，无法据此宣布全局无缺陷。
+
+本期为主 frame 的只读工具，扩展通过本地解压加载；未发布商店，Firefox / Safari 扩展适配、跨 frame、编辑、时间旅行、完整因果轨迹与生产设备性能未验收。必要异常完整现场继续走原 Host 诊断出口，工具的截断副本不能替代原报告。
+
+
+2026-10-27 用户授权落实本阶段入口 Review 与 Runtime 内部命名整理。增加非法根配置 / 访问器、同一配置注册变更不重复接管 / checkView、销毁后拒绝、首次诊断多消费者与开发历史窗口回归；Runtime 主编排归一化语法对照修改前快照，除私有模块名 / helper 名外保持一致。配置复制与检查的调用次数减少，不代表已取得生产性能基准；数据写入链的复制与错误返回语义保留。相关源文件、命名规则和剩余性能范围集中在两个包 README，未新增 ADR 或发布 API。

@@ -39,7 +39,7 @@ _Avoid_：运行时实例登记、业务主键，或任意表达式可创建的�
 **FormDefinition（原始定义）**：由业务作者表达并审查的数据、规则与视图定义，是 L2 编译的输入；Canonical 与 Authoring 是其规范形式和可选简写。
 _Avoid_：将原始定义当成 Runtime 的另一种直接执行入口，或把 Authoring / Canonical 算成两份独立业务协议。
 
-**PreparedForm（编译后协议）**：L2 生成、供 L3 / L4 消费的确定执行产物，与 FormDefinition 具有不同的职责和版本契约。
+**PreparedForm（编译后协议）**：L2 生成、供 L3 / L4 消费的确定执行产物，与 FormDefinition 具有不同的职责和版本契约。TS 的 PreparedForm 表示可构造 JSON；Compiler 成功结果以 ReadonlyPreparedForm 暴露并深度冻结，修订前先克隆、变更后重新检查。进程内验证身份不随 JSON 交付。
 _Avoid_：原始 JSON 的另存副本、实例状态容器，或运行时自动补全 watch 的配置。
 
 **Prepared Source Map（编译来源映射）**：关联准备后的规则与原始定义位置、身份和版本的诊断信息，用于回查业务配置；详细结构和 SDK 随实现固化；不参与执行控制。

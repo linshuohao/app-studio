@@ -29,7 +29,7 @@ sources:
 navigation:
   group: 03 · L2 预处理
   order: 40
-last_reviewed: '2026-10-23'
+last_reviewed: '2026-10-27'
 reading_next: DESIGN-L3-RUNTIME
 relocated_sections:
 - source: docs/design/architecture.md
@@ -716,6 +716,8 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 协议结构校验链路已确认采用原生 TS 类型 → 自动生成 JSON Schema → Ajv；Compiler 在输入边界执行结构校验，再做引用、Scope、能力连接等语义分析。具体生成器和诊断映射随实施固化，见 [L1 结构源](l1/08-decisions-release.md#protocol-structure-source)。Runtime 不在交互高频路径重复静态检查；本节规定的制品装载兼容与有效性检查继续保留。
 
 2026-10-21 用户确认：同进程 Compiler 刚成功生成的结果不重复整份结构校验；外部文件 / 接口 / 缓存载入的 Prepared JSON 在接收边界做一次结构检查，再核对格式、目标与能力。检查结果可随受控不可变产物复用，不在交互或成员实例化时重验整份协议；可信验证与缓存须有明确边界，不能仅凭格式版本断言结构有效。
+
+2026-10-27 用户进一步确认：Compiler 成功交付的 Prepared 深度只读，需要编辑时先克隆为可修改的 JSON；变更后的对象重新进入检查，不能继承旧验证结果。TS 成功结果使用 ReadonlyPreparedForm，PreparedForm 继续表示可构造的 JSON 形状。结构接收入口在纯 JSON 接管与 Schema 检查成功后，以进程内弱身份识别不可变产物，供 Compiler、Runtime 和 Renderer 复用；该身份不序列化，不接受调用者自报的 trusted 标记或单独 Object.isFrozen 判断。内部接收入口复用 Protocol 的生成 Schema，不承担引用 / 类型连接等 Compiler 语义分析；格式、能力锁、实际注册及不同视图的执行兼容仍由消费者检查。同一份受控执行对象可直接复用兼容结果，不同对象仍按契约核对。
 
 首阶段 Prepared Artifact 采用 JSON 交付，Form / View / Dependency Plan 保持逻辑分工，不要求拆为多个文件。传输压缩不构成另一套协议；不同时建设二进制格式，只有性能证据出现后才另行评估。具体字段、确定性序列化及摘要覆盖对象继续固化，JSON 方向确认不等于完整 ABI 已冻结。
 

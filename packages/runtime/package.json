@@ -10,13 +10,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./devtools": {
+      "development": "./src/devtools/index.ts",
+      "types": "./dist/devtools/index.d.ts",
+      "import": "./dist/devtools/index.js"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && tsdown --config tsdown.development.config.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --passWithNoTests",
@@ -36,10 +41,16 @@
   "publishConfig": {
     "exports": {
       ".": {
+        "development": "./dist/development/index.js",
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./devtools": {
+        "development": "./dist/development/devtools/index.js",
+        "types": "./dist/devtools/index.d.ts",
+        "import": "./dist/devtools/index.js"
+      }
     }
   }
 }

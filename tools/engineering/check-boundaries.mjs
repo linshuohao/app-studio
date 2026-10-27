@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 export const allowed = {
   protocol: [],
+  devtools: ['runtime'],
   compiler: ['protocol'],
   runtime: ['protocol', 'pure-functions'],
   'pure-functions': ['protocol'],

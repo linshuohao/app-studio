@@ -23,9 +23,12 @@ test('家庭出行：非法工作值、监护人、双 Profile、日期和城市
   await ages.nth(1).fill('12');
   await page.getByRole('textbox', { name: '监护人姓名', exact: true }).fill('监护人已补');
   await page.getByLabel('呈现方式').selectOption('compact');
-  const members = page.getByRole('region', { name: '被保人', exact: true });
-  await members.nth(1).getByRole('button', { name: '编辑', exact: true }).click();
-  const editor = page.getByRole('dialog', { name: '编辑被保人' });
+  const child = page.getByRole('article', { name: '被保人 儿童 B', exact: true });
+  const childRegion = page.getByRole('region').filter({ has: child }).last();
+  await childRegion.getByRole('button', { name: '编辑', exact: true }).click();
+  const editor = page.getByRole('dialog').filter({
+    has: page.getByRole('heading', { name: '编辑被保险人', exact: true }),
+  });
   await editor.getByRole('textbox', { name: '成员姓名', exact: true }).fill('儿童已编辑');
   await editor.getByRole('button', { name: '移到首位', exact: true }).click();
   await expect(editor.getByRole('textbox', { name: '成员姓名', exact: true })).toHaveValue(

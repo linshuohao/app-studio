@@ -55,11 +55,13 @@ try {
     await import('@form-engine/materials-react/manifests');
     const functions = await import('@form-engine/pure-functions/manifests');
     assert.equal(functions.textIsNonBlankManifest.id, 'text.isNonBlank');
-    assert.equal(Object.values(functions).length, 7);
+    assert.equal(Object.values(functions).length, 8);
+    assert.equal(functions.dateAgeInYearsManifest.id, 'date.ageInYears');
     assert.equal(functions.travelPersonPremiumManifest.parameters[0].schema, true);
     assert.equal(functions.dateInclusiveDaysManifest.returns.type.includes('null'), true);
     const materials = await import('@form-engine/materials-react/manifests');
-    assert.equal(Object.values(materials).length, 14);
+    assert.equal(Object.values(materials).length, 15);
+    assert.equal(materials.arrayEditorManifest.id, 'array-editor');
     assert.equal(materials.textInputManifest.bindings.value.schema.type[0], 'string');
     assert.doesNotMatch(readFileSync(new URL(import.meta.resolve('@form-engine/materials-react/manifests')), 'utf8'), /use client/);
     console.log('Static manifest consumers: no UI, Runtime, or client directive.');

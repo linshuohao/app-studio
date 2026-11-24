@@ -11,6 +11,7 @@ from hashlib import sha256
 from typing import Any, Protocol
 
 from langchain_core.messages import message_to_dict, messages_from_dict
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from pydantic import BaseModel
 
 
@@ -23,6 +24,11 @@ class ExecutionJournal(Protocol):
 
 _journal = ContextVar[ExecutionJournal | None]("execution_journal", default=None)
 _step = ContextVar[tuple[str, dict[str, int]]]("execution_step")
+_replay = RunnablePassthrough().with_config(run_name="journal.replay")
+
+
+async def trace_replay(kind: str, key: str):
+    await _replay.ainvoke({"kind": kind, "step_key": key})
 
 
 @dataclass
@@ -106,6 +112,7 @@ def step(name: str, run: Callable[..., Any]):
         key = f"{state.get('steps', 0)}:{name}"
         previous = await journal.begin(key, "step", {"name": name})
         if previous is not None:
+            await trace_replay("step", key)
             return unpack(previous["value"])
         context = _step.set((key, {}))
         try:
@@ -140,6 +147,7 @@ async def call(
     key = _key(kind, request)
     previous = await journal.begin(key, kind, request)
     if previous is not None:
+        await trace_replay(kind, key)
         return decode(previous["value"])
     result = await run()
     await journal.finish(key, encode(result))
@@ -170,6 +178,7 @@ async def structured(model, schema, messages, **options):
     key = _key("llm", request)
     previous = await journal.begin(key, "llm", request)
     if previous is not None:
+        await trace_replay("llm", key)
         return schema.model_validate(previous["value"]["parsed"])
 
     packet = await model.with_structured_output(
@@ -199,6 +208,7 @@ async def stream(model, messages, *, require_text=False):
     key = _key("llm", request)
     previous = await journal.begin(key, "llm", request)
     if previous is not None:
+        await trace_replay("llm", key)
         for chunk in messages_from_dict(previous["value"]):
             yield chunk
         return
@@ -264,11 +274,16 @@ def journal_tools(tools):
     from form_agent.integrations.dependencies import CreateFormTools
 
     def wrap(name, operation):
+        async def execute(args):
+            return await operation(*args)
+
+        runnable = RunnableLambda(execute, name=f"platform.{name}")
+
         async def invoke(*args):
             return await call(
                 "tool",
                 {"name": name, "arguments": list(args)},
-                lambda: operation(*args),
+                lambda: runnable.ainvoke(list(args)),
                 pack,
                 unpack,
             )

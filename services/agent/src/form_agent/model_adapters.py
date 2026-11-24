@@ -12,6 +12,7 @@ from uuid import uuid4
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+from langchain_core.messages.ai import UsageMetadata
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from pydantic import BaseModel, PrivateAttr
@@ -24,6 +25,24 @@ class FunctionCall(BaseModel, extra="forbid"):
 
 class FunctionCalls(BaseModel, extra="forbid"):
     calls: list[FunctionCall]
+
+
+def codex_usage(raw: dict | None) -> UsageMetadata | None:
+    if not raw:
+        return None
+    input_tokens, output_tokens = raw.get("input_tokens"), raw.get("output_tokens")
+    if not isinstance(input_tokens, int) or not isinstance(output_tokens, int):
+        return None
+    usage = UsageMetadata(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=input_tokens + output_tokens,
+    )
+    if isinstance(cached := raw.get("cached_input_tokens"), int):
+        usage["input_token_details"] = {"cache_read": cached}
+    if isinstance(reasoning := raw.get("reasoning_output_tokens"), int):
+        usage["output_token_details"] = {"reasoning": reasoning}
+    return usage
 
 
 class LocalChatGPT(BaseChatModel):
@@ -130,12 +149,14 @@ class LocalChatGPT(BaseChatModel):
             if proc.returncode:
                 raise RuntimeError("Local ChatGPT model invocation failed")
             events = list(map(json.loads, out.splitlines()))
+            usage = None
             for event in events:
                 if event.get("type") == "turn.completed":
+                    usage = event.get("usage")
                     logging.getLogger("uvicorn.error").info(
                         "model_call elapsed=%.2f usage=%s",
                         monotonic() - started,
-                        event.get("usage"),
+                        usage,
                     )
             items = [
                 event["item"] for event in events if event["type"] == "item.completed"
@@ -150,6 +171,7 @@ class LocalChatGPT(BaseChatModel):
                     ChatGeneration(
                         message=AIMessage(
                             content="",
+                            usage_metadata=codex_usage(usage),
                             tool_calls=[
                                 {
                                     "id": uuid4().hex,
@@ -175,7 +197,12 @@ class LocalChatGPTText(LocalChatGPT):
             ensure_ascii=False,
         )
         async for delta in local_text_stream(self.model_name, prompt):
-            yield ChatGenerationChunk(message=AIMessageChunk(content=delta))
+            if isinstance(delta, str):
+                yield ChatGenerationChunk(message=AIMessageChunk(content=delta))
+            elif usage := codex_usage(delta):
+                yield ChatGenerationChunk(
+                    message=AIMessageChunk(content="", usage_metadata=usage)
+                )
 
 
 def text_model(model):

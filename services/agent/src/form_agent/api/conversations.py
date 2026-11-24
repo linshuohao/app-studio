@@ -3,7 +3,8 @@
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
+from contextlib import aclosing
 from secrets import compare_digest
 from typing import Annotated, Any
 from uuid import UUID, uuid4
@@ -25,6 +26,7 @@ from form_agent.conversations.store import (
     turns,
 )
 from form_agent.execution import execution_scope
+from form_agent.raw_trace import RawTraceArchive
 
 
 class ConversationTitle(BaseModel):
@@ -48,35 +50,52 @@ LABELS = {
 
 
 async def graph_events(
-    graph, request, trace, recursion_limit=TURN_RECURSION_LIMIT
-) -> AsyncIterator[dict[str, Any]]:
-    async for event in graph.astream_events(
+    graph,
+    request,
+    trace,
+    recursion_limit=TURN_RECURSION_LIMIT,
+    *,
+    callbacks=(),
+    trace_metadata=None,
+) -> AsyncGenerator[dict[str, Any], None]:
+    config: dict[str, Any] = {
+        "run_id": trace,
+        "recursion_limit": recursion_limit,
+        "run_name": "AgentTurn",
+        "metadata": {"creation_trace_id": str(trace), **(trace_metadata or {})},
+    }
+    if callbacks:
+        config["callbacks"] = list(callbacks)
+    stream = graph.astream_events(
         {"request": request},
         version="v2",
-        config={
-            "run_id": trace,
-            "recursion_limit": recursion_limit,
-            "run_name": "AgentTurn",
-            "metadata": {"creation_trace_id": str(trace)},
-        },
+        config=config,
+    )
+    async with aclosing(stream):
+        async for event in stream:
+            frame = public_graph_event(event)
+            if frame is not None:
+                yield frame
+
+
+def public_graph_event(event):
+    name, kind = event["name"], event["event"]
+    if kind == "on_custom_event" and name in (
+        "understanding_item",
+        "understanding_reset",
     ):
-        name, kind = event["name"], event["event"]
-        if kind == "on_custom_event" and name in (
-            "understanding_item",
-            "understanding_reset",
-        ):
-            yield {"type": name, **event["data"]}
-        elif kind == "on_custom_event" and name == "public_text":
-            yield {"type": "text_delta", "delta": event["data"]["delta"]}
-        elif kind == "on_custom_event" and name == "public_text_reset":
-            yield {"type": "text_reset"}
-        elif name in LABELS and kind in ("on_chain_start", "on_tool_start"):
-            yield {"type": "progress", "message": LABELS[name]}
-        elif kind == "on_chain_end" and not event["parent_ids"]:
-            yield {
-                "type": "private_result",
-                "result": event["data"]["output"]["result"],
-            }
+        return {"type": name, **event["data"]}
+    elif kind == "on_custom_event" and name == "public_text":
+        return {"type": "text_delta", "delta": event["data"]["delta"]}
+    elif kind == "on_custom_event" and name == "public_text_reset":
+        return {"type": "text_reset"}
+    elif name in LABELS and kind in ("on_chain_start", "on_tool_start"):
+        return {"type": "progress", "message": LABELS[name]}
+    elif kind == "on_chain_end" and not event["parent_ids"]:
+        return {
+            "type": "private_result",
+            "result": event["data"]["output"]["result"],
+        }
 
 
 def conversation_router(
@@ -86,6 +105,7 @@ def conversation_router(
     service_token: str,
     store: ConversationStore,
     timeout_seconds: float,
+    trace_callback_factory=None,
 ):
     router = APIRouter(prefix="/internal/v1/conversations")
     graph = (
@@ -156,13 +176,23 @@ def conversation_router(
 
     async def run_turn(id, message, owner, accept, trace_id, *, resume: bool):
         cid, trace = str(id), trace_id or uuid4()
+        callbacks = trace_callback_factory(trace) if trace_callback_factory else []
+        archive = next(
+            (item for item in callbacks if isinstance(item, RawTraceArchive)), None
+        )
 
         async def events():
+            if archive:
+                archive.record(
+                    "turn.request", conversation_id=cid, message=message, resume=resume
+                )
             async with store.exclusive(cid) as conn:
                 prepared = await db_step(store.prepare, conn, cid, owner, message)
                 if "replay" in prepared:
                     envelope = prepared["replay"]
                     batches = []
+                    if archive:
+                        archive.record("turn.replay", result=envelope)
                 else:
                     journal = TurnJournal(conn, cid, str(message.turnId))
                     try:
@@ -173,34 +203,48 @@ def conversation_router(
                         completed = (
                             await journal.completed_repair_rounds() if resume else 0
                         )
+                        trace_options = {}
+                        if callbacks:
+                            trace_options = {
+                                "callbacks": callbacks,
+                                "trace_metadata": {
+                                    "langfuse_session_id": cid,
+                                    "turn_id": str(message.turnId),
+                                    "resume": resume,
+                                    "capture_version": "raw-events-v1",
+                                },
+                            }
                         with execution_scope(journal, resume=resume):
                             async with asyncio.timeout(timeout_seconds):
-                                async for event in graph_events(
+                                stream = graph_events(
                                     graph,
                                     prepared["input"],
                                     trace,
                                     TURN_RECURSION_LIMIT + 6 * completed,
-                                ):
-                                    if event["type"] != "private_result":
-                                        await journal.event(event)
-                                        yield event
-                                        continue
-                                    result = event["result"].model_dump(
-                                        mode="json", exclude_none=True
-                                    )
-                                    envelope, batches = await db_step(
-                                        store.finish,
-                                        conn,
-                                        cid,
-                                        owner,
-                                        prepared["message"],
-                                        prepared["facts"],
-                                        prepared["input"].referenced_candidate,
-                                        result,
-                                    )
-                                    break
-                                else:
-                                    raise RuntimeError("Missing graph result")
+                                    **trace_options,
+                                )
+                                async with aclosing(stream):
+                                    async for event in stream:
+                                        if event["type"] != "private_result":
+                                            await journal.event(event)
+                                            yield event
+                                            continue
+                                        result = event["result"].model_dump(
+                                            mode="json", exclude_none=True
+                                        )
+                                        envelope, batches = await db_step(
+                                            store.finish,
+                                            conn,
+                                            cid,
+                                            owner,
+                                            prepared["message"],
+                                            prepared["facts"],
+                                            prepared["input"].referenced_candidate,
+                                            result,
+                                        )
+                                        break
+                                    else:
+                                        raise RuntimeError("Missing graph result")
                     finally:
 
                         def release():
@@ -218,13 +262,21 @@ def conversation_router(
                         await db_step(release)
             for batch in batches:
                 yield batch
+            if archive:
+                archive.record("turn.result", result=envelope, batches=batches)
             yield {"type": "result", "result": envelope}
 
         async def guarded() -> AsyncIterator[dict[str, Any]]:
             try:
                 async for event in events():
                     yield event
+            except asyncio.CancelledError as error:
+                if archive:
+                    archive.record("turn.cancelled", error=error)
+                raise
             except Exception as error:
+                if archive:
+                    archive.record("turn.error", error=error)
                 status = (
                     503
                     if isinstance(error, StoreUnavailable)

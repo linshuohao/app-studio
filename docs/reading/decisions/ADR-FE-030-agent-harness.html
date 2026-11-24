@@ -8,7 +8,7 @@
   <title>ADR-FE-030：独立 Agent 服务与共享 Harness · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
 
-  <script src="../assets/knowledge-index.js?v=a021b081cf45" defer></script>
+  <script src="../assets/knowledge-index.js?v=72a21ee25c2e" defer></script>
 
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -98,7 +98,8 @@
       <main class="content" id="top">
         <header class="hero"><div class="eyebrow">FORM ENGINE · ARCHITECTURE DECISION RECORD</div><h1>ADR-FE-030：独立 Agent 服务与共享 Harness</h1></header>
         <hr class="hero-line">
-        <section class="section" id="overview"><p>2026-11-19 局部替代：首期范围、会话所有权及同步 / 内存 / 不恢复限制由 <a href="ADR-FE-033-agent-create-conversation.html" rel="noopener noreferrer">ADR-FE-033</a> 更新；当前仅创建、Platform 持久业务会话、Agent 持久执行状态、异步受理与恢复。其余全局职责、分域与安全原则保留。本页原首期描述作为当时决定追溯，当前以新决定为准。</p>
+        <section class="section" id="overview"><p>2026-11-24 局部替代：观测与评测由 LangSmith 改为 Langfuse。沿用共享 Harness 和既有数据授权边界，详见<a href="../platform-studio.html#agent-evaluation-capture" rel="noopener noreferrer">现行采集契约</a>。</p>
+<p>2026-11-19 局部替代：首期范围、会话所有权及同步 / 内存 / 不恢复限制由 <a href="ADR-FE-033-agent-create-conversation.html" rel="noopener noreferrer">ADR-FE-033</a> 更新；当前仅创建、Platform 持久业务会话、Agent 持久执行状态、异步受理与恢复。其余全局职责、分域与安全原则保留。本页原首期描述作为当时决定追溯，当前以新决定为准。</p>
 <p>2026-11-15 用户确认 Python + FastAPI + LangChain + LangGraph + LangSmith 独立 Agent 微服务，统一共享 Harness，按能力配置工作流。六类职责为需求分析、配置创作、诊断修复、验证评估、填写辅助、运行诊断。协调器使用显式任务状态图，组织任务工作流、Agent 内部循环及跨 Agent 反馈三层 Loop，统一管理授权、输入快照、总预算及产物。</p>
 <p>首期选择 Studio 表单编辑页的诊断修复，通过 Studio → Platform → Agent 接入；Platform 拥有权限、表单与 Compiler 检查上下文，Agent 产生候选，用户审阅后应用编辑区。首期同步请求、最多两轮生成和两次候选检查；业务歧义结束当前运行，补充后重新冻结输入。知识采用版本化只读集，存储由 ADR-FE-031 确认为 PostgreSQL，首期记忆限于运行工作状态及 Studio 当前编辑会话。完整契约与取舍见<a href="../platform-studio.html#agent-confirmed-blueprint" rel="noopener noreferrer">现行主题</a>。</p>
 <p>选择独立服务用于承载用户指定 Python 技术栈及 Agent 生命周期，多个能力通过共享 Harness 复用工具授权、上下文、预算、观测与验证。按职责使用不同子图，避免给每种业务独立复制执行底座。固定修复流程先提供可检查结果，后续按真实场景增加自主工具循环和长任务恢复。</p>

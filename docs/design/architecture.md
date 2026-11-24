@@ -161,7 +161,7 @@ flowchart TB
 
 ### Agent 在完整蓝图中的位置 {#blueprint-agent}
 
-Agent 采用 Python / FastAPI / LangChain / LangGraph / LangSmith 独立服务，六类职责共用 Harness，按任务需要启用三层 Loop。首期通过 Studio → Platform → Agent 统一处理问答与表单创建。Agent 拥有会话与任务事实，API Server 转发本轮消息并独立保存已交付的草稿。用户审阅候选后，由 Platform 原子保存首个配置版本，Agent 会话可继续用于该表单。以 Agent 生成的旅险候选运行真实 Runtime 场景作为首期验收，运行结果和配置检查各自保有证据。详见 [ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)、[ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)及[首期验收](platform-studio.md#agent-create-runtime-acceptance)。具体实施进展见[治理状态](governance.md#layer-progress)。
+Agent 采用 Python / FastAPI / LangChain / LangGraph / Langfuse 独立服务，六类职责共用 Harness，按任务需要启用三层 Loop。首期通过 Studio → Platform → Agent 统一处理问答与表单创建。Agent 拥有会话与任务事实，API Server 转发本轮消息并独立保存已交付的草稿。用户审阅候选后，由 Platform 原子保存首个配置版本，Agent 会话可继续用于该表单。以 Agent 生成的旅险候选运行真实 Runtime 场景作为首期验收，运行结果和配置检查各自保有证据。详见 [ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)、[ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)及[首期验收](platform-studio.md#agent-create-runtime-acceptance)。具体实施进展见[治理状态](governance.md#layer-progress)。
 
 CreateForm 接收自由格式需求，先保留来源并整理标准需求，再由创作阶段结合固定版本协议和目标能力形成配置映射。候选仍经真实 Compiler 检查并交由用户审阅。需求澄清、能力验证与候选保存的边界见[需求理解与配置交接](platform-studio.md#agent-create-requirements)。
 

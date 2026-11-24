@@ -8,7 +8,7 @@
   <title>来源映射与知识覆盖 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
+  <script src="assets/knowledge-index.js?v=72a21ee25c2e" defer></script>
 <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -661,6 +661,7 @@
 <p>2026-11-23 用户确认会话前置路由、显式修复节点、动作经 observe 返回 route、一份共享状态按节点依赖复用，并授权实施。见<a href="platform-studio.html#agent-turn-graph" rel="noopener noreferrer">统一助手 Graph</a>。</p>
 <p>2026-11-23 用户确认<a href="platform-studio.html#agent-conversation-draft-ownership" rel="noopener noreferrer">数据归属与全量清洗</a>。删除对话保留平台草稿；Agent 和 API 分别维护所拥有的数据，实施直接切换。</p>
 <p>2026-11-24，SRC-AGENTBLUEPRINT 增量确认来自本次 Studio 会话反馈。用户明确要求保存用户消息、LLM 请求和返回及每一步结果，并在重开和继续时复用。见<a href="platform-studio.html#agent-turn-recovery" rel="noopener noreferrer">确认契约</a>。</p>
+<p>2026-11-24，用户选择 Langfuse，要求重构前统一规划全量采集与比较口径，优先使用框架数据并授权落地采集。见<a href="platform-studio.html#agent-evaluation-capture" rel="noopener noreferrer">现行采集契约</a>。</p>
 <p>2026-11-15 当前会话中，用户指定 Python、FastAPI、LangChain、LangGraph、LangSmith 与独立微服务；确认 Studio 编辑页诊断修复、人工审阅应用。随后要求完整 Harness / Loop、接口、知识清洗更新与记忆设计，认可六类 Agent 和三层 Loop 蓝图，最终明确授权统一归档并暂不开发。依据为本会话逐轮确认；完整对话原文尚未另存仓库，不编造历史附件。现行正文见<a href="platform-studio.html#agent-confirmed-blueprint" rel="noopener noreferrer">Agent 蓝图</a>，决策见<a href="decisions/ADR-FE-030-agent-harness.html" rel="noopener noreferrer">ADR-FE-030</a>。归档包含首期同步接口 / 状态流、工具授权失败处理、版本化知识包、记忆边界与后续阶段。模型供应方、真实数据传输与后续具体工具 / 持久化契约继续待细化。</p>
 <p>2026-11-15，SRC-AGENTBLUEPRINT 增量确认：同一会话中用户认可内部凭证、运行状态和路由方案，要求使用主流持久化技术，最终确认 PostgreSQL 统一持久化、Platform 与 Agent 分别管理数据域，要求归档并明确迁移范围和顺序，暂不开发。见 <a href="decisions/ADR-FE-031-postgresql-agent-runtime.html" rel="noopener noreferrer">ADR-FE-031</a>及<a href="platform-studio.html#platform-postgresql-migration" rel="noopener noreferrer">迁移方案</a>。</p>
 <p>2026-11-17 同会话用户在只读迁移预检后确认“OK，那就按建议的取舍来实施”。本次授权为 Platform PostgreSQL 存储迁移实现、演练与验收准备；不扩展为 Agent 编码或无目标环境的业务库切换。权威实施范围见<a href="platform-studio.html#platform-postgresql-migration" rel="noopener noreferrer">迁移方案</a>，证据见 <code>openspec/changes/archive/2026-11-18-platform-postgresql-migration/</code>。</p>

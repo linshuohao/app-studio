@@ -8,7 +8,7 @@
   <title>整体架构设计 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
+  <script src="assets/knowledge-index.js?v=72a21ee25c2e" defer></script>
 <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -234,7 +234,7 @@
 </ul>
 <p>平台可以提供任务配置与治理入口；管理能力不意味着全部执行系统必须自建。</p>
 <h3 id="blueprint-agent">Agent 在完整蓝图中的位置</h3>
-<p>Agent 采用 Python / FastAPI / LangChain / LangGraph / LangSmith 独立服务，六类职责共用 Harness，按任务需要启用三层 Loop。首期通过 Studio → Platform → Agent 统一处理问答与表单创建。Agent 拥有会话与任务事实，API Server 转发本轮消息并独立保存已交付的草稿。用户审阅候选后，由 Platform 原子保存首个配置版本，Agent 会话可继续用于该表单。以 Agent 生成的旅险候选运行真实 Runtime 场景作为首期验收，运行结果和配置检查各自保有证据。详见 <a href="decisions/ADR-FE-030-agent-harness.html" rel="noopener noreferrer">ADR-FE-030</a>、<a href="decisions/ADR-FE-033-agent-create-conversation.html" rel="noopener noreferrer">ADR-FE-033</a>及<a href="platform-studio.html#agent-create-runtime-acceptance" rel="noopener noreferrer">首期验收</a>。具体实施进展见<a href="governance.html#layer-progress" rel="noopener noreferrer">治理状态</a>。</p>
+<p>Agent 采用 Python / FastAPI / LangChain / LangGraph / Langfuse 独立服务，六类职责共用 Harness，按任务需要启用三层 Loop。首期通过 Studio → Platform → Agent 统一处理问答与表单创建。Agent 拥有会话与任务事实，API Server 转发本轮消息并独立保存已交付的草稿。用户审阅候选后，由 Platform 原子保存首个配置版本，Agent 会话可继续用于该表单。以 Agent 生成的旅险候选运行真实 Runtime 场景作为首期验收，运行结果和配置检查各自保有证据。详见 <a href="decisions/ADR-FE-030-agent-harness.html" rel="noopener noreferrer">ADR-FE-030</a>、<a href="decisions/ADR-FE-033-agent-create-conversation.html" rel="noopener noreferrer">ADR-FE-033</a>及<a href="platform-studio.html#agent-create-runtime-acceptance" rel="noopener noreferrer">首期验收</a>。具体实施进展见<a href="governance.html#layer-progress" rel="noopener noreferrer">治理状态</a>。</p>
 <p>CreateForm 接收自由格式需求，先保留来源并整理标准需求，再由创作阶段结合固定版本协议和目标能力形成配置映射。候选仍经真实 Compiler 检查并交由用户审阅。需求澄清、能力验证与候选保存的边界见<a href="platform-studio.html#agent-create-requirements" rel="noopener noreferrer">需求理解与配置交接</a>。</p>
 <p><a href="platform-studio.html#agent-form-workspace" rel="noopener noreferrer">智能表单工作台</a>连接两条产品工作流。创作侧由 Studio 组织定义、候选预览和版本审阅，后续加入已有配置的定向编辑与场景测试。填写侧由业务 Host 授权接入助手，获准的数据修改与用户操作进入同一表单实例的 Command 路径。预览和测试拥有隔离的 Runtime 实例，实际填写与业务提交留在 Host 边界。</p>
 <p>场景覆盖创作生成 / 修改、诊断与测试、填写解释 / 提取 / 补全、业务知识和工具协作、运维分析。知识 / RAG、模型与 Prompt、工具与 Skills、记忆、单 / 多 Agent 执行、结构化与流式交互、权限 / 观测 / 评测继续使用<a href="platform-studio.html#agent-capability-plan" rel="noopener noreferrer">平台主题中的完整清单</a>，不另建平行体系。</p>

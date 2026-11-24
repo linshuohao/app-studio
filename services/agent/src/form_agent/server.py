@@ -10,6 +10,7 @@ from form_agent.conversations.store import ConversationStore, postgres_engine
 from form_agent.integrations.dependencies import CreateFormTools, PostgresProtocolReader
 from form_agent.main import create_app
 from form_agent.model_adapters import configured_model
+from form_agent.observability import evaluation_callback_factory
 
 
 def create_configured_app():
@@ -67,6 +68,7 @@ def create_configured_app():
         service_token=token,
         store=ConversationStore(postgres_engine(os.environ["AGENT_DATABASE_URL"])),
         timeout_seconds=600,
+        trace_callback_factory=evaluation_callback_factory(),
     )
 
     @app.get("/health")

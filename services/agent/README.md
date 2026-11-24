@@ -86,6 +86,58 @@ Studio 使用 Platform 的已认证会话代理和独立草稿服务。Platform 
 
 部署使用 `uv run uvicorn form_agent.server:create_configured_app --factory`。模型通过 LangChain 的 `provider:model` 标识选择，安装匹配的 provider 包并设置其服务凭据。OpenAI API 部署可执行 `uv sync --locked --extra openai` 并配置 `OPENAI_API_KEY`。本机 ChatGPT 联调可选择 `local-chatgpt:gpt-6.2-sol`，使用已登录的 Codex CLI。它仅负责输出工具调用，使用临时空目录并忽略用户配置；Deep Agents 执行创作工具，CreateForm Graph 驱动修复与复验。
 
+### Langfuse 评测追踪
+
+对隔离的 Agent 评测实例安装 `uv sync --locked --project services/agent --extra observability`。锁定的 Python SDK 5 连接 Langfuse 4。启动时显式设置 `CREATE_FORM_LANGFUSE_EVAL=1`、`LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY` 和 `LANGFUSE_SECRET_KEY`。开关默认关闭。评测实例全量采样并发送框架捕获的输入和输出，使用合成用例与独立 Langfuse 项目。
+
+使用对应会话 ID 查找 `AgentTurn`，用 `turn_id`、`creation_trace_id`、`resume` 关联轮次和当次执行。查看 `route` 输出与后续节点核对流转。检查真实 Compiler 调用用 `platform.check_candidate`，已保存步骤的恢复用 `journal.replay`，实际模型消耗看 generation。仅返回已经完成轮次的 HTTP 幂等请求不会执行 Graph。框架只统计模型适配器返回的用量，缺失字段按未知处理。
+
+隔离评测实例同时把 LangChain 保有的所有回调参数逐条追加到本地 `.langfuse-evaluation/raw/{creation_trace_id}.events.jsonl`，包括未纳入评分的事件、流式增量、工具结果、错误和回放。可通过 `CREATE_FORM_EVAL_ARCHIVE_DIR` 指定目录。文件默认只允许当前用户读写，执行指标和 UI 过滤不会删减原始事件。框架没有提供的供应商内部数据无从记录。
+
+用 `uv run --locked --project services/agent --extra observability pytest services/agent/tests/test_observability.py -q` 验证实际 SDK 的导出内容。该检查使用内存 exporter，验证 Graph 与 SDK 的接入。部署验收再使用合成样例在指定 Langfuse 服务中读回 trace。
+
+在在线用例的 **Tracing** 里展开 `AgentTurn`，选中 `compose`、具体模型调用或工具节点，在 **Preview → Formatted** 查看该次输入输出。切换 **Raw** 可以查看原始结构；该视图持续加载时，可直接读取本地原始事件档案。离线基线导入的 trace 只有实验和评分记录。`experiment-item-task` 有历史评分任务的数据，原始 Agent 节点只能从实际在线记录查看。
+
+### 跑 CreateForm 评测并查看原生看板
+
+在仓库根启动本机 Langfuse，首次启动会下载官方镜像：
+
+```sh
+python3 services/agent/evaluation/langfuse-local.py
+uv sync --locked --project services/agent --extra observability
+```
+
+看板在 [本机 CreateForm Evaluation](http://localhost:3300/project/createform-evaluation)。本地帐号及 SDK 凭证由启动脚本写入 `services/agent/.langfuse-evaluation/langfuse.env`，该目录不提交。登录使用其中的 `LANGFUSE_INIT_USER_EMAIL` 和 `LANGFUSE_INIT_USER_PASSWORD`。团队已有 Langfuse 4 项目时，可以直接提供该项目的 `LANGFUSE_BASE_URL`、`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`。
+
+准备 Node workspace 依赖与本次代码对应的 Compiler、Runtime、物料及纯函数构建。如需重建，运行 `pnpm --filter '@form-engine/compiler...' --filter '@form-engine/runtime...' --filter '@form-engine/materials-react...' --filter '@form-engine/pure-functions...' build`。用当前模型执行现行 Graph 的基线：
+
+```sh
+uv run --locked --project services/agent --extra observability \
+  python services/agent/evaluation/run.py \
+  --name compose-baseline \
+  --env-file services/agent/.langfuse-evaluation/langfuse.env \
+  --env-file services/agent/.env.local \
+  --repeat 3 \
+  --output services/agent/.langfuse-evaluation/compose-baseline.json
+```
+
+模型由 `CREATE_FORM_MODEL` 指定。给候选版换一个运行名和输出文件，保持评测集、用例筛选、重复次数、模型、分数和环境一致。Runner 使用同一 Graph 和会话需求更新规则，配套本地 Web Compiler、Runtime 与受控目录。报告记录代码提交、工作差异摘要、评测集、协议、模型和工具环境。该路径测 Graph，不经过 Studio、Platform 的 HTTP 接口或持久化层。
+
+首次试跑可用 `--repeat 1 --case contact-length`。做正式对比时保留完整报告的 `dataset_digest`、`scorer` 和 `capture_version`，用相同口径对齐两次运行。运行未通过时报告仍写盘，退出码为 1。
+
+Runner 在线和离线都会在报告旁写 `.events.jsonl`。逐条记录 Graph 框架事件、评测输入和结果，以及本地 Compiler / Runtime 子进程的请求、输出、错误输出和耗时。进程输出的原始字节以 Base64 保存；其余结构化回调参数保留为 JSON。在线文件的 `trace_id` 可关联到 Langfuse，`case_id` 和 `trial` 可关联到报告。
+
+想先验收评测器和看板，可以把参数换为 `--mode reference` 和 `--mode reference-broken`，各用不同运行名与输出文件，重复次数相同。这两种模式执行真实 Compiler 与 Runtime，不调用模型。后者故意移除「换国家清空城市备注」联动，预期返回非零退出码，并报告 Compiler 通过、Runtime 失败。`--offline` 仅输出 JSON，不连接 Langfuse。`--case` 可重复指定用例 ID。
+
+| 怎么看 | 在 Langfuse 原生界面做什么 |
+| --- | --- |
+| 业务是否合格 | 打开 **Experiments**，进入 Runner 打印的实验链接。看 `business_success` 和 `business_disposition`，选失败用例，在输出中查看 `runtime_assertions` 的期望、实际与状态。`not_run` 表示缺少前置证据。 |
+| 卡在哪一步 | 查看 `failure_at` 和该用例的 Compiler 诊断、轮次结果与节点顺序。`failure_at` 是发现失败的阶段。进入 trace 看 `route`、`compose`、`platform.check_candidate` 和 `repair` 的输入与输出，可继续追溯原因。 |
+| Agent 能力和效率 | 在 **Experiments** 看 `route_valid`、`compiler_executed`、首次与最终编译通过、重编次数、修复次数、`agent_ms` 和 `elapsed_ms`。在关联 **Tracing** 中查看 generation 的实际用量与节点耗时。 |
+| 基线与候选比较 | 在 **Experiments** 选择同一评测集的两次运行，点 **Compare**。先看回归用例，再比较用量与耗时。首次和最终编译通过数只包含已编译用例，另看 `compiler_executed` 核实覆盖。参考配置实验用于验证评分，Agent 实验用于比较模型与流程。 |
+
+首批用例见 [评测集](evaluation/cases.json)。覆盖字段边界、枚举、澄清续办、联动和远程城市的工作值与 Host 请求契约。澄清相关性首期采用显式关键词断言。远程请求的浏览器交互、复杂旅险成员 Scope 和真实 Host 后端另有验收范围。效率目前展示实际分布，阈值以多次 Agent 基线记录为依据。
+
 如果开发进程没有继承 Codex CLI 路径，在 Agent 的本地 `.env.local` 设置 `CODEX_CLI_DIR` 为包含 `codex` 的目录。开发工厂在启动时将该目录放到 Agent 的 `PATH` 前面。修改配置后重启 Agent。
 
 `pnpm dev:all` 启动开发进程。缺少模型配置时开发 Agent 返回 503。正式装配使用 PostgreSQL 中已发布的手册版本、Platform 已安装的 Web 目录和真实 Compiler。Host 查询提供当前 Web 预览的城市搜索签名。编译结果中的 HostRequirements 是接入义务，业务 Host 实际注册另行验证。

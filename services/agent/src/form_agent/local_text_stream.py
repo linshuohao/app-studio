@@ -124,6 +124,15 @@ async def local_text_stream(model: str, prompt: str):
                     )
                     if data["turn"]["status"] != "completed":
                         raise RuntimeError("Codex turn failed")
+                    if isinstance(usage, dict):
+                        yield {
+                            "input_tokens": usage.get("inputTokens"),
+                            "cached_input_tokens": usage.get("cachedInputTokens"),
+                            "output_tokens": usage.get("outputTokens"),
+                            "reasoning_output_tokens": usage.get(
+                                "reasoningOutputTokens"
+                            ),
+                        }
                     return
         finally:
             if proc.returncode is None:

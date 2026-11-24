@@ -1,5 +1,9 @@
+from collections.abc import Callable
+from uuid import UUID
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.language_models import BaseChatModel
 
 from form_agent.api.conversations import conversation_router
@@ -19,6 +23,7 @@ def create_app(
     service_token: str,
     store: ConversationStore,
     timeout_seconds: float = 60,
+    trace_callback_factory: Callable[[UUID], list[BaseCallbackHandler]] | None = None,
 ) -> FastAPI:
     if not service_token:
         raise ValueError("Agent requires a service token")
@@ -45,6 +50,7 @@ def create_app(
             service_token=service_token,
             store=store,
             timeout_seconds=timeout_seconds,
+            trace_callback_factory=trace_callback_factory,
         )
     )
     return app

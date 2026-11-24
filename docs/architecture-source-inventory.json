@@ -291,8 +291,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 58231,
-      "sha256": "c09aa6b6aa4470ecadbf5675ef7f0e3c13336b3a6b3f6c4cdcf041b18c31af13",
+      "bytes": 58230,
+      "sha256": "1424468e9ecd32f26e0ca90de848264ece3372d49186c249bc07d7ca1febb1b6",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -1641,8 +1641,8 @@
       "path": "docs/design/decisions/ADR-FE-030-agent-harness.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 3505,
-      "sha256": "c80dab683d81d19f4d5e42a9eb7d2d5d95a94805fefb43a605ed8b76e7d5fd80",
+      "bytes": 3708,
+      "sha256": "f51efea800d8d1bc2c104b0d92a2e12d30547f7c4551605160c5f8ba715a361a",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -4796,8 +4796,8 @@
       "path": "docs/design/platform-studio.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 282775,
-      "sha256": "14b3db9778f3bdf55ef4a2bec1af5a5ef66b8222cc4322a47f8dbd650e554928",
+      "bytes": 286245,
+      "sha256": "aef1f1da1547e5bca5e2f5c21f49d7ad4a314210f7f7c753f1132bb41c868e20",
       "mapping": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
       "sections": [
         {
@@ -5269,6 +5269,11 @@
           "level": 3,
           "title": "工具授权、错误与数据出口",
           "anchor": "agent-tools-security"
+        },
+        {
+          "level": 4,
+          "title": "创建流程评测采集",
+          "anchor": "agent-evaluation-capture"
         },
         {
           "level": 3,

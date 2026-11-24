@@ -528,6 +528,8 @@ SRC-OBSERVABILITY 补充（2026-11-09）：用户明确确认“端到端订阅�
 
 2026-11-24，SRC-AGENTBLUEPRINT 增量确认来自本次 Studio 会话反馈。用户明确要求保存用户消息、LLM 请求和返回及每一步结果，并在重开和继续时复用。见[确认契约](platform-studio.md#agent-turn-recovery)。
 
+2026-11-24，用户选择 Langfuse，要求重构前统一规划全量采集与比较口径，优先使用框架数据并授权落地采集。见[现行采集契约](platform-studio.md#agent-evaluation-capture)。
+
 
 2026-11-15 当前会话中，用户指定 Python、FastAPI、LangChain、LangGraph、LangSmith 与独立微服务；确认 Studio 编辑页诊断修复、人工审阅应用。随后要求完整 Harness / Loop、接口、知识清洗更新与记忆设计，认可六类 Agent 和三层 Loop 蓝图，最终明确授权统一归档并暂不开发。依据为本会话逐轮确认；完整对话原文尚未另存仓库，不编造历史附件。现行正文见[Agent 蓝图](platform-studio.md#agent-confirmed-blueprint)，决策见[ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)。归档包含首期同步接口 / 状态流、工具授权失败处理、版本化知识包、记忆边界与后续阶段。模型供应方、真实数据传输与后续具体工具 / 持久化契约继续待细化。
 

@@ -6,6 +6,7 @@ import logging
 from time import monotonic
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableLambda
 from pydantic import BaseModel, field_validator
 
 from form_agent.execution import structured
@@ -26,7 +27,7 @@ class SchemaDraft(BaseModel, extra="forbid"):
             except json.JSONDecodeError as error:
                 if error.msg != "Invalid \\escape":
                     raise
-                value = value[:error.pos] + chr(92) + value[error.pos:]
+                value = value[: error.pos] + chr(92) + value[error.pos :]
         else:
             raise ValueError("Too many invalid JSON escapes")
         if not isinstance(schema, dict):
@@ -62,21 +63,8 @@ async def prepare_binding(model, standard, catalog, reference):
     facts = standard.model_dump(mode="json")
     log = logging.getLogger("uvicorn.error")
 
-    async def schema():
+    async def schema(payload):
         start = monotonic()
-        payload = {
-            "requirements": [
-                r
-                for r in facts["requirements"]
-                if r["kind"] in ("field", "data", "validation")
-            ]
-        }
-        if reference:
-            try:
-                payload["current_schema"] = json.loads(reference)["data"]["schema"]
-            except (ValueError, KeyError, TypeError):
-                # The binding step still receives the exact original working text.
-                pass
         draft = await structured(
             model,
             SchemaDraft,
@@ -95,7 +83,7 @@ async def prepare_binding(model, standard, catalog, reference):
         )
         return value
 
-    async def capabilities():
+    async def capabilities(requirements):
         start = monotonic()
         materials, functions, host = await asyncio.gather(
             *(catalog(k, "") for k in ("material", "pure_function", "host"))
@@ -115,9 +103,7 @@ async def prepare_binding(model, standard, catalog, reference):
                 HumanMessage(
                     content=json.dumps(
                         {
-                            "requirements": [
-                                r["behavior"] for r in facts["requirements"]
-                            ],
+                            "requirements": requirements,
                             "available": available,
                         },
                         ensure_ascii=False,
@@ -147,7 +133,24 @@ async def prepare_binding(model, standard, catalog, reference):
             "available_ids": available,
         }
 
+    schema_input = {
+        "requirements": [
+            r
+            for r in facts["requirements"]
+            if r["kind"] in ("field", "data", "validation")
+        ]
+    }
+    if reference:
+        try:
+            schema_input["current_schema"] = json.loads(reference)["data"]["schema"]
+        except (ValueError, KeyError, TypeError):
+            # The binding step still receives the exact original working text.
+            pass
+    schema_branch = RunnableLambda(schema, name="compose.schema_draft")
+    capability_branch = RunnableLambda(capabilities, name="compose.capability_evidence")
     async with asyncio.TaskGroup() as tasks:
-        a = tasks.create_task(schema())
-        b = tasks.create_task(capabilities())
+        a = tasks.create_task(schema_branch.ainvoke(schema_input))
+        b = tasks.create_task(
+            capability_branch.ainvoke([r["behavior"] for r in facts["requirements"]])
+        )
     return {"schema_draft": a.result(), "capabilities": b.result()}

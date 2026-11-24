@@ -1,0 +1,121 @@
+{
+  "version": "createform-v1",
+  "cases": [
+    {
+      "id": "contact-length",
+      "group": "fields",
+      "fixture": "01",
+      "prd": "complete",
+      "assertions": [
+        { "id": "contact.required", "data": {}, "expected": "invalid" },
+        { "id": "contact.empty", "data": { "contactName": "" }, "expected": "invalid" },
+        { "id": "contact.min", "data": { "contactName": "张" }, "expected": "valid" },
+        {
+          "id": "contact.max",
+          "data": { "contactName": "1234567890123456789012345678901234567890" },
+          "expected": "valid"
+        },
+        {
+          "id": "contact.over-max",
+          "data": { "contactName": "12345678901234567890123456789012345678901" },
+          "expected": "invalid"
+        }
+      ]
+    },
+    {
+      "id": "contact-clarify-length",
+      "group": "clarification",
+      "fixture": "01",
+      "prd": "needs-material",
+      "clarification": {
+        "terms": ["长度", "字符", "上下限"],
+        "answer": "已和柜台确认：联系人姓名必填，长度为 1 至 40 个字符，没有默认值。请继续生成。"
+      },
+      "reuse_assertions": "contact-length"
+    },
+    {
+      "id": "country-enum",
+      "group": "fields",
+      "fixture": "02",
+      "prd": "complete",
+      "assertions": [
+        {
+          "id": "country.cn",
+          "data": { "contactName": "张", "countryCode": "CN" },
+          "expected": "valid"
+        },
+        {
+          "id": "country.jp",
+          "data": { "contactName": "张", "countryCode": "JP" },
+          "expected": "valid"
+        },
+        {
+          "id": "country.reject-label",
+          "data": { "contactName": "张", "countryCode": "中国" },
+          "expected": "invalid"
+        },
+        { "id": "country.required", "data": { "contactName": "张" }, "expected": "invalid" }
+      ]
+    },
+    {
+      "id": "country-change-clears-city",
+      "group": "reaction",
+      "fixture": "04",
+      "prd": "complete",
+      "assertions": [
+        {
+          "id": "city.cleared-on-country-change",
+          "data": { "contactName": "张", "countryCode": "CN", "cityNote": "上海" },
+          "steps": [{ "path": "/countryCode", "value": "JP" }],
+          "path": "/cityNote",
+          "expected": { "kind": "value", "value": null }
+        },
+        {
+          "id": "city.preserved-on-unrelated-change",
+          "data": { "contactName": "张", "countryCode": "CN", "cityNote": "上海" },
+          "steps": [{ "path": "/contactName", "value": "李" }],
+          "path": "/cityNote",
+          "expected": { "kind": "value", "value": "上海" }
+        }
+      ]
+    },
+    {
+      "id": "remote-city-contract",
+      "group": "host",
+      "fixture": "05",
+      "prd": "complete",
+      "assertions": [
+        {
+          "id": "city.search-capability",
+          "request": "travel.searchCities",
+          "expected": true
+        },
+        {
+          "id": "city.object-valid",
+          "data": {
+            "contactName": "张",
+            "countryCode": "CN",
+            "city": { "id": "SHA", "label": "上海" }
+          },
+          "expected": "valid"
+        },
+        {
+          "id": "city.code-only-invalid",
+          "data": { "contactName": "张", "countryCode": "CN", "city": "SHA" },
+          "expected": "invalid"
+        },
+        {
+          "id": "city.selection-cleared",
+          "data": {
+            "contactName": "张",
+            "countryCode": "CN",
+            "city": { "id": "SHA", "label": "上海" }
+          },
+          "steps": [{ "path": "/countryCode", "value": "JP" }],
+          "path": "/city",
+          "expected": { "kind": "value", "value": null }
+        }
+      ]
+    }
+  ]
+}

@@ -1027,7 +1027,7 @@ P3 对比：A 具备发布权限者直接发布并记审计（首期建议）；
 
 2026-11-15 用户确认六类 Agent、共享 Harness、三层 Loop、服务接口、离线知识与记忆方案，并授权统一归档，明确暂不开发。决策见 [ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)，来源见 [SRC-AGENTBLUEPRINT](source-map.md#src-agent-blueprint)。本节是当前确认范围；后文八层清单继续保留完整候选覆盖，未被本节选中的能力仍待专题设计。
 
-技术选型为 Python、FastAPI、LangChain、LangGraph、LangSmith，Agent 独立微服务，Platform 维持模块化单体。六类职责、共享 Harness、三层 Loop 保留。2026-11-19 用户确认首期改为仅创建配置：多轮澄清、持久化会话、候选审阅、保存并归档。首期执行采用下文直接调用契约。旧诊断修复首期和同步临时会话安排由 [ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md) 局部替代；未授权开发。
+技术选型为 Python、FastAPI、LangChain、LangGraph，观测与评测采用 [Langfuse](#agent-evaluation-capture)。Agent 独立微服务，Platform 维持模块化单体。六类职责、共享 Harness、三层 Loop 保留。2026-11-19 用户确认首期改为仅创建配置：多轮澄清、持久化会话、候选审阅、保存并归档。首期执行采用下文直接调用契约。旧诊断修复首期和同步临时会话安排由 [ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md) 局部替代。
 
 ### 智能表单工作台 {#agent-form-workspace}
 
@@ -1563,7 +1563,7 @@ flowchart TB
     Diagnose -.-> Harness
     Harness --> Resources[知识 记忆 工具适配]
     Resources --> Services[Platform Compiler 测试执行器 Host 业务服务]
-    Harness --> Observe[LangSmith 追踪与评测]
+    Harness --> Observe[Langfuse 追踪与评测]
 ```
 
 图为已确认的职责与接入蓝图，非已运行调用证据。Studio 经 Platform 调 Agent；未来填写辅助由 Host 后端授权后接入 Agent，表单运行身份与业务工具范围由 Host 管理，具体身份交换契约留到填写专题。
@@ -1704,7 +1704,26 @@ Studio 根据原文和候选生成差异，不按模型修改清单直接写入�
 | Agent / Compiler / 索引不可用 | 503，原文与手工编辑保留 |
 | 模型或执行超时 | 504，无可应用候选 |
 
-首期真实链路先使用合成样例；模型供应方与真实配置传输范围在团队内测前确认。LangSmith 仅记录允许的运行标识、阶段、耗时、用量和失败类别，默认隐藏原文、候选、完整 Prompt 和凭据。模型调用与 Trace 上传分别控制。业务读取与写入工具恢复时须重新授权，未来副作用操作须具备业务幂等键及结果查询契约。
+首期真实链路先使用合成样例；模型供应方与真实配置传输范围在团队内测前确认。完整输入输出追踪只在隔离的评测实例显式开启。正常业务实例默认关闭 Langfuse 导出，真实业务场景的可见范围和留存周期待确认。模型调用与 Trace 上传分别控制。业务读取与写入工具恢复时须重新授权，未来副作用操作须具备业务幂等键及结果查询契约。
+
+#### 创建流程评测采集 {#agent-evaluation-capture}
+
+2026-11-24 确认用 Langfuse 替换 ADR-FE-030 的 LangSmith 选型。先用统一采集切面对现行 Compose 建立基线，再比较 Graph、State、Prompt 和参考资料变化。团队保有用例、断言和指标定义，Langfuse 提供实验与轨迹查询。首期只在隔离服务连接指定 Langfuse 实例和项目，使用合成样例及全量 trace。
+
+| 证据 | 权威来源和口径 |
+| --- | --- |
+| Graph 节点、模型和工具的输入输出、时间、错误 | LangChain / LangGraph 回调。Schema 草拟、能力准备和 Platform 工具调用通过有名称的 Runnable 进入相同回调；业务节点不手工重复上报输入输出。 |
+| 流转 | `route` 实际输出与 Graph 后续节点共同证明所选择、所到达的动作。预期动作集合和禁止流转由独立评测用例定义。框架轨迹本身不判业务意图正误。 |
+| 恢复与用量 | `journal.replay` 标识复用的步骤或调用。只把实际模型调用上报的 token 计入本次消耗，缺失计量保持未知。并行耗时按时间线区分关键路径和累计执行时间。 |
+| 最终质量 | Compiler 回执给出结构检查证据。端到端业务成功依赖同一候选全部必过 Runtime / 浏览器断言。正确澄清和按证据受阻按对应场景计分。Compose 内部通过控制流异常交回已提交候选，是否失败以外层动作和业务结果判定。 |
+
+执行数据通过会话、轮次和实际请求身份关联。重构前后用稳定业务阶段对齐，物理节点可增减，已有指标的单位、分母和聚合保持一致。用同一版本的评测集、Compiler、目标目录和 Host 替身比较首轮编译、端到端业务成功、流转正确率、墙钟时延、实际模型调用量与 token。在基线缺失的粒度上明确标记缺失。
+
+采集扩展 `raw-events-v1` 在评测现场追加框架收到的全部原始回调及执行结果，保留未进入首期评分的字段、事件、流式增量、错误和回放。Runner 还保存 Compiler / Runtime 桥接的原始请求与响应，包括进程错误输出。Langfuse 用于查看轨迹和分析，独立原始记录用于后续重新评分和大字段检查。机制只覆盖系统实际收到的数据，旧离线评分导入不生成历史节点。效率实验需在同一采集版本下重跑对照。
+
+围绕轨迹与业务断言建立实验对比、阶段诊断与单例时间线。分析 Agent 读取相同的指标查询和授权证据，给出样本、原因假设、候选改动和复验条件。受控自动实验范围与预算另行确认。采集接入、部署后的数据可用性、基线测量和分析功能分别验收。启用方式见 [Agent 开发说明](../../services/agent/README.md)。
+
+首期看板采用 Langfuse 原生 Experiments、Compare 和 Tracing。评测用例在仓库维护，明确预期业务处置、关键流转及必过断言。每项断言保留通过、失败、未执行和不适用的语义。卡点记录观测到失败的阶段和对应证据，归因以最早可证实的偏差为准。业务视图消费业务成功、澄清处置和 Runtime 断言，基础能力视图消费流转、编译、修复、耗时和模型用量。现行版与候选版以相同的评测集和评分版本对照，人工参考与故意注错对照先验证评分器。
 
 ### PostgreSQL、内部凭证与多实例运行 {#agent-storage-routing}
 

@@ -21,6 +21,8 @@ status_note: 蓝图与首期行为已确认，仅归档，未授权开发；后�
 ---
 
 # ADR-FE-030：独立 Agent 服务与共享 Harness
+2026-11-24 局部替代：观测与评测由 LangSmith 改为 Langfuse。沿用共享 Harness 和既有数据授权边界，详见[现行采集契约](../platform-studio.md#agent-evaluation-capture)。
+
 2026-11-19 局部替代：首期范围、会话所有权及同步 / 内存 / 不恢复限制由 [ADR-FE-033](ADR-FE-033-agent-create-conversation.md) 更新；当前仅创建、Platform 持久业务会话、Agent 持久执行状态、异步受理与恢复。其余全局职责、分域与安全原则保留。本页原首期描述作为当时决定追溯，当前以新决定为准。
 
 

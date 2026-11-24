@@ -28,3 +28,4 @@ test-results/
 
 # Platform local persistence, backup and import reports.
 services/api/.platform-data/
+services/agent/.langfuse-evaluation/

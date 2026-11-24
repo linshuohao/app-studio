@@ -4,7 +4,19 @@ import { mkdtempSync, readdirSync, readFileSync, writeFileSync, rmSync } from 'n
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 const scratch = mkdtempSync(join(tmpdir(), 'form-engine-consumer-'));
-const run = (args, cwd = process.cwd()) => execFileSync('pnpm', args, { cwd, stdio: 'inherit' });
+// Native pnpm distributions may not read npm_config_* rc variables themselves.
+// Forward an explicitly selected existing cache through the public CLI option.
+const run = (args, cwd = process.cwd()) =>
+  execFileSync(
+    'pnpm',
+    [
+      ...(process.env.npm_config_store_dir
+        ? ['--store-dir', process.env.npm_config_store_dir]
+        : []),
+      ...args,
+    ],
+    { cwd, stdio: 'inherit' },
+  );
 try {
   for (const name of readdirSync('packages'))
     run(['--dir', `packages/${name}`, 'pack', '--pack-destination', scratch]);
@@ -30,6 +42,31 @@ try {
   writeFileSync(join(scratch, 'pnpm-workspace.yaml'), `overrides:\n${overrides.join('\n')}\n`);
   run(['add', '--offline', ...archives, `react@${react}`, `react-dom@${reactDom}`], scratch);
   writeFileSync(
+    join(scratch, 'verify-manifests.mjs'),
+    `
+    import assert from 'node:assert/strict';
+    import { registerHooks } from 'node:module';
+    import { readFileSync } from 'node:fs';
+    registerHooks({ resolve(specifier, context, next) {
+      if (/^(react(?:-dom)?(?:\\/|$)|@form-engine\\/(renderer-react|runtime)(?:\\/|$))/.test(specifier))
+        throw Error('Static contracts loaded UI or Runtime: ' + specifier);
+      return next(specifier, context);
+    } });
+    await import('@form-engine/materials-react/manifests');
+    const functions = await import('@form-engine/pure-functions/manifests');
+    assert.equal(functions.textIsNonBlankManifest.id, 'text.isNonBlank');
+    assert.equal(Object.values(functions).length, 7);
+    assert.equal(functions.travelPersonPremiumManifest.parameters[0].schema, true);
+    assert.equal(functions.dateInclusiveDaysManifest.returns.type.includes('null'), true);
+    const materials = await import('@form-engine/materials-react/manifests');
+    assert.equal(Object.values(materials).length, 14);
+    assert.equal(materials.textInputManifest.bindings.value.schema.type[0], 'string');
+    assert.doesNotMatch(readFileSync(new URL(import.meta.resolve('@form-engine/materials-react/manifests')), 'utf8'), /use client/);
+    console.log('Static manifest consumers: no UI, Runtime, or client directive.');
+  `,
+  );
+  execFileSync('node', ['verify-manifests.mjs'], { cwd: scratch, stdio: 'inherit' });
+  writeFileSync(
     join(scratch, 'verify.mjs'),
     `
     import assert from 'node:assert/strict';
@@ -37,15 +74,20 @@ try {
     import { compile, validateMaterialManifest } from '@form-engine/compiler';
     import { createRuntime } from '@form-engine/runtime';
     import { getDevtoolsHook } from '@form-engine/runtime/devtools';
-    import { connectDevtools } from '@form-engine/devtools';
+    import { createObservationClient } from '@form-engine/devtools';
     globalThis.window = globalThis; // Only the isolated consumer simulates a browser discovery realm.
-    import { createCoreFunctions } from '@form-engine/pure-functions';
+    import { createCoreFunctions, createTravelTotalPremium, createDateInclusiveDays } from '@form-engine/pure-functions';
     import { createElement } from 'react';
     import { renderToString } from 'react-dom/server';
     import { FormRenderer, useMaterialAdapter, defineMaterialContract, defineMaterial, createMaterialRegistry } from '@form-engine/renderer-react';
     const artifact = { id: 'consumer-build', platform: 'web', digest: 'sha256:' + '1'.repeat(64) };
     const functions = createCoreFunctions(artifact);
     assert.equal(functions['core.add'].invoke([2, 3]), 5);
+    const ratePolicy = { agePolicy: { minAge: 0, maxAge: 80, adultAge: 18 }, maxDays: 30, maxInsureds: 5, rates: { basic: { adultDailyMinor: 100, childDailyMinor: 150 }, plus: { adultDailyMinor: 180, childDailyMinor: 250 } } };
+    assert.equal(createTravelTotalPremium(artifact).invoke([[{age:30},{age:12}],'basic',2,ratePolicy]),500);
+    assert.equal(createDateInclusiveDays(artifact).invoke(['2028-02-28','2028-03-01']),3);
+    assert.equal(Object.hasOwn(functions,'travel.totalPremium'),false);
+
     const material = { id: 'display', version: 'consumer-test' };
     assert.equal(validateMaterialManifest(material).valid, true);
     const compiled = compile({
@@ -73,13 +115,22 @@ try {
     assert.equal(runtime.diagnostics().find(entry => entry.kind === 'command.error').evidence.prepared, compiled.prepared, 'Packed Compiler and Runtime share the immutable artifact');
     const development = process.execArgv.includes('--conditions=development');
     assert.equal(Boolean(getDevtoolsHook()), development, 'Only development package conditions may register discovery');
-    if (development) {
-      const client = connectDevtools(getDevtoolsHook());
-      assert.equal(client.list().filter(source => source.kind === 'runtime').length, 1);
-      assert.ok(client.inspect(client.list()[0].id).value.data);
-      client.disconnect();
-    }
     const prior = runtime.snapshot();
+    if (development) {
+      const client = createObservationClient({ request: async command => getDevtoolsHook().request(command) }, () => crypto.randomUUID());
+      const discovery = (await client.query({ op: 'discover' })).result;
+      assert.equal(discovery.status, 'ok');
+      assert.equal(discovery.producers.filter(source => source.kind === 'runtime').length, 1);
+      const producer = discovery.producers[0].ref;
+      const opened = (await client.query({ op: 'openObservation', producer })).result;
+      assert.equal(opened.status, 'ok');
+      const target = { producer, sessionId: opened.sessionId };
+      const page = (await client.query({ op: 'readSnapshotPage', ...target, snapshotId: opened.snapshotId })).result;
+      assert.equal(page.status, 'ok');
+      assert.ok(page.rows.some(row => row.record === 'header'));
+      assert.equal(JSON.stringify(page.rows).includes('Ada'), false);
+      assert.equal((await client.query({ op: 'closeObservation', ...target })).result.status, 'closed');
+    }
     runtime.dispatch({ op: 'set', target: { source: 'data', path: '/name' }, value: 'Grace' });
     await runtime.flush();
     assert.deepEqual(prior, { name: 'Ada', age: 20, total: 0 });
@@ -92,14 +143,23 @@ try {
     const markup = renderToString(createElement(FormRenderer, { prepared: compiled.prepared, runtime, materials: registry }));
     assert.ok(markup.includes('>Grace</span>'));
     runtime.dispose();
-    assert.equal(getDevtoolsHook()?.list().length ?? 0, 0);
+    if (development) assert.equal(getDevtoolsHook().request({ version: 2, requestId: 'after-dispose', op: 'discover' }).result.producers.length, 0);
     const protocolSchema = JSON.parse(readFileSync(new URL(import.meta.resolve('@form-engine/protocol/schemas/form-definition.schema.json')), 'utf8'));
     assert.equal(protocolSchema.$schema, 'https://json-schema.org/draft/2020-12/schema');
     for (const domain of ['definition', 'capability', 'prepared'])
       assert.deepEqual(Object.keys(await import('@form-engine/protocol/' + domain)), []);
     // 正式物料库仍待实现；Renderer 已通过真实 Prepared 的打包消费。
     await import('@form-engine/renderer-react');
-    await import('@form-engine/materials-react');
+    const { createValueDisplay } = await import('@form-engine/materials-react');
+    const { valueDisplayManifest } = await import('@form-engine/materials-react/manifests');
+    const displayed = compile({definition: {protocolVersion:'consumer-test',id:'material-consumer',version:'test',data:{schema:{type:'object'}},views:{main:{material:'value-display',props:{value:500,format:'moneyMinor'}}}},catalog:{id:'material-consumer',materials:{'value-display':{manifest:valueDisplayManifest,artifact}},pureFunctions:{}}});
+    assert.equal(displayed.success,true,JSON.stringify(displayed.diagnostics));
+    const displayRuntime=createRuntime({prepared:displayed.prepared,data:{}});
+    const officialMarkup=renderToString(createElement(FormRenderer,{prepared:displayed.prepared,runtime:displayRuntime,materials:createMaterialRegistry([createValueDisplay(artifact)])}));
+    assert.ok(officialMarkup.includes('¥5.00'));
+    displayRuntime.dispose();
+    const styles=readFileSync(new URL(import.meta.resolve('@form-engine/materials-react/styles.css')),'utf8');
+    assert.ok(styles.includes('.fe-input'));
     console.log('Isolated packed consumer: pure functions, Compiler → Runtime, exports and Schema passed');
   `,
   );
@@ -132,6 +192,14 @@ function MaterialConsumer() {
   adapter.set('missing', 'value');
 }
 defineHostRequests({ lookup: request }, { lookup: input => [input] });
+import { remoteSelectRequests, type RemoteSelectSearchInput } from '@form-engine/materials-react';
+const cityInput: RemoteSelectSearchInput = { query: '杭州', filterKey: 'CN' };
+defineHostRequests({ cities: remoteSelectRequests.search }, { cities: input => ({ items: [{ id: input.filterKey ?? '', label: input.query }] }) });
+// @ts-expect-error Packed remote-select declarations reject malformed Host results.
+defineHostRequests({ cities: remoteSelectRequests.search }, { cities: () => ({ items: ['wrong'] }) });
+// @ts-expect-error The normalized filter key is required in Host input.
+const missingFilter: RemoteSelectSearchInput = { query: cityInput.query };
+
 // @ts-expect-error Required statically-known Host registration cannot be omitted.
 defineHostRequests({ lookup: request }, {});
 void MaterialConsumer;

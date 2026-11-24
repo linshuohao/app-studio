@@ -1,0 +1,45 @@
+{
+  "fingerprint": "4d39072df058875982bc3e1ea8a46ded585a66cbcd7862f5f29e128a9dad1381",
+  "checks": [
+    [
+      "node",
+      "tools/engineering/catalog-docs.mjs",
+      "--check"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "build"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "lint"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "test:integration"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

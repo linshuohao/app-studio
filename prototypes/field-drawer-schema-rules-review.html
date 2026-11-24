@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>字段编辑抽屉 · 联动校验验收</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 13px;
+      }
+      body {
+        margin: 0;
+        background: var(--studio-bg);
+        color: var(--studio-text);
+        font: var(--studio-type-body);
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font: var(--studio-type-title);
+      }
+      h2,
+      h3 {
+        font: var(--studio-type-section);
+      }
+      small,
+      code,
+      .muted {
+        color: var(--studio-text-muted);
+      }
+      code,
+      pre {
+        font: var(--studio-type-code);
+      }
+      header,
+      main {
+        padding: 16px 24px;
+      }
+      header {
+        background: var(--studio-surface);
+        border-bottom: 1px solid var(--studio-border);
+      }
+      main {
+        display: grid;
+        gap: 16px;
+        justify-items: start;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .right {
+        margin-left: auto;
+      }
+      .tree {
+        display: grid;
+        gap: 8px;
+        min-width: min(100%, 420px);
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid var(--studio-border);
+        background: var(--studio-surface);
+      }
+      dialog {
+        color: inherit;
+        border: 1px solid var(--studio-border);
+        border-radius: 8px;
+        padding: 16px;
+        width: min(480px, calc(100vw - 32px));
+      }
+      dialog::backdrop {
+        background: #23272f33;
+      }
+      #drawer {
+        position: fixed;
+        inset: 0 0 0 auto;
+        margin: 0;
+        padding: 0;
+        width: min(640px, 100vw);
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border: 0;
+        border-left: 1px solid var(--studio-border);
+        border-radius: 0;
+      }
+      #drawer[open] {
+        display: flex;
+        flex-direction: column;
+      }
+      #drawer header,
+      #drawer footer {
+        padding: 12px 16px;
+      }
+      #drawer footer {
+        border-top: 1px solid var(--studio-border);
+      }
+      #drawer .studio-button {
+        min-height: var(--studio-control-height-dense);
+      }
+      .body {
+        flex: 1;
+        overflow: auto;
+        padding: 16px;
+        display: grid;
+        align-content: start;
+        gap: 24px;
+      }
+      .section,
+      .cards,
+      form,
+      .editor,
+      .checks {
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        border: 1px solid var(--studio-border);
+        border-radius: 8px;
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .card.editing {
+        border-color: var(--studio-control-border);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+        min-width: 0;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      fieldset {
+        margin: 0;
+        border: 0;
+        border-top: 1px solid var(--studio-border);
+        padding: 12px 0 0;
+        min-width: 0;
+      }
+      legend {
+        padding: 0 8px 0 0;
+        font: var(--studio-type-control);
+      }
+      select,
+      input:not([type='checkbox']),
+      textarea {
+        min-width: 0;
+        width: 100%;
+        min-height: 32px;
+        border: 1px solid var(--studio-control-border);
+        border-radius: 4px;
+        padding: 4px 8px;
+        color: inherit;
+        background: var(--studio-surface);
+        font: inherit;
+      }
+      textarea {
+        display: block;
+        resize: vertical;
+        font: var(--studio-type-code);
+      }
+      .checks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .checks label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .notice {
+        background: var(--studio-surface-muted);
+        padding: 8px 12px;
+        border-radius: 4px;
+      }
+      [role='alert'] {
+        color: var(--studio-danger-fg);
+      }
+      [role='alert']:empty {
+        display: none;
+      }
+      :focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      pre {
+        overflow: auto;
+        max-height: 55dvh;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 460px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>Studio / 旅险投保 / 字段配置</header>
+    <main>
+      <h1>JSON Schema 联动校验</h1>
+      <div class="tree">
+        <h2>表单结构</h2>
+        <div class="bar">
+          <button class="studio-button" id="open" data-variant="secondary">编辑投保资料</button>
+          <button class="studio-button" id="child" data-variant="text">查看护照号码</button>
+        </div>
+        <div class="bar">
+          <button class="studio-button" data-variant="text" id="undo">撤销上次应用</button
+          ><small id="main-status" role="status"></small>
+        </div>
+      </div>
+    </main>
+    <dialog id="drawer" aria-labelledby="title">
+      <header>
+        <div class="bar">
+          <h1 id="title">投保资料</h1>
+          <button class="studio-button right" id="close" data-variant="text">关闭</button>
+        </div>
+        <div class="bar">
+          <code id="pointer">/data/schema</code
+          ><button class="studio-button right" id="json-open" data-variant="text">
+            查看节点 JSON
+          </button>
+        </div>
+      </header>
+      <div class="body" id="body"></div>
+      <footer class="bar">
+        <small id="drawer-status" role="status"></small>
+        <button class="studio-button right" id="cancel" data-variant="secondary">取消</button>
+        <button class="studio-button" id="apply">应用到工作台</button>
+      </footer>
+    </dialog>
+    <dialog id="json" aria-labelledby="json-title">
+      <h2 id="json-title">节点 JSON</h2>
+      <pre id="source"></pre>
+      <button class="studio-button" id="json-close">关闭原文</button>
+    </dialog>
+    <dialog id="leave" aria-labelledby="leave-title">
+      <h2 id="leave-title">放弃抽屉内的修改？</h2>
+      <div class="bar">
+        <button class="studio-button" id="stay">继续编辑</button
+        ><button class="studio-button" id="discard" data-variant="secondary">放弃修改</button>
+      </div>
+    </dialog>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const fields = {
+        trip: { label: '行程类型', schema: { enum: ['境内', '境外'] } },
+        passportNo: { label: '护照号码', schema: { type: 'string', minLength: 6, maxLength: 12 } },
+        identityNo: { label: '身份证号码', schema: { type: 'string' } },
+        invoiceTitle: { label: '发票抬头', schema: { type: 'string' } },
+        taxId: { label: '税号', schema: { type: 'string' } },
+      };
+      const seed = {
+        conditions: [
+          {
+            source: 'trip',
+            operator: 'equals',
+            value: '境外',
+            then: { mode: 'required', fields: ['passportNo'] },
+            otherwise: null,
+          },
+        ],
+        dependencies: [{ source: 'invoiceTitle', branch: { mode: 'required', fields: ['taxId'] } }],
+      };
+      let saved = structuredClone(seed),
+        draft,
+        editor = null,
+        trigger,
+        fromChild = false,
+        childView = false;
+      const history = [];
+      const titleOf = (key) => fields[key]?.label ?? key;
+      const clone = (value) => structuredClone(value);
+      function el(tag, text, className) {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        if (className) node.className = className;
+        return node;
+      }
+      function action(text, handler, variant = 'text') {
+        const node = el('button', text, 'studio-button');
+        node.type = 'button';
+        node.dataset.variant = variant;
+        node.onclick = handler;
+        return node;
+      }
+      function select(items, value, label) {
+        const node = el('select');
+        if (label) node.setAttribute('aria-label', label);
+        for (const [key, name] of Object.entries(items)) {
+          const option = el('option', name);
+          option.value = key;
+          node.append(option);
+        }
+        node.value = value;
+        return node;
+      }
+      function field(label, control, wide = false) {
+        const row = el('label', undefined, wide ? 'field wide' : 'field');
+        row.append(el('span', label), control);
+        return row;
+      }
+      function sourcePicker(value) {
+        return select(
+          Object.fromEntries(Object.entries(fields).map(([key, f]) => [key, f.label])),
+          value,
+        );
+      }
+      function summary(branch) {
+        return branch.mode === 'required'
+          ? '必填 ' + branch.fields.map(titleOf).join('、')
+          : '应用子模型';
+      }
+      function conditionLabel(rule) {
+        return (
+          titleOf(rule.source) +
+          (rule.operator === 'exists' ? ' 存在' : ' 等于「' + rule.value + '」')
+        );
+      }
+      function schemaFor(branch) {
+        if (branch.mode === 'required') {
+          if (!branch.fields.length) throw Error('请至少选择一个必填字段。');
+          return { required: branch.fields };
+        }
+        let parsed;
+        try {
+          parsed = JSON.parse(branch.raw);
+        } catch {
+          throw Error('子模型的 JSON 格式有误。');
+        }
+        if (
+          typeof parsed !== 'boolean' &&
+          (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+        )
+          throw Error('子模型须为 JSON 对象或布尔值。');
+        return parsed;
+      }
+      function toSchema(draft) {
+        const schema = {
+          type: 'object',
+          properties: Object.fromEntries(Object.entries(fields).map(([key, f]) => [key, f.schema])),
+          required: ['trip'],
+        };
+        const conditions = draft.conditions.map((rule) => {
+          const predicate = { required: [rule.source] };
+          if (rule.operator === 'equals')
+            predicate.properties = { [rule.source]: { const: rule.value } };
+          const result = { if: predicate, then: schemaFor(rule.then) };
+          if (rule.otherwise) result.else = schemaFor(rule.otherwise);
+          return result;
+        });
+        if (conditions.length === 1) Object.assign(schema, conditions[0]);
+        if (conditions.length > 1) schema.allOf = conditions;
+        for (const item of draft.dependencies) {
+          const key = item.branch.mode === 'required' ? 'dependentRequired' : 'dependentSchemas';
+          const value = schemaFor(item.branch);
+          (schema[key] ??= {})[item.source] =
+            item.branch.mode === 'required' ? value.required : value;
+        }
+        return schema;
+      }
+      function dirty() {
+        return JSON.stringify(draft) !== JSON.stringify(saved);
+      }
+      function status() {
+        $('apply').hidden = childView;
+        $('cancel').hidden = childView;
+        $('apply').disabled = Boolean(editor) || !dirty();
+        $('drawer-status').textContent = childView
+          ? '规则声明于所属对象'
+          : editor
+            ? '当前规则编辑中'
+            : dirty()
+              ? '有待应用的规则修改'
+              : '已与工作台草稿同步';
+      }
+      function addRule(group, index) {
+        const existing = draft[group][index];
+        const fallback =
+          group === 'conditions'
+            ? {
+                source: 'trip',
+                operator: 'equals',
+                value: '境外',
+                then: { mode: 'required', fields: [] },
+                otherwise: null,
+              }
+            : { source: 'invoiceTitle', branch: { mode: 'required', fields: [] } };
+        editor = { group, index, value: clone(existing ?? fallback), error: '' };
+        render();
+        $('body').querySelector('form select')?.focus();
+      }
+      function branchEditor(branch, legend, onChange, allowRemove = false) {
+        const box = el('fieldset');
+        box.append(el('legend', legend));
+        const controls = el('div', undefined, 'editor');
+        box.append(controls);
+        const type = select(
+          { required: '要求字段必填', schema: '应用子模型' },
+          branch.mode,
+          legend + '作用',
+        );
+        type.onchange = () => {
+          branch.mode = type.value;
+          branch.fields ??= [];
+          branch.raw ??= '{}';
+          drawBody();
+        };
+        const content = el('div');
+        controls.append(type, content);
+        if (allowRemove)
+          controls.append(
+            action('移除否则分支', () => {
+              onChange(null);
+              drawConditionEditor();
+            }),
+          );
+        function drawBody() {
+          content.replaceChildren();
+          if (branch.mode === 'required') {
+            const checks = el('div', undefined, 'checks');
+            checks.setAttribute('role', 'group');
+            checks.setAttribute('aria-label', legend + '必填字段');
+            for (const [key, info] of Object.entries(fields)) {
+              const label = el('label'),
+                box = el('input');
+              box.type = 'checkbox';
+              box.checked = (branch.fields ?? []).includes(key);
+              box.onchange = () => {
+                branch.fields = branch.fields ?? [];
+                if (box.checked) branch.fields.push(key);
+                else branch.fields = branch.fields.filter((item) => item !== key);
+              };
+              label.append(box, info.label);
+              checks.append(label);
+            }
+            content.append(checks);
+          } else {
+            const input = el('textarea');
+            input.rows = 3;
+            input.value = branch.raw ?? '{}';
+            input.oninput = () => {
+              branch.raw = input.value;
+            };
+            content.append(field(legend + '子模型', input));
+          }
+        }
+        drawBody();
+        return box;
+      }
+      function drawConditionEditor() {
+        const host = $('condition-form');
+        if (!host) return;
+        const rule = editor.value;
+        host.replaceChildren();
+        const condition = el('fieldset');
+        condition.append(el('legend', '条件'));
+        const grid = el('div', undefined, 'grid');
+        const source = sourcePicker(rule.source);
+        const operator = select({ equals: '等于', exists: '字段存在' }, rule.operator);
+        const valueBox = el('div', undefined, 'wide');
+        grid.append(field('条件字段', source), field('判断方式', operator), valueBox);
+        condition.append(grid);
+        function drawValue() {
+          valueBox.replaceChildren();
+          valueBox.hidden = rule.operator === 'exists';
+          const options = fields[rule.source].schema.enum;
+          const input = options
+            ? select(Object.fromEntries(options.map((value) => [value, value])), rule.value)
+            : el('input');
+          input.value = rule.value;
+          input.oninput = () => {
+            rule.value = input.value;
+          };
+          valueBox.append(field('匹配值', input));
+        }
+        source.onchange = () => {
+          rule.source = source.value;
+          rule.value = fields[rule.source].schema.enum?.[0] ?? '';
+          drawValue();
+        };
+        operator.onchange = () => {
+          rule.operator = operator.value;
+          drawValue();
+        };
+        drawValue();
+        host.append(condition, branchEditor(rule.then, '成立时'));
+        if (rule.otherwise)
+          host.append(
+            branchEditor(
+              rule.otherwise,
+              '否则',
+              (value) => {
+                rule.otherwise = value;
+              },
+              true,
+            ),
+          );
+        else
+          host.append(
+            action('添加否则分支', () => {
+              rule.otherwise = { mode: 'required', fields: [] };
+              drawConditionEditor();
+              host.querySelector('[aria-label="否则作用"]')?.focus();
+            }),
+          );
+      }
+      function ruleForm(group) {
+        const form = el('form', undefined, 'card editing');
+        form.append(
+          el(
+            'h3',
+            (draft[group][editor.index] ? '编辑' : '新增') +
+              (group === 'conditions' ? '条件规则' : '字段依赖'),
+          ),
+        );
+        if (group === 'conditions') {
+          const host = el('div', undefined, 'editor');
+          host.id = 'condition-form';
+          form.append(host);
+        } else {
+          const rule = editor.value,
+            source = sourcePicker(rule.source);
+          source.onchange = () => {
+            rule.source = source.value;
+          };
+          form.append(
+            field('触发字段', source),
+            el('small', '该字段出现时触发，空字符串也算出现。'),
+            branchEditor(rule.branch, '字段存在时'),
+          );
+        }
+        const error = el('p', editor.error);
+        error.setAttribute('role', 'alert');
+        const apply = el('button', '完成规则', 'studio-button');
+        const index = editor.index;
+        form.append(error, el('div', undefined, 'bar'));
+        form.lastChild.append(
+          action(
+            '取消编辑',
+            () => {
+              editor = null;
+              render();
+              focusRule(group, index);
+            },
+            'secondary',
+          ),
+          apply,
+        );
+        form.onsubmit = (event) => {
+          event.preventDefault();
+          const rule = editor.value;
+          try {
+            if (group === 'conditions') {
+              schemaFor(rule.then);
+              if (rule.otherwise) schemaFor(rule.otherwise);
+            } else {
+              schemaFor(rule.branch);
+              if (rule.branch.mode === 'required' && rule.branch.fields.includes(rule.source))
+                throw Error('触发字段已经存在，请选择其他必填字段。');
+              if (
+                draft[group].some(
+                  (item, i) =>
+                    i !== index &&
+                    item.source === rule.source &&
+                    item.branch.mode === rule.branch.mode,
+                )
+              )
+                throw Error('该字段已配置同类型依赖，请编辑已有规则。');
+            }
+            draft[group][index] = clone(rule);
+            editor = null;
+            render();
+            focusRule(group, index);
+          } catch (problem) {
+            editor.error = error.textContent = problem.message;
+          }
+        };
+        return form;
+      }
+      function focusRule(group, index) {
+        ($('edit-' + group + '-' + index) ?? $('add-' + group))?.focus();
+      }
+      function renderGroup(body, group, name) {
+        const section = el('section', undefined, 'section'),
+          bar = el('div', undefined, 'bar');
+        const add = action(
+          '新增' + (group === 'conditions' ? '条件规则' : '字段依赖'),
+          () => addRule(group, draft[group].length),
+          'secondary',
+        );
+        add.id = 'add-' + group;
+        add.classList.add('right');
+        add.disabled = Boolean(editor);
+        bar.append(el('h2', name), add);
+        section.append(bar);
+        if (!draft[group].length && editor?.group !== group)
+          section.append(el('p', '暂未配置。', 'muted'));
+        draft[group].forEach((rule, index) => {
+          if (editor?.group === group && editor.index === index) {
+            section.append(ruleForm(group));
+            return;
+          }
+          const card = el('div', undefined, 'card'),
+            head = el('div', undefined, 'bar');
+          const edit = action('编辑', () => addRule(group, index));
+          edit.id = 'edit-' + group + '-' + index;
+          const remove = action('删除', () => {
+            draft[group].splice(index, 1);
+            render();
+            focusRule(group, index);
+          });
+          edit.disabled = remove.disabled = Boolean(editor);
+          edit.classList.add('right');
+          head.append(
+            el(
+              'strong',
+              group === 'conditions' ? conditionLabel(rule) : titleOf(rule.source) + ' 存在时',
+            ),
+            edit,
+            remove,
+          );
+          card.append(head);
+          if (group === 'conditions')
+            card.append(
+              el('p', '成立时 · ' + summary(rule.then)),
+              el('p', '否则 · ' + (rule.otherwise ? summary(rule.otherwise) : '未配置')),
+            );
+          else
+            card.append(
+              el('p', summary(rule.branch)),
+              el(
+                'code',
+                rule.branch.mode === 'required' ? 'dependentRequired' : 'dependentSchemas',
+              ),
+            );
+          section.append(card);
+        });
+        if (editor?.group === group && editor.index === draft[group].length)
+          section.append(ruleForm(group));
+        body.append(section);
+      }
+      function render() {
+        $('title').textContent = childView ? '护照号码' : '投保资料';
+        $('pointer').textContent = childView
+          ? '/data/schema/properties/passportNo'
+          : '/data/schema';
+        const body = $('body');
+        body.replaceChildren();
+        if (childView) {
+          const related = saved.conditions.filter((rule) =>
+            [rule.then, rule.otherwise].some(
+              (branch) => branch?.mode === 'required' && branch.fields.includes('passportNo'),
+            ),
+          );
+          body.append(el('h2', '所属对象的条件规则'));
+          for (const rule of related)
+            body.append(
+              el(
+                'p',
+                conditionLabel(rule) +
+                  '。' +
+                  (rule.then.fields?.includes('passportNo')
+                    ? '成立时必填护照号码。'
+                    : '否则必填护照号码。'),
+                'notice',
+              ),
+            );
+          if (!related.length) body.append(el('p', '当前没有直接引用护照号码的必填分支。'));
+          body.append(
+            action(
+              '编辑所属对象',
+              () => {
+                fromChild = true;
+                childView = false;
+                render();
+                $('add-conditions').focus();
+              },
+              'secondary',
+            ),
+          );
+        } else {
+          if (fromChild) body.append(action('返回护照号码', () => requestClose()));
+          renderGroup(body, 'conditions', '条件规则');
+          renderGroup(body, 'dependencies', '字段依赖');
+          if (editor?.group === 'conditions') drawConditionEditor();
+        }
+        status();
+      }
+      function open(child) {
+        trigger = child ? $('child') : $('open');
+        childView = child;
+        fromChild = false;
+        draft = clone(saved);
+        editor = null;
+        render();
+        $('drawer').showModal();
+      }
+      function close() {
+        if (fromChild) {
+          childView = true;
+          fromChild = false;
+          draft = clone(saved);
+          editor = null;
+          render();
+          $('close').focus();
+          return;
+        }
+        $('drawer').close();
+        trigger?.focus();
+      }
+      function requestClose() {
+        if (!childView && (dirty() || editor)) $('leave').showModal();
+        else close();
+      }
+      $('open').onclick = () => open(false);
+      $('child').onclick = () => open(true);
+      $('close').onclick = $('cancel').onclick = requestClose;
+      $('drawer').oncancel = (event) => {
+        event.preventDefault();
+        requestClose();
+      };
+      $('stay').onclick = () => $('leave').close();
+      $('discard').onclick = () => {
+        $('leave').close();
+        close();
+      };
+      $('json-open').onclick = () => {
+        $('json-title').textContent = editor ? '节点 JSON · 已完成的规则' : '节点 JSON';
+        $('source').textContent = JSON.stringify(
+          childView ? fields.passportNo.schema : toSchema(draft),
+          null,
+          2,
+        );
+        $('json').showModal();
+      };
+      $('json-close').onclick = () => $('json').close();
+      $('apply').onclick = () => {
+        if (editor || !dirty()) return;
+        history.push(saved);
+        saved = clone(draft);
+        $('undo').disabled = false;
+        $('main-status').textContent = '已应用规则修改';
+        close();
+      };
+      $('undo').onclick = () => {
+        if (!history.length) return;
+        saved = history.pop();
+        $('undo').disabled = !history.length;
+        $('main-status').textContent = '已撤销';
+      };
+      $('undo').disabled = true;
+      open(false);
+    </script>
+  </body>
+</html>

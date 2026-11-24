@@ -1,0 +1,7 @@
+{
+  "extends": "services/agent/pyproject.toml",
+  "include": ["services/agent/src", "services/agent/tests"],
+  "venvPath": "services/agent",
+  "venv": ".venv",
+  "extraPaths": ["services/agent/src"]
+}

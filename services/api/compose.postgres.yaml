@@ -1,0 +1,18 @@
+name: form-platform
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.postgres.local}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-55439}:5432'
+    volumes:
+      - platform-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+      interval: 2s
+      timeout: 5s
+      retries: 20
+volumes:
+  platform-postgres-data:

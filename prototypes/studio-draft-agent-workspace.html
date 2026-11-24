@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Studio · 草稿工作台与 Agent 聊天原型</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f8f9fb;
+        --surface: #fff;
+        --muted: #f2f4f7;
+        --ink: #23272f;
+        --subtle: #68717f;
+        --line: #d9dee6;
+        --blue: #315b9b;
+        --blue-soft: #eff5ff;
+        --green: #166534;
+        --green-soft: #effaf2;
+        --shadow: 0 12px 38px #17223524;
+      }
+      html {
+        font-size: 13px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--page);
+        font: var(--studio-type-body, 400 14px/22px system-ui, sans-serif);
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .app {
+        min-height: 100dvh;
+      }
+      .global-bar {
+        height: 54px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+      .brand-mark {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--ink);
+        color: white;
+        font-size: 12px;
+      }
+      .global-nav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .global-nav button,
+      .crumb-link {
+        border: 0;
+        background: transparent;
+        color: var(--subtle);
+        padding: 8px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+      }
+      .global-nav button[aria-current='page'] {
+        color: var(--ink);
+        background: var(--muted);
+        font-weight: 600;
+      }
+      .bar-spacer {
+        flex: 1;
+      }
+      .space-label {
+        color: var(--subtle);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .chat-menu-wrap {
+        position: relative;
+      }
+      .chat-menu-trigger {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: white;
+      }
+      .chat-pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #4d8c65;
+      }
+      .chevron {
+        color: var(--subtle);
+        font-size: 11px;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #364965;
+        background: #dce7f7;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .conversation-menu {
+        position: absolute;
+        z-index: 40;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 318px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: white;
+        box-shadow: var(--shadow);
+      }
+      .menu-title {
+        padding: 8px 9px 7px;
+        color: var(--subtle);
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .conversation-choice {
+        display: grid;
+        width: 100%;
+        grid-template-columns: 30px 1fr auto;
+        align-items: center;
+        gap: 9px;
+        padding: 9px;
+        border: 0;
+        border-radius: 7px;
+        text-align: left;
+        background: white;
+      }
+      .conversation-choice:hover,
+      .conversation-choice[aria-current='true'] {
+        background: var(--muted);
+      }
+      .conversation-copy {
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+      }
+      .conversation-copy strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .conversation-copy small,
+      .menu-time {
+        color: var(--subtle);
+        font-size: 11px;
+      }
+      .menu-divider {
+        height: 1px;
+        margin: 6px 4px;
+        background: var(--line);
+      }
+      .open-full-agent {
+        width: 100%;
+        padding: 9px;
+        border: 0;
+        border-radius: 7px;
+        text-align: left;
+        background: white;
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .open-full-agent:hover {
+        background: var(--blue-soft);
+      }
+      .page {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px 24px 30px;
+      }
+      .breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--subtle);
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
+      .breadcrumbs .current {
+        color: var(--ink);
+      }
+      .page-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 17px;
+      }
+      .heading-left {
+        display: grid;
+        gap: 6px;
+      }
+      .title-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h1 {
+        margin: 0;
+        font: 600 24px/32px var(--studio-font, system-ui, sans-serif);
+        letter-spacing: -0.3px;
+      }
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border: 1px solid #a9c6e8;
+        border-radius: 5px;
+        color: #315b89;
+        background: var(--blue-soft);
+        font-size: 11px;
+        line-height: 17px;
+      }
+      .title-help {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+      .primary-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: white;
+        font-size: 12px;
+        font-weight: 550;
+      }
+      .btn:hover {
+        background: #f7f8fa;
+      }
+      .btn-primary {
+        color: white;
+        background: #262c36;
+        border-color: #262c36;
+      }
+      .btn-primary:hover {
+        background: #171c24;
+      }
+      .btn-text {
+        border-color: transparent;
+        color: var(--subtle);
+        background: transparent;
+      }
+      .editor-tabs {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 15px;
+      }
+      .editor-tabs button {
+        position: relative;
+        border: 0;
+        background: transparent;
+        padding: 11px 2px;
+        color: var(--subtle);
+        font-size: 12px;
+      }
+      .editor-tabs button[aria-current='page'] {
+        color: var(--ink);
+        font-weight: 650;
+      }
+      .editor-tabs button[aria-current='page']::after {
+        position: absolute;
+        content: '';
+        height: 2px;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        background: #315b9b;
+      }
+      .workbench {
+        min-height: 570px;
+        display: grid;
+        grid-template-columns: 216px minmax(400px, 1fr) 290px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+        background: white;
+      }
+      .side-panel {
+        min-width: 0;
+        background: #fbfcfd;
+      }
+      .structure {
+        border-right: 1px solid var(--line);
+        padding: 15px 11px;
+      }
+      .properties {
+        border-left: 1px solid var(--line);
+        padding: 17px 15px;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 4px 12px;
+        color: #424b58;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .mini-action {
+        width: 24px;
+        height: 24px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--subtle);
+      }
+      .mini-action:hover {
+        background: #edf0f4;
+      }
+      .tree {
+        display: grid;
+        gap: 2px;
+      }
+      .tree-row {
+        min-height: 31px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 7px;
+        border-radius: 5px;
+        color: #46505d;
+        font-size: 11px;
+      }
+      .tree-row.active {
+        color: #244b82;
+        background: #eaf1fb;
+        font-weight: 600;
+      }
+      .tree-row.indent {
+        padding-left: 25px;
+      }
+      .tree-icon {
+        width: 15px;
+        color: #7c8795;
+        text-align: center;
+        font-size: 11px;
+      }
+      .tree-row.active .tree-icon {
+        color: #315b9b;
+      }
+      .tree-count {
+        margin-left: auto;
+        color: #87909d;
+        font-size: 10px;
+      }
+      .canvas {
+        min-width: 0;
+        padding: 16px 20px 24px;
+        background: #f5f7fa;
+      }
+      .canvas-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .view-tabs {
+        display: flex;
+        gap: 3px;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: white;
+      }
+      .view-tabs button {
+        border: 0;
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: var(--subtle);
+        background: transparent;
+        font-size: 11px;
+      }
+      .view-tabs button[aria-pressed='true'] {
+        background: var(--muted);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .canvas-toolbar .canvas-tools {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--subtle);
+        font-size: 11px;
+      }
+      .canvas-tools button {
+        width: 27px;
+        height: 27px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: white;
+        color: #67717f;
+      }
+      .form-preview {
+        width: min(100%, 610px);
+        min-height: 448px;
+        margin: 0 auto;
+        padding: 25px 32px;
+        border: 1px solid #e1e5eb;
+        border-radius: 7px;
+        background: white;
+        box-shadow: 0 2px 6px #20293808;
+      }
+      .form-preview h2 {
+        margin-bottom: 5px;
+        font-size: 17px;
+        line-height: 24px;
+        font-weight: 650;
+      }
+      .form-description {
+        margin-bottom: 20px;
+        color: var(--subtle);
+        font-size: 11px;
+      }
+      .form-section {
+        margin-top: 20px;
+        padding-top: 17px;
+        border-top: 1px solid #e9edf2;
+      }
+      .form-section h3 {
+        margin-bottom: 14px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .form-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 13px 14px;
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+      .field.wide {
+        grid-column: 1 / -1;
+      }
+      .field label {
+        color: #424b58;
+        font-size: 11px;
+        font-weight: 550;
+      }
+      .required {
+        color: #b43545;
+      }
+      .fake-input {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 9px;
+        border: 1px solid #cdd4de;
+        border-radius: 5px;
+        background: white;
+        color: #7b8491;
+        font-size: 11px;
+      }
+      .properties .panel-head {
+        margin: 0 0 15px;
+        font-size: 12px;
+      }
+      .properties .field {
+        margin-bottom: 14px;
+      }
+      .properties label {
+        font-size: 11px;
+        color: #56606e;
+      }
+      .properties input,
+      .properties select {
+        min-width: 0;
+        width: 100%;
+        min-height: 33px;
+        padding: 0 9px;
+        border: 1px solid #cdd4de;
+        border-radius: 5px;
+        color: var(--ink);
+        background: white;
+        font-size: 11px;
+      }
+      .property-note {
+        padding: 10px;
+        border-radius: 6px;
+        color: #56606e;
+        background: var(--muted);
+        font-size: 10px;
+        line-height: 16px;
+      }
+      .bottom-note {
+        margin-top: 11px;
+        color: #7a8491;
+        font-size: 10px;
+      }
+      /* floating conversation */
+      .chat-window {
+        position: fixed;
+        z-index: 30;
+        top: auto;
+        right: 28px;
+        bottom: 25px;
+        left: auto;
+        width: 372px;
+        height: 458px;
+        min-width: 300px;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        resize: both;
+        overflow: hidden;
+        border: 1px solid #cfd6e0;
+        border-radius: 10px;
+        background: white;
+        box-shadow: var(--shadow);
+      }
+      .chat-window[data-positioned='true'] {
+        right: auto;
+        bottom: auto;
+      }
+      .chat-head {
+        min-height: 51px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 11px 0 14px;
+        border-bottom: 1px solid var(--line);
+        background: white;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+      .chat-head:active {
+        cursor: grabbing;
+      }
+      .agent-mark {
+        width: 25px;
+        height: 25px;
+        display: grid;
+        flex: none;
+        place-items: center;
+        border-radius: 7px;
+        background: #eaf0f8;
+        color: #365984;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .chat-heading {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        gap: 1px;
+      }
+      .chat-heading strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .chat-heading small {
+        color: var(--subtle);
+        font-size: 10px;
+      }
+      .window-control {
+        width: 27px;
+        height: 27px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: #697381;
+        font-size: 15px;
+      }
+      .window-control:hover {
+        background: var(--muted);
+        color: var(--ink);
+      }
+      .chat-context {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 13px;
+        border-bottom: 1px solid #e8edf3;
+        background: #f8fafd;
+        color: #536174;
+        font-size: 10px;
+      }
+      .context-link {
+        margin-left: auto;
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .chat-messages {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 13px;
+      }
+      .message {
+        max-width: 91%;
+        display: grid;
+        gap: 5px;
+        font-size: 11px;
+        line-height: 17px;
+      }
+      .message.assistant {
+        align-self: flex-start;
+      }
+      .message.user {
+        align-self: flex-end;
+      }
+      .message-name {
+        color: var(--subtle);
+        font-size: 9px;
+      }
+      .bubble {
+        padding: 9px 10px;
+        border: 1px solid #e3e7ec;
+        border-radius: 8px;
+        background: #f8f9fb;
+      }
+      .message.user .bubble {
+        border-color: #d3e1f3;
+        background: #edf4fc;
+      }
+      .suggestion {
+        padding: 9px 10px;
+        border: 1px solid #cddcf0;
+        border-radius: 7px;
+        background: #f6f9fe;
+        color: #344b68;
+        font-size: 10px;
+        line-height: 15px;
+      }
+      .chat-compose {
+        padding: 9px;
+        border-top: 1px solid var(--line);
+        background: white;
+      }
+      .compose-box {
+        min-height: 70px;
+        padding: 9px;
+        border: 1px solid #cdd4de;
+        border-radius: 7px;
+        color: #818a97;
+        font-size: 11px;
+      }
+      .compose-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        color: var(--subtle);
+        font-size: 10px;
+      }
+      .send-btn {
+        border: 0;
+        border-radius: 5px;
+        background: #262c36;
+        color: white;
+        padding: 5px 10px;
+        font-size: 10px;
+      }
+      .chat-bubble {
+        position: fixed;
+        z-index: 31;
+        right: 30px;
+        bottom: 28px;
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        color: white;
+        background: #2d3c52;
+        box-shadow: 0 5px 18px #1c2a3b35;
+        touch-action: none;
+        user-select: none;
+      }
+      .chat-bubble:hover {
+        background: #3b526f;
+      }
+      .chat-bubble .agent-mark {
+        width: 31px;
+        height: 31px;
+        border: 1px solid #ffffff4a;
+        border-radius: 50%;
+        color: white;
+        background: transparent;
+      }
+      .bubble-count {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 16px;
+        height: 16px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--page);
+        border-radius: 50%;
+        background: #4c8a67;
+        color: white;
+        font-size: 8px;
+      }
+      .agent-page {
+        min-height: calc(100dvh - 54px);
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        background: white;
+      }
+      .agent-sidebar {
+        padding: 20px 14px;
+        border-right: 1px solid var(--line);
+        background: #fbfcfd;
+      }
+      .agent-sidebar h2 {
+        margin: 0 7px 12px;
+        color: var(--subtle);
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .agent-sidebar button {
+        width: 100%;
+        display: grid;
+        gap: 3px;
+        padding: 10px 9px;
+        border: 0;
+        border-radius: 6px;
+        text-align: left;
+        background: transparent;
+        font-size: 11px;
+      }
+      .agent-sidebar button[aria-current='true'] {
+        background: #eaf1fb;
+        color: #244b82;
+        font-weight: 600;
+      }
+      .agent-sidebar small {
+        color: var(--subtle);
+        font-size: 10px;
+        font-weight: 400;
+      }
+      .agent-main {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .agent-main-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 17px 25px;
+        border-bottom: 1px solid var(--line);
+      }
+      .agent-main-head h1 {
+        font-size: 18px;
+        line-height: 26px;
+      }
+      .agent-main-head small {
+        display: block;
+        margin-top: 2px;
+        color: var(--subtle);
+        font-size: 11px;
+      }
+      .agent-thread {
+        width: min(760px, 100%);
+        justify-self: center;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 34px 30px;
+      }
+      .agent-thread .message {
+        max-width: 82%;
+        font-size: 13px;
+        line-height: 20px;
+      }
+      .agent-thread .bubble {
+        padding: 13px 15px;
+      }
+      .agent-page-compose {
+        width: min(760px, 100%);
+        justify-self: center;
+        padding: 0 30px 24px;
+      }
+      .agent-page-compose .compose-box {
+        min-height: 100px;
+        font-size: 12px;
+      }
+      .toast {
+        position: fixed;
+        z-index: 60;
+        left: 50%;
+        bottom: 26px;
+        transform: translateX(-50%);
+        padding: 9px 14px;
+        border-radius: 7px;
+        background: #253244;
+        color: white;
+        box-shadow: var(--shadow);
+        font-size: 11px;
+      }
+      @media (max-width: 1100px) {
+        .workbench {
+          grid-template-columns: 190px minmax(360px, 1fr);
+        }
+        .properties {
+          grid-column: 1 / -1;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0 15px;
+        }
+        .properties .panel-head {
+          grid-column: 1 / -1;
+        }
+      }
+      @media (max-width: 760px) {
+        .global-bar {
+          gap: 9px;
+          padding-inline: 12px;
+        }
+        .global-nav,
+        .space-label {
+          display: none;
+        }
+        .page {
+          padding: 14px 12px 24px;
+        }
+        .page-heading {
+          flex-direction: column;
+        }
+        .workbench {
+          grid-template-columns: 1fr;
+        }
+        .structure {
+          display: none;
+        }
+        .properties {
+          grid-column: auto;
+          display: block;
+          border: 0;
+          border-top: 1px solid var(--line);
+        }
+        .canvas {
+          padding: 12px;
+        }
+        .form-preview {
+          padding: 18px;
+        }
+        .chat-window {
+          right: 8px;
+          bottom: 8px;
+          width: min(372px, calc(100vw - 16px));
+          height: min(458px, calc(100dvh - 70px));
+        }
+        .chat-bubble {
+          right: 13px;
+          bottom: 13px;
+        }
+        .agent-page {
+          grid-template-columns: 1fr;
+        }
+        .agent-sidebar {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="global-bar">
+        <div class="brand"><span class="brand-mark">F</span><span>Form Studio</span></div>
+        <nav class="global-nav" aria-label="主导航">
+          <button data-show-view="forms">表单列表</button>
+          <button aria-current="page" data-show-view="draft">草稿编辑</button>
+        </nav>
+        <div class="bar-spacer"></div>
+        <span class="space-label">默认空间</span>
+        <div class="chat-menu-wrap">
+          <button
+            class="chat-menu-trigger"
+            id="chat-menu-trigger"
+            aria-expanded="false"
+            aria-controls="conversation-menu"
+          >
+            <span class="chat-pulse" aria-hidden="true"></span><span>Agent 聊天</span
+            ><span class="chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="conversation-menu" id="conversation-menu" hidden>
+            <div class="menu-title">近期聊天</div>
+            <button class="conversation-choice" data-conversation="travel">
+              <span class="avatar">旅</span
+              ><span class="conversation-copy"
+                ><strong>旅行保障表单创建</strong><small>已生成草稿 · 2 分钟前</small></span
+              ><span class="menu-time">2 分钟</span>
+            </button>
+            <button class="conversation-choice" data-conversation="claims">
+              <span class="avatar" style="background: #e7eee8; color: #42634a">理</span
+              ><span class="conversation-copy"
+                ><strong>理赔申请字段梳理</strong><small>继续讨论字段与材料</small></span
+              ><span class="menu-time">昨天</span>
+            </button>
+            <button class="conversation-choice" data-conversation="renewal">
+              <span class="avatar" style="background: #f2e9df; color: #795b39">续</span
+              ><span class="conversation-copy"
+                ><strong>续保问卷精简</strong><small>最后查看：问题顺序</small></span
+              ><span class="menu-time">周一</span>
+            </button>
+            <div class="menu-divider"></div>
+            <button class="open-full-agent" id="open-full-agent">打开 Agent 完整页面</button>
+          </div>
+        </div>
+        <button class="avatar" aria-label="账户菜单">S</button>
+      </header>
+
+      <main class="page" id="forms-page" hidden>
+        <div class="breadcrumbs"><span class="current">表单</span></div>
+        <section class="page-heading">
+          <div class="heading-left">
+            <div class="title-line"><h1>表单</h1></div>
+            <p class="title-help">管理表单、草稿与配置工作</p>
+          </div>
+          <div class="primary-actions"><button class="btn btn-primary">新建表单</button></div>
+        </section>
+        <section
+          class="workbench"
+          style="min-height: 420px; display: block; padding: 22px 24px"
+          aria-label="表单列表"
+        >
+          <div class="panel-head" style="margin: 0 0 13px">
+            <span>最近编辑</span><span class="title-help">3 项</span>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr auto auto;
+              align-items: center;
+              gap: 14px;
+              padding: 14px 8px;
+              border-bottom: 1px solid var(--line);
+            "
+          >
+            <div>
+              <strong>境外旅行保障申请</strong>
+              <p class="title-help" style="margin-top: 4px">草稿 · 今天 14:32 · Agent 创建</p>
+            </div>
+            <span class="status">草稿</span><button class="btn" data-open-draft>继续编辑</button>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr auto auto;
+              align-items: center;
+              gap: 14px;
+              padding: 14px 8px;
+              border-bottom: 1px solid var(--line);
+            "
+          >
+            <div>
+              <strong>家庭财产保障申请</strong>
+              <p class="title-help" style="margin-top: 4px">配置已保存 · 昨天 16:10</p>
+            </div>
+            <span
+              class="status"
+              style="color: var(--green); background: var(--green-soft); border-color: #b6d5bf"
+              >已保存</span
+            ><button class="btn" data-open-draft>打开</button>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr auto auto;
+              align-items: center;
+              gap: 14px;
+              padding: 14px 8px;
+            "
+          >
+            <div>
+              <strong>理赔信息登记</strong>
+              <p class="title-help" style="margin-top: 4px">已发布 · 周五 10:05</p>
+            </div>
+            <span
+              class="status"
+              style="color: var(--green); background: var(--green-soft); border-color: #b6d5bf"
+              >已发布</span
+            ><button class="btn" data-open-draft>查看</button>
+          </div>
+          <p class="bottom-note">
+            顶部 Agent 聊天入口在表单列表与草稿编辑页保持一致；进入 Agent 完整页面后不显示浮窗。
+          </p>
+        </section>
+      </main>
+
+      <main class="page" id="draft-page">
+        <div class="breadcrumbs">
+          <span>表单</span><span aria-hidden="true">/</span><span>我的草稿</span
+          ><span aria-hidden="true">/</span><span class="current">境外旅行保障申请</span>
+        </div>
+        <section class="page-heading">
+          <div class="heading-left">
+            <div class="title-line">
+              <h1>境外旅行保障申请</h1>
+              <span class="status"><span aria-hidden="true">●</span> 草稿</span>
+            </div>
+            <p class="title-help">由 Agent 创建 · 最近保存于今天 14:32</p>
+          </div>
+          <div class="primary-actions">
+            <button class="btn">预览试填</button>
+            <button class="btn">检查配置</button>
+            <button class="btn btn-primary" id="save-draft">保存草稿</button>
+          </div>
+        </section>
+        <nav class="editor-tabs" aria-label="表单工作台">
+          <button aria-current="page" data-editor-tab="config">配置工作台</button>
+          <button data-editor-tab="history">配置历史</button>
+        </nav>
+        <section class="workbench" aria-label="表单配置编辑器">
+          <aside class="side-panel structure" aria-label="表单结构">
+            <div class="panel-head">
+              <span>表单结构</span><button class="mini-action" aria-label="添加字段">＋</button>
+            </div>
+            <div class="tree">
+              <div class="tree-row">
+                <span class="tree-icon">⌄</span><strong>境外旅行保障申请</strong>
+              </div>
+              <div class="tree-row indent">
+                <span class="tree-icon">▦</span><span>申请人信息</span
+                ><span class="tree-count">5</span>
+              </div>
+              <div class="tree-row indent active">
+                <span class="tree-icon">▤</span><span>出行计划</span
+                ><span class="tree-count">4</span>
+              </div>
+              <div class="tree-row indent">
+                <span class="tree-icon">▦</span><span>保障方案</span
+                ><span class="tree-count">3</span>
+              </div>
+              <div class="tree-row indent">
+                <span class="tree-icon">▦</span><span>紧急联系人</span
+                ><span class="tree-count">2</span>
+              </div>
+            </div>
+            <div class="panel-head" style="margin-top: 22px">
+              <span>当前区域</span><button class="mini-action" aria-label="区域操作">···</button>
+            </div>
+            <div class="tree">
+              <div class="tree-row active">
+                <span class="tree-icon">▤</span><span>出行计划</span>
+              </div>
+              <div class="tree-row indent">
+                <span class="tree-icon">↕</span><span>出发日期</span>
+              </div>
+              <div class="tree-row indent">
+                <span class="tree-icon">↕</span><span>返回日期</span>
+              </div>
+              <div class="tree-row indent"><span class="tree-icon">↕</span><span>目的地</span></div>
+              <div class="tree-row indent">
+                <span class="tree-icon">↕</span><span>出行目的</span>
+              </div>
+            </div>
+            <p class="bottom-note">从结构选择字段，在右侧编辑属性</p>
+          </aside>
+          <section class="canvas" aria-label="表单画布">
+            <div class="canvas-toolbar">
+              <div class="view-tabs" role="tablist" aria-label="配置编辑视图">
+                <button aria-pressed="false">字段</button><button aria-pressed="true">布局</button
+                ><button aria-pressed="false">联动</button
+                ><button aria-pressed="false">校验</button>
+              </div>
+              <div class="canvas-tools">
+                <span>缩放</span><button aria-label="缩小">−</button><span>100%</span
+                ><button aria-label="放大">＋</button><button aria-label="更多画布操作">···</button>
+              </div>
+            </div>
+            <div class="form-preview">
+              <h2>境外旅行保障申请</h2>
+              <p class="form-description">填写出行信息，为你匹配合适的保障方案。</p>
+              <div class="form-section" style="margin-top: 0; padding-top: 0; border: 0">
+                <h3>申请人信息</h3>
+                <div class="form-fields">
+                  <div class="field">
+                    <label>姓名 <span class="required">*</span></label>
+                    <div class="fake-input">请输入姓名<span>⌄</span></div>
+                  </div>
+                  <div class="field">
+                    <label>证件号码 <span class="required">*</span></label>
+                    <div class="fake-input">请输入证件号码</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-section">
+                <h3>出行计划</h3>
+                <div class="form-fields">
+                  <div class="field">
+                    <label>出发日期 <span class="required">*</span></label>
+                    <div class="fake-input">请选择日期<span>▦</span></div>
+                  </div>
+                  <div class="field">
+                    <label>返回日期 <span class="required">*</span></label>
+                    <div class="fake-input">请选择日期<span>▦</span></div>
+                  </div>
+                  <div class="field wide">
+                    <label>目的地 <span class="required">*</span></label>
+                    <div class="fake-input">请选择国家或地区<span>⌄</span></div>
+                  </div>
+                  <div class="field wide">
+                    <label>出行目的</label>
+                    <div class="fake-input">请选择出行目的<span>⌄</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <aside class="side-panel properties" aria-label="属性设置">
+            <div class="panel-head">
+              <span>字段属性</span><button class="mini-action" aria-label="关闭属性">×</button>
+            </div>
+            <div class="field">
+              <label for="field-name">字段名称</label><input id="field-name" value="出发日期" />
+            </div>
+            <div class="field">
+              <label for="field-type">物料类型</label
+              ><select id="field-type">
+                <option>日期选择</option>
+                <option>文本输入</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="field-path">数据字段</label
+              ><input id="field-path" value="trip.departureDate" />
+            </div>
+            <div class="field">
+              <label for="field-placeholder">提示文字</label
+              ><input id="field-placeholder" value="请选择日期" />
+            </div>
+            <div class="property-note">
+              此字段已绑定到数据结构中的 <strong>出发日期</strong>。Agent
+              可以根据当前选择的会话协助修改草稿。
+            </div>
+          </aside>
+        </section>
+      </main>
+
+      <section class="agent-page" id="agent-page" hidden>
+        <aside class="agent-sidebar">
+          <h2>近期聊天</h2>
+          <button aria-current="true" data-conversation="travel">
+            旅行保障表单创建<small>已生成草稿 · 2 分钟前</small>
+          </button>
+          <button data-conversation="claims">
+            理赔申请字段梳理<small>继续讨论字段与材料</small>
+          </button>
+          <button data-conversation="renewal">续保问卷精简<small>最后查看：问题顺序</small></button>
+        </aside>
+        <div class="agent-main">
+          <header class="agent-main-head">
+            <div>
+              <h1 id="agent-page-title">旅行保障表单创建</h1>
+              <small>完整 Agent 页面 · 对话与草稿工作区分开</small>
+            </div>
+            <button class="btn" id="return-to-draft">返回草稿编辑</button>
+          </header>
+          <div class="agent-thread" id="agent-thread">
+            <div class="message assistant">
+              <span class="message-name">Agent</span>
+              <div class="bubble">
+                我已根据需求整理出旅行保障申请表草稿，包含申请人信息、出行计划、保障方案和紧急联系人。你可以继续讨论，也可以返回草稿编辑页独立调整配置。
+              </div>
+            </div>
+            <div class="message user">
+              <span class="message-name">你</span>
+              <div class="bubble">把出行计划里的日期改成同一行展示。</div>
+            </div>
+            <div class="message assistant">
+              <span class="message-name">Agent</span>
+              <div class="bubble">
+                可以。草稿已经在独立编辑页中打开。你希望我先调整布局，再由你检查和保存吗？
+              </div>
+              <div class="suggestion">
+                工作稿：境外旅行保障申请<br />编辑、试填与保存可在完整草稿页继续。
+              </div>
+            </div>
+          </div>
+          <div class="agent-page-compose">
+            <div class="compose-box" contenteditable="true" aria-label="发送消息">
+              继续描述你想修改的内容…
+            </div>
+            <div class="compose-bottom">
+              <span>Enter 发送 · Shift + Enter 换行</span><button class="send-btn">发送</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="chat-window" id="chat-window" aria-label="Agent 聊天浮窗">
+      <header class="chat-head" id="chat-drag-handle">
+        <span class="agent-mark">A</span>
+        <div class="chat-heading">
+          <strong id="chat-title">旅行保障表单创建</strong><small>最近聊天 · 草稿关联中</small>
+        </div>
+        <button
+          class="window-control"
+          id="go-agent-page"
+          aria-label="打开完整 Agent 页面"
+          title="打开完整页面"
+        >
+          ↗
+        </button>
+        <button class="window-control" id="collapse-chat" aria-label="折叠聊天窗口" title="折叠">
+          —
+        </button>
+      </header>
+      <div class="chat-context">
+        <span>关联草稿</span><strong>境外旅行保障申请</strong
+        ><button class="context-link" id="focus-draft">回到编辑</button>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="message assistant">
+          <span class="message-name">Agent</span>
+          <div class="bubble">
+            出行日期字段已加入草稿。你可以在编辑页选中字段后调整布局，我会继续保留这段对话供你随时返回。
+          </div>
+        </div>
+        <div class="message user">
+          <span class="message-name">你</span>
+          <div class="bubble">日期改成同一行。</div>
+        </div>
+        <div class="message assistant">
+          <span class="message-name">Agent</span>
+          <div class="suggestion">
+            可以把出发日期与返回日期放在同一行。草稿仍由你在完整表单编辑页检查、试填和保存。
+          </div>
+        </div>
+      </div>
+      <div class="chat-compose">
+        <div class="compose-box" contenteditable="true" aria-label="给 Agent 发送消息">
+          继续描述你想修改的内容…
+        </div>
+        <div class="compose-bottom">
+          <span>关联当前草稿</span><button class="send-btn" id="send-chat">发送</button>
+        </div>
+      </div>
+    </section>
+    <button
+      class="chat-bubble"
+      id="chat-bubble"
+      aria-label="展开 Agent 聊天"
+      title="展开聊天"
+      hidden
+    >
+      <span class="agent-mark">A</span><span class="bubble-count">1</span>
+    </button>
+    <div class="toast" id="toast" role="status" hidden>草稿已保存</div>
+
+    <script>
+      const menuButton = document.querySelector('#chat-menu-trigger');
+      const menu = document.querySelector('#conversation-menu');
+      const chatWindow = document.querySelector('#chat-window');
+      const bubbleButton = document.querySelector('#chat-bubble');
+      const draftPage = document.querySelector('#draft-page');
+      const formsPage = document.querySelector('#forms-page');
+      const agentPage = document.querySelector('#agent-page');
+      const toast = document.querySelector('#toast');
+      const conversations = {
+        travel: {
+          title: '旅行保障表单创建',
+          subtitle: '最近聊天 · 草稿关联中',
+          message:
+            '出行日期字段已加入草稿。你可以在编辑页选中字段后调整布局，我会继续保留这段对话供你随时返回。',
+        },
+        claims: {
+          title: '理赔申请字段梳理',
+          subtitle: '昨天 · 继续讨论字段与材料',
+          message: '我们上次整理了事故信息和材料清单。需要我把缺少的字段补进理赔申请草稿吗？',
+        },
+        renewal: {
+          title: '续保问卷精简',
+          subtitle: '周一 · 最后查看：问题顺序',
+          message:
+            '问卷可以先收拢为健康状况、保障变化和确认信息三部分。打开完整页面后可以继续细调问题顺序。',
+        },
+      };
+      let activeConversation = 'travel';
+      let chatCollapsed = false;
+      function closeMenu() {
+        menu.hidden = true;
+        menuButton.setAttribute('aria-expanded', 'false');
+      }
+      menuButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        menu.hidden = !menu.hidden;
+        menuButton.setAttribute('aria-expanded', String(!menu.hidden));
+      });
+      document.addEventListener('click', (event) => {
+        if (!menu.contains(event.target) && event.target !== menuButton) closeMenu();
+      });
+      function chooseConversation(id) {
+        activeConversation = id;
+        const item = conversations[id];
+        document.querySelector('#chat-title').textContent = item.title;
+        document.querySelector('#agent-page-title').textContent = item.title;
+        document.querySelector('.chat-heading small').textContent = item.subtitle;
+        document.querySelector('#chat-messages .message.assistant .bubble').textContent =
+          item.message;
+        document
+          .querySelectorAll('.conversation-choice')
+          .forEach((button) =>
+            button.setAttribute('aria-current', String(button.dataset.conversation === id)),
+          );
+        document
+          .querySelectorAll('.agent-sidebar button')
+          .forEach((button) =>
+            button.setAttribute('aria-current', String(button.dataset.conversation === id)),
+          );
+        closeMenu();
+        chatCollapsed = false;
+        chatWindow.hidden = !agentPage.hidden;
+        bubbleButton.hidden = !agentPage.hidden;
+      }
+      document
+        .querySelectorAll('[data-conversation]')
+        .forEach((button) =>
+          button.addEventListener('click', () => chooseConversation(button.dataset.conversation)),
+        );
+      function showAgentPage() {
+        closeMenu();
+        draftPage.hidden = true;
+        formsPage.hidden = true;
+        agentPage.hidden = false;
+        chatWindow.hidden = true;
+        bubbleButton.hidden = true;
+        document
+          .querySelectorAll('[data-show-view]')
+          .forEach((button) => button.removeAttribute('aria-current'));
+        window.scrollTo(0, 0);
+      }
+      function showDraftPage() {
+        agentPage.hidden = true;
+        formsPage.hidden = true;
+        draftPage.hidden = false;
+        chatWindow.hidden = chatCollapsed;
+        bubbleButton.hidden = !chatCollapsed;
+        document
+          .querySelectorAll('[data-show-view]')
+          .forEach((button) => button.removeAttribute('aria-current'));
+        document.querySelector('[data-show-view="draft"]').setAttribute('aria-current', 'page');
+        window.scrollTo(0, 0);
+      }
+      function showFormsPage() {
+        agentPage.hidden = true;
+        draftPage.hidden = true;
+        formsPage.hidden = false;
+        chatWindow.hidden = chatCollapsed;
+        bubbleButton.hidden = !chatCollapsed;
+        document
+          .querySelectorAll('[data-show-view]')
+          .forEach((button) => button.removeAttribute('aria-current'));
+        document.querySelector('[data-show-view="forms"]').setAttribute('aria-current', 'page');
+        window.scrollTo(0, 0);
+      }
+      document
+        .querySelectorAll('[data-show-view]')
+        .forEach((button) =>
+          button.addEventListener('click', () =>
+            button.dataset.showView === 'forms' ? showFormsPage() : showDraftPage(),
+          ),
+        );
+      document
+        .querySelectorAll('[data-open-draft]')
+        .forEach((button) => button.addEventListener('click', showDraftPage));
+      document.querySelector('#open-full-agent').addEventListener('click', showAgentPage);
+      document.querySelector('#go-agent-page').addEventListener('click', showAgentPage);
+      document.querySelector('#return-to-draft').addEventListener('click', showDraftPage);
+      document.querySelector('#focus-draft').addEventListener('click', () => {
+        if (!agentPage.hidden) {
+          showDraftPage();
+          return;
+        }
+        if (draftPage.hidden) showDraftPage();
+        document.querySelector('#field-name').focus();
+      });
+      document.querySelector('#collapse-chat').addEventListener('click', () => {
+        chatCollapsed = true;
+        chatWindow.hidden = true;
+        bubbleButton.hidden = false;
+        bubbleButton.style.left = '';
+        bubbleButton.style.top = '';
+        bubbleButton.style.right = '30px';
+        bubbleButton.style.bottom = '28px';
+      });
+      let bubbleMoved = false;
+      bubbleButton.addEventListener('pointerdown', (event) => {
+        bubbleMoved = false;
+        const startX = event.clientX,
+          startY = event.clientY;
+        const rect = bubbleButton.getBoundingClientRect();
+        const move = (moveEvent) => {
+          const dx = moveEvent.clientX - startX,
+            dy = moveEvent.clientY - startY;
+          if (Math.abs(dx) + Math.abs(dy) > 4) bubbleMoved = true;
+          if (!bubbleMoved) return;
+          bubbleButton.style.left =
+            Math.max(0, Math.min(innerWidth - rect.width, rect.left + dx)) + 'px';
+          bubbleButton.style.top =
+            Math.max(0, Math.min(innerHeight - rect.height, rect.top + dy)) + 'px';
+          bubbleButton.style.right = 'auto';
+          bubbleButton.style.bottom = 'auto';
+        };
+        const up = () => {
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up, { once: true });
+      });
+      bubbleButton.addEventListener('click', () => {
+        if (bubbleMoved) return;
+        chatCollapsed = false;
+        bubbleButton.hidden = true;
+        chatWindow.hidden = false;
+      });
+      const dragHandle = document.querySelector('#chat-drag-handle');
+      dragHandle.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) return;
+        const rect = chatWindow.getBoundingClientRect();
+        const startX = event.clientX,
+          startY = event.clientY;
+        chatWindow.dataset.positioned = 'true';
+        chatWindow.style.left = rect.left + 'px';
+        chatWindow.style.top = rect.top + 'px';
+        const move = (moveEvent) => {
+          const left = Math.max(
+            0,
+            Math.min(innerWidth - 100, rect.left + moveEvent.clientX - startX),
+          );
+          const top = Math.max(
+            0,
+            Math.min(innerHeight - 80, rect.top + moveEvent.clientY - startY),
+          );
+          chatWindow.style.left = left + 'px';
+          chatWindow.style.top = top + 'px';
+        };
+        const up = () => {
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up, { once: true });
+      });
+      document.querySelector('#save-draft').addEventListener('click', () => {
+        toast.hidden = false;
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(() => {
+          toast.hidden = true;
+        }, 1700);
+      });
+      document.querySelector('#send-chat').addEventListener('click', () => {
+        const compose = document.querySelector('.chat-compose .compose-box');
+        const text = compose.textContent.trim();
+        if (!text || text === '继续描述你想修改的内容…') return;
+        const message = document.createElement('div');
+        message.className = 'message user';
+        const name = document.createElement('span');
+        name.className = 'message-name';
+        name.textContent = '你';
+        const content = document.createElement('div');
+        content.className = 'bubble';
+        content.textContent = text;
+        message.append(name, content);
+        document.querySelector('#chat-messages').append(message);
+        compose.textContent = '继续描述你想修改的内容…';
+        document.querySelector('#chat-messages').scrollTop =
+          document.querySelector('#chat-messages').scrollHeight;
+      });
+      document.querySelectorAll('[data-editor-tab]').forEach((button) =>
+        button.addEventListener('click', () => {
+          document
+            .querySelectorAll('[data-editor-tab]')
+            .forEach((item) => item.removeAttribute('aria-current'));
+          button.setAttribute('aria-current', 'page');
+          if (button.dataset.editorTab === 'history') {
+            document.querySelector('.form-description').textContent =
+              '草稿编辑页沿用表单编辑工作台，可在此查看保存记录与当前工作稿。';
+          } else
+            document.querySelector('.form-description').textContent =
+              '填写出行信息，为你匹配合适的保障方案。';
+        }),
+      );
+    </script>
+  </body>
+</html>

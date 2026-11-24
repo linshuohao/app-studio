@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agent 对话 · Form Studio</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+      --ink: #252a33;
+      --muted: #647080;
+      --line: #dfe3e9;
+      --blue: #375c91;
+      --tint: #e9eff8;
+      --paper: #f8f9fb;
+      color: var(--ink);
+      font:
+        14px/1.55 system-ui,
+        'PingFang SC',
+        'Microsoft YaHei',
+        sans-serif;
+    }
+    body {
+      margin: 0;
+    }
+    button,
+    input,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+      border-radius: 7px;
+      padding: 7px 10px;
+    }
+    button:hover {
+      background: #edf0f4;
+    }
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid #527ab1;
+      outline-offset: 2px;
+    }
+    button:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+    h1 {
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+    h2 {
+      font-size: 18px;
+    }
+    small,
+    .muted {
+      color: var(--muted);
+    }
+    svg {
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      flex: none;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.65;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .row,
+    .nav,
+    .action,
+    .tag,
+    .author,
+    .bread {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .spread {
+      justify-content: space-between;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 208px minmax(0, 1fr);
+      height: 100dvh;
+    }
+    .rail {
+      background: #f4f5f7;
+      border-right: 1px solid var(--line);
+      padding: 26px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    .brand {
+      font-size: 19px;
+      letter-spacing: -0.7px;
+      font-weight: 680;
+      padding: 0 6px;
+    }
+    .mark,
+    .avatar {
+      display: inline-grid;
+      place-items: center;
+      border-radius: 9px;
+      width: 33px;
+      height: 33px;
+      background: #272d38;
+      color: white;
+    }
+    .mark svg {
+      width: 22px;
+      height: 22px;
+    }
+    .navs {
+      display: grid;
+      gap: 4px;
+      margin-top: 40px;
+    }
+    .nav {
+      width: 100%;
+      text-align: left;
+      padding: 9px 12px;
+      font-weight: 550;
+    }
+    .nav.active {
+      background: #e2e8f2;
+      color: #294976;
+    }
+    .who {
+      margin-top: auto;
+      border-top: 1px solid var(--line);
+      padding: 17px 6px 0;
+    }
+    .who b,
+    .who small {
+      display: block;
+    }
+    .who small {
+      font-size: 11px;
+    }
+    .avatar {
+      background: #e2e5ec;
+      color: #434e62;
+      font-size: 12px;
+    }
+    .main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .top {
+      height: 60px;
+      flex: none;
+      border-bottom: 1px solid var(--line);
+      padding: 0 24px;
+    }
+    .bread {
+      font-size: 13px;
+    }
+    .slash {
+      color: #a6acb6;
+    }
+    .body {
+      display: flex;
+      min-height: 0;
+      flex: 1;
+    }
+    .history {
+      width: 234px;
+      flex: none;
+      background: #fafbfc;
+      border-right: 1px solid var(--line);
+      padding: 22px 14px;
+      overflow: auto;
+    }
+    .primary {
+      background: #29303b;
+      color: white;
+    }
+    .primary:hover {
+      background: #3a4555;
+    }
+    .new {
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+    .section {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin: 0 7px 8px;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      border-radius: 7px;
+      margin: 3px 0;
+    }
+    .item.active {
+      background: var(--tint);
+      color: #284971;
+    }
+    .item > button:first-child {
+      text-align: left;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .item svg {
+      width: 15px;
+    }
+    .icon {
+      display: inline-grid;
+      place-items: center;
+      min-width: 32px;
+      min-height: 32px;
+    }
+    .chat {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .chathead {
+      height: 76px;
+      flex: none;
+      border-bottom: 1px solid #edf0f3;
+      padding: 0 clamp(16px, 4vw, 52px);
+    }
+    .feed {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 24px clamp(16px, 4vw, 52px) 8px;
+    }
+    .inner,
+    .composer {
+      max-width: 720px;
+      margin: auto;
+    }
+    .date {
+      text-align: center;
+      color: #78808c;
+      font-size: 12px;
+      margin: 0 0 22px;
+    }
+    .msg {
+      margin: 0 0 24px;
+    }
+    .author {
+      font-size: 13px;
+      font-weight: 630;
+      margin-bottom: 9px;
+    }
+    .bot,
+    .person {
+      width: 25px;
+      height: 25px;
+      border-radius: 7px;
+      display: inline-grid;
+      place-items: center;
+      background: #e6edf8;
+      color: #375785;
+    }
+    .person {
+      background: #eceef2;
+      color: #485362;
+      font-size: 11px;
+    }
+    .answer {
+      margin-left: 34px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+    .card {
+      margin: 13px 0 0 34px;
+      border: 1px solid #cdd6e3;
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 500px;
+    }
+    .cover {
+      height: 75px;
+      overflow: hidden;
+      position: relative;
+      background-color: #eff3f9;
+      background-image: radial-gradient(#c5d0df 1px, transparent 1px);
+      background-size: 12px 12px;
+    }
+    .sheet {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-5deg);
+      width: 140px;
+      height: 85px;
+      border: 1px solid #c6d1e2;
+      border-radius: 5px;
+      background: white;
+      padding: 10px 14px;
+      box-shadow: 5px 5px 0 #dce5f2;
+    }
+    .sheet i {
+      display: block;
+      width: 43%;
+      height: 4px;
+      background: #738ba8;
+      margin-bottom: 7px;
+    }
+    .sheet b {
+      display: block;
+      height: 10px;
+      border: 1px solid #dbe1e8;
+      margin: 4px 0;
+      border-radius: 2px;
+    }
+    .cardfoot {
+      padding: 12px 15px;
+    }
+    .cardfoot small {
+      display: block;
+    }
+    .outline {
+      border: 1px solid #cfd5de;
+      background: white;
+    }
+    .composewrap {
+      padding: 12px clamp(16px, 4vw, 52px) 24px;
+    }
+    .composer {
+      border: 1px solid #bdc8d7;
+      border-radius: 12px;
+      background: white;
+      padding: 10px;
+      box-shadow: 0 3px 12px #2539550a;
+    }
+    .composer:focus-within {
+      border-color: #708aaf;
+    }
+    .composer textarea {
+      border: 0;
+      outline: none;
+      width: 100%;
+      resize: vertical;
+      min-height: 42px;
+      padding: 5px 7px;
+      background: transparent;
+    }
+    .composer textarea:focus-visible {
+      outline: none;
+    }
+    .send {
+      border-radius: 8px;
+    }
+    .tag {
+      display: inline-flex;
+      background: var(--tint);
+      color: #304e77;
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-size: 12px;
+      margin: 0 4px 5px;
+    }
+    .tag button {
+      padding: 1px 4px;
+    }
+    .empty {
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      height: 100%;
+      gap: 12px;
+      text-align: center;
+    }
+    .empty .bot {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+    .page {
+      background: var(--paper);
+      flex: 1;
+      padding: 28px;
+      overflow: auto;
+    }
+    .library {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 300px));
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .tile,
+    .canvas {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .tile {
+      text-align: left;
+    }
+    .tile strong {
+      display: block;
+      font-size: 17px;
+      margin: 12px 0 4px;
+    }
+    .editor {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--paper);
+    }
+    .tools {
+      background: white;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+    .canvaswrap {
+      padding: 24px;
+      overflow: auto;
+    }
+    .canvas {
+      max-width: 660px;
+      margin: auto;
+      padding: clamp(18px, 3vw, 36px);
+    }
+    .canvas h2 {
+      font-size: 23px;
+      margin: 5px 0 22px;
+    }
+    .fields {
+      display: grid;
+      gap: 18px;
+    }
+    .fields label {
+      display: grid;
+      gap: 7px;
+      font-weight: 550;
+    }
+    .fields input[type='text'],
+    .fake {
+      width: 100%;
+      border: 1px solid #ccd3dd;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-weight: 400;
+    }
+    .fake {
+      color: #687382;
+      background: #fafbfc;
+    }
+    .fields label.check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 400;
+    }
+    .side {
+      border-left: 1px solid var(--line);
+      width: clamp(310px, 33vw, 460px);
+      flex: none;
+      display: flex;
+    }
+    .side .feed,
+    .side .composewrap {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+    .side .chathead {
+      padding: 0 14px;
+      height: 62px;
+    }
+    .side h1 {
+      font-size: 16px;
+    }
+    .side .card {
+      margin-left: 0;
+    }
+    .side .cover {
+      height: 45px;
+    }
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px;
+      width: min(400px, calc(100% - 32px));
+      color: var(--ink);
+      box-shadow: 0 12px 50px #19253524;
+    }
+    dialog::backdrop {
+      background: #20283433;
+    }
+    dialog p {
+      margin: 12px 0 20px;
+    }
+    dialog .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      padding: 11px 8px;
+      border-top: 1px solid #edf0f4;
+      border-radius: 0;
+    }
+    dialog .choices {
+      margin-top: 16px;
+    }
+    .danger {
+      color: #981b2d;
+    }
+    .mobile {
+      display: none;
+    }
+    .notice {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #27303c;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    .notice:empty {
+      display: none;
+    }
+    @media (max-width: 1080px) {
+      .app {
+        grid-template-columns: 156px minmax(0, 1fr);
+      }
+      .history {
+        width: 196px;
+      }
+      .rail {
+        padding-inline: 9px;
+      }
+    }
+    @media (max-width: 800px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+      .rail {
+        padding: 6px 12px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        font-size: 15px;
+      }
+      .mark {
+        width: 27px;
+        height: 27px;
+      }
+      .who {
+        display: none;
+      }
+      .navs {
+        display: flex;
+        margin: 0;
+      }
+      .nav {
+        width: auto;
+        min-height: 44px;
+      }
+      .side {
+        position: fixed;
+        inset: 50px 0 0 auto;
+        width: min(390px, 100%);
+        background: white;
+        box-shadow: -8px 0 24px #35405014;
+        z-index: 2;
+      }
+      .history {
+        width: 180px;
+      }
+      .top {
+        height: 44px;
+      }
+    }
+    @media (max-width: 620px) {
+      .history {
+        display: none;
+      }
+      .mobile {
+        display: inline-grid;
+      }
+      .feed {
+        padding-top: 16px;
+      }
+      .chathead {
+        height: 58px;
+      }
+      .composewrap {
+        padding-bottom: 12px;
+      }
+      .top {
+        padding-inline: 12px;
+      }
+      .page,
+      .canvaswrap {
+        padding: 14px;
+      }
+      .card {
+        margin-left: 0;
+      }
+      .item button,
+      .option,
+      .tools button,
+      .composer button:not(.tag button) {
+        min-height: 44px;
+      }
+    }
+  </style>
+  <div id="root"></div>
+  <dialog id="dlg"></dialog>
+  <div class="notice" role="status" id="notice"></div>
+  <script>
+    const icons = {
+      logo: 'M4 8l8-4 8 4-8 4z M4 12l8 4 8-4 M4 16l8 4 8-4',
+      agent: 'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+      form: 'M6 3h9l4 4v14H6z M14 3v5h5 M9 12h7 M9 16h5',
+      chat: 'M4 5h16v12H9l-5 4z',
+      plus: 'M12 5v14 M5 12h14',
+      up: 'M12 19V5 M6 11l6-6 6 6',
+      open: 'M6 18L18 6 M8 6h10v10',
+      close: 'M6 6l12 12 M18 6L6 18',
+      list: 'M4 6h16 M4 12h16 M4 18h16',
+    };
+    function icon(n) {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + icons[n] + '"/></svg>';
+    }
+    const esc = (s) =>
+      String(s ?? '').replace(
+        /[&<>"']/g,
+        (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+      );
+    const btn = (a, label, cls = '', i = '', id = '') =>
+      '<button class="' +
+      cls +
+      '" data-a="' +
+      a +
+      '" data-id="' +
+      esc(id) +
+      '">' +
+      (i ? icon(i) : '') +
+      esc(label) +
+      '</button>';
+    const ib = (a, label, i, cls = '') =>
+      '<button class="icon ' +
+      cls +
+      '" data-a="' +
+      a +
+      '" aria-label="' +
+      esc(label) +
+      '" title="' +
+      esc(label) +
+      '">' +
+      icon(i) +
+      '</button>';
+    const forms = [
+      { id: 'leave', name: '请假申请', kind: '草稿', phone: '手机号', required: false },
+      { id: 'travel', name: '差旅报销', kind: '正式表单 · V3', phone: '联系电话', required: true },
+    ];
+    const chats = [
+      {
+        id: 'one',
+        title: '请假申请的字段设计',
+        messages: [
+          { u: 1, text: '帮我创建一份请假申请表，包含申请人、请假日期和手机号。' },
+          {
+            text: '请假申请草稿已生成。申请人和请假日期为必填项，手机号暂为选填，方便员工在需要时留下联系方式。',
+            card: 'leave',
+          },
+        ],
+      },
+      {
+        id: 'two',
+        title: '差旅报销的校验规则',
+        messages: [
+          { u: 1, text: '差旅报销里，哪些费用需要填写说明？' },
+          { text: '可以按费用类型区分。比如交通费填写行程，住宿费填写入住日期和晚数。' },
+        ],
+      },
+    ];
+    let screen = 'agent',
+      cid = 'one',
+      fid = 'leave',
+      side = false,
+      seq = 2,
+      scratch = {},
+      refs = {},
+      inputs = {};
+    const form = (id) => forms.find((f) => f.id === id),
+      chat = () => chats.find((c) => c.id === cid),
+      current = () => scratch[fid] || form(fid),
+      key = () => cid || 'new';
+    const dirty = (id) => !!scratch[id],
+      label = (f) => f.kind + ' · ' + f.name;
+    function snapshot() {
+      return { ...current(), dirty: dirty(fid) };
+    }
+    function tag(ref, rem = false) {
+      return (
+        '<span class="tag">' +
+        icon('form') +
+        esc(label(ref)) +
+        (ref.dirty ? ' · 含未保存修改' : '') +
+        (rem ? btn('detach', '×') : '') +
+        '</span>'
+      );
+    }
+    function rail() {
+      return (
+        '<aside class="rail"><div class="row brand"><span class="mark">' +
+        icon('logo') +
+        '</span>Form Studio</div><nav class="navs">' +
+        [
+          ['forms', 'form', '表单'],
+          ['agent', 'agent', 'Agent'],
+        ]
+          .map(
+            ([n, i, t]) =>
+              '<button class="nav ' +
+              ((screen === 'agent') === (n === 'agent') ? 'active' : '') +
+              '" data-a="' +
+              n +
+              '">' +
+              icon(i) +
+              t +
+              '</button>',
+          )
+          .join('') +
+        '</nav><div class="row who"><span class="avatar">FS</span><div><b>设计工作区</b><small>Form Studio</small></div></div></aside>'
+      );
+    }
+    function history() {
+      return (
+        '<aside class="history">' +
+        btn('new', '新对话', 'action new primary', 'plus') +
+        '<div class="section">对话列表 · ' +
+        chats.length +
+        '</div>' +
+        chats
+          .map(
+            (c) =>
+              '<div class="item ' +
+              (cid === c.id ? 'active' : '') +
+              '">' +
+              btn('pick', c.title, '', '', c.id) +
+              '<button aria-label="删除对话：' +
+              esc(c.title) +
+              '" title="删除对话" data-a="del" data-id="' +
+              c.id +
+              '">···</button></div>',
+          )
+          .join('') +
+        '</aside>'
+      );
+    }
+    function card(id) {
+      const f = form(id);
+      return (
+        '<div class="card"><div class="cover" aria-hidden="true"><div class="sheet"><i></i><b></b><b></b><b></b></div></div><div class="row spread cardfoot"><div><strong>' +
+        esc(f.name) +
+        '</strong><small>表单草稿</small></div>' +
+        btn('edit', '打开草稿', 'outline', '', id) +
+        '</div></div>'
+      );
+    }
+    function thread(inSide = false) {
+      const c = chat(),
+        ref = refs[key()];
+      return (
+        '<section class="chat"><div class="row spread chathead"><h1>' +
+        esc(c?.title || '新对话') +
+        '</h1><div class="row">' +
+        (inSide
+          ? ib('agent', '在 Agent 页打开', 'open') + ib('hide', '关闭侧栏', 'close')
+          : ib('history', '对话列表', 'list', 'mobile')) +
+        '</div></div><div class="feed"><div class="' +
+        (c ? 'inner' : 'empty') +
+        '">' +
+        (c
+          ? c.messages
+              .map(
+                (m) =>
+                  '<div class="msg"><div class="author">' +
+                  (m.u
+                    ? '<span class="person">我</span>你'
+                    : '<span class="bot">' + icon('agent') + '</span>Agent') +
+                  '</div><div class="answer">' +
+                  (m.ref ? tag(m.ref) + '<br>' : '') +
+                  esc(m.text) +
+                  '</div>' +
+                  (m.card ? card(m.card) : '') +
+                  '</div>',
+              )
+              .join('')
+          : '<span class="bot">' +
+            icon('agent') +
+            '</span><h2>想讨论什么？</h2><p class="muted">直接提问，或添加一份表单一起讨论。</p>') +
+        '</div></div><div class="composewrap"><div class="composer">' +
+        (ref ? tag(ref, true) : '') +
+        '<textarea id="msg" aria-label="对话消息" placeholder="输入消息…" rows="2">' +
+        esc(inputs[key()] || '') +
+        '</textarea><div class="row spread">' +
+        btn('attach', '添加表单', 'action', 'plus') +
+        '<button class="primary send icon" aria-label="发送" title="发送" data-a="send" ' +
+        ((inputs[key()] || '').trim() ? '' : 'disabled') +
+        '>' +
+        icon('up') +
+        '</button></div></div></div></section>'
+      );
+    }
+    function library() {
+      return (
+        '<section class="page"><h1>表单</h1><div class="library">' +
+        forms
+          .map(
+            (f) =>
+              '<button class="tile" data-a="edit" data-id="' +
+              f.id +
+              '">' +
+              icon('form') +
+              '<strong>' +
+              esc(f.name) +
+              '</strong><small>' +
+              esc(f.kind) +
+              '</small></button>',
+          )
+          .join('') +
+        '</div></section>'
+      );
+    }
+    function editor() {
+      const f = current();
+      return (
+        '<section class="editor"><div class="row spread tools"><div><b>' +
+        esc(f.name) +
+        '</b> <small>' +
+        esc(f.kind) +
+        '</small></div><div class="row">' +
+        btn('choose', '添加到对话', 'action outline', 'chat') +
+        btn('save', '保存', 'primary') +
+        '</div></div><div class="canvaswrap"><div class="canvas"><small>表单编辑器</small><h2>' +
+        esc(f.name) +
+        '</h2><div class="fields"><label>申请人<div class="fake">请输入姓名</div></label><label>' +
+        (fid === 'travel' ? '出差' : '请假') +
+        '日期<div class="fake">年 / 月 / 日</div></label><label>联系字段名称<input id="phone" type="text" value="' +
+        esc(f.phone) +
+        '"></label><label class="check"><input id="required" type="checkbox" ' +
+        (f.required ? 'checked' : '') +
+        '> 联系字段必填</label><small id="dirty">' +
+        (dirty(fid) ? '含未保存修改' : '已保存') +
+        '</small></div></div></div></section>' +
+        (side ? '<aside class="side">' + thread(true) + '</aside>' : '')
+      );
+    }
+    function render() {
+      root.innerHTML =
+        '<div class="app">' +
+        rail() +
+        '<main class="main"><header class="row top"><div class="bread"><span class="muted">工作区</span><span class="slash">/</span><b>' +
+        (screen === 'agent' ? 'Agent' : '表单') +
+        '</b>' +
+        (screen === 'editor' ? '<span class="slash">/</span>' + esc(form(fid).name) : '') +
+        '</div></header><div class="body">' +
+        (screen === 'agent' ? history() + thread() : screen === 'forms' ? library() : editor()) +
+        '</div></main></div>';
+    }
+    function modal(title, contents) {
+      dlg.innerHTML =
+        '<div class="row spread"><h2>' +
+        esc(title) +
+        '</h2>' +
+        ib('cancel', '关闭', 'close') +
+        '</div>' +
+        contents;
+      dlg.showModal();
+    }
+    function options(a, items) {
+      return (
+        '<div class="choices">' +
+        items.map(([id, name, i]) => btn(a, name, 'option', i, id)).join('') +
+        '</div>'
+      );
+    }
+    function toast(t) {
+      notice.textContent = t;
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => (notice.textContent = ''), 1900);
+    }
+    function begin() {
+      cid = null;
+      delete refs.new;
+      delete inputs.new;
+    }
+    function send() {
+      const old = key(),
+        text = (inputs[old] || '').trim();
+      if (!text) return;
+      const ref = refs[old];
+      if (!chat()) {
+        cid = 'c' + ++seq;
+        chats.unshift({ id: cid, title: text.slice(0, 18), messages: [] });
+        if (ref) refs[cid] = ref;
+      }
+      const c = chat();
+      c.messages.push({ u: 1, text, ref: ref && { ...ref } });
+      let reply;
+      if (ref) {
+        reply = {
+          text:
+            '你引用的是《' +
+            ref.name +
+            '》。当前联系字段叫「' +
+            ref.phone +
+            '」，状态是' +
+            (ref.required ? '必填' : '选填') +
+            '。' +
+            (ref.dirty ? '这次讨论包含编辑器里尚未保存的修改。' : ''),
+        };
+      } else if (/创建|生成|建.*表/.test(text)) {
+        const f = {
+          id: 'f' + ++seq,
+          name: text.includes('报销') ? '报销申请' : '请假申请',
+          kind: '草稿',
+          phone: '手机号',
+          required: false,
+        };
+        forms.push(f);
+        reply = { text: '已生成一份示例草稿，可以打开后继续编辑。', card: f.id };
+      } else {
+        reply = {
+          text: '可以。你想讨论哪些字段需要填写，还是某个字段应该怎样校验？也可以把当前表单添加到对话。',
+        };
+      }
+      c.messages.push(reply);
+      delete inputs[old];
+      delete inputs[cid];
+      render();
+      const feed = document.querySelector('.feed');
+      feed.scrollTop = feed.scrollHeight;
+    }
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'msg') {
+        inputs[key()] = e.target.value;
+        document.querySelector('[data-a=send]').disabled = !e.target.value.trim();
+      }
+      if (['phone', 'required'].includes(e.target.id)) {
+        scratch[fid] = {
+          ...current(),
+          phone: document.querySelector('#phone').value,
+          required: document.querySelector('#required').checked,
+        };
+        document.querySelector('#dirty').textContent = '含未保存修改';
+        const r = refs[key()];
+        if (side && r?.id === fid) {
+          refs[key()] = snapshot();
+          document.querySelector('.composer .tag').outerHTML = tag(refs[key()], true);
+        }
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (
+        e.target.id === 'msg' &&
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.isComposing &&
+        e.keyCode !== 229
+      ) {
+        e.preventDefault();
+        send();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-a]');
+      if (!b) return;
+      const { a, id } = b.dataset;
+      if (dlg.open) dlg.close();
+      switch (a) {
+        case 'cancel':
+          return;
+        case 'send':
+          send();
+          return;
+        case 'forms':
+        case 'agent':
+          screen = a;
+          side = false;
+          break;
+        case 'new':
+          begin();
+          screen = 'agent';
+          break;
+        case 'pick':
+          cid = id;
+          screen = 'agent';
+          break;
+        case 'history':
+          modal(
+            '对话列表',
+            options('new', [['', '新对话', 'plus']]) +
+              chats
+                .map(
+                  (c) =>
+                    '<div class="item">' +
+                    btn('pick', c.title, '', '', c.id) +
+                    btn('del', '删除', 'danger', '', c.id) +
+                    '</div>',
+                )
+                .join(''),
+          );
+          return;
+        case 'del':
+          modal(
+            '删除这段对话？',
+            '<p>「' +
+              esc(chats.find((c) => c.id === id).title) +
+              '」的消息将被删除。已生成的表单草稿会保留。</p><div class="row">' +
+              btn('cancel', '取消', 'outline') +
+              btn('confirm', '删除对话', 'danger outline', '', id) +
+              '</div>',
+          );
+          return;
+        case 'confirm':
+          chats.splice(
+            chats.findIndex((c) => c.id === id),
+            1,
+          );
+          delete refs[id];
+          delete inputs[id];
+          if (cid === id) cid = chats[0]?.id || null;
+          toast('对话已删除，表单草稿已保留');
+          break;
+        case 'edit':
+          fid = id;
+          screen = 'editor';
+          side = false;
+          break;
+        case 'hide':
+          side = false;
+          break;
+        case 'choose':
+          modal(
+            '添加到对话',
+            options('target', [
+              ['', '新对话', 'plus'],
+              ...chats.map((c) => [c.id, c.title, 'chat']),
+            ]),
+          );
+          return;
+        case 'target':
+          if (id) cid = id;
+          else begin();
+          refs[key()] = snapshot();
+          side = true;
+          break;
+        case 'attach':
+          modal(
+            '添加表单',
+            options(
+              'resource',
+              forms.map((f) => [f.id, label(f), 'form']),
+            ),
+          );
+          return;
+        case 'resource':
+          refs[key()] = { ...(scratch[id] || form(id)), dirty: dirty(id) };
+          break;
+        case 'detach':
+          delete refs[key()];
+          break;
+        case 'save':
+          Object.assign(form(fid), current());
+          delete scratch[fid];
+          if (refs[key()]?.id === fid) refs[key()] = snapshot();
+          toast('表单已保存');
+          break;
+      }
+      render();
+      if (['new', 'target', 'resource', 'detach'].includes(a))
+        document.querySelector('#msg')?.focus();
+    });
+    render();
+  </script>
+</html>

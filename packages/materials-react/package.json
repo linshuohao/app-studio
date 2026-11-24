@@ -2,23 +2,32 @@
   "name": "@form-engine/materials-react",
   "type": "module",
   "version": "0.0.0",
-  "description": "Engineering scaffold; production contract pending",
+  "description": "React form materials and static capability manifests",
   "exports": {
     ".": {
       "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./manifests": {
+      "development": "./src/manifests.ts",
+      "types": "./dist/manifests.d.ts",
+      "import": "./dist/manifests.js"
+    },
+    "./styles.css": {
+      "development": "./src/styles.css",
+      "default": "./dist/styles.css"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.tests.json --noEmit",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest"
   },
   "peerDependencies": {
@@ -46,7 +55,19 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./manifests": {
+        "types": "./dist/manifests.d.ts",
+        "import": "./dist/manifests.js"
+      },
+      "./styles.css": "./dist/styles.css"
     }
-  }
+  },
+  "dependencies": {
+    "@form-engine/protocol": "workspace:*",
+    "@form-engine/renderer-react": "workspace:*"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

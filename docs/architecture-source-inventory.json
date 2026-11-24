@@ -9,16 +9,16 @@
     "Generated reading pages, caches and production engine behavior are outside this source inventory."
   ],
   "counts": {
-    "candidate-validation-evidence": 36,
-    "current-markdown": 54,
+    "candidate-validation-evidence": 40,
+    "current-markdown": 67,
     "documentation-tooling": 13,
     "history-archive": 11,
     "history-integration-snapshot": 234,
     "history-original-member": 30,
     "history-readable-copy": 30
   },
-  "total_entries": 408,
-  "unique_byte_contents": 369,
+  "total_entries": 425,
+  "unique_byte_contents": 386,
   "repeated_byte_entries": 39,
   "preservation": {
     "baseline": "docs/history/2026-10-19-architecture-review-sources.zip",
@@ -176,8 +176,8 @@
       "path": "README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 2545,
-      "sha256": "25f7fc9a63f1716195c1b496ce65a3a9b11ca636aa7346da7e438f0377fb59fd",
+      "bytes": 2909,
+      "sha256": "2adc95932642011e9171620a26c11ed8d5cab3d1f9a0625e80cc010efe4e092a",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -191,8 +191,8 @@
       "path": "docs/README.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 20161,
-      "sha256": "36b4ff9bb91912bc87d0a2178803c4548f579ad99f7e0bab487833ade29fef6b",
+      "bytes": 23792,
+      "sha256": "7dc9cc413dda2b31db036245fcbe5f1ad724a8247aecd4eee082147406a0e15f",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -246,8 +246,8 @@
       "path": "docs/CONTEXT.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 14194,
-      "sha256": "8da53020938a0f1c8841c36532c9898245a84c7c76711f9bf7edc6e83ba9bcc7",
+      "bytes": 19127,
+      "sha256": "08df5d46bde50fc2d4b7086574f0063121f1627f7edebd17105f414c75d5f775",
       "mapping": "维护 / 领域词汇入口；非独立技术规范",
       "sections": [
         {
@@ -264,6 +264,26 @@
           "level": 2,
           "title": "Request（物料请求）",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "DevTools 观测语义",
+          "anchor": "observation-terms"
+        },
+        {
+          "level": 2,
+          "title": "平台访问与权限",
+          "anchor": "platform-access-language"
+        },
+        {
+          "level": 2,
+          "title": "平台创作与发布身份",
+          "anchor": "platform-authoring-language"
+        },
+        {
+          "level": 2,
+          "title": "Agent 任务、执行与记忆",
+          "anchor": "agent-terms"
         }
       ]
     },
@@ -271,8 +291,8 @@
       "path": "docs/design/architecture.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 47259,
-      "sha256": "c6cbdad7ffa429709c0f3e88234879a9173eb12a0356e429e457ba68aedaf1c6",
+      "bytes": 58231,
+      "sha256": "c09aa6b6aa4470ecadbf5675ef7f0e3c13336b3a6b3f6c4cdcf041b18c31af13",
       "mapping": "SRC-EARLY / K01 / K29–K30",
       "sections": [
         {
@@ -282,7 +302,7 @@
         },
         {
           "level": 2,
-          "title": "整体产品与建设蓝图（待审阅）",
+          "title": "整体产品与建设蓝图（分项确认）",
           "anchor": "product-blueprint"
         },
         {
@@ -337,7 +357,37 @@
         },
         {
           "level": 3,
-          "title": "2. 应用与服务组织（候选）",
+          "title": "2. 应用与服务组织（平台方向已确认，其余按需展开）",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "平台模块化单体：DDD 思路与业务边界",
+          "anchor": "platform-modular-monolith"
+        },
+        {
+          "level": 4,
+          "title": "初步业务划分与所有权",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "初期应用、模块与存储关系",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "模块协作与一致性",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "按运行需要演进",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "细化顺序与交付边界",
           "anchor": null
         },
         {
@@ -394,6 +444,11 @@
           "level": 2,
           "title": "继续阅读：从全貌进入具体能力",
           "anchor": "current-design-map"
+        },
+        {
+          "level": 3,
+          "title": "PostgreSQL 数据域",
+          "anchor": "postgresql-data-domains"
         }
       ]
     },
@@ -401,8 +456,8 @@
       "path": "docs/design/capability-map.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 10296,
-      "sha256": "ef7e1ff37ab53a1d2084fd3b928e72ba4826ea895810f56bf5b2372875248cce",
+      "bytes": 10623,
+      "sha256": "a9cef701da230558c49b34860bdd8db28b88f0ca0da17d4c41530231d890f211",
       "mapping": "MAP-CAPABILITIES / 已有纵向职责与横向契约的阅读关系",
       "sections": [
         {
@@ -1391,8 +1446,8 @@
       "path": "docs/design/decisions/ADR-FE-023-independent-devtools.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 2352,
-      "sha256": "43841a914c882fbb83204bc3f25f6451f8077ea21729eb4703d3078a0987f478",
+      "bytes": 2758,
+      "sha256": "53a3eb6547754b79b3ca57835b73724e197917873a7565a481efd65fd9043412",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1409,6 +1464,11 @@
           "level": 2,
           "title": "约束与取舍",
           "anchor": "adr-023-decision"
+        },
+        {
+          "level": 2,
+          "title": "后续观测能力扩展",
+          "anchor": "adr-023-observation-extension"
         }
       ]
     },
@@ -1416,8 +1476,8 @@
       "path": "docs/design/decisions/ADR-FE-024-first-assets-tooling.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 4667,
-      "sha256": "21631791d1566b7bc5ab0506f6f8d842aa7fc3685801f4b6337a4c7ee617e652",
+      "bytes": 6087,
+      "sha256": "b8009efa96f69164ca0af2f6a50f98256e7a8ef917d0066a52bce78420b29966",
       "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
       "sections": [
         {
@@ -1444,6 +1504,256 @@
           "level": 2,
           "title": "实施和证据边界",
           "anchor": "adr-024-evidence"
+        },
+        {
+          "level": 2,
+          "title": "实施进展",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-025-observation-contract.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 5233,
+      "sha256": "b088f13aa3dc4d842831a6cb2d7849e9d5d96850f59ccbd05b32f69c68a7a523",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-025：通用观测契约与四视图",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与决定",
+          "anchor": "adr-025-context"
+        },
+        {
+          "level": 2,
+          "title": "三个原则与约束",
+          "anchor": "adr-025-decision"
+        },
+        {
+          "level": 2,
+          "title": "与既有决定的关系及代价",
+          "anchor": "adr-025-consequences"
+        },
+        {
+          "level": 2,
+          "title": "技术方案确认与升级方式修订",
+          "anchor": "adr-025-technical"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-026-platform-rbac.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 1819,
+      "sha256": "a746f0eea9b7f142a411c41e3096197e88b3a3785e53d7b8913901a55bca4eee",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-026：单团队空间与内建角色授权",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与决定",
+          "anchor": "adr-026-decision"
+        },
+        {
+          "level": 2,
+          "title": "取舍与后续",
+          "anchor": "adr-026-consequences"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-027-platform-modular-monolith.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2026,
+      "sha256": "a9dd2b9b7ec7161ecb231f6793fec15f1689f74416d5955bd14b36d44b0929de",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-027：平台采用 DDD 思路的模块化单体",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "背景与选择",
+          "anchor": "adr-027-decision"
+        },
+        {
+          "level": 2,
+          "title": "取舍与限定",
+          "anchor": "adr-027-consequences"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-028-platform-authoring-mvp.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2746,
+      "sha256": "892fedd7ee7f64a9f019e685ecbfa93ec8ac2db368c0d02c074279d1f35e56e1",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-028：最小创作 MVP 与不可变编辑修订",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "决策与依据",
+          "anchor": "adr-028-decision"
+        },
+        {
+          "level": 2,
+          "title": "替代、代价与范围",
+          "anchor": "adr-028-consequences"
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-029-platform-config-versions.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2530,
+      "sha256": "996ebc67022dba439872441f8489e334e6dae630beec5cf9abab2beee4ce77b7",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-029：配置版本与首期交付闭环",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-030-agent-harness.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 3505,
+      "sha256": "c80dab683d81d19f4d5e42a9eb7d2d5d95a94805fefb43a605ed8b76e7d5fd80",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-030：独立 Agent 服务与共享 Harness",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-031-postgresql-agent-runtime.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 3171,
+      "sha256": "a38b086f7b9c1b3122404b662482db7ecb3dc96f850bacf6b165a7f0344e72ca",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-032-studio-assistant-entry.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 2502,
+      "sha256": "b153dd2898ab905a0866070b1ad788e688fa598a2d97681bd3bdbefb4a394fcf",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-032：统一 Studio 助手入口与首批诊断修复",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-033-agent-create-conversation.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 5950,
+      "sha256": "7b1d6096f878d33f2714215aeef41c49dd8f5093345afbebdd12e41f8a1f06ec",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-033：首期创建配置、持久会话与异步接口",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-034-platform-diagnostic-events.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 1761,
+      "sha256": "bd730c2faaaf0825980b95024e3a7077121aef36fc4be992e37758ddf37b6536",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-034：首期错误事件采集与现场归属",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-035-agent-turn-graph.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 1496,
+      "sha256": "790aaf361f232550af6c1fa21e0d8c61a38a871268ecb3eed4cccf5980f0eb0f",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-035：统一助手轮次与按状态续办",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-036-conversation-draft-ownership.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 1263,
+      "sha256": "e4a5cd746600a005b2fdbb4cb9e383eaf051618222994c2211353c080821ac4a",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-036：Agent 会话与平台草稿分别持久化",
+          "anchor": null
+        }
+      ]
+    },
+    {
+      "path": "docs/design/decisions/ADR-FE-037-agent-turn-recovery.md",
+      "role": "current-markdown",
+      "coverage": "indexed",
+      "bytes": 1103,
+      "sha256": "2190d9fe2701e07dce32bf6ee0c39e145a5cf6f493fef161f9f7420c6603d438",
+      "mapping": "重要取舍的来源提取；完整规则仍在所属主题",
+      "sections": [
+        {
+          "level": 1,
+          "title": "ADR-FE-037：保存 Agent 轮内消息和步骤结果",
+          "anchor": null
         }
       ]
     },
@@ -1451,8 +1761,8 @@
       "path": "docs/design/dependency-reactivity.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 46157,
-      "sha256": "b22969a0d3acf56c3bc195f72ff7d57f09cdec0e70234ba929a0ea0337930b9b",
+      "bytes": 46277,
+      "sha256": "6d0baafcb0ca6dbabb5e1a05af5a3720d50eb209fd40a1c7e2cba8c84611627d",
       "mapping": "SRC-DEP / SRC-V05 / K10–K13",
       "sections": [
         {
@@ -1571,8 +1881,8 @@
       "path": "docs/design/design-history.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 159140,
-      "sha256": "56f31a5ef0531fbe804a9b9800a2579b418420d0591f737fa8553367cfef79fa",
+      "bytes": 186321,
+      "sha256": "1e558b241a66a61ff3a3786003ecc73284f6c0321fe12684916d8fae6c2b258b",
       "mapping": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
       "sections": [
         {
@@ -2001,6 +2311,16 @@
           "anchor": "workflow-contract-evidence-adopted"
         },
         {
+          "level": 3,
+          "title": "2026-11-02：OpenSpec 变更管理与执行适配",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-11-10：统一项目工作流入口",
+          "anchor": null
+        },
+        {
           "level": 2,
           "title": "2026-10-20：工程初始化与兼容联验",
           "anchor": "engineering-initialized"
@@ -2089,6 +2409,106 @@
           "level": 2,
           "title": "2026-10-27：首批正式物料、业务函数及版本工具确认",
           "anchor": "first-assets-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-10-28：资产工具第 0 批与首个函数",
+          "anchor": "first-assets-tooling-implementation"
+        },
+        {
+          "level": 3,
+          "title": "同日：基础输入与字段呈现交付",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "同日：组合成员与同实例 Profile 交付",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "同日：日期确认与远程选择交付",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "同日：同步业务函数与完整表单纵切",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "2026-11-04：整体变更讲解与 review 证据修复",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "2026-11-08：动态表单平台蓝图组织确认，具体设计继续展开",
+          "anchor": "platform-blueprint-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "通用观测模型与四视图确认",
+          "anchor": "general-observation-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-08：单团队 RBAC 完整方案确认",
+          "anchor": "platform-rbac-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "观测详细技术契约与破坏性升级确认",
+          "anchor": "observation-technical-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-08：DDD 思路的模块化单体方向确认",
+          "anchor": "platform-modules-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-10：最小 MVP 与分支版本更新统一确认",
+          "anchor": "platform-mvp-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-11 配置版本与首期交付闭环",
+          "anchor": "platform-config-versions-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-14：MVP 增加最小能力目录与成员角色管理",
+          "anchor": "platform-mvp-management-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-15：GitHub 自助注册与团队准入确认",
+          "anchor": "platform-account-admission-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "Agent 从候选覆盖到已确认蓝图",
+          "anchor": "agent-blueprint-confirmed"
+        },
+        {
+          "level": 2,
+          "title": "Agent 存储演进与 PostgreSQL 确认",
+          "anchor": "agent-storage-evolution"
+        },
+        {
+          "level": 2,
+          "title": "Studio助手入口统一",
+          "anchor": "agent-assistant-entry-evolution"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-19：首期仅创建与持久会话接口确认",
+          "anchor": "agent-create-evolution"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-22：首期错误事件采集与现场归属",
+          "anchor": "platform-diagnostics-evolution"
         }
       ]
     },
@@ -2096,8 +2516,8 @@
       "path": "docs/design/design-review.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 18109,
-      "sha256": "c4599c555b8f192605df74627ffb80f72c382f76158512a4965acc256210e38d",
+      "bytes": 18342,
+      "sha256": "6868aa885336f3d50d888699eff83a17b7c21c06a72c7f6d221effcf7b8e487e",
       "mapping": "REVIEW-FE-001 / 迁移的约束与冲突证据",
       "sections": [
         {
@@ -2181,8 +2601,8 @@
       "path": "docs/design/engineering.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 70082,
-      "sha256": "3836dce8bbf0864e9a2457a91530ffce13a8d1f6de196fe425ae26238c477398",
+      "bytes": 105028,
+      "sha256": "ccdecc3dd3957d119b079e3edc40797343d0218b0b9139db9b75dea4e5c1f50e",
       "mapping": "SRC-ENGINEERING / 已确认工具链与初始化流程，尚未工程验收",
       "sections": [
         {
@@ -2296,6 +2716,36 @@
           "anchor": null
         },
         {
+          "level": 3,
+          "title": "工具第 0 批与首个函数实施",
+          "anchor": "asset-tooling-implementation"
+        },
+        {
+          "level": 3,
+          "title": "首批输入与字段物料实施",
+          "anchor": "first-materials-implementation"
+        },
+        {
+          "level": 3,
+          "title": "组合成员与同实例 Profile 实施",
+          "anchor": "member-materials-implementation"
+        },
+        {
+          "level": 3,
+          "title": "日期确认与远程选择实施",
+          "anchor": "interaction-materials-implementation"
+        },
+        {
+          "level": 3,
+          "title": "业务纯函数与完整目标表单实施",
+          "anchor": "business-travel-implementation"
+        },
+        {
+          "level": 3,
+          "title": "当前资产与 Playground 批次收口",
+          "anchor": "assets-batch-closure"
+        },
+        {
           "level": 2,
           "title": "8. 质量门禁、测试与环境治理",
           "anchor": "engineering-gates"
@@ -2371,8 +2821,8 @@
       "path": "docs/design/extension-integration.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 41446,
-      "sha256": "bdeef5ae239f8daf090191955bc61eae90ed7a2215283947cbc3eed21c3cd22b",
+      "bytes": 46019,
+      "sha256": "0cee4c8b303e79b11a9eb981a929f26ce18fc68cc3185cfb08e5aa802502d1ee",
       "mapping": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
       "sections": [
         {
@@ -2486,8 +2936,8 @@
       "path": "docs/design/governance.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 44222,
-      "sha256": "c8b0215665e9a531a0e1d20764beebceae8c6e6ba5ccadf7e350add85b3c1952",
+      "bytes": 67512,
+      "sha256": "21361aeb395218072d3978d67ca0c0fd5c0a3113124237bb42690db8f96107c0",
       "mapping": "GOV-FE-001 / 审查建议，非新增已确认决策",
       "sections": [
         {
@@ -2542,7 +2992,7 @@
         },
         {
           "level": 3,
-          "title": "Agent 后续规划可讨论，不进入当前首期",
+          "title": "Agent 规划阶段与当前确认范围",
           "anchor": null
         },
         {
@@ -2579,6 +3029,31 @@
           "level": 2,
           "title": "首批正式资产与工程工具确认",
           "anchor": "first-assets-status"
+        },
+        {
+          "level": 3,
+          "title": "通用观测契约归档与实施准备",
+          "anchor": "observability-contract-status"
+        },
+        {
+          "level": 2,
+          "title": "2026-11-15 账号准入增量状态",
+          "anchor": "platform-account-admission-progress"
+        },
+        {
+          "level": 3,
+          "title": "首期错误事件采集",
+          "anchor": "platform-diagnostic-progress"
+        },
+        {
+          "level": 3,
+          "title": "Agent 蓝图、首期与后续阶段",
+          "anchor": "agent-blueprint-progress"
+        },
+        {
+          "level": 3,
+          "title": "PostgreSQL 迁移与 Agent 运行状态",
+          "anchor": "agent-postgresql-progress"
         }
       ]
     },
@@ -2586,8 +3061,8 @@
       "path": "docs/design/l1/01-foundation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 13366,
-      "sha256": "7a8db202d4b2b74a918af3d69a26821931a1e3f98e78bc2250489268ef303692",
+      "bytes": 13450,
+      "sha256": "74adc466de387192f1b7974f57f6e71bf8f1fa3248a4155ba689393d905c0870",
       "mapping": "SRC-L1 / K01 / K10–K11",
       "sections": [
         {
@@ -2686,8 +3161,8 @@
       "path": "docs/design/l1/03-expression-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17337,
-      "sha256": "0fc4d69689fae95aa506116be732070c48db354197f2098b3ef2eb1e1b4f66c5",
+      "bytes": 17413,
+      "sha256": "ee0ba5b98f0652b34b68738de1b6eab6ad1ef9a00228ace4e07c3375d9916051",
       "mapping": "SRC-L1 / K05–K06 / K12 / K25–K28",
       "sections": [
         {
@@ -2781,8 +3256,8 @@
       "path": "docs/design/l1/05-view-material-host.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 21867,
-      "sha256": "6b875bf479cc8375071a5be0651f76b2b2cbe48ec149abeafd5414b8281be29b",
+      "bytes": 22002,
+      "sha256": "c81499947428c9f49f194a9173def357db8cec37bad8e94b8b974e7dedfd722a",
       "mapping": "SRC-L1 / K07–K09 / K13",
       "sections": [
         {
@@ -2931,8 +3406,8 @@
       "path": "docs/design/l1/08-decisions-release.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 19012,
-      "sha256": "b541f5a379310f165c552bb72eb2719314d3ef273307dc12b42da88468f7c4d6",
+      "bytes": 19522,
+      "sha256": "4878d117ea2fbca6f0bb871430c17816e1af0fdaad2698e625d8e4c8463cc056",
       "mapping": "SRC-L1 / 追溯附录 / K01–K30",
       "sections": [
         {
@@ -3041,8 +3516,8 @@
       "path": "docs/design/l2/compiler.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 98215,
-      "sha256": "8c436112a443f9c47e731351b3661daca11a8a393313f39adb8c08574cfcb9f1",
+      "bytes": 98810,
+      "sha256": "408ee4300672743a16d47f2a61b5bcec92b44952cf560587f5dd8329c205430f",
       "mapping": "SRC-COMPILERDESIGN / Compiler 本期详细设计确认与实施授权；平台报告后置",
       "sections": [
         {
@@ -3411,8 +3886,8 @@
       "path": "docs/design/l2-preparation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 69485,
-      "sha256": "3c4c49e62e1c7ab588b1e56ddcfe068d33616d827c4747bd128bed819666c845",
+      "bytes": 71517,
+      "sha256": "7e54bf2128344325e16e9fb0a95df2ec45d33f4de3d75e537f0907a2ee0d1153",
       "mapping": "SRC-L2 / K06 / K10–K13 / K29–K30",
       "sections": [
         {
@@ -3604,6 +4079,11 @@
           "level": 3,
           "title": "状态观察与响应项的兼容增量",
           "anchor": "prepared-state-actions"
+        },
+        {
+          "level": 2,
+          "title": "通用观测的定义与来源接缝",
+          "anchor": "l2-observation-handoff"
         }
       ]
     },
@@ -3611,8 +4091,8 @@
       "path": "docs/design/l3-data-scope.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 32857,
-      "sha256": "2d64a730cf6c003a71a8ce0f4993f355a20e69bee6ac6d01dd36ec5d8e5f3612",
+      "bytes": 34034,
+      "sha256": "c8749ae008537a4250dab61d388e40dfa840fd6e68265a2a5468129c7a66921a",
       "mapping": "DESIGN-L3-DATA / 逐 Command 数据、快照、Scope 与完整行为验收迁移",
       "sections": [
         {
@@ -3674,6 +4154,11 @@
           "level": 3,
           "title": "数组位置契约验收补充",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "观测位置与成员身份",
+          "anchor": "scope-observation-handoff"
         }
       ]
     },
@@ -3681,8 +4166,8 @@
       "path": "docs/design/l3-observability.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 17513,
-      "sha256": "60b0f18bc5388bba09c82b1f6d28b343554c1e3f3d8448ef30fdcce0bfe5757f",
+      "bytes": 74583,
+      "sha256": "4117b3bd77185ffdf593e2a0a1182a0ba45fc1eb08d6eef47a8cea106ec66716",
       "mapping": "DESIGN-L3-DIAGNOSTICS / 运行事实、Trace 与开发工具说明迁移",
       "sections": [
         {
@@ -3729,6 +4214,106 @@
           "level": 3,
           "title": "实现入口与验收边界",
           "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "通用观测契约：结构、事实与四个视图",
+          "anchor": "observation-contract"
+        },
+        {
+          "level": 3,
+          "title": "所有权与通用模型",
+          "anchor": "observation-model"
+        },
+        {
+          "level": 3,
+          "title": "关系语义与可推导边界",
+          "anchor": "observation-relations"
+        },
+        {
+          "level": 3,
+          "title": "当前可复用数据与缺口",
+          "anchor": "observation-reuse"
+        },
+        {
+          "level": 3,
+          "title": "事件上报与因果契约",
+          "anchor": "observation-events"
+        },
+        {
+          "level": 3,
+          "title": "快照、游标与完整性",
+          "anchor": "observation-consistency"
+        },
+        {
+          "level": 3,
+          "title": "四个视图如何消费同一数据",
+          "anchor": "observation-views"
+        },
+        {
+          "level": 3,
+          "title": "对象 / 数组折叠与跨对象影响链",
+          "anchor": "observation-folding"
+        },
+        {
+          "level": 3,
+          "title": "只读接缝、兼容与资源边界",
+          "anchor": "observation-api"
+        },
+        {
+          "level": 2,
+          "title": "分阶段实施范围与验收清单",
+          "anchor": "observation-delivery"
+        },
+        {
+          "level": 2,
+          "title": "详细技术方案与接口契约",
+          "anchor": "observation-technical"
+        },
+        {
+          "level": 3,
+          "title": "当前实施边界",
+          "anchor": "observation-implementation"
+        },
+        {
+          "level": 3,
+          "title": "模块、依赖与现有接缝",
+          "anchor": "observation-modules"
+        },
+        {
+          "level": 3,
+          "title": "身份、关系与选择类型",
+          "anchor": "observation-identities"
+        },
+        {
+          "level": 3,
+          "title": "查询与会话接口",
+          "anchor": "observation-query-contract"
+        },
+        {
+          "level": 3,
+          "title": "快照切点、分页与增量确认",
+          "anchor": "observation-snapshot-protocol"
+        },
+        {
+          "level": 3,
+          "title": "事实采集、类型化事件与异步状态",
+          "anchor": "observation-instrumentation"
+        },
+        {
+          "level": 3,
+          "title": "Store、四视图投影与布局",
+          "anchor": "observation-store-projection"
+        },
+        {
+          "level": 3,
+          "title": "订阅生命周期、资源与破坏性升级",
+          "anchor": "observation-breaking-upgrade"
+        },
+        {
+          "level": 3,
+          "title": "技术实施清单与测试落点",
+          "anchor": "observation-technical-delivery"
         }
       ]
     },
@@ -3736,8 +4321,8 @@
       "path": "docs/design/l3-reactive-engine.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 72604,
-      "sha256": "2834e9cf5a34d1d45a62a4d980305d5c8999cdaea4c355ef2f8e21cd45c15976",
+      "bytes": 73227,
+      "sha256": "964f85ce63aae0bdc20888ef86e403a662cc767b935714782685744483d7269a",
       "mapping": "SRC-V04 / SRC-V05 / SRC-V06 / SRC-HOST / K14–K24",
       "sections": [
         {
@@ -3876,8 +4461,8 @@
       "path": "docs/design/l3-validation.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 49160,
-      "sha256": "bc1469cf4074b84e33327599be56a27ed87f3c354a3980ee8fd432e8c42e92e0",
+      "bytes": 50915,
+      "sha256": "2abd248c281ca3c2841dd6409d3a44d56587977ec6e90885a22936ac74558101",
       "mapping": "SRC-V07 / K25–K28",
       "sections": [
         {
@@ -4004,6 +4589,11 @@
           "level": 2,
           "title": "字段状态观察与逐结果通知",
           "anchor": "validation-state-observation"
+        },
+        {
+          "level": 2,
+          "title": "校验观测与共享任务关联",
+          "anchor": "validation-observation-handoff"
         }
       ]
     },
@@ -4011,8 +4601,8 @@
       "path": "docs/design/l4-renderer.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 43672,
-      "sha256": "647120168a3569a873ec8147f1b994dedf64b5f150b84e8dbdfef00a01511027",
+      "bytes": 45311,
+      "sha256": "734096b6755d1b4c74b70551154ecafffce80098cd6fb08ef56a130893c709b3",
       "mapping": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
       "sections": [
         {
@@ -4194,6 +4784,11 @@
           "level": 3,
           "title": "实现目录与状态注释整理",
           "anchor": "react-code-organization"
+        },
+        {
+          "level": 2,
+          "title": "Renderer 的通用观测接缝",
+          "anchor": "renderer-observation-handoff"
         }
       ]
     },
@@ -4201,19 +4796,249 @@
       "path": "docs/design/platform-studio.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 39149,
-      "sha256": "ff249584a859575037d22cf258cb5e53e3fc61785fd84eeadce19dabc3e2e85b",
+      "bytes": 282775,
+      "sha256": "14b3db9778f3bdf55ef4a2bec1af5a5ef66b8222cc4322a47f8dbd650e554928",
       "mapping": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
       "sections": [
         {
           "level": 1,
-          "title": "Platform 与 Studio：范围及待设计工作",
+          "title": "Platform 与 Studio：产品蓝图与待设计工作",
           "anchor": null
         },
         {
           "level": 2,
           "title": "已有边界，尚未展开的设计",
           "anchor": "platform-studio-status"
+        },
+        {
+          "level": 2,
+          "title": "产品蓝图：业务环节、前端页面与后端模型",
+          "anchor": "platform-blueprint"
+        },
+        {
+          "level": 3,
+          "title": "蓝图目标与阅读方式",
+          "anchor": "blueprint-overview"
+        },
+        {
+          "level": 3,
+          "title": "典型场景 · 共用同一条链",
+          "anchor": "blueprint-scenarios"
+        },
+        {
+          "level": 3,
+          "title": "业务环节 · 六个主环节",
+          "anchor": "blueprint-stages"
+        },
+        {
+          "level": 3,
+          "title": "前端页面 · 业务页面与基础管理入口",
+          "anchor": "blueprint-pages"
+        },
+        {
+          "level": 3,
+          "title": "后端模型 · 业务事实及关系",
+          "anchor": "blueprint-models"
+        },
+        {
+          "level": 3,
+          "title": "基础能力管理 · 用户与权限",
+          "anchor": "blueprint-foundation"
+        },
+        {
+          "level": 3,
+          "title": "环节、页面和模型怎样协作",
+          "anchor": "blueprint-relationships"
+        },
+        {
+          "level": 3,
+          "title": "关键操作 · 连接前后端",
+          "anchor": "blueprint-actions"
+        },
+        {
+          "level": 3,
+          "title": "MVP 与逐步演进",
+          "anchor": "blueprint-mvp"
+        },
+        {
+          "level": 3,
+          "title": "逐项设计顺序与确认边界",
+          "anchor": "blueprint-next-design"
+        },
+        {
+          "level": 2,
+          "title": "最小 MVP：配置版本与发布闭环",
+          "anchor": "platform-authoring-mvp"
+        },
+        {
+          "level": 3,
+          "title": "模型、身份与所有权",
+          "anchor": "authoring-models"
+        },
+        {
+          "level": 3,
+          "title": "页面与最小范围",
+          "anchor": "authoring-pages"
+        },
+        {
+          "level": 3,
+          "title": "创建与复制",
+          "anchor": "authoring-fork"
+        },
+        {
+          "level": 3,
+          "title": "保存与历史",
+          "anchor": "authoring-save"
+        },
+        {
+          "level": 3,
+          "title": "检查、预览与发布",
+          "anchor": "authoring-publish"
+        },
+        {
+          "level": 3,
+          "title": "Host 消费与交付身份",
+          "anchor": "authoring-host"
+        },
+        {
+          "level": 3,
+          "title": "最小验收与实施边界",
+          "anchor": "authoring-acceptance"
+        },
+        {
+          "level": 3,
+          "title": "本次 MVP 补齐范围与纵向任务",
+          "anchor": "platform-mvp-completion"
+        },
+        {
+          "level": 3,
+          "title": "GitHub 登录与会话",
+          "anchor": "platform-github-login"
+        },
+        {
+          "level": 3,
+          "title": "平台账号、申请加入与审批",
+          "anchor": "platform-account-admission"
+        },
+        {
+          "level": 4,
+          "title": "页面与操作",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "状态与一致性",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "GitHub 原生账号与登录方式",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "API 与实施接口",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "兼容、交付切片与验收",
+          "anchor": null
+        },
+        {
+          "level": 2,
+          "title": "Studio UI 契约",
+          "anchor": "studio-ui-contract"
+        },
+        {
+          "level": 3,
+          "title": "组件来源与封装",
+          "anchor": "studio-ui-components"
+        },
+        {
+          "level": 3,
+          "title": "字体加载与字阶",
+          "anchor": "studio-ui-typography"
+        },
+        {
+          "level": 3,
+          "title": "主题变量与布局尺度",
+          "anchor": "studio-ui-theme"
+        },
+        {
+          "level": 3,
+          "title": "表单与布局间距",
+          "anchor": "studio-ui-spacing"
+        },
+        {
+          "level": 3,
+          "title": "可观察交互",
+          "anchor": "studio-ui-interaction"
+        },
+        {
+          "level": 3,
+          "title": "页面、导航、筛选栏与弹窗布局",
+          "anchor": "studio-ui-layout"
+        },
+        {
+          "level": 4,
+          "title": "页面外壳与导航",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "滚动区设计",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "筛选栏与宽表格",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "弹窗尺寸与内部布局",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "按任务加载与实施验证",
+          "anchor": "studio-ui-context"
+        },
+        {
+          "level": 2,
+          "title": "用户与权限：单团队 RBAC 方案",
+          "anchor": "platform-rbac"
+        },
+        {
+          "level": 3,
+          "title": "身份、成员与资源范围",
+          "anchor": "rbac-model"
+        },
+        {
+          "level": 3,
+          "title": "四角色与五组基础权限",
+          "anchor": "rbac-roles"
+        },
+        {
+          "level": 3,
+          "title": "成员管理入口与生命周期",
+          "anchor": "rbac-members"
+        },
+        {
+          "level": 3,
+          "title": "表单管理与工作台的权限映射",
+          "anchor": "rbac-form-actions"
+        },
+        {
+          "level": 3,
+          "title": "授权、撤权与执行时点",
+          "anchor": "rbac-enforcement"
+        },
+        {
+          "level": 3,
+          "title": "多团队扩展与验收",
+          "anchor": "rbac-expansion"
         },
         {
           "level": 2,
@@ -4229,6 +5054,36 @@
           "level": 3,
           "title": "工程质量与可观测性",
           "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "首期错误事件采集与查询",
+          "anchor": "platform-diagnostic-events"
+        },
+        {
+          "level": 4,
+          "title": "上报与接收",
+          "anchor": "platform-diagnostic-ingestion"
+        },
+        {
+          "level": 4,
+          "title": "诊断事件映射与现场边界",
+          "anchor": "platform-diagnostic-mapping"
+        },
+        {
+          "level": 4,
+          "title": "PostgreSQL 存储",
+          "anchor": "platform-diagnostic-storage"
+        },
+        {
+          "level": 4,
+          "title": "查询与保留",
+          "anchor": "platform-diagnostic-query-retention"
+        },
+        {
+          "level": 4,
+          "title": "验收范围",
+          "anchor": "platform-diagnostic-acceptance"
         },
         {
           "level": 2,
@@ -4252,17 +5107,17 @@
         },
         {
           "level": 3,
-          "title": "4. 编辑、入库与编译流程（待确认 P2）",
+          "title": "4. 编辑、入库与编译流程（旧 P2 比较，已由 MVP 承接）",
           "anchor": null
         },
         {
           "level": 3,
-          "title": "5. 发布、权限与回滚（待确认 P3）",
+          "title": "5. 发布、权限与回滚（P3 首期直接发布已确认）",
           "anchor": null
         },
         {
           "level": 3,
-          "title": "6. Host 获取与运行会话固定（待确认 P4）",
+          "title": "6. Host 获取与运行会话固定（P4 首期精确 Release 已确认）",
           "anchor": null
         },
         {
@@ -4272,13 +5127,198 @@
         },
         {
           "level": 3,
-          "title": "本轮待确认清单",
+          "title": "旧候选清单及替代关系",
           "anchor": null
         },
         {
           "level": 2,
-          "title": "Agent 赋能与完整能力接入规划（后续候选）",
+          "title": "Agent 赋能、已确认蓝图与后续能力规划",
           "anchor": "agent-capability-plan"
+        },
+        {
+          "level": 3,
+          "title": "已确认 Agent 蓝图与实施边界",
+          "anchor": "agent-confirmed-blueprint"
+        },
+        {
+          "level": 3,
+          "title": "智能表单工作台",
+          "anchor": "agent-form-workspace"
+        },
+        {
+          "level": 3,
+          "title": "统一 Studio 助手与首批交付",
+          "anchor": "agent-assistant-entry"
+        },
+        {
+          "level": 3,
+          "title": "会话、草稿与接口契约",
+          "anchor": "agent-create-contract"
+        },
+        {
+          "level": 4,
+          "title": "统一助手 Graph 与节点状态",
+          "anchor": "agent-turn-graph"
+        },
+        {
+          "level": 4,
+          "title": "Agent 对话页与行为组件",
+          "anchor": "agent-conversation-ui"
+        },
+        {
+          "level": 4,
+          "title": "会话与平台草稿的数据归属",
+          "anchor": "agent-conversation-draft-ownership"
+        },
+        {
+          "level": 4,
+          "title": "消息、执行步骤与中断恢复",
+          "anchor": "agent-turn-recovery"
+        },
+        {
+          "level": 4,
+          "title": "候选编译失败后的修复循环",
+          "anchor": "agent-create-compiler-repair"
+        },
+        {
+          "level": 4,
+          "title": "编辑页协作、工作稿与首次保存",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "需求理解、标准化与配置交接",
+          "anchor": "agent-create-requirements"
+        },
+        {
+          "level": 4,
+          "title": "原异步创建与三方详细设计（历史）",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "历史 · 对象、数据域与执行语义",
+          "anchor": "agent-create-lifecycle"
+        },
+        {
+          "level": 4,
+          "title": "历史 · Studio 与 Platform 接口",
+          "anchor": "agent-create-client-api"
+        },
+        {
+          "level": 4,
+          "title": "历史 · 业务结果、错误和结构约束",
+          "anchor": "agent-create-results"
+        },
+        {
+          "level": 4,
+          "title": "历史 · Platform 与 Agent 接口",
+          "anchor": "agent-create-internal-api"
+        },
+        {
+          "level": 4,
+          "title": "历史 · Agent 回调 Platform 的工具接口",
+          "anchor": "agent-create-tool-api"
+        },
+        {
+          "level": 4,
+          "title": "历史 · 可靠投递、执行接管与失败恢复",
+          "anchor": "agent-create-recovery"
+        },
+        {
+          "level": 4,
+          "title": "历史 · 三个会话的详细设计范围与验收",
+          "anchor": "agent-create-design-workstreams"
+        },
+        {
+          "level": 4,
+          "title": "历史 · 实施切片与预检未决项",
+          "anchor": "agent-create-delivery-slices"
+        },
+        {
+          "level": 4,
+          "title": "旅险候选的真实 Runtime 验收",
+          "anchor": "agent-create-runtime-acceptance"
+        },
+        {
+          "level": 4,
+          "title": "MCP 与插件扩展方向及首期复用约束",
+          "anchor": "agent-mcp-extension"
+        },
+        {
+          "level": 3,
+          "title": "六类 Agent 与共享 Harness",
+          "anchor": "agent-roles-harness"
+        },
+        {
+          "level": 3,
+          "title": "三层 Loop 与场景编排",
+          "anchor": "agent-loops"
+        },
+        {
+          "level": 3,
+          "title": "首期 Query 与修复状态流",
+          "anchor": "agent-repair-state"
+        },
+        {
+          "level": 3,
+          "title": "两侧接口与示例",
+          "anchor": "agent-api"
+        },
+        {
+          "level": 3,
+          "title": "工具授权、错误与数据出口",
+          "anchor": "agent-tools-security"
+        },
+        {
+          "level": 3,
+          "title": "PostgreSQL、内部凭证与多实例运行",
+          "anchor": "agent-storage-routing"
+        },
+        {
+          "level": 4,
+          "title": "服务身份与运行授权",
+          "anchor": "agent-internal-credentials"
+        },
+        {
+          "level": 4,
+          "title": "运行与检查状态",
+          "anchor": "agent-runtime-persistence"
+        },
+        {
+          "level": 4,
+          "title": "多实例与失败处理",
+          "anchor": "agent-multi-instance"
+        },
+        {
+          "level": 3,
+          "title": "Platform PostgreSQL 迁移范围与实施顺序",
+          "anchor": "platform-postgresql-migration"
+        },
+        {
+          "level": 4,
+          "title": "当前实现与类型兼容",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "切换与回退判定",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "离线知识包：来源、清洗、检索与更新",
+          "anchor": "agent-knowledge"
+        },
+        {
+          "level": 3,
+          "title": "记忆与结构化产物边界",
+          "anchor": "agent-memory"
+        },
+        {
+          "level": 3,
+          "title": "阶段、验收与剩余细化",
+          "anchor": "agent-delivery"
         },
         {
           "level": 3,
@@ -4369,6 +5409,76 @@
           "level": 2,
           "title": "Compiler 分析复用与展示边界",
           "anchor": "compiler-platform-analysis"
+        },
+        {
+          "level": 3,
+          "title": "本地开发快捷登录",
+          "anchor": "platform-local-login"
+        },
+        {
+          "level": 2,
+          "title": "Studio 配置创作与接入工作台",
+          "anchor": "studio-authoring-expansion"
+        },
+        {
+          "level": 3,
+          "title": "5. 面向表单语义的编辑界面",
+          "anchor": null
+        },
+        {
+          "level": 4,
+          "title": "可视化编辑的职责与待设计入口",
+          "anchor": "studio-visual-editing-boundary"
+        },
+        {
+          "level": 4,
+          "title": "数据模型首期可视化与实施交接",
+          "anchor": "studio-data-model-visual"
+        },
+        {
+          "level": 4,
+          "title": "字段配置抽屉统一与验收",
+          "anchor": "studio-schema-drawer-review"
+        },
+        {
+          "level": 4,
+          "title": "布局可视化编辑与实施交接",
+          "anchor": "studio-layout-visual"
+        },
+        {
+          "level": 4,
+          "title": "联动可视化编辑与实施交接",
+          "anchor": "studio-reaction-visual"
+        },
+        {
+          "level": 4,
+          "title": "单条动作编辑器",
+          "anchor": "studio-action-editor"
+        },
+        {
+          "level": 4,
+          "title": "共享表达式编辑器",
+          "anchor": "studio-expression-editor"
+        },
+        {
+          "level": 4,
+          "title": "嵌套表达式的取值展示",
+          "anchor": "studio-expression-reading"
+        },
+        {
+          "level": 4,
+          "title": "自定义校验可视化编辑与实施交接",
+          "anchor": "studio-constraint-visual"
+        },
+        {
+          "level": 3,
+          "title": "6. 可复用模板与测试场景",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "7. 操作记录查询",
+          "anchor": null
         }
       ]
     },
@@ -4376,8 +5486,8 @@
       "path": "docs/design/usage-guide.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 20824,
-      "sha256": "c0fbd257badf8dbfad2861d2908f53de210f467e635f15b4583ca59b3e14bc8b",
+      "bytes": 21313,
+      "sha256": "257b3d14b59b0230cc87c1ce3e0e31735ab97ed4c040b60790e91d45326a218f",
       "mapping": "SRC-L1 / SRC-V05 / SRC-HOST / SRC-V07",
       "sections": [
         {
@@ -4431,8 +5541,8 @@
       "path": "docs/design/workflows.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 28877,
-      "sha256": "86136ce66b738b6a7790472f83d6b756c1d741e0c92a843476cee92264046374",
+      "bytes": 38736,
+      "sha256": "5006510a4cf36ff9b71937377a43c5e16273a546628f12459b1dae8f90bee2b8",
       "mapping": "SRC-WORKFLOWS / 五类研发工作流与项目 skill，真实任务效果待验证",
       "sections": [
         {
@@ -4442,7 +5552,7 @@
         },
         {
           "level": 2,
-          "title": "先选你要做的任务",
+          "title": "直接描述你要做的任务",
           "anchor": "workflow-selection"
         },
         {
@@ -4504,6 +5614,31 @@
           "level": 2,
           "title": "Skill 和工具选择：哪些需要安装",
           "anchor": "workflow-tools"
+        },
+        {
+          "level": 2,
+          "title": "OpenSpec 变更管理与执行衔接",
+          "anchor": "workflow-openspec"
+        },
+        {
+          "level": 3,
+          "title": "权威来源与产物",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "中途变更与恢复",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "本地命令与 hooks",
+          "anchor": null
+        },
+        {
+          "level": 3,
+          "title": "隔离验证与剩余范围",
+          "anchor": null
         },
         {
           "level": 2,
@@ -24295,6 +25430,42 @@
       "sections": []
     },
     {
+      "path": "docs/validation/create-form-travel-compose-context.json",
+      "role": "candidate-validation-evidence",
+      "coverage": "indexed",
+      "bytes": 67178,
+      "sha256": "014eff85b55b6335a1c71d534147f2ff6ab29ef215262e71e1fdec6ec88c8da2",
+      "mapping": "source-map.md#src-validation; not production runtime verification",
+      "sections": []
+    },
+    {
+      "path": "docs/validation/create-form-travel-parallel-binding.json",
+      "role": "candidate-validation-evidence",
+      "coverage": "indexed",
+      "bytes": 9045,
+      "sha256": "2558ca7927e07bb5d51d60061e32842870ddd83a1c959cafa55158c6b6d482a1",
+      "mapping": "source-map.md#src-validation; not production runtime verification",
+      "sections": []
+    },
+    {
+      "path": "docs/validation/create-form-travel-resume.json",
+      "role": "candidate-validation-evidence",
+      "coverage": "indexed",
+      "bytes": 2004,
+      "sha256": "bfdd399f127e583c9f732caaab64cbcfa6ef98ef866d91174a2b73fb1ca85567",
+      "mapping": "source-map.md#src-validation; not production runtime verification",
+      "sections": []
+    },
+    {
+      "path": "docs/validation/create-form-travel-view-revision.json",
+      "role": "candidate-validation-evidence",
+      "coverage": "indexed",
+      "bytes": 2860,
+      "sha256": "a2ab27fe09ea54526e0179b2c19bdd40fe62de672f2fbfe1507e138e80576691",
+      "mapping": "source-map.md#src-validation; not production runtime verification",
+      "sections": []
+    },
+    {
       "path": "docs/validation/create_report.py",
       "role": "candidate-validation-evidence",
       "coverage": "indexed",
@@ -24577,8 +25748,8 @@
       "path": "tools/docs/test_knowledge.py",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 9363,
-      "sha256": "7cfe13e3e90258e2395b457b33419f13634e15665bcdff7d6e1da5aae8cd86fd",
+      "bytes": 9297,
+      "sha256": "bef394788071d520c98b73636f53c4263d76c5e076b44488a9792aaa261dcdb5",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },
@@ -24586,8 +25757,8 @@
       "path": "tools/docs/test_search.cjs",
       "role": "documentation-tooling",
       "coverage": "indexed",
-      "bytes": 3152,
-      "sha256": "085e66120011f988f2be7aea1019b17c0140697b988174ae0fa0062b2c27beba",
+      "bytes": 3383,
+      "sha256": "6cd6efd8fb7d1311ccb95cb53497bf39ea269f130a5ccb99ab18d52c35ccefbb",
       "mapping": "文档生成 / 盘点；非引擎实现",
       "sections": []
     },

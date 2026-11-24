@@ -1,0 +1,506 @@
+{
+  "text-input": {
+    "title": "文本输入",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "填写姓名、电话等文本，支持只读与长度限制。",
+    "annotations": {
+      "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/propsSchema/properties/readOnly": "只读展示，用户不能修改当前值。",
+      "/propsSchema/properties/maxLength": "允许输入的最大字符数。",
+      "/propsSchema/properties/inputMode": "提示设备使用文本或电话输入键盘，不改变字段类型。",
+      "/bindings/value": "当前文本；用户输入后写入字符串，空输入保存为空字符串。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "placeholder": "请输入姓名",
+          "disabled": false,
+          "readOnly": false,
+          "maxLength": 40,
+          "inputMode": "text"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": "林小满"
+        }
+      }
+    ]
+  },
+  "number-input": {
+    "title": "数字输入",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "输入人数、数量等数字，支持数字或小数键盘提示。",
+    "annotations": {
+      "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/propsSchema/properties/readOnly": "只读展示，用户不能修改当前值。",
+      "/propsSchema/properties/inputMode": "提示设备使用数字或小数输入键盘，不限制实际输入内容。",
+      "/bindings/value": "契约期望 number 或 null；有效数字输入写入数字，清空写 null，无法无损解析的文本原样写入，由业务校验处理。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "placeholder": "请输入年龄",
+          "disabled": false,
+          "readOnly": false,
+          "inputMode": "numeric"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": 30
+        }
+      }
+    ]
+  },
+  "checkbox": {
+    "title": "勾选",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "用于确认条款或切换布尔选项。",
+    "annotations": {
+      "/propsSchema/properties/label": "控件展示的文字标签。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/bindings/value": "当前勾选状态：选中为 true，取消为 false。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "label": "我已核对信息",
+          "disabled": false
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": true
+        }
+      }
+    ]
+  },
+  "select": {
+    "title": "固定选项",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "从预设列表中选择一项。",
+    "annotations": {
+      "/propsSchema/properties/options": "可选择的候选项列表，每项包含稳定标识 id 和展示文字 label。",
+      "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/propsSchema/properties/clearable": "是否显示清空选择入口。",
+      "/bindings/value": "当前选项的 id 字符串；未选择或清空时为 null。选择不会写入整个选项对象。",
+      "/propsSchema/properties/options/items/properties/id": "选项的业务标识，选择后写入 bindings.value。",
+      "/propsSchema/properties/options/items/properties/label": "在下拉列表中展示给用户的文字。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "options": [
+            {
+              "id": "basic",
+              "label": "基础计划"
+            },
+            {
+              "id": "plus",
+              "label": "升级计划"
+            }
+          ],
+          "placeholder": "请选择计划",
+          "disabled": false,
+          "clearable": true
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": "basic"
+        }
+      }
+    ]
+  },
+  "date-range": {
+    "title": "日期范围",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "选择开始和结束日期，确认后写入表单。",
+    "annotations": {
+      "/propsSchema/properties/label": "控件展示的文字标签。",
+      "/propsSchema/properties/startMin": "开始日期的下限，包含当天。格式为 YYYY-MM-DD。",
+      "/propsSchema/properties/startMax": "开始日期的上限，包含当天。格式为 YYYY-MM-DD。",
+      "/propsSchema/properties/startLabel": "开始日期的字段标签。",
+      "/propsSchema/properties/endLabel": "结束日期的字段标签。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/bindings/start": "绑定开始日期，YYYY-MM-DD 或 null。",
+      "/bindings/end": "绑定结束日期，YYYY-MM-DD 或 null。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "label": "出行日期",
+          "startLabel": "开始日期",
+          "endLabel": "结束日期",
+          "disabled": false
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "start": "2028-02-28",
+          "end": "2028-02-29"
+        }
+      }
+    ]
+  },
+  "remote-select": {
+    "title": "远程搜索",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "搜索并选择候选项，结果由 Host 提供。",
+    "annotations": {
+      "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/propsSchema/properties/clearable": "是否显示清空选择入口。",
+      "/propsSchema/properties/filterKey": "外部传入的筛选条件，例如国家代码 CN；可通过表达式读取表单数据。它是 Props，不是选中值绑定，未提供时请求中传 null。",
+      "/bindings/value": "用户选中的完整候选对象 { id, label }，或未选择时的 null；输入关键词和搜索成功都不会修改它。",
+      "/requests/search": "点击搜索或按 Enter 调用。query 来自搜索框，filterKey 来自外部 Props；用户选中候选项后才将 { id, label } 写入 bindings.value，清空写 null。",
+      "/requests/search/payloadSchema/properties/query": "搜索框输入的关键词，如“杭州”。物料内部维护，无需配置绑定。",
+      "/requests/search/payloadSchema/properties/filterKey": "外部 props.filterKey，如国家代码 CN。未提供时传 null。",
+      "/requests/search/resultSchema/properties/items": "候选项列表，每项包含 id 和 label；无匹配时返回空数组。",
+      "/requests/search/resultSchema/properties/items/items/properties/id": "候选项的业务标识，如 hangzhou。",
+      "/requests/search/resultSchema/properties/items/items/properties/label": "展示给用户的文字，如“杭州市”。",
+      "/bindings/value/schema/anyOf/0/properties/id": "已选候选项的业务标识。",
+      "/bindings/value/schema/anyOf/0/properties/label": "选择时的展示文字快照，不代表服务端权威名称。"
+    },
+    "requestExamples": {
+      "search": [
+        {
+          "title": "1. 用户输入关键词，物料向 Host 发起搜索",
+          "description": "假设 props.filterKey 通过表达式读到国家代码 CN，用户在搜索框输入“杭州”。点击搜索或按 Enter 时，物料将两者合并为下面这个对象；query 不需要在配置中额外绑定。",
+          "value": {
+            "query": "杭州",
+            "filterKey": "CN"
+          }
+        },
+        {
+          "title": "2. Host 返回候选列表",
+          "description": "返回一个对象，其中 items 是数组。数组内每个对象代表一个可选项：id 是业务标识，label 是显示文字。此示例只有一个候选项，也可以有多个；没有结果时返回 { \"items\": [] }，不要直接返回数组或选中值。",
+          "value": {
+            "items": [
+              {
+                "id": "hangzhou",
+                "label": "杭州市"
+              }
+            ]
+          }
+        },
+        {
+          "title": "3. 用户选择后，才写入绑定值",
+          "description": "用户点击“杭州市”后，物料将下面整个对象写入 bindings.value 指向的位置（例如 /travel/city）。这里只保存选中的一项，不保存 items 外层或 query。清空选择写入 null。",
+          "value": {
+            "id": "hangzhou",
+            "label": "杭州市"
+          }
+        }
+      ]
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "placeholder": "搜索城市",
+          "disabled": false,
+          "clearable": true,
+          "filterKey": "CN"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": {
+            "id": "hangzhou",
+            "label": "杭州市"
+          }
+        }
+      }
+    ]
+  },
+  "field": {
+    "title": "字段容器",
+    "category": "布局",
+    "implementation": "React",
+    "summary": "组合标签、必填标记、帮助文字和输入控件。",
+    "annotations": {
+      "/propsSchema/properties/label": "控件展示的文字标签。",
+      "/propsSchema/properties/help": "显示在字段下方的补充说明。",
+      "/propsSchema/properties/requiredMark": "是否显示必填标记；标记本身不创建校验规则。",
+      "/bindings/value": "关联字段的校验状态与问题展示；容器本身不修改值，实际输入由插槽控件负责。",
+      "/slots/0": "字段中的输入控件。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "label": "姓名",
+          "help": "请填写证件上的姓名",
+          "requiredMark": true
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "value": "林小满"
+        }
+      }
+    ]
+  },
+  "section": {
+    "title": "章节容器",
+    "category": "布局",
+    "implementation": "React",
+    "summary": "用标题分组表单内容，支持折叠展开。",
+    "annotations": {
+      "/propsSchema/properties/title": "容器或弹层标题。",
+      "/propsSchema/properties/description": "标题下方的补充说明。",
+      "/propsSchema/properties/collapsible": "是否允许折叠和展开章节内容。",
+      "/propsSchema/properties/defaultExpanded": "组件首次挂载时是否展开。",
+      "/slots/0": "章节内的内容。",
+      "/slots/1": "章节标题旁的操作区域，如新增或提交按钮。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "title": "出行信息",
+          "description": "填写目的地与日期",
+          "collapsible": true,
+          "defaultExpanded": true
+        }
+      }
+    ]
+  },
+  "grid": {
+    "title": "响应式网格",
+    "category": "布局",
+    "implementation": "React",
+    "summary": "将字段排列为一至三列，随容器宽度调整。",
+    "annotations": {
+      "/propsSchema/properties/columns": "网格列数，可选 1、2、3；窄容器下按响应式规则调整。",
+      "/propsSchema/properties/gap": "子项间距，可选 small、medium、large。",
+      "/slots/0": "参与网格布局的内容。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "columns": 2,
+          "gap": "medium"
+        }
+      }
+    ]
+  },
+  "condition": {
+    "title": "条件显示",
+    "category": "布局",
+    "implementation": "React",
+    "summary": "根据布尔条件显示或隐藏内容。",
+    "annotations": {
+      "/propsSchema/properties/visible": "是否显示默认插槽内容。",
+      "/slots/0": "条件为 true 时显示的内容。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "visible": true
+        }
+      }
+    ]
+  },
+  "value-display": {
+    "title": "只读展示",
+    "category": "展示",
+    "implementation": "React",
+    "summary": "展示文本、整数或金额。",
+    "annotations": {
+      "/propsSchema/properties/value": "需要展示的 JSON 值。",
+      "/propsSchema/properties/format": "展示格式：文本、整数或以分计价的金额。",
+      "/propsSchema/properties/emptyText": "没有可展示内容时使用的占位文字。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "value": 12800,
+          "format": "moneyMinor",
+          "emptyText": "暂无金额"
+        }
+      }
+    ]
+  },
+  "insured-summary": {
+    "title": "被保人摘要",
+    "category": "业务",
+    "implementation": "React",
+    "summary": "汇总姓名、年龄、金额和校验状态。",
+    "annotations": {
+      "/propsSchema/properties/premiumMinor": "试算金额，单位为分；null 表示暂无可展示金额。",
+      "/propsSchema/properties/emptyName": "姓名尚未填写时显示的占位文字。",
+      "/bindings/insured": "只读被保人对象，用于读取 name、age 并展示校验摘要；Manifest 未限制对象的内部字段。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "premiumMinor": 12800,
+          "emptyName": "未填写姓名"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
+        "value": {
+          "insured": {
+            "name": "林小满",
+            "age": 30
+          }
+        }
+      }
+    ]
+  },
+  "button": {
+    "title": "操作按钮",
+    "category": "交互",
+    "implementation": "React",
+    "summary": "触发表单操作，支持主要、次要和危险样式。",
+    "annotations": {
+      "/propsSchema/properties/label": "控件展示的文字标签。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/propsSchema/properties/variant": "按钮外观：主要、次要或危险操作。",
+      "/events/activate": "用户激活按钮时发出的通知；配置需要将其映射到表单命令或 Host 事件。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "label": "保存草稿",
+          "disabled": false,
+          "variant": "primary"
+        }
+      }
+    ]
+  },
+  "dialog-editor": {
+    "title": "编辑弹层",
+    "category": "交互",
+    "implementation": "React",
+    "summary": "在弹层中编辑内容，并在表单内保留摘要。",
+    "annotations": {
+      "/propsSchema/properties/title": "容器或弹层标题。",
+      "/propsSchema/properties/triggerLabel": "打开编辑弹层的按钮文字。",
+      "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+      "/slots/0": "弹层关闭时在表单内展示的摘要内容。",
+      "/slots/1": "弹层打开后展示的编辑内容。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "示例为表达式求值后的实际属性对象；可选属性的示例值不表示默认值。",
+        "value": {
+          "title": "编辑成员",
+          "triggerLabel": "编辑",
+          "disabled": false
+        }
+      }
+    ]
+  },
+  "array-editor": {
+    "title": "对象数组编辑器",
+    "summary": "编辑对象集合，支持暂存、排序与删除确认。",
+    "category": "容器",
+    "implementation": "React",
+    "annotations": {
+      "/propsSchema/properties/title": "列表标题。",
+      "/propsSchema/properties/initial": "新增成员的初始字段与值。",
+      "/propsSchema/properties/columns": "摘要区域列数。",
+      "/propsSchema/properties/defaultExpanded": "卡片初始展开状态。",
+      "/propsSchema/properties/drawerTitle": "编辑面板标题。",
+      "/propsSchema/properties/confirmTitle": "删除确认标题。",
+      "/propsSchema/properties/minItems": "删除时至少保留的行数。",
+      "/bindings/value": "需要编辑的对象数组。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "新成员从空姓名开始。",
+        "value": {
+          "title": "同行人",
+          "initial": {
+            "姓名": ""
+          }
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "成员按列表顺序展示。",
+        "value": {
+          "value": [
+            {
+              "姓名": "小林"
+            }
+          ]
+        }
+      }
+    ],
+    "examples": [
+      {
+        "source": "services/api/src/platform/material-previews.ts",
+        "value": {
+          "material": "array-editor",
+          "props": {
+            "title": "同行人",
+            "initial": {
+              "name": ""
+            }
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/people"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

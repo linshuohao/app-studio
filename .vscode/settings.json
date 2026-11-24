@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/services/agent/.venv",
+  "cursorpyright.analysis.include": ["services/agent/src", "services/agent/tests"],
+  "cursorpyright.analysis.typeCheckingMode": "basic",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  }
+}

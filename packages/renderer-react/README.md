@@ -182,6 +182,6 @@ pnpm test:e2e
 
 `tests/renderer.test.tsx` 验证真实首读 / 写入 / Host 改值 / 局部缺失；composition 覆盖表达式计数、Context、数组与模板；lifecycle 覆盖首次读取交接、Strict Mode、隐藏重挂、改绑、非法输入 / 确认、Host 通知、Profile、故障 / 恢复；requests 覆盖并发、取消、乱序 / 失败、注册缺失与实例销毁；type-contracts.ts 在独立测试类型检查中验证静态负例。
 
-浏览器入口为 Playground `/l4`（点击“打开验证”），源在 `apps/playground/src/app/l4`，用测试专用物料与可控 Host 连接真实 Compiler / Runtime。`tests/e2e/renderer.spec.ts` 操作页面到完整校验及 Host 交付，不用直接 Command 替代用户输入。验证夹具不是正式基础物料库或真实业务应用。
+浏览器入口现为 Playground 首页及 `/demos/basic`、`/demos/members`、`/demos/interactions`、`/demos/travel`，源在 `apps/playground/src/demos`，全部使用正式物料与可控 Host。旧 `/l4` 专用物料夹具和 renderer.spec.ts 已移除；原输入、Scope、请求与提交行为由正式场景 E2E 覆盖，故障隔离与 Strict Mode 等 SDK 反例继续保留在包内测试。
 
-当前交付以客户端交互为范围。SSR 表单水合、Flutter、正式基础物料库、业务纯函数、真实 Host 后端、生产设备性能与完整监控平台仍未验收；不能从测试通过外推这些能力。
+当前交付以客户端交互为范围。首批 14 个正式物料、7 个业务函数及完整可控表单已本地交付，见[资产实施证据](../../docs/design/engineering.md#business-travel-implementation)。SSR 表单水合、Flutter、真实 Host 后端、生产设备性能与完整监控平台仍未验收；不能从测试通过外推这些能力。

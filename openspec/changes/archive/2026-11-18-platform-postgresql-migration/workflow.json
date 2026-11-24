@@ -1,0 +1,31 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md",
+    "docs/design/decisions/ADR-FE-031-postgresql-agent-runtime.md"
+  ],
+  "scope": [
+    ".gitignore",
+    ".prettierignore",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "services/api/package.json",
+    "services/api/.env.example",
+    "services/api/README.md",
+    "services/api/compose.postgres.yaml",
+    "services/api/src/platform",
+    "services/api/tools",
+    "services/api/test",
+    "services/api/migrations",
+    "services/api/vitest.config.e2e.ts",
+    "apps/studio/package.json",
+    "apps/studio/tsconfig.json",
+    "apps/studio/tests/start-api.mjs",
+    "apps/playground/package.json",
+    ".github/workflows/quality.yml",
+    "playwright.config.ts"
+  ],
+  "checks": [
+    ["pnpm", "check"],
+    ["pnpm", "audit", "--prod", "--audit-level", "low"]
+  ]
+}

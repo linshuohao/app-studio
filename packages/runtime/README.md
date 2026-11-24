@@ -1,6 +1,6 @@
 # L3 Runtime：代码 Review 入口
 
-本包消费真实 Compiler 产出的 Prepared /2，提供无界面的数据、观察、联动和校验主链。设计依据为 [L3 总览](../../docs/design/l3-reactive-engine.md)、[数据与 Scope](../../docs/design/l3-data-scope.md)、[校验](../../docs/design/l3-validation.md)和 ADR-FE-018 / 019 / 020。下列 SDK 是本次实现的 review 草案；实现事实与剩余限制分别列出，不宣称已完成 React / Flutter 或生产性能验收。
+本包消费真实 Compiler 产出的 Prepared /2，提供无界面的数据、观察、联动和校验主链。设计依据为 [L3 总览](../../docs/design/l3-reactive-engine.md)、[数据与 Scope](../../docs/design/l3-data-scope.md)、[校验](../../docs/design/l3-validation.md)和 ADR-FE-018 / 019 / 020。下列 SDK 是本次实现的 review 草案；实现事实与剩余限制分别列出，React 消费与正式物料已有后续本地证据；Flutter 与生产性能尚未验收。
 
 ## 内部命名与公开契约
 
@@ -308,4 +308,6 @@ pnpm packages:check
 
 用例以可观察结果为依据，包含逐 Command 往返、多个 emit、同步回调重入、别名不同的前置、兄弟成员隔离、移动 / 删除、乱序与过期异常、完整覆盖和 Host 成功 / 失败。打包检查额外在独立 tarball 消费者验证 JS、只读 TS 类型和真实 Compiler → Runtime 输入输出。
 
-当前仍是无界面核心实现：结构变化时规则实例协调、Schema 校验和字段来源聚合仍可能遍历活跃集合 / 数据；大量受影响订阅也须逐项维护，不能据局部索引改造宣称整条编辑链常量时间。成员句柄只在当前进程 / 实例中使用，不可持久化。函数和 Schema 的重复编译缓存、细粒度字段聚合索引、首次输入默认值策略、真实 React Adapter / UI 操作、Flutter 等价、极深输入的递归边界、设备基准与生产阈值仍需后续交付。
+本包保持无界面核心职责，已由 React Renderer 与完整资产表单消费：结构变化时规则实例协调、Schema 校验和字段来源聚合仍可能遍历活跃集合 / 数据；大量受影响订阅也须逐项维护，不能据局部索引改造宣称整条编辑链常量时间。成员句柄只在当前进程 / 实例中使用，不可持久化。函数和 Schema 的重复编译缓存、细粒度字段聚合索引、首次输入默认值策略、真实 Host 接入、Flutter 等价、极深输入的递归边界、设备基准与生产阈值仍需后续交付。
+
+开发态观测入口使用版本 2 的只读 request / subscribe：实际 DevTools 连接后自动推送有界事实，Hook 存在本身不启用完整历史；不支持手动 startCapture / stopCapture。业务采集只固定最小 DTO，消费者异步批量接收，关闭连接不取消业务任务；接口与预算见[观测契约](../../docs/design/l3-observability.md#observation-query-contract)。

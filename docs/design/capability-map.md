@@ -8,13 +8,14 @@ modules:
 - M01
 tags: []
 sources:
+- SRC-PLATFORMBLUEPRINT
 - SRC-ASSETDESIGN
 - SRC-EARLY
 - SRC-L1
 - SRC-L2
 - SRC-DEP
 related: {}
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 navigation:
   group: 01 · 架构全貌
   order: 20
@@ -31,7 +32,7 @@ relocated_sections:
 
 ## 产品能力定位与阅读层级 {#product-capability-map}
 
-[整体蓝图](architecture.md#product-blueprint)回答产品由什么组成、怎样协作；本页将能力对应到责任与专题；各层 / 能力专题维护完整设计。它们属于文档阅读层级，不增加表单 L1–L4 的执行层。整体产品组织仍待审阅，已有核心责任继续有效。
+[整体蓝图](architecture.md#product-blueprint)回答产品由什么组成、怎样协作；本页将能力对应到责任与专题；各层 / 能力专题维护完整设计。它们属于文档阅读层级，不增加表单 L1–L4 的执行层。平台产品定位与“业务环节—前端页面—后端模型”的组织方式已确认，见[平台蓝图](platform-studio.md#platform-blueprint)；单团队 RBAC 与 [DDD 模块化单体方向](architecture.md#platform-modular-monolith)已确认；具体页面、模型与接口待设计，已有核心责任继续有效。
 
 
 ```diagram
@@ -56,13 +57,13 @@ relocated_sections:
       },
       {
         "title": "Studio",
-        "body": "定义编辑、诊断、预览、调试；完整产品待设计"
+        "body": "表单管理、工作台、检查与预览；具体页面待设计"
       }
     ],
     [
       {
         "title": "Platform",
-        "body": "资产、构建、发布、分发、权限与审计；方案待确认"
+        "body": "资产、交付、问题与用户权限管理；最小创作 MVP 已确认，接口待细化"
       },
       {
         "title": "Agent",
@@ -82,8 +83,8 @@ relocated_sections:
 | --- | --- |
 | 四层引擎 | 下方纵向图谱及 L1–L4 专题 |
 | 物料 / 纯函数与 Host | [扩展与集成](extension-integration.md)、[首批正式资产与验收](extension-integration.md#first-assets)；模板 / 版本工具见[工程主题](engineering.md#asset-tooling)，设计确认待实现 |
-| Platform / Studio | [范围与候选流程](platform-studio.md#platform-studio-status) |
-| Agent 场景与完整能力 | [赋能与接入规划](platform-studio.md#agent-capability-plan)、[Agent 八层覆盖](platform-studio.md#agent-eight-layers) |
+| Platform / Studio | [蓝图与已确认创作 MVP](platform-studio.md#platform-authoring-mvp) |
+| Agent 场景与完整能力 | [已确认 Agent 蓝图](platform-studio.md#agent-confirmed-blueprint)、[Agent 八层覆盖](platform-studio.md#agent-eight-layers) |
 | 可观测性、监控与问题处理（已纳入蓝图，可后置建设） | [运行保障与 Agent 辅助处理](architecture.md#blueprint-operations) |
 | 建设顺序与当前状态 | [蓝图建设路径](architecture.md#blueprint-roadmap)、[治理与待讨论事项](governance.md#design-status) |
 

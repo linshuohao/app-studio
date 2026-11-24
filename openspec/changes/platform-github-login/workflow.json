@@ -1,0 +1,38 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md",
+    "docs/design/decisions/ADR-FE-029-platform-config-versions.md",
+    "docs/design/decisions/ADR-FE-026-platform-rbac.md"
+  ],
+  "scope": [
+    "services/api/src",
+    "services/api/test",
+    "services/api/package.json",
+    "services/api/vitest.config.e2e.ts",
+    "apps/studio/src",
+    "apps/studio/tests",
+    "apps/studio/package.json",
+    "apps/studio/playwright.config.ts",
+    "apps/studio/next.config.ts",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml"
+  ],
+  "checks": [
+    ["pnpm", "exec", "eslint", "apps/studio", "services/api", "--max-warnings", "0"],
+    [
+      "pnpm",
+      "exec",
+      "depcruise",
+      "--config",
+      ".dependency-cruiser.mjs",
+      "apps/studio/src",
+      "services/api/src"
+    ],
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "build"],
+    ["pnpm", "--filter", "@form-engine/api", "test:integration"],
+    ["pnpm", "--filter", "@form-engine/studio", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/studio", "build"],
+    ["pnpm", "exec", "playwright", "test", "--config", "apps/studio/playwright.config.ts"]
+  ]
+}

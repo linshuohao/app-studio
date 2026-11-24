@@ -1,0 +1,422 @@
+{
+  "baseline": "create-form-travel-compose-context.json (last successful attempt)",
+  "normal": {
+    "session": "2236636f-4f35-4909-b369-7480b9e5a0d6",
+    "firstMs": 32244.498792,
+    "resumeMs": 153.7471250000017,
+    "secondMs": 120193.056958,
+    "trial": "上海 → 更换国家清空 → 东京",
+    "calls": [
+      {
+        "input": 17629,
+        "output": 1061,
+        "cached": 5248,
+        "functions": [],
+        "wall_ms": 29313,
+        "node": "understand"
+      },
+      {
+        "input": 14615,
+        "output": 92,
+        "cached": 0,
+        "functions": [
+          "ClarificationPatch"
+        ],
+        "wall_ms": 12342,
+        "node": "understand"
+      },
+      {
+        "input": 14295,
+        "output": 46,
+        "cached": 10880,
+        "functions": [
+          "CapabilitySelection"
+        ],
+        "wall_ms": 11602,
+        "node": "compose"
+      },
+      {
+        "input": 14472,
+        "output": 158,
+        "cached": 12928,
+        "functions": [
+          "SchemaDraft"
+        ],
+        "wall_ms": 15479,
+        "node": "compose"
+      },
+      {
+        "input": 23745,
+        "output": 51,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 12853,
+        "node": "compose"
+      },
+      {
+        "input": 23875,
+        "output": 122,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 14757,
+        "node": "compose"
+      },
+      {
+        "input": 24008,
+        "output": 95,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 11664,
+        "node": "compose"
+      },
+      {
+        "input": 38474,
+        "output": 1354,
+        "cached": 0,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 38214,
+        "node": "compose"
+      },
+      {
+        "input": 25384,
+        "output": 230,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 12762,
+        "node": "compose"
+      }
+    ],
+    "tools": [
+      [
+        "read_protocol",
+        74
+      ],
+      [
+        "query_capabilities",
+        14
+      ],
+      [
+        "read_protocol",
+        1
+      ],
+      [
+        "record_configuration_mapping",
+        10
+      ],
+      [
+        "check_candidate",
+        60
+      ]
+    ],
+    "branches_ms": {
+      "capabilities": 11664,
+      "schema": 15522
+    },
+    "nodes_ms": [
+      [
+        "understand",
+        29317
+      ],
+      [
+        "deliver",
+        0
+      ],
+      [
+        "understand",
+        12350
+      ],
+      [
+        "compose",
+        106071
+      ],
+      [
+        "deliver",
+        1
+      ]
+    ],
+    "check": true,
+    "digest": "sha256:e57b09ce53f38ff763aad21e0412c3a59b39c4ea3326c55189dfdd7d7939148c",
+    "binding_tool_calls_visible_in_final_model_request": [
+      "read_protocol",
+      "query_capabilities",
+      "read_protocol",
+      "record_configuration_mapping",
+      "check_candidate"
+    ]
+  },
+  "injected_fault": {
+    "session": "76f8d3e0-85d2-4103-a5d4-b38eab0369f1",
+    "firstMs": 32286.351292000003,
+    "resumeMs": 146.89216699999815,
+    "secondMs": 167967.918916,
+    "trial": "上海 → 更换国家清空 → 东京",
+    "calls": [
+      {
+        "input": 17629,
+        "output": 1086,
+        "cached": 0,
+        "functions": [],
+        "wall_ms": 29909,
+        "node": "understand"
+      },
+      {
+        "input": 14645,
+        "output": 104,
+        "cached": 0,
+        "functions": [
+          "ClarificationPatch"
+        ],
+        "wall_ms": 11877,
+        "node": "understand"
+      },
+      {
+        "input": 18991,
+        "output": 1017,
+        "cached": 0,
+        "functions": [],
+        "wall_ms": 27095,
+        "node": "understand"
+      },
+      {
+        "input": 14302,
+        "output": 46,
+        "cached": 12928,
+        "functions": [
+          "CapabilitySelection"
+        ],
+        "wall_ms": 10278,
+        "node": "compose"
+      },
+      {
+        "input": 23186,
+        "output": 222,
+        "cached": 0,
+        "functions": [
+          "SchemaDraft"
+        ],
+        "wall_ms": 15928,
+        "node": "compose"
+      },
+      {
+        "input": 23864,
+        "output": 51,
+        "cached": 10880,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 9808,
+        "node": "compose"
+      },
+      {
+        "input": 23992,
+        "output": 104,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 11843,
+        "node": "compose"
+      },
+      {
+        "input": 47277,
+        "output": 820,
+        "cached": 0,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 25875,
+        "node": "compose"
+      },
+      {
+        "input": 39271,
+        "output": 824,
+        "cached": 10880,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 27218,
+        "node": "compose"
+      },
+      {
+        "input": 40095,
+        "output": 184,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 18294,
+        "node": "compose"
+      },
+      {
+        "input": 26111,
+        "output": 231,
+        "cached": 12928,
+        "functions": [
+          "read_protocol",
+          "query_capabilities",
+          "check_candidate",
+          "repair_field",
+          "record_configuration_mapping",
+          "Clarification",
+          "Answer",
+          "Blocked",
+          "CheckedDraft"
+        ],
+        "wall_ms": 18337,
+        "node": "compose"
+      }
+    ],
+    "tools": [
+      [
+        "read_protocol",
+        70
+      ],
+      [
+        "read_protocol",
+        9
+      ],
+      [
+        "query_capabilities",
+        11
+      ],
+      [
+        "record_configuration_mapping",
+        1
+      ],
+      [
+        "check_candidate",
+        59
+      ]
+    ],
+    "branches_ms": {
+      "capabilities": 10320,
+      "schema": 15949
+    },
+    "nodes_ms": [
+      [
+        "understand",
+        29913
+      ],
+      [
+        "deliver",
+        0
+      ],
+      [
+        "understand",
+        38981
+      ],
+      [
+        "compose",
+        127621
+      ],
+      [
+        "deliver",
+        1
+      ]
+    ],
+    "check": true,
+    "digest": "sha256:9c131214e2049a6bedf9991744135226ef41516b1aee09a14ecd4ace899d27c3",
+    "changed_paths": [
+      "/data/schema/properties/cityCode/anyOf",
+      "/data/schema/properties/cityCode/type"
+    ],
+    "binding_tool_calls_visible_in_final_model_request": [
+      "read_protocol",
+      "read_protocol",
+      "query_capabilities",
+      "record_configuration_mapping",
+      "check_candidate",
+      "repair_field"
+    ]
+  }
+}

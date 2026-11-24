@@ -10,6 +10,7 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-024
   - ADR-FE-020
   - ADR-FE-017
@@ -17,6 +18,7 @@ related:
   - ADR-FE-011
   - ADR-FE-015
 sources:
+- SRC-OBSERVABILITY
 - SRC-ASSETDESIGN
 - SRC-REACTIONSTATE
 - SRC-COMPILERDESIGN
@@ -31,7 +33,7 @@ sources:
 navigation:
   group: 03 · L2 预处理
   order: 40
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 reading_next: DESIGN-L3-RUNTIME
 relocated_sections:
 - source: docs/design/architecture.md
@@ -101,7 +103,7 @@ Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope �
 
 **代码构建与 Definition 编译分开。**CI 将能力源码构建为各平台 Package + Manifest；L2 将 Definition + 契约快照编译为 Prepared Artifact。Release Manager 汇聚制品并锁定能力版本与摘要，升级能力不自动改变旧发布，回滚读取旧 Release Artifact。共同能力 ID / 版本保证语义一致，不要求 Web 与 Flutter 共用二进制。
 
-**本层交付物与验收：**Prepared 结构、诊断格式、依赖/规则索引、Profile Bundle、Capability Lock、Host Requirements 和缓存键；验证非法引用、Scope 越界、模板类型、端口不兼容、版本缺失、锁定输入可复现、多实例复用隔离、Host 缺失及目标格式 / 跨端制品兼容。完整 [待固化接口与工程交付](l2-preparation.md#l2-decisions) 尚未实现。
+**本层交付物与验收：**Prepared 结构、诊断格式、依赖/规则索引、Profile Bundle、Capability Lock、Host Requirements 和缓存键；验证非法引用、Scope 越界、模板类型、端口不兼容、版本缺失、锁定输入可复现、多实例复用隔离、Host 缺失及目标格式 / 跨端制品兼容。Compiler 与 TS / React 消费已实现并有[本地证据](l2/compiler.md#implementation-status)；完整发布流程、跨端与生产性能仍待实现或验收。
 
 ## 设计基线、范围与状态 {#l2-status}
 
@@ -109,11 +111,11 @@ Dependency Plan 表示规则 / 完整动态表达式的静态 watch 与 Scope �
 | --- | --- | --- |
 | 已收敛 | Material / Pure Function / Host 三类职责；复杂同步校验复用纯函数；L2 静态编译；能力 Manifest 与发布锁定 | 后续设计基线 |
 | 已收敛 | 内置与注册纯函数共用调用协议，`core.*` 为保留命名空间；Host 运行时注册，静态契约可选 | 不再另建校验函数 DSL 或通用业务执行器 |
-| 已确认输入输出 | PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择 | 正式类型迁移、Compiler 本期模块方案已确认；算法与各端消费待实现 |
+| 已确认输入输出 | PreparedForm 保留 Definition 领域结构，规则 / 动态表达式 watch、requires、资源和能力锁；默认输入与单视图选择 | 正式类型、Compiler I01–I04 与 TS / React 本地消费已实现；其他端待实现，完整基准待验收 |
 | 跨层设计基线 | Read / Watch / Subscription 分离；按使用位置编译 Dependency Plan；L3 统一匹配，L4 按挂载激活视图 | 计划是静态描述，不是已建立的观察者；完整接口与调度未冻结 |
 | 已确认 | L1 / PreparedForm 双结构；L3 不直接解释 L1；显式 watch 保留，编译提供建议，作者确认后回写再编译 | Prepared 执行依赖编译时确定，兼容失败不静默回退解释 L1 |
 | 推荐 | 编译 Source Map；编辑期增量分析、发布期全量检查 | 具体字段、增量算法与编辑交互仍待固化 |
-| 本期设计已确认 / 待实施 | 协议类型已同步；四职责组、六阶段、检查范围、静态准备与诊断 SDK 见 [详细设计](l2/compiler.md)；后期完整分析报告独立交付 | 不把输出确认等同于模块完成或生产性能通过 |
+| 本期主链已实现 / 生产验收待完成 | 协议类型已同步；四职责组、六阶段、检查范围、静态准备与诊断 SDK 见 [详细设计](l2/compiler.md)；后期完整分析报告独立交付 | 不把输出确认等同于模块完成或生产性能通过 |
 
 Pure Function 表示同步、确定性的受限纯计算；表达式调用节点仍采用 `op + args`，名称与协议字段不混为一项设计。
 
@@ -121,7 +123,7 @@ Pure Function 表示同步、确定性的受限纯计算；表达式调用节点
 
 本篇覆盖 L2 与平台的交界、能力分类、编译输入输出、注册、版本化、依赖分析及发布验收。Working Data、Reaction / Flush 属于 L3，Material DOM 和组件生命周期属于 L4。[本层总览](#preparation)说明模块位置和跨层关系；L1 语义以 [定义协议](l1/README.md) 为准。
 
-当前规范从职责到失败 / 验收展开；讨论记录单独在[设计演进](design-history.md)追溯。重要取舍分别见 [Prepared 唯一入口 ADR](decisions/ADR-FE-004-prepared-entry.md)和[能力 / 发布 ADR](decisions/ADR-FE-011-release-lock.md)。Host Validator 已确认以独立能力名称被规则显式引用，REV-05 策略缺口已解释；引用字段 / 签名与注册 SDK 仍待固化，见 [ADR-FE-012](decisions/ADR-FE-012-host-output.md)。
+当前规范从职责到失败 / 验收展开；讨论记录单独在[设计演进](design-history.md)追溯。重要取舍分别见 [Prepared 唯一入口 ADR](decisions/ADR-FE-004-prepared-entry.md)和[能力 / 发布 ADR](decisions/ADR-FE-011-release-lock.md)。Host Validator 已确认以独立能力名称被规则显式引用，REV-05 策略缺口已解释；引用字段与 HostCapabilities / ValidatorTask 已实现，真实服务和发布兼容待验收，见 [ADR-FE-012](decisions/ADR-FE-012-host-output.md)。
 
 [跨层依赖编译与订阅模型](dependency-reactivity.md) 补齐本层到 L3/L4 的消费契约；本篇继续维护编译与发布职责，不因统一观察机制接管真实订阅、实例状态或 UI 调度。
 
@@ -174,7 +176,7 @@ L2 不读取某个实例的具体 Working Data，不执行业务纯函数，不�
 | 自环 / 多规则潜在环 | 风险提示，允许可收敛规则 | SCC 不证明死循环，L3 仍需执行预算 |
 | 多个 Reaction 可能写同一字段 | 冲突提示供业务审查 | 不自动增加父子执行顺序、失败下游禁用或冲突 DSL |
 
-编辑分析允许读取暂时不完整的配置并返回具体诊断，但存在 Error 不产生可执行 Prepared；入库 / 发布前对确定输入完整检查，错误协议不能作为可用制品进入 C 端执行。保留建议、驳回建议与来源定位的编辑数据如何保存，具体增量缓存与 API 均待固化；本次不新增 L1 的“确认建议”协议字段。
+编辑分析允许读取暂时不完整的配置并返回具体诊断，但存在 Error 不产生可执行 Prepared；可执行制品入库 / 发布前对确定输入完整检查，错误协议不能作为可用制品进入 C 端执行。平台保存不可变配置版本允许未完成或错误内容，见[创作 MVP](platform-studio.md#authoring-save)；编辑历史留存不等于执行制品准入。保留建议、驳回建议与来源定位的编辑数据如何保存，具体增量缓存与 API 均待固化；本次不新增 L1 的“确认建议”协议字段。
 
 推荐用 Prepared 规则 / 节点与 L1 定义身份、位置及版本的 Source Map 关联异常报告。Diagnostic 的源位置是现有信息要求，跨产物 Source Map 的字段和打包方案仍属推荐，不据此宣称已具备逐行映射。Source Map 不参与触发或执行控制。
 
@@ -367,7 +369,7 @@ L1 可以声明不带版本的逻辑能力 ID，不要求每个 ViewNode 手写�
 
 能力升级不能自动改变已发布表单；回滚读取旧 Release Artifact，不能根据当前最新 Catalog 重新组装。静态可发现的 Port 移除、参数类型变化触发重新检查 / 编译；运行时代码语义兼容性还依赖版本策略、契约测试和灰度验证。`latest` 或 `^1.2.0` 单独不足以复现旧发布。
 
-2026-10-27 新增[单资产版本与包版本工程](engineering.md#asset-tooling)实施方案，见 ADR-FE-024。复用本节确定 Catalog / 双摘要，不在 L2 中新增在线范围解析或多版本搜索；版本应用后构建，再计算实际字节摘要，旧 Release 不自动换实现。工具尚未实现。
+2026-10-27 新增[单资产版本与包版本工程](engineering.md#asset-tooling)实施方案，见 ADR-FE-024。复用本节确定 Catalog / 双摘要，不在 L2 中新增在线范围解析或多版本搜索；版本应用后构建，再计算实际字节摘要，旧 Release 不自动换实现。工具第 0 批已有[本地实施证据](engineering.md#asset-tooling-implementation)，不包括真实制品留存或外部发布。
 
 ### 首期双摘要锁定 {#capability-digest-contract}
 
@@ -571,7 +573,7 @@ PreparedValidation 是校验准备信息的概念名称；当前归属 definitio
 
 静态观察不保存真实 Scope ID、成员数据、组件、回调、请求状态或 Issue；Runtime 才绑定实例并管理活跃订阅。完整业务 Schema 及必要引用闭包随制品交付，不联网补 $ref，不拆 Keyword 局部引擎，不携带 Ajv 生成 JS。表达式精确失效不要求各端具有相同的 DOM 更新机制，也不新增字段 Controller。
 
-后续授权已将 packages/protocol 的 Prepared 类型、派生 Schema、契约夹具和包消费迁移到本基线；输入默认定义类型为 CompilerInputDefinition，规范写法同样可赋值。Scope Binder 保留原语法，仅把默认 one 在输出中显式化。Compiler / Runtime / Renderer 尚未实现，结构验收不证明依赖分析、精确更新或默认选择已运行。
+后续授权已将 packages/protocol 的 Prepared 类型、派生 Schema、契约夹具和包消费迁移到本基线；输入默认定义类型为 CompilerInputDefinition，规范写法同样可赋值。Scope Binder 保留原语法，仅把默认 one 在输出中显式化。迁移批次当时只证明结构；后续 Compiler / Runtime / React Renderer 已实现，依赖分析、默认选择与 UI 消费证据见[实施现状](l2/compiler.md#implementation-status)，不以早期结构测试替代行为证据。
 
 ## 有类型的依赖关系与环检测 {#l2-dependencies}
 
@@ -652,7 +654,7 @@ L2 知道 `insured(each).age → 该项 Constraint` 的模式；L3 将其绑定�
 }
 ```
 
-这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 按现行输入输出保留 definition、就地 watch / requires、资源、锁定与 Host 要求；旧 Form / View Plan 分层仅保留为历史逻辑分工，Runtime 的初始化 API 仍待固化。
+这是概念发布摘要，不是新增 L1 字段。实际 PreparedForm 按现行输入输出保留 definition、就地 watch / requires、资源、锁定与 Host 要求；旧 Form / View Plan 分层仅保留为历史逻辑分工，Runtime 已提供 createRuntime，正式发布兼容承诺待验收。
 
 ## 失败路径、治理与验收 {#l2-acceptance}
 
@@ -684,15 +686,15 @@ L2 知道 `insured(each).age → 该项 Constraint` 的模式；L3 将其绑定�
 | Capability Release Lock | 分别锁 Manifest 内容摘要和实现制品字节摘要；按平台 / Profile 解析 | 固化实现及构建身份核对，不重开摘要对象选择 |
 | PreparedValidation | 完整 Schema 资源、规则引用 / 依赖 / 前置 / 消息计划 | 落实依赖推导 / 传递与前置共同入队，冻结引用语法及 Adapter 行为；不携带实例结果或跨端 JS 校验函数 |
 | Prepared ABI | JSON、独立格式版本、首阶段精确匹配已确认 | 完整字段、摘要、格式迁移与 SDK |
-| Dependency Plan | 现行为规则 / 完整动态表达式上的统一 watch；词法 Scope 保留，按需激活 | 输入输出已确认；后续实现分析、绑定、精确失效与格式迁移，不恢复集中计划 ID |
+| Dependency Plan | 现行为规则 / 完整动态表达式上的统一 watch；词法 Scope 保留，按需激活 | 分析、绑定及 TS / React 表达式失效已实现；格式迁移与跨端后续验收，不恢复集中计划 ID |
 | 首次执行策略 | runOnActivate 可选且默认 false，L2 编译，L3 仅新实例首次安排 | 与观察生命周期归属分开；正式类型 / Schema 与候选样例迁移 |
-| Material 的 Host Request | 沿用 ADR-FE-016 的 requests 映射、确定契约及装配预检；services 已退出 | 后续实现资源闭包、签名连接及缺失时局部错误，不恢复旧服务需求 |
+| Material 的 Host Request | 沿用 ADR-FE-016 的 requests 映射、确定契约及装配预检；services 已退出 | 资源闭包、签名连接及缺失时局部错误已有实现与本地证据，真实 Host 待接入，不恢复旧服务需求 |
 
 这些是规范落地时的接口决策，不重新开放已经收敛的职责分工。
 
 ## 后续交付与来源 {#l2-delivery}
 
-下一阶段优先固化以下四类交付；当前任务只整合设计，不创建概念性的生产发布包：
+以下四类是早期交付组织设想，文件名不作为当前缺失文件清单。前两类已在 packages/protocol、compiler、runtime 的实际类型与入口实现，见[Compiler 现状](l2/compiler.md#implementation-status)；独立 Release 管理与完整跨端 / 发布验收仍待交付，不创建重复的概念发布包：
 
 1. `capability-contracts.ts`：Material / Pure Function / Host Contract 的 ID、签名、平台与版本规则。
 2. `prepare.ts` 与 `prepared-form.types.ts`：编译输入、Diagnostics、Prepared 输出与 Format 兼容约束。
@@ -727,11 +729,11 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 
 首阶段 Runtime 只接收与其声明支持格式精确匹配的 preparedFormatVersion；不按 Compiler 版本号推断兼容，也不默认接受版本范围或增加 feature 组合协商。目标平台、Profile、能力锁及 Host 接入检查分别执行，格式匹配不代表所有能力必然可用。不兼容或无效制品拒绝进入执行，不回退解释 L1。
 
-编辑、协议入库校验与发布使用同一 L2 分析能力，尽早返回具体源位置、错误码、严重程度和可读原因。编辑器可取得不完整配置的诊断 / 符号等分析信息，但存在 Error 时不得生成可执行 Prepared，不将错误协议作为可用入库 / 发布制品，也不跳过错误节点拼成部分可执行表单。Warning 可伴随成功制品，不能把已规定拒绝的静态错误降为 Warning。错误草稿能否临时保存属于后续 Studio / Platform 范围，不在本轮另定策略。
+编辑、协议入库校验与发布使用同一 L2 分析能力，尽早返回具体源位置、错误码、严重程度和可读原因。编辑器可取得不完整配置的诊断 / 符号等分析信息，但存在 Error 时不得生成可执行 Prepared，不将错误协议作为可用入库 / 发布制品，也不跳过错误节点拼成部分可执行表单。Warning 可伴随成功制品，不能把已规定拒绝的静态错误降为 Warning。2026-11-10 [平台创作 MVP](platform-studio.md#platform-authoring-mvp)已确认错误编辑内容可保存为不可变配置版本；这只改变平台创作留存，不降低本节编译 / 可执行制品准入门槛。
 
 C 端只消费检查通过且兼容的 Prepared，错误分析结果不能传给 Runtime 继续执行。运行时仍核对格式、目标与能力，保留输入校验、任务有效性和熔断等保护；静态编译不保证网络、Host 实现或业务输入永不出错，Host 能力缺失仍按 ADR-FE-012 的用途降级，不能伪造校验通过。
 
-验收覆盖：Error 时无执行制品但有可定位诊断；Warning 可生成合法制品；格式不匹配拒绝装载；能力缺失按用途处理；相同锁定输入生成结果可复现。均为待实现验收，不是现有候选探针通过证据。
+验收覆盖：Error 时无执行制品但有可定位诊断；Warning 可生成合法制品；格式不匹配拒绝装载；能力缺失按用途处理；相同锁定输入生成结果可复现。Compiler / Runtime 本地测试已覆盖相应主链，见[实施现状](l2/compiler.md#implementation-status)与 [Runtime 入口](../../packages/runtime/README.md)；跨端制品及真实发布验收仍待完成，候选探针不作为生产证据。
 
 
 ### 旧 Host 服务候选的追溯保留
@@ -785,3 +787,9 @@ HostContract 可选只影响静态兼容证明，不豁免运行时注册。所�
 Reaction.watch 从仅 DataWatch 扩为 PreparedReactionWatch（DataWatch | ValidationWatch），then 保留 ReactionAction 的显式顺序；Command、Constraint.watch 和持续 View 表达式的 DataWatch 不扩张。只读 ValidationReference 保留静态字段与投影，不序列化当前 Issues 或任务。
 
 HostEventIntent 由物料事件和 Reaction 共同使用，需求来自完整共享 Reaction 与所选视图，按名称合并。名称 / Payload 检查、Event 环境限制与版本边界见[Compiler 衔接](l2/compiler.md#compiler-reaction-state)。新产物使用 form-engine.prepared/2，/1 目标拒绝，旧定义可重新编译；不能通过结构 Schema 接受就宣称旧消费者理解新语义。
+
+## 通用观测的定义与来源接缝 {#l2-observation-handoff}
+
+2026-11-08 已确认：通用观测复用 Prepared 的定义 / 版本、显式 Watch、有效校验依赖及可解析读写关系，区分声明、编译推导与运行绑定。Prepared Source Map 可选，缺失时保留 Prepared 定位；不因工具需要而给业务 Schema 增加调试字段、扩大 Reaction Watch 或隐式修改 Prepared ABI。完整边界见[类型化观测关系](l3-observability.md#observation-relations)。
+
+观测接入的详细接口、采集时点及版本要求统一见[技术契约](l3-observability.md#observation-technical)：Runtime、Renderer、页面桥接与工具面板同步进行破坏性协议升级，不保留旧接口兼容；本层既有业务契约不变，本次仅设计归档。

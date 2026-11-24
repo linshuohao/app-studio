@@ -1,3 +1,4 @@
+import { listProducers, readMetadata } from './observation.js';
 import { getDevtoolsHook } from '@form-engine/runtime/devtools';
 import { afterEach, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -61,7 +62,8 @@ it('完整表达式独立失效，Context 替换使空 watch 的表达式更新'
   const count = evaluated.filter((v) => v.includes('/count')).length;
   const before = { evaluated: evaluated.length, observations };
   const hook = getDevtoolsHook()!;
-  for (let i = 0; i < 5; i++) for (const source of hook.list()) hook.read(source.id);
+  for (let i = 0; i < 5; i++)
+    for (const source of listProducers(hook)) readMetadata(hook, source.ref);
   expect({ evaluated: evaluated.length, observations }).toEqual(before);
 
   await act(async () => {

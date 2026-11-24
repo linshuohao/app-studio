@@ -1,0 +1,142 @@
+:root {
+  background: var(--studio-surface);
+}
+#playground,
+#business-playground {
+  max-width: none;
+  margin: 0;
+  background: var(--studio-surface);
+  color: var(--studio-text);
+  font: var(--studio-type-body);
+  padding: var(--studio-space-12);
+}
+.specimen {
+  padding: var(--studio-space-12);
+  min-width: 0;
+}
+.specimen output {
+  display: block;
+  margin-block: var(--studio-space-8);
+  font: var(--studio-type-caption);
+}
+.props-panel {
+  display: grid;
+  gap: var(--studio-space-8);
+  border: thin solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+  padding: var(--studio-space-12);
+  margin-block-start: var(--studio-space-12);
+}
+.props-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: var(--studio-type-section);
+}
+.props-panel p,
+.props-panel dd {
+  margin: 0;
+}
+.props-panel textarea {
+  width: 100%;
+  font: var(--studio-type-code);
+  padding: var(--studio-space-12);
+  tab-size: 2;
+  resize: none;
+}
+.props-panel [role='status'] {
+  color: var(--studio-danger-fg);
+}
+.props-panel [role='status']:empty {
+  display: none;
+}
+.props-panel dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-8);
+  margin-block: var(--studio-space-4);
+}
+.specimen-cell {
+  padding: var(--studio-space-12);
+  background: var(--studio-surface-muted);
+  border-radius: var(--studio-radius-4);
+}
+
+.table-example {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--studio-space-16);
+  padding: var(--studio-space-24);
+  border-radius: var(--studio-radius-8);
+  background: var(--studio-surface-muted);
+}
+.table-example h3 {
+  margin: 0;
+  font: var(--studio-type-section);
+}
+.table-example > :is(.studio-table-results, .studio-pagination) {
+  grid-column: 1 / -1;
+}
+
+.card-list-example {
+  display: grid;
+  gap: var(--studio-space-16);
+  padding: var(--studio-space-24);
+  background: var(--studio-surface-muted);
+  border-radius: var(--studio-radius-8);
+}
+.card-list-example h3 {
+  margin: 0;
+  font: var(--studio-type-section);
+}
+.card-list-example .material-card {
+  height: 100%;
+}
+.jsx-preview {
+  display: block;
+  width: 100%;
+
+  border: 0;
+  background: var(--studio-surface);
+}
+
+/* Let the handbook page own the scroll position as source and preview content change. */
+.props-panel textarea,
+.specimen .json-component[data-json-size] > textarea {
+  field-sizing: content;
+  height: auto;
+  max-height: none;
+  min-height: 1lh;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.specimen .json-component[data-json-size] > .json-tree,
+.specimen pre {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.handbook-preview iframe,
+.handbook-source iframe {
+  display: block;
+  width: 100%;
+  border: thin solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+}
+.handbook-source {
+  margin-block-start: var(--studio-space-16);
+}
+
+.handbook-source > summary {
+  cursor: pointer;
+  padding-block: var(--studio-space-8);
+  font: var(--studio-type-control);
+}
+.handbook-source > summary:focus-visible {
+  outline: thin solid var(--studio-focus-ring);
+}

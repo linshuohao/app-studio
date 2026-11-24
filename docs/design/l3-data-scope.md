@@ -8,6 +8,7 @@ modules:
 - M07
 - M08
 sources:
+- SRC-OBSERVABILITY
 - SRC-REACTIONSTATE
 - SRC-V04
 - SRC-V05
@@ -16,6 +17,7 @@ sources:
 - SRC-RUNTIMEIMPLEMENTATION
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-006
   - ADR-FE-007
   - ADR-FE-008
@@ -379,4 +381,10 @@ execution events → use the separate execution observer interface
 | 非整数、越界或锚点已删除 | 结构性失败，无部分 Data / Scope 修改 |
 | 同一 batch 前序命令已改变顺序 | 后序位置按执行时最新数组解析，不回滚前序成功命令 |
 
-这些是待实现验收，不是候选验证器已通过的用例。
+这些是设计验收目标；DataStore / ScopeIndex 与 data、commands、scope-index 用例已实现，既有本地结果见 [Runtime 入口](../../packages/runtime/README.md)。目标设备与整体成本仍待验收，不能用候选验证器计数或局部测试宣称本表全部通过。
+
+## 观测位置与成员身份 {#scope-observation-handoff}
+
+2026-11-08 已确认：观测目录复用 Runtime 稳定成员身份，Root / 成员锚点加相对路径定位普通对象和字段；移动及 set 现有成员对象保留行身份，嵌套结构另行处理；set 整个数组或删除后新建不得按索引复用旧身份。规则实例还需完整 ScopeBinding，不能只以一个成员 ID 代替。历史窗口保留最小墓碑，不反向延长业务实例生命周期。快照 / 游标与分页契约见[通用观测模型](l3-observability.md#observation-model)，读取不注册业务 observe。
+
+观测接入的详细接口、采集时点及版本要求统一见[技术契约](l3-observability.md#observation-technical)：Runtime、Renderer、页面桥接与工具面板同步进行破坏性协议升级，不保留旧接口兼容；本层既有业务契约不变，本次仅设计归档。

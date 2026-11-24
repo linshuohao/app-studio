@@ -1,0 +1,50 @@
+{
+  "fingerprint": "6bd68870779a5fc7145ff8a7de2b71953f775e2dda7518e599262afff75f3309",
+  "checks": [
+    [
+      "node",
+      "apps/studio/tests/json-format.check.mjs"
+    ],
+    [
+      "node",
+      "apps/studio/tests/json-model.check.mjs"
+    ],
+    [
+      "node",
+      "tools/engineering/catalog-docs.mjs",
+      "--check"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "lint"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-preview",
+      "PLATFORM_API_URL=http://127.0.0.1:3319",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "build"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

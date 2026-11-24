@@ -1,3 +1,4 @@
+import { listProducers, readMetadata } from './observation.js';
 import { afterEach, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import type { PreparedForm } from '@form-engine/protocol/prepared';
@@ -114,10 +115,12 @@ it('Strict Mode 模拟清理后，晚连接仍能查询最初装配错误', asyn
     </StrictMode>,
   );
   const hook = getDevtoolsHook()!;
-  const view = hook.list().find((source) => source.kind === 'view')!;
-  expect(hook.read(view.id)!.value).toMatchObject({
-    diagnostics: [{ code: 'RENDERER_UNAVAILABLE' }],
-  });
+  const view = listProducers(hook).find((source) => source.kind === 'view')!;
+  expect(readMetadata(hook, view.ref)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ record: 'diagnostic', code: 'RENDERER_UNAVAILABLE' }),
+    ]),
+  );
   page.unmount();
   form.runtime.dispose();
 });

@@ -8,7 +8,7 @@
   <title>架构约束与一致性审查 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group" open><summary>09 · 决策与追溯</summary><div><a href="design-history.html">设计决策与讨论演进</a>
 <a class="active" aria-current="page" href="design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -217,14 +230,14 @@
 <ul>
 <li><strong>双方与来源：</strong><a href="l3-reactive-engine.html#l3-runtime-host-boundary" rel="noopener noreferrer">现行 Context 只读 / Data-only Watch</a>；<a href="l3-validation.html#validation-async" rel="noopener noreferrer">完整证明关联 Context</a>。</li>
 <li><strong>类型 / 严重程度：</strong>新鲜度接口缺口，中；两项原则可以共存，不构成扩展 Context Watch 的依据。</li>
-<li><strong>具体表现：</strong>完整校验使用渠道或策略上下文后，Host 换入新上下文，旧证明怎样被识别为不可复用尚无 SDK。局部请求有效性与整体输入证明也须分别处理。</li>
-<li><strong>2026-10-22 已解决：</strong>Host 显式替换只读 Context 快照并赋新身份，保守失效动态呈现、全部校验及旧外部任务资格；旧完整证明不代表新输入，重新校验走统一入口，不自动触发 Reaction。见 <a href="decisions/ADR-FE-019-host-context-replacement.html" rel="noopener noreferrer">ADR-FE-019</a>。SDK / 通知及性能仍需整理验收，OD-09 / T02 / T05 不再重复讨论是否允许更新。</li>
+<li><strong>原问题表现：</strong>完整校验使用渠道或策略上下文后，Host 换入新上下文，当时缺少识别旧证明不可复用的 SDK。局部请求有效性与整体输入证明也须分别处理。</li>
+<li><strong>2026-10-22 已解决：</strong>Host 显式替换只读 Context 快照并赋新身份，保守失效动态呈现、全部校验及旧外部任务资格；旧完整证明不代表新输入，重新校验走统一入口，不自动触发 Reaction。见 <a href="decisions/ADR-FE-019-host-context-replacement.html" rel="noopener noreferrer">ADR-FE-019</a>。后续 replaceContext、证明版本与失效通知已实现，见 Runtime lifecycle / renderer-contract 用例及<a href="engineering.html#renderer-implementation" rel="noopener noreferrer">本地联验</a>；生产性能待验收，OD-09 / T02 / T05 不再重复讨论是否允许更新。</li>
 </ul>
 <h3 id="rev-07">REV-07：稳定旧值的数据防御契约已明确</h3>
 <ul>
 <li><strong>原问题：</strong>Host 修改传入或读出的共享对象可能绕过 Command，破坏旧快照和变化检测。</li>
 <li><strong>2026-10-20 用户确认：</strong>外部输入的对象 / 数组值进入引擎时复制，解除 Host 原对象与内部数据的可变别名；内部以不可变 Root 和结构共享更新。read / snapshot 返回只读契约，不在生产环境为每次读取深拷贝或默认增加代理。开发环境递归冻结引擎持有的业务数据，捕获误写，不冻结 Host 原对象、Scope Index、Pending 或其他内部可变管理结构。Command 必须先构造修改路径上的新容器再写入，不能原地修改冻结的旧对象或数组；新数据发布前冻结，未变化且已保护的共享子树可复用。生产环境违反只读契约属于错误使用，不保证绕过 Command 修改后的状态正确。</li>
-<li><strong>状态：</strong>防御策略已确认，实际别名隔离 / 冻结实现与目标端成本由 T04 验证，不宣称实现完成。细节见 <a href="l3-data-scope.html#l3-observed-equality" rel="noopener noreferrer">数据与比较</a>、ADR-FE-007。</li>
+<li><strong>状态：</strong>防御策略已确认，实际别名隔离 / 冻结已有 data / ownership 回归与<a href="engineering.html#renderer-implementation" rel="noopener noreferrer">接管优化记录</a>；T04 继续验证目标端和整条编辑成本。细节见 <a href="l3-data-scope.html#l3-observed-equality" rel="noopener noreferrer">数据与比较</a>、ADR-FE-007。</li>
 </ul>
 <h3 id="rev-08">REV-08：候选规范与样本之间有明确的未迁移边界</h3>
 <ul>
@@ -304,7 +317,7 @@
 <a href="#global-constraints" data-to="global-constraints" title="全局约束与模块责任"><span class="nav-num">02</span><span>全局约束与模块责任</span></a>
 <a href="#consistency-findings" data-to="consistency-findings" title="一致性审查结论与问题"><span class="nav-num">03</span><span>一致性审查结论与问题</span></a>
 <a href="#governance-maintenance" data-to="governance-maintenance" title="增量维护与变更准入"><span class="nav-num">04</span><span>增量维护与变更准入</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>REVIEW-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 26</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="architecture.html#glossary">术语与语义边界</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>REVIEW-FE-001</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details open><summary>关联 ADR · 2</summary><ul><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li></ul></details><details><summary>相关正文与历史 · 27</summary><ul><li><a href="decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="decisions/ADR-FE-002-static-language.html">ADR-FE-002：纯表达式、结构化引用与局部词法 Scope</a></li><li><a href="decisions/ADR-FE-004-prepared-entry.html">ADR-FE-004：PreparedForm 是 Runtime 唯一执行入口</a></li><li><a href="decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="decisions/ADR-FE-010-validation.html">ADR-FE-010：完整 Schema、增量 Constraint 与字段错误消费</a></li><li><a href="decisions/ADR-FE-011-release-lock.html">ADR-FE-011：能力分责与不可变发布锁定</a></li><li><a href="decisions/ADR-FE-012-host-output.html">ADR-FE-012：Host 能力引用、降级与业务输出</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="architecture.html#glossary">术语与语义边界</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/02-data-reference-scope.html#data">数据、引用与作用域</a></li><li><a href="l1/03-expression-validation.html#expression">表达式、约束与校验</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-review">SRC-REVIEW · 本次重构前的完整来源快照</a></li></ul></details></section>
       </aside>
       </div>
     </div>

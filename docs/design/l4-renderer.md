@@ -8,6 +8,7 @@ modules:
 - M14
 tags: []
 sources:
+- SRC-OBSERVABILITY
 - SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-L4IMPLEMENTATION
@@ -18,13 +19,14 @@ sources:
 - SRC-DEP
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-022
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 navigation:
   group: 05 · L4 呈现
   order: 60
@@ -37,9 +39,9 @@ relocated_sections:
 
 # L4 呈现与交互适配
 
-L4 完整方案与四批实施已于 2026-10-26 经用户确认，已确认以组件 Adapter 订阅 Runtime、组装 Props、将事件转换为指令；共用接入、输入交付、组件生命周期和物料错误隔离已确认，行为专题已收敛；TS / React SDK、必要 Runtime 接缝及四批实现已有本地验证，正式物料库 / Host 应用、Flutter 与生产性能仍属后续范围。下文旧接口草图仅为来源追溯，不是现行 SDK 要求。完整模块方案对应 [T11](governance.md#T11)，本专题已收敛并有 React 主端纵切证据；当前待讨论的问题统一维护在[设计进展](governance.md#layer-progress)。
+L4 完整方案与四批实施已于 2026-10-26 经用户确认，已确认以组件 Adapter 订阅 Runtime、组装 Props、将事件转换为指令；共用接入、输入交付、组件生命周期和物料错误隔离已确认，行为专题已收敛；TS / React SDK、必要 Runtime 接缝及四批实现已有本地验证，该 SDK 批次本身不覆盖正式资产、真实 Host 应用、Flutter 与生产性能。下文旧接口草图仅为来源追溯，不是现行 SDK 要求。完整模块方案对应 [T11](governance.md#T11)，本专题已收敛并有 React 主端纵切证据；当前待讨论的问题统一维护在[设计进展](governance.md#layer-progress)。
 
-2026-10-27 后续[正式物料 / 业务函数方案](extension-integration.md#first-assets)已确认，模板 / 版本工具先行，14 个物料和 7 个同步函数待实施；本轮只归档。现行 SDK、状态所有权、非原子交付和独立 DevTools 保持，具体交互及 Host 验收回到该资产专题，不再写作整套方案尚待讨论。
+2026-10-27 后续[正式物料 / 业务函数方案](extension-integration.md#first-assets)已确认，模板 / 版本工具先行；2026-10-28 工具第 0 批与首个函数已有[本地实施证据](engineering.md#asset-tooling-implementation)，首批全部 14 个正式 UI 物料亦有[本地证据](engineering.md#interaction-materials-implementation)，第 4 批全部 7 个同步函数及完整可控表单亦有[本地证据](engineering.md#business-travel-implementation)，真实 Host 待交付。现行 SDK、状态所有权、非原子交付和独立 DevTools 保持，具体交互及 Host 验收回到该资产专题，不再写作整套方案尚待讨论。
 
 ## L4 · Renderer：呈现与交互适配层 {#renderer}
 
@@ -184,7 +186,7 @@ L4 将兼容 Prepared View 与 Runtime 当前状态呈现为目标平台组件�
 | L4 可持有 | 挂载组件关联、Scope 关联、取消订阅函数、有效调用身份、框架呈现缓存、必要的组件内部交互状态 |
 | L4 不持有 | 权威业务值副本、独立 Issue 存储、Reaction / Constraint 调度状态、业务请求缓存或提交结果证明副本 |
 
-首期已确认 Web/TS + React，分别由 packages/renderer-react 和 packages/materials-react 承担呈现与基础物料；Renderer 已有正式入口与四批实现，Materials 仍待正式专题交付；包保持 private / 0.0.0。类型和安装 / 释放接口见实际 SDK；未来 Flutter 按同一行为契约单独实现，不要求跨框架共用 Adapter 源码。
+首期已确认 Web/TS + React，分别由 packages/renderer-react 和 packages/materials-react 承担呈现与基础物料；Renderer 已有正式入口与四批实现，首批 14 个正式物料已本地交付；包保持 private / 0.0.0。类型和安装 / 释放接口见实际 SDK；未来 Flutter 按同一行为契约单独实现，不要求跨框架共用 Adapter 源码。
 
 ### 3. 模块职责（组织草案）
 
@@ -349,7 +351,7 @@ React 错误边界覆盖渲染；共同操作入口处理指令 / 事件和异�
 
 ### TS / React 四批实现与证据 {#react-implementation}
 
-实现入口为 [Renderer README](../../packages/renderer-react/README.md)与 `packages/renderer-react/src/index.ts`，正式物料库仍为空入口；Playground `/l4` 的物料 / 可控 Host 只作验收夹具。公共 SDK 包保持 private / 0.0.0，不视为已发布版本。
+实现入口为 [Renderer README](../../packages/renderer-react/README.md)与 `packages/renderer-react/src/index.ts`，正式物料库已提供首批 14 个物料；Playground 首页导航到 `/demos/basic`、`/demos/members`、`/demos/interactions`、`/demos/travel`。旧 `/l4` 专用物料夹具已移除，当前 Demo 使用正式物料协议与可控本地 Host。公共 SDK 包保持 private / 0.0.0，不视为已发布版本。
 
 | 契约 | 实现与行为证据 |
 | --- | --- |
@@ -359,6 +361,8 @@ React 错误边界覆盖渲染；共同操作入口处理指令 / 事件和异�
 | 清理、Profile、局部错误与完整路径 | lifecycle.test.tsx 覆盖首读交接、Strict Mode、隐藏重挂、改绑 / 确认 / 非法工作值、Host 通知、Profile 及故障恢复；tests/e2e/renderer.spec.ts 通过真实页面操作贯穿校验与 Host 数据交付 |
 
 按 [ADR-FE-023](decisions/ADR-FE-023-independent-devtools.md) 移出首批内嵌技术诊断，移除 diagnosticMode；业务树只显示业务友好降级。装配遗漏（包括隐藏节点）经结构化出口交付，开发扩展独立展示。onDiagnostic 保留 Host 报告用途，自身失败被隔离，回调身份变化不再重建装配环境。开发构建条件决定是否提供发现能力，扩展标记仅用于连接，不自行授权生产采集。
+
+[首期平台诊断映射](platform-studio.md#platform-diagnostic-mapping)只接收 `render` 阶段的物料错误。Host 的 Renderer 现场按现有 `onDiagnostic` 字段保存，配置定位使用已发布制品可核验的节点 ID。
 
 独立上下文只读审查发现并复验两项反例：模板仅接收全局形参时不能丢掉外层成员的存活资格；请求专用外部 Schema 不能阻止合法 Profile 切换。修复分别将挂载 ownership 链与词法 Scope 分开、按 Schema 位置计算执行资源闭包。模板仍只看显式形参，未增加隐式别名捕获；闭包跳过 const / default / examples 普通数据，并拒绝真实执行资源变更。写入和请求均有回归。维护者另以同步首轮修改复现快照 canonical 比较压平 -0 / 0，改用 Binding 的 Object.is 和稳定 Props 容器，执行兼容比较也保留标量语义。
 
@@ -381,3 +385,9 @@ React 错误边界覆盖渲染；共同操作入口处理指令 / 事件和异�
 后续边界 Review 的反例修复沿用既有局部隔离与 Strict Mode 幂等原则：MaterialBoundary 只保存失败标志，任意抛出值均进入降级，异常值自身无法转成字符串也不使报告逃逸。RendererContent 按本次装配结果交付一次静态诊断；MaterialFallback 只保存本挂载上次交付内容及发布关联，避免渲染 / 回调更新导致旧错误重报。新装配关联、不同 Scope、新增成员、错误恢复后再出现及真实重挂仍正常交付；静态声明记录和实际挂载记录不互相吞并。回归入口为 Renderer boundaries 测试，未改变 Request 错误分类或新增公共诊断 API。
 
 挂载与快照 Review 的修复收敛既有职责：MaterialMount 统一激活 / 释放物料关联，Hook 退订只移除监听者，不因内部子组件切换撤销请求。表达式缓存读取核对 Runtime 的只读 Data / Context 输入身份，输入变化时按 Prepared watch 比较投影并复用未变结果，不依赖观察回调先执行；结构 watch 按成员身份和顺序比较。Context 显式替换仍保守刷新全部动态项，同值标量通过空 Data watch 的管理通知保留失效信号；不改变 Runtime 公共接口、通知顺序或业务状态所有权。求值失败保留 Runtime 返回的具体原因供报告定位，生产降级提示不附带技术细节。正式反例位于 Renderer snapshots / requests 测试，无新增 ADR。
+
+## Renderer 的通用观测接缝 {#renderer-observation-handoff}
+
+2026-11-08 已确认：Renderer 仅提供已有投影缓存、Scope / owners / Binding、装配及请求事实；工具查询不重新求值或启动请求。物料请求与 Runtime Validator 分别标识；请求因果仅沿明确来源关联，不从时间相邻猜测。Renderer 与 Runtime 分别携带版本，不承诺全局原子快照。四视图共用选择、分页和历史缺失语义见[通用观测契约](l3-observability.md#observation-contract)，本次确认不代表新上报接缝已实现。
+
+观测接入的详细接口、采集时点及版本要求统一见[技术契约](l3-observability.md#observation-technical)：Runtime、Renderer、页面桥接与工具面板同步进行破坏性协议升级，不保留旧接口兼容；本层既有业务契约不变，本次仅设计归档。

@@ -8,7 +8,7 @@ export default defineConfig({
   webServer: {
     command: 'pnpm --filter @form-engine/playground dev --port 3217',
     url: 'http://127.0.0.1:3217',
-    reuseExistingServer: false,
+    reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === '1',
     timeout: 60_000,
   },
 });

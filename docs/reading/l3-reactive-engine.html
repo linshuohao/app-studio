@@ -8,7 +8,7 @@
   <title>L3 运行时总览与 Flush · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="design-history.html">设计决策与讨论演进</a>
 <a href="design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -124,8 +137,8 @@
 </tr>
 </tbody>
 </table></div>
-<p>各批次先写有明确预期的失败用例，再实现并跑通；公共接口是本次代码 Review 的草案。既有干净特性分支上保留增量供用户审查，不自动提交或发布。检查覆盖类型、行为、边界与打包；React 物料实际交互、Flutter 等价和目标设备性能单独验收，不以无界面 Runtime 用例替代。</p>
-<p>上述核心模块已有无界面实现与场景用例，不再只有工程占位入口。正文中原有“待固化 / 待实现”仍描述完整设计及其验收，不能简单理解为本批毫无实现，也不能因本批通过就整体关闭：Scope 局部位置维护、依赖与字段聚合性能、生产预算、输入默认值策略、完整 Adapter / 物料交互及跨端一致性继续保留。format 目前按注解处理，未提供格式断言。SDK 字段状态与方法结构供用户 review，未新增架构 ADR 或冻结发布契约。</p>
+<p>各批次先写有明确预期的失败用例，再实现并跑通；公共接口是本次代码 Review 的草案。既有干净特性分支上保留增量供用户审查，不自动提交或发布。检查覆盖类型、行为、边界与打包；React 物料实际交互已由后续 L4 / 资产批次本地验收；Flutter 等价和目标设备性能仍单独验收，不以无界面 Runtime 用例替代。</p>
+<p>当前已实现无界面核心、Scope 相对索引 / 旧视图与 React Adapter / 首批物料交互，见 <a href="l3-data-scope.html#l3-scope-index" rel="noopener noreferrer">Scope 实现</a>及<a href="engineering.html#business-travel-implementation" rel="noopener noreferrer">完整表单证据</a>。待实现或继续设计的是首次输入默认值策略等剩余能力；待验收的是依赖 / 字段聚合及整体编辑成本、生产预算、真实 Host 和跨端一致性。已实现范围不再列为从零实现待办，稳定公开 SDK 尚未冻结。format 目前按注解处理，未提供格式断言。SDK 字段状态与方法结构供用户 review，未新增架构 ADR 或冻结发布契约。</p>
 <p>初批本地证据曾覆盖 Runtime 41 个用例、纯函数 1 个用例、根级集成 5 个用例；后续增加类方法兼容回归及清理初始化标记链，根级集成保留 4 个真实用例。2026-10-24 按用户授权修正 Journal 生命周期后，Runtime 52 个用例及类型检查通过；10 个新增用例覆盖独立轮次、前置来源、异步回报、销毁、截断与同步 / 异步诊断出口异常。既有六包构建与打包消费证据不替代本批重新验证，也不包含真实表单 UI、Flutter 或设备性能验收。</p>
 <p>实例诊断出口与单轮执行记录已拆开：每次实际 drain 新建 FlushContext / Journal，结束后先封存不可变报告再释放，onDiagnostic 异步交付 Host。调度前仅暂存有界触发元数据；异步任务仅捕获启动事件编号，不捕获旧 Journal。具体字段与局部图见代码 Review 入口；逐 Command / Change 完整因果 Trace、字节预算及生产报告策略仍属剩余范围，无新增架构 ADR。</p>
 <p>L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Command 与 Reaction Flush。数据 / Scope 与 Trace 分别维护在<a href="l3-data-scope.html" rel="noopener noreferrer">数据与身份</a>和<a href="l3-observability.html" rel="noopener noreferrer">诊断与 Trace</a>。本篇按模型、数据修改、生命周期、执行和错误展开；校验另见<a href="l3-validation.html" rel="noopener noreferrer">校验与结果</a>。</p>
@@ -598,7 +611,7 @@
 </table></div>
 <p>数据采用不可变 Working Data Root + 结构共享：有效 Command 同步发布新 Root，旧 Snapshot 保持稳定，未变化子树可复用。每条 Command 保留前后 Root 进行观察比较；推荐 Object.is 比较观察值，子路径同值跳过、对象 / 数组新引用保守失效，不逐步深比较全表。具体更新、缓存、防御外部原地修改、存在性与跨端等值仍需验证；不可变语义不要求每步深拷贝全表，也不要求永久保留所有旧 Root。</p>
 <p>Data / Scope 与活跃观察者跨轮存在，稳定快照可由消费者持有；Host 可自行保存业务 Baseline 和 Dirty；计数与完整 Trace 仅属于本轮 Flush Context；Validation 自管 Issues / 新鲜度；异常在清理前提取报告交 Host。不建立局部 Health、父子规则控制与链级恢复；安全预算保护整个 Flush。状态所有权继续分别管理，详见 <a href="#l3-ownership" rel="noopener noreferrer">状态所有权</a>。</p>
-<p>Typed Read 失败不能静默回退旧值；Missing、null、空字符串、0 与 false 分开。初始化缺失时由业务 when / Pure Function 明确跳过或返回 null，用户清空时如需清空派生值必须显式写回；跳过不会自动清旧值。不建立通用 Reaction Ready 状态机；首次激活已确认显式可配置，默认不执行已确认，正式字段与初始化 API 仍待固化。读取结果和诊断的准确 SDK 形状仍需固化。</p>
+<p>Typed Read 失败不能静默回退旧值；Missing、null、空字符串、0 与 false 分开。初始化缺失时由业务 when / Pure Function 明确跳过或返回 null，用户清空时如需清空派生值必须显式写回；跳过不会自动清旧值。不建立通用 Reaction Ready 状态机；首次激活已确认显式可配置，默认不执行，现行字段 runOnActivate 与 createRuntime 初始化入口已实现。读取结果和诊断的当前 SDK 形状见 ReadResult / Diagnostic，发布兼容承诺尚未冻结。</p>
 <h3 id="scope-identity动态数组不是普通-splice">Scope &amp; Identity：动态数组不是普通 splice</h3>
 <div class="code-box"><div class="code-head"><span>TEXT</span><button class="copy" type="button">复制</button></div><pre><code>Form Instance
 └─ insuredList
@@ -690,7 +703,7 @@
 </tbody>
 </table></div>
 <p>纯表达式本身不写数据，因此不能沿用最初稿“多个纯派生规则写同目标一律报错”的假设。对 Command / Reaction 的潜在写入可以做诊断，但合理的有序覆盖不能自动当作非法协议。</p>
-<p>L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。正式状态引用、Prepared Expression 求值和快照协议仍待固化，L1 已加入只读 ValidationReference 与显式 ValidationWatch，见<a href="l1/04-command-reaction.html#reaction-state-host" rel="noopener noreferrer">状态观察</a>；具体 Runtime SDK 仍待固化。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。</p>
+<p>L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。状态引用、Prepared 求值与只读快照已由当前 Runtime SDK 实现，L1 已加入只读 ValidationReference 与显式 ValidationWatch，见<a href="l1/04-command-reaction.html#reaction-state-host" rel="noopener noreferrer">状态观察</a>；当前 SDK 使用 observe / evaluateValue / snapshot 等入口，见 Runtime README。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。</p>
 <h3 id="command-flush即时修改与独立收敛边界">Command &amp; Flush：即时修改与独立收敛边界</h3>
 <figure class="architecture-diagram" id="figure-transaction"><figcaption>图 5 · Command / Flush：即时数据更新与联动收敛</figcaption>
 <div class="arch-row arch-row--flow">
@@ -726,13 +739,13 @@
 <p>临时有序事实与 Change 来源；异常提取报告；同步回调写回归本轮</p>
 </div>
 </div>
-<p class="caption arch-note">取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列实现与轮次结果 SDK 仍待固化。</p>
+<p class="caption arch-note">取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列与 FlushOutcome 已实现；生产预算仍待标定。</p>
 </figure>
 <p>Command 保留修改意图、顺序与次数。两次添加被保人不能因为目标路径相同就合并成一次；一次替换对象也不一定只产生一条变化引用。</p>
 <p>来源不改变检测语义：Host 导入、用户输入、Reaction 写回都在每条 Command 内一致更新 Data / Scope、查候选并比较逻辑观察值；不建立派生字段所有权。Trie / 路径模板只定位已有观察路径，父对象导入不需遍历全部数据字段。Reaction、Validation、View、Host 共享数据检测，执行完成 / 中止 / Error 事件经独立事件观察或 Trace，不进入 Data Trie。完整前后读取、索引、逐命令合并轨迹见 <a href="l3-data-scope.html#l3-change-detection" rel="noopener noreferrer">L3 数据变更链路</a>。</p>
 <p>统一订阅不统一完成条件：Renderer 可读取最新状态，Reaction 按最新状态收敛，待执行时合并重复失效；需要每次执行的新增或副作用应明确发出 Command / Host 事件。延迟一次启动 Flush，同步执行直到结束；多个外部 Operation 可合并一轮，内部联动留在当前轮，后续异步操作另起一轮。数据即时写入不保证 UI 先绘制，也不冻结所有订阅的同步交付顺序，见 <a href="dependency-reactivity.html#dependency-scheduling" rel="noopener noreferrer">跨层时序</a> 和 <a href="#l3-flush" rel="noopener noreferrer">L3 归属边界</a>。</p>
 <p>应验证即时读取与旧快照稳定、单次结构操作的身份一致、pending 合并、同轮级联、显式动作次数、预算停止及异常恢复。默认 batch 与 then[] 有序实时写入，不默认整体回滚，允许存在尚未联动完成的工作态；业务不合法由 Validation 报告，不能当作结构性执行失败。可隔离错误不自动阻断后续独立子命令和规则，后续触发只看真实 Change / 自身 Watch，不检查上游成功状态；精确错误类型和接口继续固化。</p>
-<p>外部 I/O 由 Host 管理。<code>array.insert</code> / <code>array.move</code> 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；正式字段与错误 SDK 仍待固化。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；当前轮中止清队列、后续新触发正常执行已确认，保留填写和独立校验，轮次结果 SDK 仍待固化，详见 <a href="#l3-errors" rel="noopener noreferrer">错误与整体熔断</a>。</p>
+<p>外部 I/O 由 Host 管理。<code>array.insert</code> / <code>array.move</code> 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；ArrayPosition、命令执行与结果 / 诊断类型已实现。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；当前轮中止清队列、后续新触发正常执行已确认，保留填写和独立校验，轮次结果 FlushOutcome 已实现，生产阈值待标定，详见 <a href="#l3-errors" rel="noopener noreferrer">错误与整体熔断</a>。</p>
 <h3 id="validation">Validation：合法性不能只依赖 UI</h3>
 <p>Runtime 管理完整根 Schema、内部 / 外部 Constraint、来源 Issues 和有效性。以完整 Schema + 本轮增量 Constraint + 字段聚合明确执行方向，物料经既有 Binding 读取聚合结果，不新建 <code>validationBind</code>、<code>errorBind</code> 或独立 ValidationMetadata DSL。</p>
 <ul>
@@ -826,8 +839,8 @@ A 晚于 B 返回：
 <td>首次激活字段形状、实例建立 / 替换与稳定快照 SDK；队列实现、当前轮清队列 / 新触发验收、完整校验结果接口、错误分类及 ABI；业务 Dirty / Reset 策略不再作为 Runtime 未决项</td>
 </tr>
 <tr>
-<td>待实现标定</td>
-<td>局部旧 Scope 视图、共享对象防御、Trie / 模板 / Scope 解析性能；执行次数、耗时、记录容量和上报限频阈值</td>
+<td>已实现 / 待验收</td>
+<td>Scope 相对索引、局部旧视图及共享对象防御已有实现 / 回归；整体编辑性能、执行次数、耗时、记录容量和生产上报限频阈值待标定</td>
 </tr>
 <tr>
 <td>延期</td>
@@ -1071,7 +1084,7 @@ Host 普通对象导入：{ age: 25, premium: 80 }
 <p>正常不留生产完整历史；异常先向 Host 提取报告；Devtools 自行保存</p>
 </div>
 </div>
-<p class="caption arch-note">Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；当前轮清队列和后续新触发已确认，队列实现与结果 SDK 待固化。</p>
+<p class="caption arch-note">Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；当前轮清队列和后续新触发已确认，队列与 FlushOutcome 已实现；生产预算待标定。</p>
 </figure>
 <p>延迟一次启动，然后在同一同步执行过程消费任务直至结束；不实现时间切片。首次 Reaction 入队、进入 scheduled 时即开始保留首次有效变化及后续合并来源，不能等执行开始才采集起因。2026-10-24 按用户确认将来源暂存与实际执行上下文分阶段实现：scheduled 阶段仅暂存有界元数据，实际 drain 时创建独立 FlushContext / Journal 并移交来源，结束后先封存只读报告再释放。微任务启动是当前实现选择；记录截断不影响调度预算。</p>
 <div class="table-wrap"><table>
@@ -1134,7 +1147,7 @@ takeNext():
 </section>
 <section class="section" id="l3-missing-values"><div class="section-head"><div class="kicker">09 · FORM ENGINE</div><div class="section-title"><h2>初始化、缺失与清空由业务规则表达</h2></div></div>
 
-<p>确认不新增通用 Reaction Ready 状态机。必须区分读取缺失 / 未初始化、null、空字符串、0 与 false，不能用统一 falsy 判断表示“未就绪”。Missing 的具体读取表示与准确 SDK 类型仍待固化；示意中的 undefined 不作为 JSON 数据值写入协议。</p>
+<p>确认不新增通用 Reaction Ready 状态机。必须区分读取缺失 / 未初始化、null、空字符串、0 与 false，不能用统一 falsy 判断表示“未就绪”。Missing 已由当前 ReadResult 的 missing 分支表达；示意中的 undefined 不作为 JSON 数据值写入协议。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1166,7 +1179,7 @@ takeNext():
   否则 → 按明确的输入类型契约计算保费
 Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 </code></pre></div>
-<p>首次激活策略可配置，由 L1 表达、L2 编译，仅在新 Reaction 实例建立时应用；默认不执行已确认，正式字段与 SDK 仍待固化。Reset 由 Host 生成普通 Command，没有 Watch 有效变化就不重跑已有实例；这取代旧的主动重算目标。空值处理仍由配置表达，L3 不补 watch 或修复派生值；详见 <a href="l3-data-scope.html#l3-initialization-baseline" rel="noopener noreferrer">初始化与 Host 业务基准</a>。</p>
+<p>首次激活策略可配置，由 L1 表达、L2 编译，仅在新 Reaction 实例建立时应用；默认不执行，正式字段 runOnActivate 与 Runtime 激活路径已实现。Reset 由 Host 生成普通 Command，没有 Watch 有效变化就不重跑已有实例；这取代旧的主动重算目标。空值处理仍由配置表达，L3 不补 watch 或修复派生值；详见 <a href="l3-data-scope.html#l3-initialization-baseline" rel="noopener noreferrer">初始化与 Host 业务基准</a>。</p>
 </section>
 <section class="section" id="l3-traces"><div class="section-head"><div class="kicker">10 · FORM ENGINE</div><div class="section-title"><h2>四种执行轨迹</h2></div></div>
 
@@ -1292,7 +1305,7 @@ Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 <tr>
 <td>单实例 / 本轮执行数超限</td>
 <td>中止整个当前 Flush，清空剩余 Reaction，不做局部链路熔断</td>
-<td>下一次新操作产生有效失效时正常建新轮；旧任务不自动续跑，阈值 / Outcome SDK 待固化</td>
+<td>下一次新操作产生有效失效时正常建新轮；旧任务不自动续跑，Outcome SDK 已实现，生产阈值待标定</td>
 </tr>
 <tr>
 <td>耗时异常</td>
@@ -1355,8 +1368,8 @@ Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 </tr>
 </tbody>
 </table></div>
-<p>已明确正常路径：共享依赖匹配登记校验 Pending，Reaction 收敛后执行完整根 Schema 与本轮 Constraint 链，结果按 Source 保存、字段聚合。没有 Reaction 时校验也有独立入口；初始化 / 主动完整校验不能等待第一次修改。L2 补全可推导依赖，L3 递归补齐本轮前置并按实例去重；requires 语法与完整返回仍待固化，不引入前置结果 PubSub。</p>
-<p>完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断停止当前轮并清队列，后续新触发正常执行；保留填写与独立完整校验，通过后 Host 可提交对应快照。Outcome 与完整结果 SDK 仍需固化。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 <a href="l3-validation.html" rel="noopener noreferrer">L3 校验专题</a>。</p>
+<p>已明确正常路径：共享依赖匹配登记校验 Pending，Reaction 收敛后执行完整根 Schema 与本轮 Constraint 链，结果按 Source 保存、字段聚合。没有 Reaction 时校验也有独立入口；初始化 / 主动完整校验不能等待第一次修改。L2 补全可推导依赖，L3 递归补齐本轮前置并按实例去重；requires 类型、实例处理与 FullValidationResult 已实现，不引入前置结果 PubSub。</p>
+<p>完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断停止当前轮并清队列，后续新触发正常执行；保留填写与独立完整校验，通过后 Host 可提交对应快照。FlushOutcome 与 FullValidationResult 已实现，正式发布兼容承诺待验收。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 <a href="l3-validation.html" rel="noopener noreferrer">L3 校验专题</a>。</p>
 <p>微任务启动 Flush 可能仍发生在浏览器绘制前，耗时同步纯函数会阻塞主线程，这是当前接受的简化取舍。未来可以替换 Scheduler，但需保持数据写入、收敛、身份及异常契约。</p>
 </section>
 <section class="section" id="l3-acceptance"><div class="section-head"><div class="kicker">14 · FORM ENGINE</div><div class="section-title"><h2>设计验收与下一步</h2></div></div>
@@ -1481,7 +1494,7 @@ Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 </tr>
 </tbody>
 </table></div>
-<p>这些是未来 Runtime 的设计验收，当前候选协议检查与有界探针不实现真实 Flush / Trace / 整体熔断，不能将其通过计数当成本表已经通过。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的当前轮清队列及后续新触发已确认，实际实现待验收。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 <a href="dependency-reactivity.html#dependency-v05-acceptance" rel="noopener noreferrer">12 个跨层场景</a>。</p>
+<p>这些是 Runtime 的设计验收目标；当前真实实现与 reaction / diagnostics / lifecycle 用例已有本地记录，见本篇实现入口。候选协议探针不实现真实 Flush / Trace / 整体熔断，不能将其计数当成本表逐项通过；完整目标覆盖与生产验收仍须分别核对。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的当前轮清队列及后续新触发已实现并有本地回归，生产阈值待验收。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 <a href="dependency-reactivity.html#dependency-v05-acceptance" rel="noopener noreferrer">12 个跨层场景</a>。</p>
 <p>下一步以 <a href="l3-data-scope.html#l3-v06-acceptance" rel="noopener noreferrer">逐 Command 数据 / Scope 检测的 16 个场景</a> 与 <a href="#l3-runtime-host-boundary" rel="noopener noreferrer">现行边界验收</a> 验证稳定快照、新实例激活、已有实例同值不重跑、普通恢复 Command、替换 / Dispose、通知重入与精确排序。当前轮清队列 / 后续新触发及 Context 交接继续做实现验收，完整校验 SDK 继续补齐；正常路径已纳入 <a href="l3-validation.html#validation-completeness" rel="noopener noreferrer">校验专题</a>。随后固化 Trace / 参数 / 错误接口，以动态数组与高频输入标定预算。可隔离错误继续与整轮熔断不再重开为局部传播设计。正式类型、Schema、Prepared ABI、Runtime 与适配器按落地任务建立，不将本篇概念结构当成生产发布包。</p>
 <h3 id="数据交付与-host-输出边界">数据交付与 Host 输出边界</h3>
 <p>引擎完整校验只证明对应 Working Data 满足表单声明的全部适用校验，并向 Host 交付对应数据快照与结果身份；不负责构造或验证另一个业务请求输出。Host 自行转换、组装业务请求及执行所需输出检查，转换失败属于 Host 业务交付错误，不回写或改写引擎已完成的表单校验结论。表单业务本身需要正确的数据应在配置的数据模型、Binding、同步联动和约束中表达，不依赖提交时隐式修正。Normalized Output 如保留该术语，仅表示 Host 构造的业务提交数据，不是 Runtime 的第二份核心状态或新的通用输出 DSL。</p>
@@ -1517,7 +1530,7 @@ Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 <a href="#l3-consumers" data-to="l3-consumers" title="Validation、Renderer 与 Submit 的边界"><span class="nav-num">13</span><span>Validation、Renderer 与 Submit 的边界</span></a>
 <a href="#l3-acceptance" data-to="l3-acceptance" title="设计验收与下一步"><span class="nav-num">14</span><span>设计验收与下一步</span></a>
 <a href="#runtime-state-actions" data-to="runtime-state-actions" title="校验观察与 Host 行为的调度交接"><span class="nav-num">15</span><span>校验观察与 Host 行为的调度交接</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-RUNTIME</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 6</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li></ul></details><details><summary>相关正文与历史 · 17</summary><ul><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 8</summary><ul><li><a href="source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-runtime-overview">SRC-RUNTIMEOVERVIEW · 运行时全景、外部能力与结果通知确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>DESIGN-L3-RUNTIME</dd><dt>所属层级</dt><dd>L3</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M07">M07 数据 / Snapshot</a></li><li><a href="governance.html#M08">M08 Scope / 变化索引</a></li><li><a href="governance.html#M09">M09 Reaction / Flush / 错误</a></li><li><a href="governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 6</summary><ul><li><a href="decisions/ADR-FE-020-reaction-state-host.html">ADR-FE-020：Reaction 显式状态观察与 Host 行为出口</a></li><li><a href="decisions/ADR-FE-019-host-context-replacement.html">ADR-FE-019：Host 显式替换只读 Context 与统一失效</a></li><li><a href="decisions/ADR-FE-018-flush-round-protection.html">ADR-FE-018：可隔离错误继续、当前轮熔断与新触发恢复</a></li><li><a href="decisions/ADR-FE-006-command-flush.html">ADR-FE-006：即时非原子 Command 与最新状态 Flush</a></li><li><a href="decisions/ADR-FE-007-scope-comparison.html">ADR-FE-007：逐 Command 逻辑观察与相对 Scope 位置</a></li><li><a href="decisions/ADR-FE-008-host-editing.html">ADR-FE-008：业务 Baseline、Dirty 与 Reset 归 Host</a></li></ul></details><details><summary>相关正文与历史 · 18</summary><ul><li><a href="decisions/ADR-FE-009-errors-trace.html">ADR-FE-009：可隔离错误继续、整轮保护与临时 Trace</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-data-scope.html">L3 数据、快照与 Scope</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-validation.html">L3 校验与结果</a></li><li><a href="engineering.html">工程工具链与初始化方案</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="usage-guide.html">使用与开发指南</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="../history/index.html">历史归档与收敛记录</a></li><li><a href="l1/04-command-reaction.html#commands">命令与同步联动</a></li><li><a href="l1/06-lifecycle-profiles.html#lifecycle">生命周期与多视图交付</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 8</summary><ul><li><a href="source-map.html#src-runtime-implementation">SRC-RUNTIMEIMPLEMENTATION · L3 按场景实现与图示 Review 授权</a></li><li><a href="source-map.html#src-reaction-state">SRC-REACTIONSTATE · Reaction 行为出口、状态观察与协议更新确认</a></li><li><a href="source-map.html#src-runtime-overview">SRC-RUNTIMEOVERVIEW · 运行时全景、外部能力与结果通知确认</a></li><li><a href="source-map.html#src-l3-baseline">SRC-L3BASELINE · L3 领域骨架、统一校验与 Context 更新确认</a></li><li><a href="source-map.html#src-v04">SRC-V04 · L3 Flush / Trace V0.4</a></li><li><a href="source-map.html#src-v05">SRC-V05 · 原始 / 编译后协议与 Watch V0.5</a></li><li><a href="source-map.html#src-v06">SRC-V06 · 变化索引与 Scope V0.6</a></li><li><a href="source-map.html#src-host">SRC-HOST · 用户明确的 Runtime / Host 边界修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

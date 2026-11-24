@@ -8,7 +8,7 @@
   <title>使用与开发指南 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="design-history.html">设计决策与讨论演进</a>
 <a href="design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group" open><summary>10 · 使用与例证</summary><div><a class="active" aria-current="page" href="usage-guide.html">使用与开发指南</a>
@@ -84,7 +97,7 @@
       <div class="reading-layout">
       <main class="content" id="top">
         <header class="hero"><div class="eyebrow">FORM ENGINE · USAGE &amp; DEVELOPMENT GUIDE</div><h1>使用与开发指南</h1><div class="desc">这套框架把表单的数据、规则和呈现分开描述，让不同界面共享同一份业务语义。本指南面向表单配置者、宿主接入者和后续参与开发的同事：先理解一个字段如何工作，再按需求学习计算、联动、重复项、外部业务和排障。设计思想、完整分层与取舍见 <a href="architecture.html" rel="noopener noreferrer">设计者指南</a>，具体协议只在对应主题维护。</p>
-<p>当前处于方案设计与规范固化阶段，没有可供照抄安装的生产 SDK。本指南展示已形成的使用语义，接口草图保留候选状态；正式类型、Schema、Prepared ABI、运行时及框架适配仍待交付。阅读和运行现有协议验证的方法见 <a href="../validation/index.html#reproduce" rel="noopener noreferrer">协议样例的复现说明</a>。</div></header>
+<p>当前已实现 TS 协议 / Schema、Compiler、Runtime、React Renderer、首批物料 / 业务函数及完整可控表单，尚未发布生产 SDK。实际接入以 <a href="../../packages/compiler/README.md" rel="noopener noreferrer">Compiler</a>、<a href="../../packages/runtime/README.md" rel="noopener noreferrer">Runtime</a>和 <a href="../../packages/renderer-react/README.md" rel="noopener noreferrer">Renderer</a>为准；本指南的概念草图不作为可直接复制的 API。真实 Host、跨端与生产性能仍待交付或验收。阅读和运行现有协议验证的方法见 <a href="../validation/index.html#reproduce" rel="noopener noreferrer">协议样例的复现说明</a>。</div></header>
         <hr class="hero-line">
         <section class="section" id="usage-purpose"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>先理解框架替你完成什么</h2></div></div>
 
@@ -177,7 +190,7 @@ views.default.bindings.value   将输入端口连接 data:/name
 <p>Expression 可以调用内置或注册的 Pure Function，二者都同步、确定、无 I/O。复杂同步校验可以复用领域纯函数；请求核保服务则交给 Host。</p>
 <p>业务值允许暂时不合法：用户清空必填姓名后，Working Data 保留这次编辑，Validation 报告错误。隐藏一个区域不会自动删除数据、取消约束或清除错误；若业务要求清空某字段，需明确 Command / Reaction。</p>
 <p>可以把校验理解为“结构约束 + 业务判断 → 字段错误”：完整 JSON Schema 检查必填、类型和范围；Constraint 表达跨字段判断与外部义务。普通有效修改先完成必要联动，再执行根 Schema 和本轮命中的 Constraint；批量命中同一实例会去重，不重新扫描全部业务规则找依赖。</p>
-<p>例如 age 同时超过 Schema 上限、又不满足某条业务规则，字段可以展示两个来源的错误。Schema 重跑只撤销自己的旧错误；异步核验过期也只撤销该外部来源。字段组件读取聚合结果，不需要逐一监听每个校验器。前置 A 通过才执行 B 属于较高级的校验链能力，requires 语法及“本轮缺少 A”仍待验证，普通表单可先使用独立 Constraint。详见 <a href="l3-validation.html#validation-story" rel="noopener noreferrer">校验故事与字段结果</a>。</p>
+<p>例如 age 同时超过 Schema 上限、又不满足某条业务规则，字段可以展示两个来源的错误。Schema 重跑只撤销自己的旧错误；异步核验过期也只撤销该外部来源。字段组件读取聚合结果，不需要逐一监听每个校验器。前置 A 通过才执行 B 属于较高级的校验链能力，requires 类型、编译补全及运行时递归补齐已有实现与本地用例，普通表单可先使用独立 Constraint。详见 <a href="l3-validation.html#validation-story" rel="noopener noreferrer">校验故事与字段结果</a>。</p>
 <p>学完应能判断“只需要显示计算值，还是必须保存一个业务字段”。前者直接读表达式，后者才引入修改命令。完整语法与使用位置见 <a href="l1/03-expression-validation.html#expression" rel="noopener noreferrer">Expression</a>、<a href="l1/03-expression-validation.html#constraint" rel="noopener noreferrer">Constraint</a> 和 <a href="dependency-reactivity.html#dependency-usage" rel="noopener noreferrer">跨字段例子</a>。</p>
 </section>
 <section class="section" id="usage-updates"><div class="section-head"><div class="kicker">04 · FORM ENGINE</div><div class="section-title"><h2>第三步：理解即时写入与稍后完成的联动</h2></div></div>
@@ -189,8 +202,8 @@ views.default.bindings.value   将输入端口连接 data:/name
 3. Flush 启动：Reaction 读取最新 age 和 product，计算并写入 premium。
 4. 若其他 Reaction 观察 premium，继续在本轮执行，直到收敛或保护停止。
 </code></pre></div>
-<p>因此“立即读到刚输入的年龄”和“保费联动已经完成”是两种状态。Operation 表示一次外部修改来源；Flush 是集中完成待执行联动的一轮，多个 Operation 可以合并进入同轮。Flush 完成也不证明远程校验或 UI 绘制已完成。正式 SDK 的等待收敛 / 状态读取方法仍待固化，不能假设 dispatch 返回即满足全部提交条件。</p>
-<p><code>batch</code> 是有序修改组合，各条有效 Command 实时生效，不默认把整组作为可回滚事务。旧 Snapshot 不随新数据更新而改变。可隔离的单条 Command 错误记录后，后续独立 Command 继续尝试；其他 Reaction 只按实际数据变化和自己的 watch 响应，不检查“上游是否成功”。业务校验失败、可隔离执行错误与整个 Flush 超限分别处理，准确错误类型和 API 仍待固化。</p>
+<p>因此“立即读到刚输入的年龄”和“保费联动已经完成”是两种状态。Operation 表示一次外部修改来源；Flush 是集中完成待执行联动的一轮，多个 Operation 可以合并进入同轮。Flush 完成也不证明远程校验或 UI 绘制已完成。当前 SDK 以 flush() 等待同步收敛，以 validate() 获取完整校验结果，不能假设 dispatch 返回即满足全部提交条件。</p>
+<p><code>batch</code> 是有序修改组合，各条有效 Command 实时生效，不默认把整组作为可回滚事务。旧 Snapshot 不随新数据更新而改变。可隔离的单条 Command 错误记录后，后续独立 Command 继续尝试；其他 Reaction 只按实际数据变化和自己的 watch 响应，不检查“上游是否成功”。业务校验失败、可隔离执行错误与整个 Flush 超限分别处理，当前结果与诊断类型见 Runtime SDK；稳定发布兼容承诺尚未冻结。</p>
 <p>还要区分初始缺失与用户清空。没有年龄时可以由 when 跳过，或让纯函数按空值契约返回 null；若用户清空年龄后保费也应清空，就明确写入 premium=null。只跳过不会自动清掉旧值，0 / false 也不能按统一 falsy 当成未初始化。框架不增加通用 Reaction Ready 状态机，见 <a href="l3-reactive-engine.html#l3-missing-values" rel="noopener noreferrer">缺失与清空</a>。</p>
 <p>“从历史联系人导入整位被保人”仍是普通 set，不重新初始化整张表单。引擎定位已观察的子路径，再比较前后值：推荐方案中年龄 25→25 不使年龄规则失效，姓名变了则使姓名观察失效；整个对象换了引用，观察该对象的消费者可保守刷新。用户、Host 和 Reaction 写回都遵守同一检测，也不因保费被覆盖就自动推断它归某条规则所有。详见 <a href="l3-data-scope.html#l3-observed-equality" rel="noopener noreferrer">导入与观察粒度</a>。</p>
 <p>Reaction 适合让状态趋于正确值，待执行时可合并，执行后再次失效也可重新入队。需要“每点一次新增一条”，直接发出对应 Command / Host 事件；两条显式 array.insert 保留两次操作。不要依赖 Reaction 触发次数记账，无条件新增也可能导致无法收敛。</p>
@@ -204,9 +217,9 @@ views.default.bindings.value   将输入端口连接 data:/name
 B 的稳定 Scope 身份仍是 B。
 B 的校验、订阅与 Trace 不能变成 A 的状态。
 </code></pre></div>
-<p>操作某一项时使用稳定实例身份，而不是长期保存当前下标。删除后释放该项规则与状态，晚到的外部报告不能再应用；整体替换的身份复用规则仍待详细契约。UI 虚拟列表只释放未挂载行的 View 订阅，业务 Reaction / Constraint 继续有效。</p>
+<p>操作某一项时使用稳定实例身份，而不是长期保存当前下标。删除后释放该项规则与状态，晚到的外部报告不能再应用；整体替换按下文已确认的身份规则执行。UI 虚拟列表只释放未挂载行的 View 订阅，业务 Reaction / Constraint 继续有效。</p>
 <p>若 B 的年龄没有变化，跟随 B 的相对年龄观察不应只因移动而重算；固定位置 <code>/insureds/0/age</code> 则观察“当前位置 0”，前后值不同会失效。需要成员序号或排序的业务，应明确观察位置 / 集合，不能只观察年龄。框架在父 Scope 下存相对位置，移动被保人不要求为全部受益人重写路径，View 行也无需手工改绑物理下标。</p>
-<p>替换某一行对象保留该行身份，子字段逐项比较；整数组替换即重建成员 Scope 已确认，即使数据相同也不复用身份，不按业务 ID / 姓名 / 内容匹配。新 Scope 按显式首次激活策略运行，默认不执行已确认，正式字段名仍待固化。连续“改 A 年龄→移动 A→再次改 A 年龄”会逐条检测，但 A 的同一保费实例在 Flush 前只待执行一份，执行读最终年龄，见 <a href="l3-data-scope.html#l3-command-sequence" rel="noopener noreferrer">逐 Command 轨迹</a>。</p>
+<p>替换某一行对象保留该行身份，子字段逐项比较；整数组替换即重建成员 Scope 已确认，即使数据相同也不复用身份，不按业务 ID / 姓名 / 内容匹配。新 Scope 按显式首次激活策略运行，默认不执行已确认，当前字段为 runOnActivate，已由协议 / Compiler / Runtime 消费。连续“改 A 年龄→移动 A→再次改 A 年龄”会逐条检测，但 A 的同一保费实例在 Flush 前只待执行一份，执行读最终年龄，见 <a href="l3-data-scope.html#l3-command-sequence" rel="noopener noreferrer">逐 Command 轨迹</a>。</p>
 <p>学完应能说明“当前项位置”和“当前项是谁”的区别，以及为什么移动数组不能只做普通 splice。详见 <a href="l1/02-data-reference-scope.html#scope" rel="noopener noreferrer">ScopeBinder</a>、<a href="l1/02-data-reference-scope.html#scope-handle" rel="noopener noreferrer">ScopeHandle</a> 与 <a href="dependency-reactivity.html#dependency-scope" rel="noopener noreferrer">跨层实例生命周期</a>。</p>
 </section>
 <section class="section" id="usage-integration"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>第五步：组合视图与接入业务应用</h2></div></div>
@@ -290,7 +303,7 @@ B 的校验、订阅与 Trace 不能变成 A 的状态。
 </tr>
 <tr>
 <td>后置校验被跳过</td>
-<td>本轮前置是否存在且通过；严格缺失策略仍待验证</td>
+<td>本轮前置是否存在且通过；结合 blocked 状态与 coverage 检查，本地前置用例已有覆盖</td>
 <td><a href="l3-validation.html#validation-round" rel="noopener noreferrer">本轮校验链</a></td>
 </tr>
 <tr>
@@ -316,7 +329,7 @@ B 的校验、订阅与 Trace 不能变成 A 的状态。
 </tbody>
 </table></div>
 <p>异常 Trace 用有序执行、实际 Change 和 triggeredBy 说明“谁因何执行、改了哪里”。同一规则多次执行有独立 ID。正常生产 Flush 不保留完整历史，异常先提取受限报告；Devtools 可独立保存记录，关闭它不能改变业务结果。Trace 截断时只能解释保留下来的证据，不能据此承诺历史值恢复或确定性重放。</p>
-<p>发生安全预算停止时中止整个 Flush，保留已写数据并报告；不要自动无限重启同一批待执行任务。已替代局部 Health 与失败下游禁用方案，Trace 只解释实际过程。剩余 Pending 如何处理、后续输入怎样重新触发、Validation / Submit 如何衔接仍待确认。记录内容与复现能力见 <a href="l3-observability.html#l3-trace" rel="noopener noreferrer">Trace</a> 和 <a href="l3-observability.html#l3-devtools" rel="noopener noreferrer">三档复现</a>。</p>
+<p>发生安全预算停止时中止整个 Flush，保留已写数据并报告；不要自动无限重启同一批待执行任务。已替代局部 Health 与失败下游禁用方案，Trace 只解释实际过程。当前实现清空本轮剩余 Reaction Pending，不自动续跑；后续新有效变化建立新轮。独立完整校验仍可进行，Host 只交付当前 valid 证明对应快照；真实提交服务待接入。记录内容与复现能力见 <a href="l3-observability.html#l3-trace" rel="noopener noreferrer">Trace</a> 和 <a href="l3-observability.html#l3-devtools" rel="noopener noreferrer">三档复现</a>。</p>
 </section>
 <section class="section" id="usage-contributing"><div class="section-head"><div class="kicker">08 · FORM ENGINE</div><div class="section-title"><h2>参与开发：从一个业务链路进入对应契约</h2></div></div>
 

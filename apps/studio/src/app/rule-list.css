@@ -1,0 +1,48 @@
+.rule-list {
+  padding: var(--studio-space-16);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rule-list > header,
+.rule-list > article > header {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-8);
+}
+.rule-list > header {
+  min-height: var(--studio-control-height, 2.25rem);
+  margin-bottom: var(--studio-space-8);
+}
+.rule-list > header > span,
+.rule-list > article > dl > dt {
+  color: var(--studio-text-muted);
+}
+.rule-list > header input {
+  margin-inline-start: auto;
+  max-width: 20rem;
+}
+.rule-list > article {
+  border-top: 1px solid var(--studio-border);
+  padding-block: var(--studio-space-8);
+}
+.rule-list > article > header {
+  justify-content: space-between;
+}
+.rule-list > header > h2,
+.rule-list > article > header > h3 {
+  margin: 0;
+}
+.rule-list > article > dl {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr);
+  gap: var(--studio-space-4) var(--studio-space-12);
+  margin: var(--studio-space-4) 0 0;
+}
+.rule-list > article > dl > dd {
+  margin: 0;
+}
+.rule-list > [data-add-rule] {
+  width: 100%;
+  border-style: dashed;
+  margin-top: var(--studio-space-8);
+}

@@ -15,7 +15,8 @@ export class RequestBridge {
   readonly #calls = new Set<CallRecord>();
   #sequence = 0;
   /** 只读调用元数据，无 Payload / Result / cancel 函数，查询不会发起请求。 */
-  inspect() {
+  inspect(maximum = Infinity) {
+    if (this.#calls.size > maximum) throw Error('budget');
     return [...this.#calls].map(({ id, name }) => ({ id, name, status: 'pending' as const }));
   }
   constructor(
@@ -24,7 +25,12 @@ export class RequestBridge {
     readonly scope: ScopeBinding,
     readonly occurrence: string,
     readonly alive: () => boolean,
-    readonly inspectEvent?: (event: { id: number; name: string; status: string }) => void,
+    readonly inspectEvent?: () => (event: {
+      id: number;
+      name: string;
+      status:
+        'pending' | 'success' | 'error' | 'discarded' | 'returned' | 'rejected' | 'late-discarded';
+    }) => void,
   ) {}
   /** 本挂载失效时撤销全部在途交付，底层 Promise 即使永不结束也不能悬挂调用。 */
   cancelAll() {
@@ -37,9 +43,18 @@ export class RequestBridge {
    */
   request = (name: string, input: JsonValue): RequestCall<JsonValue> => {
     const id = ++this.#sequence;
-    const note = (status: string) => {
+    let inspect: ReturnType<NonNullable<RequestBridge['inspectEvent']>> | undefined;
+    try {
+      inspect = this.inspectEvent?.();
+    } catch {
+      /* 采集错误不影响业务。 */
+    }
+    const note = (
+      status:
+        'pending' | 'success' | 'error' | 'discarded' | 'returned' | 'rejected' | 'late-discarded',
+    ) => {
       try {
-        this.inspectEvent?.({ id, name, status });
+        inspect?.({ id, name, status });
       } catch {
         /* 工具不影响调用。 */
       }
@@ -138,7 +153,11 @@ export class RequestBridge {
       void Promise.resolve(returned)
         .then(
           (value) => {
-            if (done) return;
+            note('returned');
+            if (done) {
+              note('late-discarded');
+              return;
+            }
             if (!this.alive()) {
               cancel();
               return;
@@ -160,7 +179,11 @@ export class RequestBridge {
             }
             finish({ status: 'success', value: capturedResult });
           },
-          () => failed('REQUEST_FAILED'),
+          () => {
+            note('rejected');
+            if (done) note('late-discarded');
+            else failed('REQUEST_FAILED');
+          },
         )
         .catch(() => failed('REQUEST_FAILED'));
     } catch {

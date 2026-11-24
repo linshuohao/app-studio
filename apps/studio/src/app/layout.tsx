@@ -1,0 +1,16 @@
+import type { ReactNode } from 'react';
+import './studio.css';
+import './studio-ui.css';
+import '../components/field-picker/field-picker.css';
+import './selection-controls.css';
+import '@form-engine/materials-react/styles.css';
+
+export const metadata = { title: '表单工作台' };
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="zh-CN">
+      <body>{children}</body>
+    </html>
+  );
+}

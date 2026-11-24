@@ -54,11 +54,10 @@ class KnowledgeContracts(unittest.TestCase):
         for anchor in ("l3-decisions", "l3-v06-decisions", "dependency-v05-decisions", "validation-decisions", "history"):
             self.assertEqual(owners[anchor], "HISTORY-DESIGN")
 
-    def test_partial_layer_and_unstarted_platform_scopes_are_explicit(self):
+    def test_partial_layer_and_platform_scopes_are_explicit(self):
         records = {row["id"]: row for row in self.catalog["records"]}
-        self.assertEqual(records["M14"]["state"], "部分完成")
-        for key in ("M18", "M19"):
-            self.assertEqual(records[key]["state"], "待设计")
+        for key in ("M14", "M18", "M19"):
+            self.assertEqual(records[key]["state"], "部分完成")
         self.assertIn("T09", records)
         self.assertIn("T10", records)
         self.assertIn("T11", records["T07"]["dependencies"])

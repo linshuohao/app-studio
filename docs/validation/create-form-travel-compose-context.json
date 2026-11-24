@@ -1,0 +1,2519 @@
+{
+  "baseline": "create-form-travel-resume.json",
+  "measurement": "Provider token counts include cached input. Message lengths and schema lengths are serialized character counts, not tokens. Local ChatGPT transport.",
+  "attempts": [
+    {
+      "baseline": "create-form-travel-resume.json",
+      "transport": "local ChatGPT via Codex",
+      "calls": [
+        {
+          "seconds": 30.2,
+          "input": 17627,
+          "cached": 0,
+          "output": 1122,
+          "context": null
+        },
+        {
+          "seconds": 10.83,
+          "input": 14690,
+          "cached": 0,
+          "output": 107,
+          "context": {
+            "functions": [
+              "ClarificationPatch"
+            ],
+            "schema_chars": 624,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 445,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 1528,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 9.3,
+          "input": 22199,
+          "cached": 0,
+          "output": 47,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 11.32,
+          "input": 22327,
+          "cached": 12928,
+          "output": 104,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 155,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.02,
+          "input": 31639,
+          "cached": 0,
+          "output": 84,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 155,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 534,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 294,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 488,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 21.14,
+          "input": 23849,
+          "cached": 0,
+          "output": 499,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 155,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 534,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 33.41,
+          "input": 38663,
+          "cached": 12928,
+          "output": 1106,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 534,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1280,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 32.07,
+          "input": 39712,
+          "cached": 12928,
+          "output": 1034,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 534,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1280,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2520,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 16.35,
+          "input": 25308,
+          "cached": 0,
+          "output": 219,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 205,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 155,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 534,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 160,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1280,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2520,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2490,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 457,
+                "calls": []
+              }
+            ]
+          }
+        }
+      ],
+      "tools": [
+        {
+          "name": "read_protocol",
+          "ms": 115
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 52
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 52
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 12
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 18
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 18
+        },
+        {
+          "name": "record_configuration_mapping",
+          "ms": 2
+        },
+        {
+          "name": "check_candidate",
+          "ms": 82
+        },
+        {
+          "name": "check_candidate",
+          "ms": 64
+        }
+      ],
+      "nodes": [
+        {
+          "name": "understand",
+          "ms": 30851
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        },
+        {
+          "name": "understand",
+          "ms": 10841
+        },
+        {
+          "name": "compose",
+          "ms": 136075
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        }
+      ],
+      "session": "6bc530bc-2690-4f5a-92e5-9aaed8bd137e",
+      "firstMs": 32347,
+      "resumeMs": 151,
+      "secondMs": 147068,
+      "trial": "failed: city searchbox absent after selecting CN",
+      "compiler": [
+        "BINDING_UNPROVEN",
+        "passed"
+      ]
+    },
+    {
+      "baseline": "create-form-travel-resume.json",
+      "transport": "local ChatGPT via Codex",
+      "calls": [
+        {
+          "seconds": 29.84,
+          "input": 17621,
+          "cached": 5248,
+          "output": 1026,
+          "context": null
+        },
+        {
+          "seconds": 11.19,
+          "input": 23352,
+          "cached": 10880,
+          "output": 100,
+          "context": {
+            "functions": [
+              "ClarificationPatch"
+            ],
+            "schema_chars": 624,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 445,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 1400,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.05,
+          "input": 30870,
+          "cached": 10880,
+          "output": 47,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 14.84,
+          "input": 22280,
+          "cached": 12928,
+          "output": 171,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.19,
+          "input": 22840,
+          "cached": 12928,
+          "output": 64,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 294,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 488,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 17.32,
+          "input": 23785,
+          "cached": 12928,
+          "output": 104,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 26.08,
+          "input": 38261,
+          "cached": 12928,
+          "output": 619,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 290,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 29.47,
+          "input": 38906,
+          "cached": 0,
+          "output": 994,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 290,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1778,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 31.11,
+          "input": 39950,
+          "cached": 0,
+          "output": 981,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 290,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1778,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2567,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 32.94,
+          "input": 40970,
+          "cached": 12928,
+          "output": 1052,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 290,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1778,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2567,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2461,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.14,
+          "input": 41732,
+          "cached": 0,
+          "output": 159,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 11636,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3136,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 204,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 412,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2768,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 493,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 290,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1778,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2567,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2461,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 836,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 2537,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 98,
+                "calls": []
+              }
+            ]
+          }
+        }
+      ],
+      "tools": [
+        {
+          "name": "read_protocol",
+          "ms": 130
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 54
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 54
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 10
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 18
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 19
+        },
+        {
+          "name": "read_protocol",
+          "ms": 1
+        },
+        {
+          "name": "record_configuration_mapping",
+          "ms": 1
+        },
+        {
+          "name": "check_candidate",
+          "ms": 70
+        },
+        {
+          "name": "check_candidate",
+          "ms": 69
+        },
+        {
+          "name": "check_candidate",
+          "ms": 1
+        }
+      ],
+      "nodes": [
+        {
+          "name": "understand",
+          "ms": 30369
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        },
+        {
+          "name": "understand",
+          "ms": 11197
+        },
+        {
+          "name": "compose",
+          "ms": 188668
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        }
+      ],
+      "session": "62769e12-c391-4931-b3e4-e793cc1519d4",
+      "firstMs": 32326,
+      "resumeMs": 167,
+      "secondMs": 201598,
+      "trial": "blocked: compiler could not prove binding; trial did not start"
+    },
+    {
+      "baseline": "create-form-travel-resume.json",
+      "transport": "local ChatGPT via Codex",
+      "calls": [
+        {
+          "seconds": 27.16,
+          "input": 17624,
+          "cached": 6528,
+          "output": 1053,
+          "context": null
+        },
+        {
+          "seconds": 14.37,
+          "input": 23350,
+          "cached": 10880,
+          "output": 106,
+          "context": {
+            "functions": [
+              "ClarificationPatch"
+            ],
+            "schema_chars": 624,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 445,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 1382,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.68,
+          "input": 31007,
+          "cached": 0,
+          "output": 47,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 12.99,
+          "input": 22416,
+          "cached": 12928,
+          "output": 83,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 10.67,
+          "input": 22984,
+          "cached": 0,
+          "output": 81,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 294,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 488,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 14.87,
+          "input": 32446,
+          "cached": 21632,
+          "output": 103,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 396,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2426,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 204,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 24.28,
+          "input": 38197,
+          "cached": 12928,
+          "output": 644,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 396,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2426,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 297,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 27.78,
+          "input": 38827,
+          "cached": 12928,
+          "output": 916,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 668,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 396,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 2426,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 204,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 297,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 31908,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1730,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              }
+            ]
+          }
+        },
+        {
+          "seconds": 13.98,
+          "input": 24330,
+          "cached": 12928,
+          "output": 214,
+          "context": {
+            "functions": [
+              "read_protocol",
+              "query_capabilities",
+              "check_candidate",
+              "record_configuration_mapping",
+              "Clarification",
+              "Answer",
+              "Blocked",
+              "CheckedDraft"
+            ],
+            "schema_chars": 16659,
+            "messages": [
+              {
+                "role": "system",
+                "name": null,
+                "chars": 12513,
+                "calls": []
+              },
+              {
+                "role": "human",
+                "name": null,
+                "chars": 3063,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 293,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 483,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 396,
+                "calls": [
+                  "query_capabilities",
+                  "query_capabilities"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "tool",
+                "name": "query_capabilities",
+                "chars": 164,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 297,
+                "calls": [
+                  "read_protocol"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "read_protocol",
+                "chars": 159,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1730,
+                "calls": [
+                  "record_configuration_mapping"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "record_configuration_mapping",
+                "chars": 97,
+                "calls": []
+              },
+              {
+                "role": "ai",
+                "name": "create_form",
+                "chars": 1777,
+                "calls": [
+                  "check_candidate"
+                ]
+              },
+              {
+                "role": "tool",
+                "name": "check_candidate",
+                "chars": 469,
+                "calls": []
+              }
+            ]
+          }
+        }
+      ],
+      "tools": [
+        {
+          "name": "read_protocol",
+          "ms": 156
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 46
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 46
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 8
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 18
+        },
+        {
+          "name": "query_capabilities",
+          "ms": 18
+        },
+        {
+          "name": "read_protocol",
+          "ms": 2
+        },
+        {
+          "name": "record_configuration_mapping",
+          "ms": 2
+        },
+        {
+          "name": "check_candidate",
+          "ms": 73
+        }
+      ],
+      "nodes": [
+        {
+          "name": "understand",
+          "ms": 27719
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        },
+        {
+          "name": "understand",
+          "ms": 14378
+        },
+        {
+          "name": "compose",
+          "ms": 117706
+        },
+        {
+          "name": "deliver",
+          "ms": 1
+        }
+      ],
+      "session": "fc5de523-0965-4460-9080-b9c792e2f970",
+      "firstMs": 29279.339291,
+      "resumeMs": 147.45166699999754,
+      "secondMs": 134913.63825000002,
+      "trial": "上海 → 更换国家清空 → 东京",
+      "candidate_digest": "sha256:c55592ddd64d9f34cea2ef1b9e44e5d90a00f238660b5eff9cc2270bbfabb259",
+      "summary": "表单已通过编译。可预览中国（CN）和日本（JP）两个国家选项、选定国家后显示城市搜索框，以及切换国家时清空城市选择。生产端需绑定 travel.searchCities，按当前国家编码和搜索词返回结果，列表用 label 显示城市名称。提交时，Host 需从校验通过的快照读取 /city/id，仅将城市编码写入业务载荷，未选城市时省略该字段。实际搜索结果的国家范围、城市名称展示和提交保存结果待 Host 接入后验证。"
+    }
+  ]
+}

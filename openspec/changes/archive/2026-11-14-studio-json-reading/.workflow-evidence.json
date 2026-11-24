@@ -1,0 +1,30 @@
+{
+  "fingerprint": "53f11d8fa8acf10f95e3343c216c8e54bc991b6a03d9a6c375d8123ca8ba1771",
+  "checks": [
+    [
+      "node",
+      "--experimental-strip-types",
+      "apps/studio/tests/json-format.check.mjs"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-preview",
+      "PLATFORM_API_URL=http://127.0.0.1:3319",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "build"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

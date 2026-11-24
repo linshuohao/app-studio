@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Studio · 纯函数目录草案</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      html {
+        font-size: 13px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--studio-surface);
+        color: var(--studio-text);
+        font: var(--studio-type-body);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      header {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        padding-inline: var(--studio-space-24);
+        border-bottom: 1px solid var(--studio-border);
+        font: var(--studio-type-control);
+      }
+      main {
+        padding: var(--studio-space-16) var(--studio-space-24) var(--studio-space-32);
+      }
+      h1 {
+        margin: 0;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font: var(--studio-type-title);
+      }
+      h2 {
+        margin: 0;
+        font: var(--studio-type-section);
+      }
+      p {
+        margin: 0;
+      }
+      small,
+      .caption {
+        color: var(--studio-text-muted);
+        font: var(--studio-type-caption);
+      }
+      code,
+      pre {
+        font: var(--studio-type-code);
+      }
+      button,
+      select,
+      summary {
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      .stack {
+        display: grid;
+        gap: var(--studio-space-24);
+      }
+      .metadata,
+      .inline {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--studio-space-8);
+      }
+      .metadata {
+        margin-top: var(--studio-space-8);
+      }
+      .metadata > * {
+        padding: var(--studio-space-4) var(--studio-space-8);
+        background: var(--studio-surface-muted);
+        border-radius: var(--studio-radius-4);
+      }
+      .muted {
+        color: var(--studio-text-muted);
+      }
+      .studio-list-filters {
+        padding: 0;
+        border: 0;
+        margin-bottom: var(--studio-space-12);
+      }
+      .studio-list-filters select {
+        min-height: var(--studio-control-height);
+      }
+      .result {
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-8);
+        overflow: hidden;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: var(--studio-space-12) var(--studio-space-16);
+        border-block-end: 1px solid var(--studio-border);
+      }
+      th {
+        background: var(--studio-surface-muted);
+        font: var(--studio-type-control);
+        white-space: nowrap;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      #rows tr:hover {
+        background: var(--studio-hover);
+      }
+      .function-name {
+        padding-inline: 0;
+        min-height: 0;
+        text-decoration: none;
+        font: var(--studio-type-section);
+      }
+      .identity-code,
+      .parameter-position {
+        display: block;
+        color: var(--studio-text-muted);
+      }
+      .summary {
+        margin-top: var(--studio-space-4);
+      }
+      .result-footer {
+        padding: var(--studio-space-8) var(--studio-space-16);
+        border-top: 1px solid var(--studio-border);
+      }
+      .empty {
+        padding: var(--studio-space-24);
+      }
+      .signature {
+        margin: 0;
+        padding: var(--studio-space-16);
+        background: var(--studio-surface-muted);
+        border-radius: var(--studio-radius-8);
+        overflow: auto;
+      }
+      .subsection {
+        display: grid;
+        gap: var(--studio-space-12);
+      }
+      .example {
+        padding: var(--studio-space-16);
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-8);
+      }
+      .example + .example {
+        margin-top: var(--studio-space-8);
+      }
+      .example-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--studio-space-16);
+      }
+      .example pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      details summary {
+        font: var(--studio-type-control);
+        padding-block: var(--studio-space-8);
+      }
+      details pre {
+        margin-block: var(--studio-space-8) 0;
+      }
+      .back {
+        justify-self: start;
+      }
+      @media (max-width: 760px) {
+        main {
+          padding-inline: var(--studio-space-16);
+        }
+        .example-grid {
+          grid-template-columns: minmax(0, 1fr);
+          gap: var(--studio-space-8);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header><span class="muted">Studio /&nbsp;</span>纯函数</header>
+    <main id="studio-main">
+      <section id="catalog" class="stack" aria-labelledby="catalog-title" data-studio-ui>
+        <div>
+          <h1 id="catalog-title" tabindex="-1">纯函数目录</h1>
+          <p class="muted">查找表达式可用的函数、参数和返回值。</p>
+        </div>
+        <div>
+          <div class="studio-list-filters" role="search" aria-label="筛选纯函数">
+            <input
+              id="search"
+              class="studio-input"
+              type="search"
+              placeholder="搜索名称、标识或说明…"
+              aria-label="搜索函数"
+            />
+            <select id="category" class="studio-input" aria-label="用途分类">
+              <option value="">全部分类</option>
+            </select>
+            <select id="technology" class="studio-input" aria-label="实现技术">
+              <option value="">全部技术</option>
+            </select>
+            <button id="clear" class="studio-button" data-variant="text" type="button" hidden>
+              清除条件
+            </button>
+          </div>
+          <div class="result">
+            <div
+              id="result-scroll"
+              class="studio-table-results"
+              role="region"
+              aria-label="纯函数列表"
+              tabindex="0"
+            >
+              <table id="function-table">
+                <thead>
+                  <tr>
+                    <th scope="col">函数</th>
+                    <th scope="col">用途分类</th>
+                    <th scope="col">版本 / 技术</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+            <p id="empty" class="empty" hidden>没有匹配的函数。可以更换关键词或清除筛选条件。</p>
+            <div class="result-footer caption" id="count" role="status"></div>
+          </div>
+        </div>
+      </section>
+      <section
+        id="detail"
+        class="stack"
+        aria-labelledby="function-title"
+        data-studio-ui
+        hidden
+      ></section>
+    </main>
+    <script id="catalog-data" type="application/json">
+      [
+        {
+          "id": "date.inclusiveDays",
+          "version": "0.1.0",
+          "technology": "JavaScript",
+          "displayTemplate": "{start}到{end}的天数（含首尾）",
+          "title": "日期天数",
+          "category": "日期",
+          "summary": "计算含首尾的日期天数；无效日期或倒序返回空值。",
+          "annotations": {
+            "/parameters/0": "业务上期望 开始日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 null。",
+            "/parameters/1": "业务上期望 结束日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 null。",
+            "/returns": "含首尾的整数天数；非法、空值或倒序返回 null。"
+          },
+          "callExamples": [
+            {
+              "args": ["2028-02-28", "2028-02-29"],
+              "result": 2,
+              "description": "参数按签名顺序传入；右侧为对应返回值。"
+            },
+            {
+              "args": [null, "2028-02-29"],
+              "result": null,
+              "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+            }
+          ],
+          "parameters": [
+            ["start", "JsonValue"],
+            ["end", "JsonValue"]
+          ],
+          "returns": "integer | null",
+          "manifest": {
+            "id": "date.inclusiveDays",
+            "version": "0.1.0",
+            "parameters": [
+              {
+                "name": "start",
+                "schema": true
+              },
+              {
+                "name": "end",
+                "schema": true
+              }
+            ],
+            "returns": {
+              "type": ["integer", "null"],
+              "minimum": 1
+            }
+          }
+        },
+        {
+          "id": "date.ageInYears",
+          "version": "0.1.0",
+          "technology": "JavaScript",
+          "displayTemplate": "出生日期为{birthDate}时，截至{asOfDate}的周岁数",
+          "title": "实足周岁",
+          "category": "日期",
+          "summary": "基于指定日期计算周岁，非闰年按 2 月 28 日处理闰日生日。",
+          "annotations": {
+            "/parameters/0": "出生日，格式为 YYYY-MM-DD。",
+            "/parameters/1": "计算周岁所用的日期，例如起保日，格式为 YYYY-MM-DD。",
+            "/returns": "非负整数周岁。日期缺失、无效或早于出生日期时返回 null。"
+          },
+          "callExamples": [
+            {
+              "args": ["1956-02-29", "2026-02-28"],
+              "result": 70,
+              "description": "非闰年 2 月 28 日达到 70 周岁。"
+            }
+          ],
+          "examples": [
+            {
+              "source": "packages/pure-functions/catalog-docs.json",
+              "value": {
+                "op": "date.ageInYears",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/birthDate"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "parameters": [
+            ["birthDate", "JsonValue"],
+            ["asOfDate", "JsonValue"]
+          ],
+          "returns": "integer | null",
+          "manifest": {
+            "id": "date.ageInYears",
+            "version": "0.1.0",
+            "parameters": [
+              {
+                "name": "birthDate",
+                "schema": true
+              },
+              {
+                "name": "asOfDate",
+                "schema": true
+              }
+            ],
+            "returns": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "id": "text.isNonBlank",
+          "version": "0.1.0",
+          "technology": "JavaScript",
+          "displayTemplate": "{value}是非空白文本",
+          "title": "非空文本",
+          "category": "文本",
+          "summary": "判断文本是否包含空白之外的内容，不转换输入类型。",
+          "annotations": {
+            "/parameters/0": "业务上期望字符串。声明为 JsonValue 以检查任意工作值；空白字符串、null、数字、对象等返回 false，不转换类型、不修改原文本。",
+            "/returns": "仅非空白字符串返回 true，其他输入返回 false。"
+          },
+          "callExamples": [
+            {
+              "args": ["  林小满  "],
+              "result": true,
+              "description": "参数按签名顺序传入；右侧为对应返回值。"
+            },
+            {
+              "args": [null],
+              "result": false,
+              "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+            }
+          ],
+          "parameters": [["value", "JsonValue"]],
+          "returns": "boolean",
+          "manifest": {
+            "id": "text.isNonBlank",
+            "version": "0.1.0",
+            "parameters": [
+              {
+                "name": "value",
+                "schema": true
+              }
+            ],
+            "returns": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "id": "travel.isEligibleAge",
+          "version": "0.1.0",
+          "technology": "JavaScript",
+          "displayTemplate": "{age}符合{agePolicy}的投保年龄要求",
+          "title": "年龄资格",
+          "category": "业务规则",
+          "summary": "判断整数年龄是否处于配置的承保范围。",
+          "annotations": {
+            "/parameters/0": "业务上期望出行开始日的周岁年龄：非负安全整数且在 agePolicy 承保范围内。声明为 JsonValue 是为接收编辑中的无效值；字符串、null、负数、小数或超范围年龄返回 false，不隐式转换。",
+            "/parameters/1": "承保年龄范围与成年阈值规则；非法规则配置抛求值错误。",
+            "/returns": "年龄满足配置的承保范围时返回 true。",
+            "/parameters/1/schema/properties/minAge": "承保最小年龄，含此年龄。",
+            "/parameters/1/schema/properties/maxAge": "承保最大年龄，含此年龄；不得小于 minAge。",
+            "/parameters/1/schema/properties/adultAge": "成年年龄阈值，达到此年龄按成年人处理。"
+          },
+          "callExamples": [
+            {
+              "args": [
+                30,
+                {
+                  "minAge": 0,
+                  "maxAge": 80,
+                  "adultAge": 18
+                }
+              ],
+              "result": true,
+              "description": "使用包内合成验收政策演示业务判断。"
+            },
+            {
+              "args": [
+                "12",
+                {
+                  "minAge": 0,
+                  "maxAge": 80,
+                  "adultAge": 18
+                }
+              ],
+              "result": false,
+              "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+            }
+          ],
+          "parameters": [
+            ["age", "JsonValue"],
+            ["agePolicy", "AgePolicy"]
+          ],
+          "returns": "boolean",
+          "manifest": {
+            "id": "travel.isEligibleAge",
+            "version": "0.1.0",
+            "parameters": [
+              {
+                "name": "age",
+                "schema": true
+              },
+              {
+                "name": "agePolicy",
+                "schema": {
+                  "type": "object",
+                  "required": ["minAge", "maxAge", "adultAge"],
+                  "properties": {
+                    "minAge": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "maxAge": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "adultAge": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            ],
+            "returns": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    </script>
+    <script>
+      const assets = JSON.parse(document.querySelector('#catalog-data').textContent);
+      const get = (selector) => document.querySelector(selector);
+      const search = get('#search');
+      const category = get('#category');
+      const technology = get('#technology');
+      const results = get('#result-scroll');
+      const detail = get('#detail');
+      const catalog = get('#catalog');
+      const labels = new Set(assets.map((asset) => asset.category));
+      for (const label of labels) category.add(new Option(label, label));
+      for (const label of new Set(assets.map((asset) => asset.technology)))
+        technology.add(new Option(label, label));
+
+      const escape = (value) =>
+        String(value ?? '').replace(
+          /[&<>"]/g,
+          (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char],
+        );
+      const json = (value) => escape(JSON.stringify(value, null, 4));
+      const button = (label, attributes) =>
+        '<button type="button" class="studio-button" data-variant="secondary" ' +
+        attributes +
+        '>' +
+        label +
+        '</button>';
+
+      function renderResults() {
+        const query = search.value.trim().toLowerCase();
+        const matches = assets.filter(
+          (asset) =>
+            (!category.value || category.value === asset.category) &&
+            (!technology.value || technology.value === asset.technology) &&
+            [asset.title, asset.id, asset.summary].some((value) =>
+              value.toLowerCase().includes(query),
+            ),
+        );
+        get('#rows').innerHTML = matches
+          .map(
+            (asset) => `
+      <tr>
+        <td>
+          <button type="button" class="studio-button function-name" data-variant="text" data-function="${asset.id}">${escape(asset.title)}</button>
+          <code class="identity-code">${asset.id}</code>
+          <p class="summary muted">${escape(asset.summary)}</p>
+        </td>
+        <td>${escape(asset.category)}</td>
+        <td><code>${asset.version}</code><small class="identity-code">${asset.technology}</small></td>
+      </tr>`,
+          )
+          .join('');
+        results.hidden = matches.length === 0;
+        get('#empty').hidden = matches.length > 0;
+        get('#clear').hidden = !search.value && !category.value && !technology.value;
+        get('#count').textContent = '共 ' + matches.length + ' 项';
+      }
+
+      let returnPosition;
+      function show(asset) {
+        const signature =
+          asset.id +
+          '(' +
+          asset.parameters.map(([name, type]) => name + ': ' + type).join(', ') +
+          ') → ' +
+          asset.returns;
+        detail.innerHTML = `
+      <div>
+        ${button('返回纯函数目录', 'id="back"')}
+        <h1 id="function-title" tabindex="-1">${escape(asset.title)}</h1>
+        <p class="muted">${escape(asset.summary)}</p>
+        <div class="metadata"><code>${asset.id}</code><small>${escape(asset.category)}</small><small>${asset.version} · ${asset.technology}</small></div>
+      </div>
+      <section class="subsection" aria-labelledby="signature-title">
+        <h2 id="signature-title">函数签名</h2>
+        <pre class="signature">${escape(signature)}</pre>
+      </section>
+      <section class="subsection" aria-labelledby="parameters-title">
+        <h2 id="parameters-title">参数与返回值</h2>
+        <div class="result"><div class="studio-table-results" role="region" aria-label="参数与返回值" tabindex="0">
+          <table><thead><tr><th scope="col">位置 / 名称</th><th scope="col">类型</th><th scope="col">说明</th></tr></thead><tbody>
+            ${asset.parameters.map(([name, type], index) => `<tr><td><small class="parameter-position">args[${index}]</small><code>${name}</code></td><td><code>${escape(type)}</code></td><td>${escape(asset.annotations['/parameters/' + index])}</td></tr>`).join('')}
+            <tr><td>返回值</td><td><code>${escape(asset.returns)}</code></td><td>${escape(asset.annotations['/returns'])}</td></tr>
+          </tbody></table>
+        </div></div>
+      </section>
+      <section class="subsection" aria-labelledby="examples-title">
+        <h2 id="examples-title">调用示例</h2>
+        <div>${asset.callExamples
+          .map(
+            (item, index) => `
+          <div class="example">
+            <div class="example-grid">
+              <div><small>传入 args</small><pre>${json(item.args)}</pre></div>
+              <div><small>返回值</small><pre>${json(item.result)}</pre></div>
+            </div>
+            <p class="caption">${escape(item.description)}</p>
+            <div class="metadata">
+              ${button('复制表达式', 'data-copy="' + index + '"')}
+              <small role="status" data-copy-status="${index}" hidden></small>
+            </div>
+          </div>`,
+          )
+          .join('')}</div>
+      </section>
+      <section class="subsection" aria-labelledby="manifest-title">
+        <h2 id="manifest-title">资产契约</h2>
+        <details><summary>查看完整 Manifest</summary><pre class="signature">${json(asset.manifest)}</pre></details>
+      </section>`;
+        catalog.hidden = true;
+        detail.hidden = false;
+        document.title = asset.title + ' · 纯函数目录';
+        window.scrollTo(0, 0);
+        get('#function-title').focus({ preventScroll: true });
+        get('#back').addEventListener('click', () => {
+          if (history.state?.catalogOrigin) history.back();
+          else {
+            history.replaceState(null, '', location.pathname);
+            readLocation();
+          }
+        });
+        detail.querySelectorAll('[data-copy]').forEach((control) =>
+          control.addEventListener('click', async () => {
+            const item = asset.callExamples[Number(control.dataset.copy)];
+            const expression = JSON.stringify({ op: asset.id, args: item.args }, null, 4);
+            const status = detail.querySelector(
+              '[data-copy-status="' + control.dataset.copy + '"]',
+            );
+            try {
+              await navigator.clipboard.writeText(expression);
+              status.textContent = '已复制';
+            } catch {
+              const source = document.createElement('textarea');
+              source.value = expression;
+              source.readOnly = true;
+              source.setAttribute('aria-label', '表达式文本');
+              control.parentElement.append(source);
+              source.select();
+              status.textContent = '表达式已选中，可使用键盘复制';
+            }
+            status.hidden = false;
+          }),
+        );
+      }
+
+      function readLocation() {
+        const [id, version] = location.hash.slice(1).split('@');
+        const match = assets.find((asset) => asset.id === id && asset.version === version);
+        if (match) {
+          show(match);
+          return;
+        }
+        const returning = !detail.hidden;
+        detail.hidden = true;
+        catalog.hidden = false;
+        document.title = 'Studio · 纯函数目录草案';
+        if (returning) {
+          const position = returnPosition;
+          results.scrollLeft = position?.left ?? 0;
+          window.scrollTo(0, position?.top ?? 0);
+          (
+            catalog.querySelector('[data-function="' + position?.id + '"]') || get('#catalog-title')
+          ).focus({ preventScroll: true });
+        }
+      }
+
+      search.addEventListener('input', renderResults);
+      category.addEventListener('change', renderResults);
+      technology.addEventListener('change', renderResults);
+      get('#clear').addEventListener('click', () => {
+        search.value = category.value = technology.value = '';
+        renderResults();
+        search.focus();
+      });
+      get('#rows').addEventListener('click', (event) => {
+        const control = event.target.closest('[data-function]');
+        if (!control) return;
+        const asset = assets.find((item) => item.id === control.dataset.function);
+        returnPosition = { id: asset.id, top: window.scrollY, left: results.scrollLeft };
+        history.pushState({ catalogOrigin: true }, '', '#' + asset.id + '@' + asset.version);
+        readLocation();
+      });
+      window.addEventListener('popstate', readLocation);
+      renderResults();
+      readLocation();
+    </script>
+  </body>
+</html>

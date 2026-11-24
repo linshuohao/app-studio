@@ -1,0 +1,55 @@
+{
+  "fingerprint": "55f0bdedfdd14ea76160b65dce47c8f330b6c71848bd37c6f6c7abd6450d35a8",
+  "checks": [
+    [
+      "node",
+      "apps/studio/tests/json-format.check.mjs"
+    ],
+    [
+      "node",
+      "apps/studio/tests/json-model.check.mjs"
+    ],
+    [
+      "node",
+      "tools/engineering/catalog-docs.mjs",
+      "--check"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "lint"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-preview",
+      "PLATFORM_API_URL=http://127.0.0.1:3319",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "build"
+    ],
+    [
+      "node",
+      "services/api/test/release-name-migration.check.mjs",
+      "services/api/.platform-data/manual-mvp/platform.sqlite"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

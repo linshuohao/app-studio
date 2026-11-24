@@ -198,7 +198,7 @@ export interface HostCapabilities {
 export interface RuntimeOptions {
   /** Compiler 已编译的产物，装载时仍检查形状、格式与函数锁。 */
   readonly prepared: ReadonlyPreparedForm;
-  /** Host 明确提供的业务初值，必须是纯 JSON，不隐式应用 Schema 默认值。 */
+  /** Host 明确提供的业务初值，必须是纯 JSON；Schema 默认值填充缺失位置且不覆盖显式 null。 */
   readonly data: unknown;
   /** 只读环境输入，缺省为空对象，可通过独立入口整体替换。 */
   readonly context?: unknown;

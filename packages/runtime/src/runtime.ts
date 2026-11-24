@@ -1,4 +1,14 @@
-import { DEVTOOLS_ENABLED, registerDevtoolsSource, type DevtoolsSource } from './devtools/index.js';
+import {
+  registerObservedProducer,
+  observedEntityId,
+  observedPreparedId,
+  observedProducerRef,
+  emitObservedEvent,
+} from './devtools/index.js';
+import { createRuntimeMetadataProducer } from './devtools/observation-runtime.js';
+import { createMetadataReader } from './devtools/observation-reader.js';
+import type { MetadataValue, EventRef } from './devtools/observation-protocol.js';
+import { DEVTOOLS_ENABLED } from './devtools/index.js';
 import { diagnosticSummary } from './devtools/diagnostic-summary.js';
 import type { JsonValue } from '@form-engine/protocol';
 import type {
@@ -39,6 +49,7 @@ import {
   capturePreparedForm,
   PreparedStructureError,
 } from '@form-engine/protocol/internal/prepared';
+import { applyDataSchemaDefaults } from '@form-engine/protocol/internal/schema';
 import { observeRejection } from './lifecycle/async.js';
 import { ObserverRegistry } from './observation/registry.js';
 import { ReactionScheduler } from './reactions/scheduler.js';
@@ -74,6 +85,10 @@ interface ReactionInstance {
 }
 /** 单次 dispatch 及其 batch 叶命令共享的结果；跨 flush 不保留。 */
 interface CommandExecution {
+  interrupted?: boolean;
+  operation?: EventRef;
+  reactionExecutionId?: string;
+  actionIndex?: number;
   /** 任意叶命令产生有效修改即为 true；后续失败不会回滚此前修改。 */
   changed: boolean;
   /** 按执行顺序累积叶命令错误，形成 dispatch 的统一返回结果。 */
@@ -82,7 +97,11 @@ interface CommandExecution {
 
 /** 组合各领域模块，串联 Command → 观察失效 → Reaction → 校验；对外提供实例 API。 */
 class Runtime implements FormRuntime {
-  #inspectionSource?: DevtoolsSource;
+  #stopObservation?: () => void;
+  #evidenceLocators?: Map<number, readonly number[]>;
+  #metadataDepth = 0;
+  #initialOperation?: EventRef;
+  #observedTrigger?: { diagnosticSequence: number; event?: EventRef };
   readonly #functionSchemas: Readonly<Record<string, readonly SchemaRoot[]>>;
   readonly #scopeInvalidationListeners = new Set<() => void>();
   // 固定输入与模块依赖；生命周期策略仍由各模块负责。
@@ -134,7 +153,28 @@ class Runtime implements FormRuntime {
       () => this.#compiledForm as unknown as ReadonlyPreparedForm,
       () => this.#diagnosticInput(),
       DEVTOOLS_ENABLED
-        ? (report) => this.#inspectionSource?.publish('diagnostic', diagnosticSummary(report))
+        ? (report) => {
+            const ref = emitObservedEvent(
+              this,
+              'diagnostic',
+              () => diagnosticSummary(report) as unknown as MetadataValue,
+            );
+            if (!ref) return;
+            const entries = report.kind === 'runtime' ? [report.entry] : report.entries;
+            const sequences = entries
+              .filter((entry) => entry.evidence)
+              .map((entry) => entry.sequence);
+            if (!sequences.length || sequences.length > 2000) return;
+            const locators = (this.#evidenceLocators ??= new Map());
+            locators.set(ref.sequence, sequences);
+            let retained = 0;
+            for (const entries of locators.values()) retained += entries.length;
+            while (retained > 2000) {
+              const oldest = locators.keys().next().value!;
+              retained -= locators.get(oldest)!.length;
+              locators.delete(oldest);
+            }
+          }
         : undefined,
     );
     // 接管注册表；实例装载后不随 Host 注册字典的修改切换实现。
@@ -159,11 +199,17 @@ class Runtime implements FormRuntime {
       ),
     );
     this.#compiledForm = loadCompiledForm(options.prepared, registeredFunctions);
+    const initialData = copyJson(options.data, false);
+    applyDataSchemaDefaults(
+      initialData,
+      this.#compiledForm.definition.data.schema,
+      this.#compiledForm.resources.schemas,
+    );
     this.#hostCapabilities = Object.freeze({
       events: Object.freeze({ ...options.host?.events }),
       validators: Object.freeze({ ...options.host?.validators }),
     });
-    this.#dataStore = new DataStore(options.data, this.#freeze);
+    this.#dataStore = new DataStore(initialData, this.#freeze);
     this.#hostContext = copyJson(
       options.context === undefined ? {} : options.context,
       this.#freeze,
@@ -243,33 +289,47 @@ class Runtime implements FormRuntime {
       maxExecutions,
       () => this.#afterReactions(),
       this.#diagnosticReporter,
+      (id, reason) => {
+        emitObservedEvent(this, 'reaction.queue-cancelled', () => ({
+          queueEntryId: `queue:${id}`,
+          reason,
+        }));
+      },
     );
     this.#validationManager = new ValidationManager(this.#compiledForm, this.#expressionEvaluator, {
+      observationOwner: this,
+      observationCause: () => this.#observedTrigger?.event ?? this.#initialOperation,
       view: () => this.#dataStore.capture(),
       contextRevision: () => this.#hostContextRevision,
       frame: (scope) => this.#createEvaluationFrame(scope),
       observe: (watch, scope, callback) =>
         this.#observerRegistry.add(watch, scope, callback, true).dispose,
-      publish: (paths, origin) => {
+      publish: (paths, origin, event) => {
         const entry = this.#diagnosticReporter.record(
           'validation.change',
           undefined,
           undefined,
           origin,
         );
-        this.#diagnosticReporter.withTrigger(
-          {
-            origin: {
-              sequence: entry.sequence,
-              ...(entry.round === undefined ? {} : { round: entry.round }),
+        const previous = this.#observedTrigger;
+        this.#observedTrigger = { diagnosticSequence: entry.sequence, event };
+        try {
+          this.#diagnosticReporter.withTrigger(
+            {
+              origin: {
+                sequence: entry.sequence,
+                ...(entry.round === undefined ? {} : { round: entry.round }),
+              },
+              input: this.#diagnosticInput(),
             },
-            input: this.#diagnosticInput(),
-          },
-          () => {
-            if (this.#observerRegistry.validationChanged(paths) && !this.#disposed)
-              this.#diagnosticReporter.addTrigger(entry);
-          },
-        );
+            () => {
+              if (this.#observerRegistry.validationChanged(paths) && !this.#disposed)
+                this.#diagnosticReporter.addTrigger(entry);
+            },
+          );
+        } finally {
+          this.#observedTrigger = previous;
+        }
       },
       schedule: () => this.#reactionScheduler.schedule(),
       captureOrigin: (kind, ruleId) => this.#diagnosticReporter.capture(kind, ruleId),
@@ -278,29 +338,87 @@ class Runtime implements FormRuntime {
       deferEffect: (effect) => this.#observerRegistry.deferEffect(effect),
       host: this.#hostCapabilities,
     });
-    if (DEVTOOLS_ENABLED)
-      this.#inspectionSource = registerDevtoolsSource(
-        this,
-        {
-          kind: 'runtime',
-          label: this.#compiledForm.definition.id,
-          formId: this.#compiledForm.definition.id,
-        },
-        () => ({
-          data: this.#dataStore.capture().root,
-          context: this.#hostContext,
-          dataRevision: this.#dataStore.capture().revision,
-          contextRevision: this.#hostContextRevision,
-          prepared: this.#compiledForm,
-          // 仅轻量查询尾部，不把错误现场中的完整输入隐式广播。
-          diagnostics: this.#diagnosticReporter
-            .read()
-            .map(({ evidence: _evidence, ...entry }) => entry),
-        }),
-      );
+    if (DEVTOOLS_ENABLED && 'window' in globalThis) {
+      this.#stopObservation = registerObservedProducer(this, (ref, budget) => {
+        const identity = (object: object) => observedEntityId(this, object);
+        const base = createRuntimeMetadataProducer(
+          ref,
+          this.#compiledForm,
+          observedPreparedId(this.#compiledForm),
+          budget,
+          () => {
+            const validation = this.#metadataDepth
+              ? undefined
+              : this.#validationManager.inspectMetadata(identity, budget.maxRows);
+            const instances: MetadataValue[] = [];
+            if (this.#reactionInstances.size > budget.maxRows) throw Error('budget');
+            if (validation)
+              for (const instance of this.#reactionInstances.values())
+                instances.push({
+                  record: 'reaction-instance',
+                  entityId: identity(instance),
+                  ruleId: instance.rule.id,
+                  binding: instance.scope as unknown as MetadataValue,
+                  lifecycle: 'active',
+                });
+            return {
+              view: this.#dataStore.capture(),
+              contextRevision: this.#hostContextRevision,
+              metadataRevision: 0,
+              coordinating: !!this.#metadataDepth || !validation,
+              instances,
+              validation: validation ?? [],
+            };
+          },
+        );
+        const reader = createMetadataReader(ref, budget.maxBytes, () => {
+          const snapshot = base.snapshot();
+          return 'status' in snapshot
+            ? { status: 'busy' }
+            : { rows: snapshot.rows, inputVersion: base.inputVersion() };
+        });
+        return Object.freeze({
+          ...reader,
+          inputVersion: base.inputVersion,
+          inspect: base.inspect,
+          locateEvidence: (event: EventRef) => {
+            const sequences = this.#evidenceLocators?.get(event.sequence) ?? [];
+            const available = this.#diagnosticReporter.hasEvidence(sequences, 2000);
+            return {
+              status: 'ok' as const,
+              event,
+              availability: available ? ('available' as const) : ('unavailable' as const),
+              reason: available
+                ? ('retained-runtime-diagnostic' as const)
+                : ('not-recorded-or-expired' as const),
+              diagnosticSequences: available ? sequences : [],
+            };
+          },
+        });
+      });
+    }
     this.#bindPublicMethods();
+    this.#initialOperation = emitObservedEvent(this, 'operation.started', () => ({
+      source: 'initialize',
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
+    this.#validationManager.observeInitialization(this.#initialOperation);
     this.#report('runtime.initialize', undefined, undefined, undefined, true);
     this.#refreshRuleInstances();
+    emitObservedEvent(this, 'operation.returned', () => ({
+      operation: this.#initialOperation ?? null,
+      scope: 'entry-return',
+      ok: true,
+      changed: false,
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
+    this.#initialOperation = undefined;
     this.#reactionScheduler.schedule();
     // 公共方法保持不可覆盖；原生私有字段仍能维护实例状态。
     Object.freeze(this);
@@ -443,6 +561,13 @@ class Runtime implements FormRuntime {
     const execution: CommandExecution = { changed: false, errors: [] };
     const binding = ownScope(scope);
     const capturedEvent = event === undefined ? undefined : copyJson(event);
+    execution.operation = emitObservedEvent(this, 'operation.started', () => ({
+      source: 'dispatch',
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
     try {
       this.#executeCommand(
         captureJson(command) as unknown as Command,
@@ -454,6 +579,16 @@ class Runtime implements FormRuntime {
       execution.errors.push(String(error));
       this.#diagnosticReporter.error('command.error', error);
     }
+    emitObservedEvent(this, 'operation.returned', () => ({
+      operation: execution.operation ?? null,
+      scope: 'entry-return',
+      ok: !execution.errors.length,
+      changed: execution.changed,
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
     return Object.freeze({
       ok: !execution.errors.length,
       changed: execution.changed,
@@ -494,19 +629,68 @@ class Runtime implements FormRuntime {
   /** 对本次捕获输入启动完整校验并等待结果；输入变化时返回 stale，不自动保存业务数据。 */
   validate(): Promise<FullValidationResult> {
     this.#assertAlive();
-    return this.#validationManager.validate();
+    const operation = emitObservedEvent(this, 'operation.started', () => ({
+      source: 'validate',
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
+    let ok = false;
+    try {
+      const result = this.#validationManager.validate(operation);
+      ok = true;
+      return result;
+    } finally {
+      emitObservedEvent(this, 'operation.returned', () => ({
+        operation: operation ?? null,
+        scope: 'entry-return',
+        ok,
+        changed: false,
+        inputVersion: {
+          dataRevision: this.#dataStore.capture().revision,
+          contextRevision: this.#hostContextRevision,
+        },
+      }));
+    }
   }
 
   /** 整体替换 Host 环境输入，失效校验与外部读取；不伪造 Data 变化或触发 Data watch。 */
   replaceContext(input: unknown): void {
-    this.#assertAlive();
-    this.#hostContext = copyJson(input, this.#freeze);
-    this.#hostContextRevision++;
-    this.#report('context.replace', undefined, undefined, undefined, true);
-    this.#observerRegistry.transaction(() => {
-      this.#validationManager.inputChanged(true);
-      this.#observerRegistry.contextChanged();
-    });
+    const operation = emitObservedEvent(this, 'operation.started', () => ({
+      source: 'replaceContext',
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+    }));
+    let changed = false,
+      ok = false;
+    this.#metadataDepth++;
+    try {
+      this.#assertAlive();
+      this.#hostContext = copyJson(input, this.#freeze);
+      this.#hostContextRevision++;
+      changed = true;
+      this.#report('context.replace', undefined, undefined, undefined, true);
+      this.#observerRegistry.transaction(() => {
+        this.#validationManager.inputChanged(true);
+        this.#observerRegistry.contextChanged();
+      });
+      ok = true;
+    } finally {
+      this.#metadataDepth--;
+      emitObservedEvent(this, 'operation.returned', () => ({
+        operation: operation ?? null,
+        scope: 'entry-return',
+        ok,
+        changed,
+        inputVersion: {
+          dataRevision: this.#dataStore.capture().revision,
+          contextRevision: this.#hostContextRevision,
+        },
+      }));
+    }
   }
 
   /** 读取实例最近诊断事件，返回独立只读数组；销毁后仍可排查最后事件。 */
@@ -518,6 +702,8 @@ class Runtime implements FormRuntime {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
+    this.#stopObservation?.();
+    this.#evidenceLocators = undefined;
     this.#reactionScheduler.dispose();
     this.#reactionInstances.forEach((instance) => instance.dispose());
     this.#reactionInstances.clear();
@@ -525,7 +711,6 @@ class Runtime implements FormRuntime {
     for (const invalidate of [...this.#scopeInvalidationListeners]) invalidate();
     this.#observerRegistry.clear();
     this.#report('runtime.dispose');
-    this.#inspectionSource?.dispose();
   }
 
   /** 展开 batch 并逐叶提交；有效修改后按顺序失效校验、更新规则实例、比较观察值。 */
@@ -536,113 +721,199 @@ class Runtime implements FormRuntime {
     execution: CommandExecution,
     source: 'external' | 'prepared' = 'external',
   ): void {
-    const trace = this.#diagnosticReporter.execution(
-      'command',
-      this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
-    );
-    this.#diagnosticReporter.run(trace, () => {
-      try {
-        this.#assertAlive();
-        if (this.#reactionScheduler.hasAborted()) return;
-        if (command.op === 'batch') {
-          if (
-            source === 'external' &&
-            (Object.keys(command).some((key) => !['op', 'commands'].includes(key)) ||
-              !Array.isArray(command.commands))
-          )
-            throw Error('command: invalid batch');
-          for (const leaf of command.commands)
-            this.#executeCommand(leaf, scope, event, execution, source);
-          return;
-        }
-        // 外部命令在此逐叶检查；Prepared 动作已在装载时接管并检查，动态执行保护仍共用。
-        if (source === 'external' && !validCommand(command)) throw Error('command: invalid shape');
-        const before = this.#dataStore.capture();
-        const mutation = executeCommand(
-          this.#dataStore,
-          this.#expressionEvaluator,
-          command,
-          this.#createEvaluationFrame(scope, event),
-        );
-        if (!mutation.changed) return;
-        execution.changed = true;
-        const change = this.#diagnosticReporter.record(
-          'data.change',
-          this.#diagnosticReporter.capacity ? JSON.stringify(command) : undefined,
-          undefined,
-          undefined,
-          true,
-        );
-        this.#diagnosticReporter.withTrigger(
-          {
-            origin: {
-              sequence: change.sequence,
-              ...(change.round === undefined ? {} : { round: change.round }),
+    this.#metadataDepth++;
+    try {
+      const trace = this.#diagnosticReporter.execution(
+        'command',
+        this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
+      );
+      const commandRef = () => ({
+        commandId: `command:${trace.ref.id}`,
+        operation: execution.operation ?? null,
+        reactionExecutionId: execution.reactionExecutionId ?? null,
+        actionIndex: execution.actionIndex ?? null,
+      });
+      let commandChanged = false;
+      let outcome: 'changed' | 'no-change' | 'error' | 'partial-error' | 'not-executed' =
+        'not-executed';
+      this.#diagnosticReporter.run(trace, () => {
+        try {
+          this.#assertAlive();
+          if (this.#reactionScheduler.hasAborted()) {
+            execution.interrupted = true;
+            return;
+          }
+          if (command.op === 'batch') {
+            if (
+              source === 'external' &&
+              (Object.keys(command).some((key) => !['op', 'commands'].includes(key)) ||
+                !Array.isArray(command.commands))
+            )
+              throw Error('command: invalid batch');
+            for (const leaf of command.commands)
+              this.#executeCommand(leaf, scope, event, execution, source);
+            return;
+          }
+          // 外部命令在此逐叶检查；Prepared 动作已在装载时接管并检查，动态执行保护仍共用。
+          if (source === 'external' && !validCommand(command))
+            throw Error('command: invalid shape');
+          const before = this.#dataStore.capture();
+          const mutation = executeCommand(
+            this.#dataStore,
+            this.#expressionEvaluator,
+            command,
+            this.#createEvaluationFrame(scope, event),
+          );
+          outcome = mutation.changed ? 'changed' : 'no-change';
+          if (!mutation.changed) return;
+          commandChanged = true;
+          const observedChange = emitObservedEvent(this, 'data.changed', () => ({
+            ...commandRef(),
+            target: before.scopes.locate(mutation.path),
+            path: mutation.path,
+            before: { dataRevision: before.revision, contextRevision: this.#hostContextRevision },
+            after: {
+              dataRevision: this.#dataStore.capture().revision,
+              contextRevision: this.#hostContextRevision,
             },
-            input: this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
-          },
-          () =>
-            this.#observerRegistry.transaction(() => {
-              this.#validationManager.inputChanged();
-              if (this.#dataStore.capture().topologyChanged) this.#refreshRuleInstances();
-              this.#observerRegistry.dataChanged(mutation.path, before);
-            }),
-        );
-      } catch (error) {
-        const message = String(error);
-        execution.errors.push(message);
-        this.#diagnosticReporter.error(
-          'command.error',
-          error,
-          trace,
-          'command',
-          command as unknown as ReadonlyJson,
-        );
-      }
-    });
+            topologyChanged: this.#dataStore.capture().topologyChanged,
+            detail: 'target-only',
+          }));
+          execution.changed = true;
+          const change = this.#diagnosticReporter.record(
+            'data.change',
+            this.#diagnosticReporter.capacity ? JSON.stringify(command) : undefined,
+            undefined,
+            undefined,
+            true,
+          );
+          const previousObservedTrigger = this.#observedTrigger;
+          this.#observedTrigger = { diagnosticSequence: change.sequence, event: observedChange };
+          try {
+            this.#diagnosticReporter.withTrigger(
+              {
+                origin: {
+                  sequence: change.sequence,
+                  ...(change.round === undefined ? {} : { round: change.round }),
+                },
+                input: this.#diagnosticInput(this.#createEvaluationFrame(scope, event)),
+              },
+              () =>
+                this.#observerRegistry.transaction(() => {
+                  this.#validationManager.inputChanged();
+                  if (this.#dataStore.capture().topologyChanged) this.#refreshRuleInstances();
+                  this.#observerRegistry.dataChanged(mutation.path, before);
+                }),
+            );
+          } finally {
+            this.#observedTrigger = previousObservedTrigger;
+          }
+        } catch (error) {
+          outcome = commandChanged ? 'partial-error' : 'error';
+          const message = String(error);
+          execution.errors.push(message);
+          this.#diagnosticReporter.error(
+            'command.error',
+            error,
+            trace,
+            'command',
+            command as unknown as ReadonlyJson,
+          );
+        } finally {
+          // batch 本身不伪造一次叶命令执行；子项分别保留结果和有效修改。
+          if (command?.op !== 'batch')
+            emitObservedEvent(this, 'command.finished', () => ({
+              ...commandRef(),
+              outcome,
+              diagnostic: 'not-collected',
+            }));
+        }
+      });
+    } finally {
+      this.#metadataDepth--;
+    }
   }
 
   /** 数据结构变化后重绑定规则；保留已有成员实例，只为新实例处理 runOnActivate。 */
   #refreshRuleInstances(): void {
-    this.#validationManager.refresh();
-    const keys = new Set<string>();
-    for (const rule of this.#compiledForm.definition.reactions ?? []) {
-      for (const scope of bindScopes(this.#dataStore.capture(), rule.scope)) {
-        const key = `${rule.id}:${bindingKey(scope)}`;
-        keys.add(key);
-        if (this.#reactionInstances.has(key)) continue;
-        const dispose = this.#observerRegistry.add(
-          rule.watch,
-          scope,
-          () => this.#enqueueReaction(key),
-          true,
-        ).dispose;
-        this.#reactionInstances.set(key, { rule, scope, dispose, triggers: new Map() });
-        if (rule.runOnActivate) this.#enqueueReaction(key);
+    this.#metadataDepth++;
+    try {
+      this.#validationManager.refresh();
+      const keys = new Set<string>();
+      for (const rule of this.#compiledForm.definition.reactions ?? []) {
+        for (const scope of bindScopes(this.#dataStore.capture(), rule.scope)) {
+          const key = `${rule.id}:${bindingKey(scope)}`;
+          keys.add(key);
+          if (this.#reactionInstances.has(key)) continue;
+          const dispose = this.#observerRegistry.add(
+            rule.watch,
+            scope,
+            () => this.#enqueueReaction(key),
+            true,
+          ).dispose;
+          const instance = { rule, scope, dispose, triggers: new Map() };
+          this.#reactionInstances.set(key, instance);
+          emitObservedEvent(this, 'entity.added', () => ({
+            entity: { ...observedProducerRef(this)!, entityId: observedEntityId(this, instance) },
+            row: {
+              record: 'reaction-instance',
+              entityId: observedEntityId(this, instance),
+              ruleId: rule.id,
+              binding: scope as unknown as MetadataValue,
+              lifecycle: 'active',
+            },
+          }));
+          if (rule.runOnActivate) this.#enqueueReaction(key);
+        }
       }
-    }
-    for (const [key, instance] of this.#reactionInstances) {
-      if (keys.has(key)) continue;
-      instance.dispose();
-      this.#reactionInstances.delete(key);
-      this.#reactionScheduler.remove(key);
+      for (const [key, instance] of this.#reactionInstances) {
+        if (keys.has(key)) continue;
+        emitObservedEvent(this, 'entity.disposed', () => ({
+          entity: { ...observedProducerRef(this)!, entityId: observedEntityId(this, instance) },
+          row: {
+            record: 'reaction-instance',
+            entityId: observedEntityId(this, instance),
+            ruleId: instance.rule.id,
+            binding: instance.scope as unknown as MetadataValue,
+            lifecycle: 'disposed',
+          },
+        }));
+        instance.dispose();
+        this.#reactionInstances.delete(key);
+        this.#reactionScheduler.remove(key);
+      }
+    } finally {
+      this.#metadataDepth--;
     }
   }
 
   /** 按实例键入队，多个 watch 失效可合并为一次待执行任务。 */
   #enqueueReaction(key: string): void {
     const instance = this.#reactionInstances.get(key);
+    let cause: EventRef | undefined;
     if (instance) {
       const trigger = this.#diagnosticReporter.captureTrigger(
         this.#diagnosticInput(this.#createEvaluationFrame(instance.scope)),
       );
       instance.triggers.set(trigger.origin.sequence, trigger);
+      if (this.#observedTrigger?.diagnosticSequence === trigger.origin.sequence)
+        cause = this.#observedTrigger.event;
     }
-    this.#reactionScheduler.enqueue(key, () => this.#runReaction(key));
+    const queue = this.#reactionScheduler.enqueue(key, (id) => this.#runReaction(key, id));
+    if (instance && queue)
+      emitObservedEvent(this, queue.merged ? 'reaction.queue-merged' : 'reaction.queued', () => {
+        const ref = observedProducerRef(this);
+        if (!ref) throw Error('disposed');
+        return {
+          instance: { ...ref, entityId: observedEntityId(this, instance) },
+          queueEntryId: `queue:${queue.id}`,
+          cause: cause ?? this.#initialOperation ?? null,
+        };
+      });
   }
 
   /** 读取执行时最新数据判断 when，再按声明顺序执行响应项；已失效实例直接跳过。 */
-  #runReaction(key: string): void {
+  #runReaction(key: string, queueId: number): void {
     const instance = this.#reactionInstances.get(key);
     if (!instance || this.#disposed) return;
     const trace = this.#diagnosticReporter.execution(
@@ -652,34 +923,114 @@ class Runtime implements FormRuntime {
       [...instance.triggers.values()],
     );
     instance.triggers.clear();
+    // 使用已有执行编号；无录制时不创建 DTO，中途开始也能采集之后真实发生的终态。
+    const execution = () => {
+      const ref = observedProducerRef(this);
+      if (!ref) throw Error('disposed');
+      return {
+        instance: { ...ref, entityId: observedEntityId(this, instance) },
+        executionId: `execution:${trace.ref.id}`,
+      };
+    };
+    emitObservedEvent(this, 'reaction.started', () => ({
+      ...execution(),
+      inputVersion: {
+        dataRevision: this.#dataStore.capture().revision,
+        contextRevision: this.#hostContextRevision,
+      },
+      causes: 'queue-events',
+      queueEntryId: `queue:${queueId}`,
+    }));
+    const skipped = (
+      from: number,
+      reason: 'condition-false' | 'condition-error' | 'interrupted',
+    ) => {
+      for (let index = from; index < instance.rule.then.length; index++)
+        emitObservedEvent(this, 'action.finished', () => ({
+          reactionExecutionId: `execution:${trace.ref.id}`,
+          actionIndex: index,
+          scope: 'synchronous-return',
+          diagnostic: 'not-collected',
+          kind: 'type' in instance.rule.then[index]! ? 'host.emit' : 'command',
+          outcome: 'not-executed',
+          reason,
+        }));
+    };
+    let outcome: 'completed' | 'condition-false' | 'condition-error' | 'interrupted' = 'completed';
     this.#diagnosticReporter.run(trace, () => {
       try {
         this.#report('reaction.execute', undefined, instance.rule.id);
-        if (
-          instance.rule.when !== undefined &&
-          !this.#expressionEvaluator.boolean(
-            instance.rule.when,
-            this.#createEvaluationFrame(instance.scope),
-          )
-        )
+        const condition =
+          instance.rule.when === undefined
+            ? undefined
+            : this.#expressionEvaluator.boolean(
+                instance.rule.when,
+                this.#createEvaluationFrame(instance.scope),
+              );
+        emitObservedEvent(this, 'reaction.condition', () => ({
+          ...execution(),
+          outcome: condition === undefined ? 'absent' : condition ? 'true' : 'false',
+        }));
+        if (condition === false) {
+          outcome = 'condition-false';
+          skipped(0, 'condition-false');
           return;
-        for (const action of instance.rule.then) {
-          if (this.#disposed || this.#reactionScheduler.hasAborted()) break;
-          this.#executeReactionAction(action, instance.scope, instance.rule.id);
         }
+        for (const [actionIndex, action] of instance.rule.then.entries()) {
+          if (this.#disposed || this.#reactionScheduler.hasAborted()) {
+            outcome = 'interrupted';
+            skipped(actionIndex, 'interrupted');
+            break;
+          }
+          this.#executeReactionAction(
+            action,
+            instance.scope,
+            instance.rule.id,
+            `execution:${trace.ref.id}`,
+            actionIndex,
+          );
+        }
+        if (this.#disposed || this.#reactionScheduler.hasAborted()) outcome = 'interrupted';
       } catch (error) {
+        outcome = 'condition-error';
+        skipped(0, 'condition-error');
+        emitObservedEvent(this, 'reaction.condition', () => ({
+          ...execution(),
+          outcome: 'error',
+          diagnostic: 'not-collected',
+        }));
         this.#diagnosticReporter.error('reaction.error', error, trace, 'when');
+      } finally {
+        emitObservedEvent(this, 'reaction.finished', () => ({
+          ...execution(),
+          outcome,
+          actionCoverage: 'all-declared',
+        }));
       }
     });
   }
 
   /** 分派数据 Command 或 Host 通知；单项异常记诊断，后续响应项继续执行。 */
-  #executeReactionAction(action: ReactionAction, scope: ScopeBinding, ruleId: string): void {
+  #executeReactionAction(
+    action: ReactionAction,
+    scope: ScopeBinding,
+    ruleId: string,
+    reactionExecutionId: string,
+    actionIndex: number,
+  ): void {
+    let hostReturned = false;
+    const execution: CommandExecution = {
+      changed: false,
+      errors: [],
+      reactionExecutionId,
+      actionIndex,
+    };
+    let failed = false;
     try {
-      if ('type' in action) this.#emitHostEvent(action, scope, ruleId);
-      else
-        this.#executeCommand(action, scope, undefined, { changed: false, errors: [] }, 'prepared');
+      if ('type' in action) hostReturned = this.#emitHostEvent(action, scope, ruleId);
+      else this.#executeCommand(action, scope, undefined, execution, 'prepared');
     } catch (error) {
+      failed = true;
       this.#diagnosticReporter.error(
         'reaction.action.error',
         error,
@@ -687,6 +1038,31 @@ class Runtime implements FormRuntime {
         'action',
         action as unknown as ReadonlyJson,
       );
+    } finally {
+      emitObservedEvent(this, 'action.finished', () => {
+        const common = {
+          reactionExecutionId,
+          actionIndex,
+          scope: 'synchronous-return' as const,
+          diagnostic: 'not-collected' as const,
+        };
+        return 'type' in action
+          ? { ...common, kind: 'host.emit', outcome: hostReturned ? 'returned' : 'error' }
+          : {
+              ...common,
+              kind: 'command',
+              changed: execution.changed,
+              outcome: execution.interrupted
+                ? 'interrupted'
+                : failed || execution.errors.length
+                  ? execution.changed
+                    ? 'partial-error'
+                    : 'error'
+                  : execution.changed
+                    ? 'changed'
+                    : 'no-change',
+            };
+      });
     }
   }
 

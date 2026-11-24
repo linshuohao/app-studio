@@ -1,6 +1,7 @@
 node_modules
 **/dist
 **/.next
+apps/studio/.next-*
 .turbo
 coverage
 playwright-report
@@ -16,3 +17,17 @@ tools/docs
 
 # Deterministic JSON Schema generated from protocol types.
 packages/protocol/schemas
+
+# Catalog documentation is emitted deterministically and checked by catalog:check.
+services/api/src/platform/catalog-documentation.ts
+
+# Built assets consumed by the standalone Studio handbook pages.
+prototypes/studio-components/assets/
+prototypes/action-editor-draft.html
+
+# Immutable historical records and machine-generated verification receipts.
+openspec/changes/archive
+openspec/changes/**/.workflow-evidence.json
+
+# Local persisted business data is not a formatting input.
+services/api/.platform-data

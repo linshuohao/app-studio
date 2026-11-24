@@ -1,0 +1,20 @@
+---
+'@form-engine/materials-react': minor
+---
+
+新增 button 正式物料，沿用公共 Adapter、Runtime 状态所有权与首批已确认交付契约。
+
+```capability-changes
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "button",
+      "kind": "material",
+      "bump": "minor"
+    }
+  ],
+  "noRelease": [],
+  "noReleasePackages": []
+}
+```

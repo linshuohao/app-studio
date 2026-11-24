@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EditorViewSwitch · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+  </head>
+  <body class="studio-content">
+    <main id="studio-main">
+      <article data-studio-ui>
+        <header class="hero">
+          <a href="../studio-design-handbook.html">组件总览</a>
+          <h1>EditorViewSwitch 表单与 JSON 切换</h1>
+          <p>用于同一份配置的表单编辑和 JSON 编辑。两种视图由调用方共享草稿。</p>
+        </header>
+        <section class="section">
+          <h2>用法</h2>
+          <pre><code>import { EditorViewSwitch } from '../components/ui';
+
+&lt;EditorViewSwitch
+  value={view}
+  onChange={switchView}
+  formDisabled={hasInvalidJson}
+  jsonDisabled={formBusy}
+/&gt;</code></pre>
+          <p>
+            两个按钮通过 aria-pressed 表达当前视图，支持 Tab 聚焦和 Enter
+            或空格切换。弹窗中放在标题下方的固定工具栏内。
+          </p>
+          <p>
+            调用方可在 onChange 中校验格式并决定是否切换。先保留非法 JSON 输入，再提示用户修正。
+          </p>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>

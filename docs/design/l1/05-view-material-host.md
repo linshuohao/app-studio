@@ -337,7 +337,7 @@ MaterialManifest.services、HostContract.services 及 Prepared HostRequirements.
 
 ### 请求开发接入与缺失诊断验收 {#request-development-contract}
 
-2026-10-21 用户进一步确认：交付目标必须贯通“物料公开请求类型 → Host 实现 → 注册 → 页面映射 → 编译 / 装配核对”。仅提供 Manifest Schema 或各端各自声明类型不足以证明完整接入。以下为实现目标，尚未实现对应 SDK 或 Compiler。
+2026-10-21 用户进一步确认：交付目标必须贯通“物料公开请求类型 → Host 实现 → 注册 → 页面映射 → 编译 / 装配核对”。仅提供 Manifest Schema 或各端各自声明类型不足以证明完整接入。以下目标已由 Compiler 请求检查、React 请求类型辅助和装配预检实现，见 [React 本地证据](../engineering.md#renderer-implementation)；真实 Host 与跨端仍待验收。
 
 物料公开每个请求的输入输出类型及可关联的契约；物料侧桥接以该契约约束请求名、输入和成功结果。Host 编写处理函数时可直接引用物料请求契约，自动得到参数提示与返回类型检查，不要求重抄签名或逐物料包装。直接转发时复用物料契约；页面转换输入时 Host 使用自己的明确输入契约，Compiler 检查映射结果到 Host 输入、Host 输出到物料结果的有限结构连接。首期没有结果转换 DSL。TS 类型与 Schema 保持同源；自动推导或公开显式类型的工具方式留给实现选择，公共辅助函数名称尚未冻结。
 

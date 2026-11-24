@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>字段编辑抽屉 · 基础属性验收</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 13px;
+      }
+      body {
+        margin: 0;
+        color: var(--studio-text);
+        background: var(--studio-bg);
+        font: var(--studio-type-body);
+      }
+      h1 {
+        font: var(--studio-type-title);
+      }
+      h2,
+      summary {
+        font: var(--studio-type-section);
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      header,
+      main {
+        padding: 16px 24px;
+      }
+      header {
+        background: var(--studio-surface);
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .bar,
+      footer,
+      .fieldline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .right {
+        margin-left: auto;
+      }
+      .shell {
+        background: var(--studio-surface);
+        border: 1px solid var(--studio-border);
+        padding: 16px;
+        border-radius: 8px;
+        max-width: 1000px;
+        margin-top: 24px;
+      }
+      .tree {
+        display: grid;
+        margin-top: 12px;
+      }
+      .tree button {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-align: left;
+        border: 0;
+        border-top: 1px solid var(--studio-border);
+        background: var(--studio-surface);
+        padding: 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .tree button[aria-current='true'] {
+        background: var(--studio-selected);
+      }
+      small,
+      code,
+      .muted {
+        color: var(--studio-text-muted);
+      }
+      code {
+        font: var(--studio-type-code);
+        overflow-wrap: anywhere;
+      }
+      dialog {
+        color: inherit;
+        border: 1px solid var(--studio-border);
+        padding: 24px;
+        border-radius: 8px;
+        max-width: min(100vw, 560px);
+      }
+      dialog::backdrop {
+        background: #23272f33;
+      }
+      #drawer {
+        position: fixed;
+        inset: 0 0 0 auto;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-left: 1px solid var(--studio-border);
+        border-radius: 0;
+        width: min(640px, 100vw);
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+      }
+      #drawer[open] {
+        display: flex;
+        flex-direction: column;
+      }
+      #drawer header {
+        padding: var(--studio-space-12) var(--studio-space-16);
+      }
+      #drawer .bar,
+      #drawer footer {
+        gap: var(--studio-space-8);
+      }
+      #drawer .studio-button {
+        min-height: var(--studio-control-height-dense);
+      }
+      #drawer #path {
+        min-width: 0;
+      }
+      #source {
+        flex-shrink: 0;
+      }
+      .body {
+        padding: 0 var(--studio-space-16) var(--studio-space-16);
+        overflow: auto;
+        flex: 1;
+      }
+      .section {
+        padding: var(--studio-space-12) 0;
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .section h2 {
+        margin-bottom: var(--studio-space-16);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--studio-space-12);
+      }
+      .field {
+        display: grid;
+        align-content: start;
+        gap: var(--studio-space-8);
+        min-width: 0;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      input:not([type='checkbox']),
+      select,
+      textarea {
+        min-width: 0;
+        width: 100%;
+        min-height: var(--studio-control-height-dense);
+        border: 1px solid var(--studio-control-border);
+        border-radius: 4px;
+        padding: var(--studio-space-4) var(--studio-space-8);
+        background: var(--studio-surface);
+        color: inherit;
+        font: inherit;
+      }
+      input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .fieldline select {
+        width: auto;
+      }
+      .fieldline input {
+        flex: 1;
+      }
+      summary,
+      button {
+        cursor: pointer;
+      }
+      details.section[open] > summary {
+        margin-bottom: 16px;
+      }
+      .rule {
+        background: var(--studio-bg);
+        padding: 12px 16px;
+        border-radius: 8px;
+      }
+      .rule p {
+        margin: 4px 0;
+      }
+      .foot {
+        padding: var(--studio-space-8) var(--studio-space-16);
+        border-top: 1px solid var(--studio-border);
+      }
+      .link {
+        color: var(--studio-info-fg);
+      }
+      pre {
+        max-height: 60vh;
+        overflow: auto;
+        background: var(--studio-bg);
+        padding: 16px;
+      }
+      button:focus-visible,
+      summary:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .type-picker {
+        position: relative;
+        min-width: 0;
+      }
+      .type-picker summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--studio-space-8);
+        min-height: var(--studio-control-height-dense);
+        padding: var(--studio-space-4) var(--studio-space-8);
+        border: 1px solid var(--studio-control-border);
+        border-radius: var(--studio-radius-4);
+        font: inherit;
+      }
+      .type-options {
+        position: absolute;
+        z-index: 1;
+        inset: 100% 0 auto;
+        display: grid;
+        padding: var(--studio-space-8);
+        gap: var(--studio-space-4);
+        background: var(--studio-surface);
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-4);
+        box-shadow: var(--studio-overlay-shadow);
+      }
+      #validation,
+      #validation details {
+        display: grid;
+        gap: var(--studio-space-12);
+      }
+      #validation > details {
+        border-top: 1px solid var(--studio-border);
+        padding-top: var(--studio-space-12);
+      }
+      #validation > details > .grid {
+        margin-top: var(--studio-space-12);
+      }
+      #validation > details > summary {
+        font: var(--studio-type-control);
+      }
+      #drawer input:not([type='checkbox']),
+      #drawer select,
+      #drawer .type-picker summary {
+        height: var(--studio-control-height-dense);
+      }
+      #type-selection {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .field-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #drawer .field-heading .studio-button {
+        min-height: 0;
+        padding: 0 var(--studio-space-4);
+        border: 0;
+        line-height: inherit;
+      }
+      #drawer textarea {
+        display: block;
+        resize: vertical;
+      }
+      #feedback:not(:empty) {
+        margin-top: var(--studio-space-4);
+        color: var(--studio-danger-fg);
+      }
+      @media (max-width: 400px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .body,
+        #drawer header,
+        .foot {
+          padding-inline: 16px;
+        }
+        .bar {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>Studio / 旅险投保 / 字段配置</header>
+    <main>
+      <h1>字段抽屉 · 基础属性验收</h1>
+      <section class="shell">
+        <div class="bar">
+          <h2>表单结构</h2>
+          <label class="right check"><input id="readonly" type="checkbox" />只读查看</label>
+        </div>
+        <div class="tree" id="tree"></div>
+      </section>
+    </main>
+    <dialog id="drawer" aria-labelledby="heading">
+      <header>
+        <div class="bar">
+          <h1 id="heading"></h1>
+          <button id="close" class="studio-button right" data-variant="text">关闭</button>
+        </div>
+        <div class="bar">
+          <code id="path"></code
+          ><button id="source" class="studio-button right" data-variant="text">
+            查看节点 JSON
+          </button>
+        </div>
+      </header>
+      <div class="body">
+        <form id="form">
+          <section class="section">
+            <h2>基础属性</h2>
+            <div id="basics" class="grid"></div>
+            <p id="feedback" role="alert"></p>
+          </section>
+          <section class="section">
+            <h2>校验属性</h2>
+            <div id="validation"></div>
+          </section>
+        </form>
+      </div>
+      <footer class="foot">
+        <small id="status" role="status"></small
+        ><button id="cancel" class="studio-button right" data-variant="secondary">取消</button
+        ><button id="apply" class="studio-button" form="form">应用到工作台</button>
+      </footer>
+    </dialog>
+    <dialog id="leave" aria-labelledby="leave-title">
+      <h2 id="leave-title">放弃本次修改？</h2>
+      <footer>
+        <button id="stay" class="studio-button">继续编辑</button
+        ><button id="discard" class="studio-button" data-variant="secondary">放弃修改</button>
+      </footer>
+    </dialog>
+    <dialog id="json" aria-labelledby="json-title">
+      <h2 id="json-title">节点 JSON · 当前输入</h2>
+      <pre></pre>
+      <button id="done" class="studio-button">关闭原文</button>
+    </dialog>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const labels = {
+        string: '文本',
+        integer: '整数',
+        number: '数值',
+        boolean: '布尔',
+        object: '对象',
+        array: '数组',
+        null: '空值',
+      };
+      const nodes = [
+        { name: '', path: '/data/schema', schema: { title: '投保资料', type: 'object' } },
+        { name: 'trip', schema: { title: '行程类型', type: 'string' }, required: true },
+        {
+          name: 'passportNo',
+          schema: {
+            title: '护照号码',
+            type: 'string',
+            description: '填写护照资料页上的号码。',
+            minLength: 6,
+            maxLength: 12,
+          },
+        },
+        { name: 'invoice', schema: { title: '是否需要发票', type: 'boolean' } },
+        {
+          name: 'insured',
+          schema: {
+            title: '被保险人名单',
+            type: 'array',
+            items: { title: '每位被保险人', type: 'object' },
+          },
+        },
+        { name: '', path: '/data/schema/properties/insured/items', schema: null },
+        { name: 'contact', schema: { title: '联系人姓名', $ref: '#/$defs/personName' } },
+      ];
+      nodes[5].schema = nodes[4].schema.items;
+      let current, draft, fieldName, required, initial, waiting, defaultEditor;
+      const nodePath = (node, name = node.name) =>
+        node.path || '/data/schema/properties/' + name.replaceAll('~', '~0').replaceAll('/', '~1');
+      const readonly = () => $('readonly').checked;
+      function element(tag, text) {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+      function button(text, action) {
+        const node = element('button', text);
+        node.type = 'button';
+        node.className = 'studio-button';
+        node.dataset.variant = 'text';
+        node.onclick = action;
+        return node;
+      }
+      function field(host, label, control, wide = false) {
+        const row = element('div');
+        row.className = 'field' + (wide ? ' wide' : '');
+        control.id ||= 'control-' + label;
+        const caption = element('label', label);
+        caption.htmlFor = control.id;
+        row.append(caption, control);
+        host.append(row);
+        return row;
+      }
+      function input(value = '', type = 'text') {
+        const node = element('input');
+        node.type = type;
+        node.value = value;
+        node.readOnly = readonly();
+        return node;
+      }
+      function select(options, value) {
+        const node = element('select');
+        Object.entries(options).forEach(([key, label]) => {
+          const option = element('option', label);
+          option.value = key;
+          node.append(option);
+        });
+        node.value = value;
+        node.disabled = readonly();
+        return node;
+      }
+      function checkbox(text, checked, action) {
+        const caption = element('label');
+        caption.className = 'check';
+        const control = input('', 'checkbox');
+        control.checked = checked;
+        control.disabled = readonly();
+        control.onchange = () => action(control.checked);
+        caption.append(control, text);
+        return caption;
+      }
+      function updateText(key, value) {
+        if (value === '') delete draft[key];
+        else draft[key] = value;
+        refresh();
+      }
+      function snapshot() {
+        return JSON.stringify([
+          fieldName,
+          required,
+          draft,
+          defaultEditor?.value() ?? '',
+          [...rawRules],
+        ]);
+      }
+      function refresh() {
+        $('feedback').textContent = '';
+        $('apply').disabled = snapshot() === initial;
+        $('status').textContent = readonly()
+          ? '只读查看'
+          : $('apply').disabled
+            ? '已与工作台草稿同步'
+            : '有待应用的修改';
+      }
+      function renderTree() {
+        $('tree').replaceChildren(
+          ...nodes.map((node) => {
+            const row = button(node.schema.title ?? node.name, () => open(node));
+            row.dataset.node = String(nodes.indexOf(node));
+            row.append(element('code', node.name || (node === nodes[0] ? '表单根' : '数组元素')));
+            return row;
+          }),
+        );
+      }
+      function rename(host) {
+        const control = input(fieldName);
+        control.readOnly = true;
+        const row = field(host, '字段标识', control);
+        if (readonly()) return;
+        const edit = button('改名', () => {
+          control.readOnly = false;
+          edit.hidden = true;
+          impact.hidden = false;
+          control.focus();
+          control.select();
+        });
+        const impact = element(
+          'small',
+          current === nodes[2]
+            ? '示例使用位置 · 投保资料的境外必填条件。正式应用前需核对引用。'
+            : '本示例中没有已知引用。',
+        );
+        impact.hidden = true;
+        const heading = element('div');
+        heading.className = 'field-heading';
+        heading.append(row.firstChild, edit);
+        row.prepend(heading);
+        row.append(impact);
+        control.oninput = () => {
+          fieldName = control.value;
+          refresh();
+          showNameError();
+        };
+      }
+      function showNameError() {
+        if (!current.name) return false;
+        const problem = !fieldName.trim()
+          ? '请输入字段标识。'
+          : nodes.some((node) => node !== current && node.name === fieldName)
+            ? '同一对象下已有此字段标识。'
+            : '';
+        $('feedback').textContent = problem;
+        return Boolean(problem);
+      }
+      function renderType(host) {
+        const picker = element('details');
+        picker.className = 'type-picker';
+        const trigger = element('summary');
+        trigger.setAttribute('aria-labelledby', 'type-caption type-selection');
+        const selection = element('span');
+        selection.id = 'type-selection';
+        trigger.append(selection);
+        trigger.append(element('span', readonly() ? '' : '▾'));
+        picker.append(trigger);
+        const caption = element('span', '数据类型');
+        caption.id = 'type-caption';
+        const row = element('div');
+        row.className = 'field wide';
+        row.append(caption, picker);
+        host.append(row);
+
+        const selected = Array.isArray(draft.type) ? [...draft.type] : [draft.type].filter(Boolean);
+        const options = element('div');
+        options.className = 'type-options';
+        options.setAttribute('role', 'group');
+        options.setAttribute('aria-labelledby', caption.id);
+        for (const [key, label] of Object.entries(labels)) {
+          options.append(
+            checkbox(label, selected.includes(key), (checked) => {
+              if (checked) selected.push(key);
+              else selected.splice(selected.indexOf(key), 1);
+              if (selected.length) draft.type = selected.length === 1 ? selected[0] : [...selected];
+              else delete draft.type;
+              updateSummary();
+              refresh();
+              renderValidation();
+            }),
+          );
+        }
+        function updateSummary() {
+          selection.textContent = selected.map((key) => labels[key]).join('、') || '不限类型';
+        }
+        updateSummary();
+        if (readonly()) picker.replaceWith(selection);
+        else {
+          picker.append(options);
+          picker.onkeydown = (event) => {
+            if (event.key === 'Escape' && picker.open) {
+              event.preventDefault();
+              picker.open = false;
+              trigger.focus();
+            }
+          };
+        }
+      }
+      const numericRules = [
+        ['minimum', '最小值'],
+        ['maximum', '最大值'],
+        ['exclusiveMinimum', '必须大于'],
+        ['exclusiveMaximum', '必须小于'],
+        ['multipleOf', '必须为其倍数'],
+      ];
+      let rawRules = new Map();
+      function renderValidation() {
+        const validation = $('validation');
+        validation.replaceChildren();
+        if (current.name)
+          validation.append(
+            checkbox('始终必填', required, (value) => {
+              required = value;
+              refresh();
+            }),
+          );
+        const grid = element('div');
+        grid.className = 'grid';
+        validation.append(grid);
+        const types = Array.isArray(draft.type) ? draft.type : [draft.type];
+        const applicable = (type, key) => types.includes(type) || Object.hasOwn(draft, key);
+        function numberControl(key, label, count = false, host = grid) {
+          const control = input(draft[key] ?? '', 'number');
+          control.step = count ? '1' : 'any';
+          if (count) control.min = '0';
+          control.oninput = () => {
+            if (control.value === '') delete draft[key];
+            else draft[key] = control.valueAsNumber;
+            refresh();
+          };
+          field(host, label, control);
+        }
+        for (const [type, rules] of [
+          [
+            'string',
+            [
+              ['minLength', '最短长度'],
+              ['maxLength', '最长长度'],
+            ],
+          ],
+          [
+            'array',
+            [
+              ['minItems', '最少项数'],
+              ['maxItems', '最多项数'],
+            ],
+          ],
+          [
+            'object',
+            [
+              ['minProperties', '最少属性数'],
+              ['maxProperties', '最多属性数'],
+            ],
+          ],
+        ]) {
+          for (const [key, label] of rules)
+            if (applicable(type, key)) numberControl(key, label, true);
+        }
+        for (const [key, label] of numericRules.slice(0, 2)) {
+          if (applicable('number', key) || types.includes('integer')) numberControl(key, label);
+        }
+        const more = element('details');
+        const advanced = element('div');
+        advanced.className = 'grid';
+        const advancedNumeric = numericRules
+          .slice(2)
+          .filter(([key]) => applicable('number', key) || types.includes('integer'));
+        const configured = [
+          ...advancedNumeric.map(([key]) => key),
+          'pattern',
+          'enum',
+          'const',
+        ].filter((key) => Object.hasOwn(draft, key) || rawRules.get(key)?.trim()).length;
+        more.open = validation.dataset.more === 'open';
+        more.ontoggle = () => {
+          validation.dataset.more = more.open ? 'open' : '';
+        };
+        more.append(
+          element('summary', configured ? '更多校验 · 已配置 ' + configured + ' 项' : '更多校验'),
+          advanced,
+        );
+        for (const [key, label] of advancedNumeric) numberControl(key, label, false, advanced);
+        if (applicable('string', 'pattern')) {
+          const pattern = input(draft.pattern);
+          pattern.oninput = () => updateText('pattern', pattern.value);
+          field(advanced, '正则匹配', pattern, true);
+        }
+        if (applicable('array', 'uniqueItems')) {
+          const unique = select(
+            { '': '未设置', true: '要求唯一', false: '允许重复' },
+            String(draft.uniqueItems ?? ''),
+          );
+          unique.onchange = () => {
+            if (unique.value === '') delete draft.uniqueItems;
+            else draft.uniqueItems = unique.value === 'true';
+            refresh();
+          };
+          field(grid, '元素唯一', unique);
+        }
+        for (const [key, label, placeholder] of [
+          ['enum', '允许值', '例如 ["境内", "境外"]'],
+          ['const', '固定值', '例如 "境外"'],
+        ]) {
+          const control = input(
+            rawRules.get(key) ?? (Object.hasOwn(draft, key) ? JSON.stringify(draft[key]) : ''),
+          );
+          control.placeholder = placeholder;
+          control.oninput = () => {
+            rawRules.set(key, control.value);
+            refresh();
+          };
+          field(advanced, label, control);
+        }
+        validation.append(more);
+      }
+      function renderDefault(host) {
+        const row = element('div');
+        row.className = 'field wide';
+        const valueHost = element('div');
+        valueHost.className = 'grid';
+        const enabled = checkbox('设置默认值', Object.hasOwn(draft, 'default'), () => {
+          valueHost.hidden = !enabled.firstChild.checked;
+          refresh();
+        });
+        const value = draft.default;
+        const initialType =
+          value === null
+            ? 'null'
+            : Array.isArray(value)
+              ? 'array'
+              : value === undefined
+                ? Array.isArray(draft.type)
+                  ? draft.type[0]
+                  : draft.type
+                : typeof value;
+        const type = select(labels, initialType || 'string');
+        let control;
+        function renderValue(seed) {
+          valueHost.replaceChildren();
+          field(valueHost, '默认值类型', type);
+          if (type.value === 'boolean')
+            control = select({ false: 'false', true: 'true' }, String(seed ?? false));
+          else if (type.value === 'null') {
+            control = input('null');
+            control.readOnly = true;
+          } else if (['object', 'array'].includes(type.value)) {
+            control = element('textarea');
+            control.readOnly = readonly();
+            control.value = JSON.stringify(seed ?? (type.value === 'array' ? [] : {}));
+          } else {
+            control = input(
+              seed ?? '',
+              ['number', 'integer'].includes(type.value) ? 'number' : 'text',
+            );
+            if (type.value === 'number') control.step = 'any';
+          }
+          field(valueHost, '默认值', control, control.tagName === 'TEXTAREA');
+          control.oninput = refresh;
+        }
+        type.onchange = () => {
+          renderValue();
+          refresh();
+        };
+        renderValue(value);
+        valueHost.hidden = !enabled.firstChild.checked;
+        row.append(enabled, valueHost);
+        host.append(row);
+        defaultEditor = {
+          value: () =>
+            enabled.firstChild.checked ? JSON.stringify([type.value, control.value]) : '',
+          apply(target) {
+            if (!enabled.firstChild.checked) delete target.default;
+            else if (type.value === 'string') target.default = control.value;
+            else {
+              const parsed = JSON.parse(control.value);
+              if (type.value === 'integer' && !Number.isInteger(parsed))
+                throw Error('请输入整数默认值。');
+              if (type.value === 'array' && !Array.isArray(parsed))
+                throw Error('请输入 JSON 数组。');
+              if (
+                type.value === 'object' &&
+                (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+              )
+                throw Error('请输入 JSON 对象。');
+              target.default = parsed;
+            }
+          },
+        };
+      }
+      function closeDrawer() {
+        $('drawer').close();
+        renderTree();
+        $('tree')
+          .querySelector('[data-node="' + nodes.indexOf(current) + '"]')
+          ?.focus();
+      }
+      function guard(action) {
+        if (snapshot() === initial) return action();
+        waiting = action;
+        $('leave').showModal();
+      }
+      function open(node) {
+        current = node;
+        fieldName = node.name;
+        required = Boolean(node.required);
+        draft = structuredClone(node.schema);
+        rawRules = new Map();
+        delete $('validation').dataset.more;
+        $('heading').textContent = node.schema.title || node.name;
+        $('path').textContent = nodePath(node);
+        const host = $('basics');
+        host.replaceChildren();
+        if (node.name) rename(host);
+        const title = input(draft.title);
+        title.oninput = () => updateText('title', title.value);
+        field(host, '显示名称', title);
+        renderType(host);
+        const description = element('textarea');
+        description.rows = 2;
+        description.value = draft.description ?? '';
+        description.readOnly = readonly();
+        description.oninput = () => updateText('description', description.value);
+        field(host, '字段说明', description, true);
+        renderDefault(host);
+        if (node === nodes[0]) host.append(button('查看子字段', () => guard(closeDrawer)));
+        if (draft.items) host.append(button('查看元素模型', () => guard(() => open(nodes[5]))));
+        if (draft.$ref)
+          field(host, '引用目标', select({ [draft.$ref]: draft.$ref }, draft.$ref), true);
+        renderValidation();
+        $('apply').hidden = $('cancel').hidden = readonly();
+        initial = snapshot();
+        refresh();
+        $('drawer').querySelector('.body').scrollTop = 0;
+        if (!$('drawer').open) $('drawer').showModal();
+        else $('close').focus();
+      }
+      function editedSchema() {
+        if (Array.isArray(draft.type) && draft.type.length === 0)
+          throw Error('请至少勾选一个数据类型。');
+        const result = structuredClone(draft);
+        defaultEditor.apply(result);
+        for (const [min, max] of [
+          ['minLength', 'maxLength'],
+          ['minItems', 'maxItems'],
+          ['minProperties', 'maxProperties'],
+        ]) {
+          if (result[min] > result[max]) throw Error('最小限制不能大于最大限制。');
+        }
+        if (result.multipleOf <= 0) throw Error('倍数必须大于 0。');
+        for (const [key, value] of rawRules) {
+          if (!value.trim()) delete result[key];
+          else {
+            const parsed = JSON.parse(value);
+            if (key === 'enum' && (!Array.isArray(parsed) || !parsed.length))
+              throw Error('允许值需要填写至少包含一项的 JSON 数组。');
+            result[key] = parsed;
+          }
+        }
+        return result;
+      }
+      $('form').onsubmit = (event) => {
+        event.preventDefault();
+        if (readonly() || showNameError()) return;
+        try {
+          const edited = editedSchema();
+          if (current === nodes[5]) nodes[4].schema.items = edited;
+          if (current === nodes[4]) nodes[5].schema = edited.items;
+          current.schema = edited;
+          current.name = fieldName;
+          current.required = required;
+          nodes[5].path = nodePath(nodes[4]) + '/items';
+          closeDrawer();
+        } catch (error) {
+          $('feedback').textContent = error.message;
+        }
+      };
+      $('close').onclick = $('cancel').onclick = () => guard(closeDrawer);
+      $('drawer').oncancel = (event) => {
+        event.preventDefault();
+        guard(closeDrawer);
+      };
+      $('stay').onclick = () => $('leave').close();
+      $('discard').onclick = () => {
+        $('leave').close();
+        waiting();
+      };
+      $('source').onclick = () => {
+        try {
+          $('json').querySelector('pre').textContent = JSON.stringify(editedSchema(), null, 2);
+          $('json').showModal();
+        } catch (error) {
+          $('feedback').textContent = error.message;
+        }
+      };
+      $('done').onclick = () => $('json').close();
+      renderTree();
+      open(nodes[2]);
+    </script>
+  </body>
+</html>

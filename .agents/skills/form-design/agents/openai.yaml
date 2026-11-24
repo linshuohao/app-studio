@@ -1,4 +1,0 @@
-interface:
-  display_name: "表单项目 · 方案讨论"
-  short_description: "动态表单引擎项目的方案讨论工作流，按现行契约推进并报告实际结果"
-  default_prompt: "使用 $form-design 处理动态表单引擎项目的方案讨论任务。"

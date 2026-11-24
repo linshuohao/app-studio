@@ -1,0 +1,139 @@
+.constraint-summary {
+  display: grid;
+  grid-template-columns: 3em minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 12px 0 0;
+}
+.constraint-summary dt {
+  color: var(--studio-text-muted);
+}
+.constraint-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+#studio-main dialog.constraint-drawer[data-studio-modal-size] {
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(740px, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  transform: none;
+}
+.constraint-drawer .constraint-fields {
+  display: grid;
+  align-content: start;
+  gap: var(--studio-space-24);
+  min-width: 0;
+}
+.constraint-fields > section {
+  display: grid;
+  align-content: start;
+  gap: var(--studio-space-12);
+  min-width: 0;
+  padding-top: var(--studio-space-16);
+  border-top: 1px solid var(--studio-border);
+}
+.constraint-fields :is(h3, h4, p) {
+  margin-block: 0;
+}
+.constraint-fields h3 {
+  font: var(--studio-type-section);
+}
+.constraint-fields > .studio-button,
+.constraint-fields > section > .studio-button {
+  justify-self: start;
+}
+.constraint-section-heading,
+.constraint-actions,
+.constraint-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--studio-space-8);
+}
+.constraint-section-heading,
+.constraint-fields .reaction-row {
+  justify-content: space-between;
+}
+.constraint-identity span {
+  color: var(--studio-text-muted);
+}
+.constraint-fields :is(strong, code) {
+  overflow-wrap: anywhere;
+}
+.constraint-fields > .constraint-preview {
+  padding: var(--studio-space-16);
+  background: var(--studio-surface-muted);
+  border: 0;
+  border-radius: var(--studio-radius-8);
+}
+.constraint-drawer > .studio-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.constraint-fields label:has(> .studio-input) {
+  display: grid;
+  gap: var(--studio-space-8);
+}
+.constraint-requirement {
+  display: flex;
+  align-items: end;
+  gap: var(--studio-space-16);
+  flex-wrap: wrap;
+}
+.constraint-requirement label {
+  display: grid;
+  gap: var(--studio-space-8);
+}
+
+.constraint-fields > .constraint-settings {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--studio-space-8) var(--studio-space-16);
+  margin: 0;
+}
+.constraint-settings dt {
+  color: var(--studio-text-muted);
+}
+.constraint-settings dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.constraint-settings .reaction-scope {
+  margin-block: 0;
+}
+.constraint-target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--studio-space-8);
+}
+.constraint-settings dd > .reaction-row {
+  margin-bottom: var(--studio-space-4);
+}
+.constraint-fields {
+  row-gap: var(--studio-space-16);
+}
+
+.constraint-settings .constraint-prerequisite-help {
+  margin: 0 0 var(--studio-space-8);
+  color: var(--studio-text-muted);
+}
+
+.constraint-drawer .constraint-delete {
+  margin-inline-end: auto;
+  color: var(--studio-danger-fg);
+}
+#constraint-error-message {
+  width: 100%;
+}
+.constraint-requirement small {
+  flex-basis: 100%;
+  color: var(--studio-text-muted);
+}

@@ -1,0 +1,42 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md"
+  ],
+  "scope": [
+    "apps/studio/src/app/form-editor.tsx",
+    "apps/studio/src/app/json-source.tsx",
+    "apps/studio/src/app/format-json.ts",
+    "apps/studio/src/app/config-inspection.tsx",
+    "apps/studio/src/app/studio.css",
+    "apps/studio/tests/json-format.check.mjs",
+    "apps/studio/tests/first-save.spec.ts",
+    "apps/studio/tests/history-preview.spec.ts"
+  ],
+  "checks": [
+    [
+      "node",
+      "--experimental-strip-types",
+      "apps/studio/tests/json-format.check.mjs"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-preview",
+      "PLATFORM_API_URL=http://127.0.0.1:3319",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "build"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

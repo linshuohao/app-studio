@@ -1,0 +1,53 @@
+{
+  "fingerprint": "a4d01709b279cb5b9055c41342ca4198d645ebdfe698c5bb2ea60bb89edbe5b3",
+  "checks": [
+    [
+      "pnpm",
+      "exec",
+      "eslint",
+      "services/api/src/platform",
+      "services/api/test",
+      "apps/studio",
+      "--max-warnings",
+      "0"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "test:integration",
+      "--testTimeout=20000",
+      "--no-file-parallelism"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/admission-test",
+      "STUDIO_TEST_PORT=3235",
+      "STUDIO_TEST_API_PORT=3335",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "--dir",
+      "apps/studio",
+      "exec",
+      "playwright",
+      "test"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

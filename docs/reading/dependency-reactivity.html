@@ -8,7 +8,7 @@
   <title>跨层依赖与订阅 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group" open><summary>06 · 横向能力</summary><div><a class="active" aria-current="page" href="dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="design-history.html">设计决策与讨论演进</a>
 <a href="design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -87,7 +100,7 @@
         <hr class="hero-line">
         <section class="section" id="dependency-baseline"><div class="section-head"><div class="kicker">01 · FORM ENGINE</div><div class="section-title"><h2>范围、状态与三个概念</h2></div></div>
 
-<p>2026-10-21 用户已确认<a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">保留领域结构的输入输出</a>：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式实现仍待迁移。</p>
+<p>2026-10-21 用户已确认<a href="l2-preparation.html#compiler-io-contract" rel="noopener noreferrer">保留领域结构的输入输出</a>：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式 Compiler / Runtime 已按就地 watch 实现；旧草图不作为待迁移生产代码。</p>
 <p>本专题连接 <a href="l1/03-expression-validation.html#expression" rel="noopener noreferrer">L1 表达式与约束</a>、<a href="l2-preparation.html#l2-dependencies" rel="noopener noreferrer">L2 静态编译</a> 和 <a href="l3-reactive-engine.html#runtime" rel="noopener noreferrer">Runtime</a> / <a href="l4-renderer.html" rel="noopener noreferrer">Renderer</a>，解决各类消费者重复发现依赖的问题。各层完整职责、能力治理和发布机制仍在原主题维护。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -615,7 +628,7 @@
 </figure>
 <p>只更新 Validation Issue 不应触发仅观察 Data 的 Reaction。Reaction 产生的新 Command 仍走统一数据入口，不能旁路写 Store。外部观察者收到的可以是“当前投影可能失效”信号，随后读取最新状态；Reaction 自身也已明确为状态收敛语义，同一 pending 实例多次失效可以合并，执行时读取最新值。显式 Command / Host 事件的次数不因此合并。</p>
 <p>External Constraint 要分开三件事：依赖变化立即撤销旧结论并登记 Pending；Flush 结束后与内部校验统一执行，先根 Schema，再按同步前置与稳定顺序发起就绪任务；返回成功 / 异常均核对输入、请求代次、Scope 与实例。External 发起不阻塞独立规则，普通增量不扩为全表完整校验。没有 Reaction 时有独立校验入口。请求、重试和实际取消仍归 Host。</p>
-<p>明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不依赖结果反向 PubSub；显式 ValidationWatch 另行消费已发布状态。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 <a href="l3-validation.html" rel="noopener noreferrer">校验链、结果与新鲜度</a> 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 <a href="l2-preparation.html#compiler-io-differences" rel="noopener noreferrer">L2</a>。</p>
+<p>明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不依赖结果反向 PubSub；显式 ValidationWatch 另行消费已发布状态。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 <a href="l3-validation.html" rel="noopener noreferrer">校验链、结果与新鲜度</a> 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；Compiler 依赖补全、Runtime 实例前置与 SDK 已实现；生产性能与跨端待验收，见 <a href="l2-preparation.html#compiler-io-differences" rel="noopener noreferrer">L2</a>。</p>
 <p>初始化校验、主动校验、首次 View 读取和 Reaction 是否初始化执行都有独立入口。<code>subscribe</code> 本身不隐含“注册时必然执行一次”；初始数据已违反 Constraint 也必须能被初始化 / 主动校验发现。</p>
 <p>常规 Reaction 的新增失效严格来自有效 Watch 变化；业务结果不符预期、Host Reset 意图或读取 snapshot 均不构成触发。runOnActivate 只在新实例首次建立时独立应用，既有实例不借它主动修复结果。Host 自选业务快照 / Dirty / 恢复 Command；snapshot 不隐式 Flush 或标 Clean，是否等待已有任务完成由 Host 所需场景及完成观察契约决定。详见 <a href="l3-reactive-engine.html#l3-runtime-host-boundary" rel="noopener noreferrer">四条职责原则</a>。</p>
 <p>用户已明确本次 Context 保持原有契约：L1 Command 只写 Data、Reaction.watch 只接受 DataReference，Context 对表达式只读。Host 显式替换 Context 时，保守失效挂载动态表达式及全部校验、撤销旧外部任务资格；校验沿用 Flush 结束后的统一入口，不使 Reaction 入队，见 <a href="extension-integration.html#host-context-update" rel="noopener noreferrer">Context 管理</a>。运行时订阅草图中的 Context / Field Meta 等候选状态类别不等于新增 L1 Watch；Field Meta 也不因此承诺核心 Dirty 或编辑来源分类。</p>

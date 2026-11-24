@@ -1,17 +1,6 @@
 import type { JsonValue } from '@form-engine/protocol';
 
-/** 对已校验的 JSON 按对象键排序序列化，用于契约摘要和资源身份比较；不校验外部输入。 */
-export function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  if (value !== null && typeof value === 'object')
-    return `{${Object.keys(value)
-      .sort()
-      .map(
-        (key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`,
-      )
-      .join(',')}}`;
-  return JSON.stringify(value)!;
-}
+export { canonicalJson } from '@form-engine/protocol/internal/json';
 
 // 所有引擎包复用同一份接管凭据；业务写入仍用独立复制，求值才允许复用只读子值。
 export { captureJson, copyJson } from '@form-engine/protocol/internal/json';

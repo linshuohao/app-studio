@@ -1,0 +1,2 @@
+class InvalidCreateFormResult(RuntimeError):
+    pass

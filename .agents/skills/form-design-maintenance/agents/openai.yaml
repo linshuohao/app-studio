@@ -1,4 +1,0 @@
-interface:
-  display_name: "表单项目 · 确认归档"
-  short_description: "动态表单引擎项目的确认归档工作流，按现行契约推进并报告实际结果"
-  default_prompt: "使用 $form-design-maintenance 处理动态表单引擎项目的确认归档任务。"

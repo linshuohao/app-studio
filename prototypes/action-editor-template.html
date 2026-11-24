@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ActionEditor 动作配置 · 评审草案</title>
+    <style>
+      /* studio css */
+      :root {
+        font-size: 13px;
+        color: var(--studio-text);
+        background: var(--studio-surface);
+        font-family: var(--studio-font);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: var(--studio-type-body);
+      }
+      main {
+        max-inline-size: 32rem;
+        margin-inline: auto;
+        padding: var(--studio-space-12);
+      }
+      header {
+        padding-block: var(--studio-space-16);
+      }
+      header small {
+        font: var(--studio-type-caption);
+        color: var(--studio-text-muted);
+      }
+      h1 {
+        font: var(--studio-type-title);
+        margin: var(--studio-space-8) 0;
+      }
+      h1 span {
+        font: var(--studio-type-section);
+      }
+      p {
+        margin: 0;
+        color: var(--studio-text-muted);
+      }
+      form,
+      .child {
+        border: thin solid var(--studio-border);
+        border-radius: var(--studio-radius-8);
+        padding: var(--studio-space-12);
+      }
+      form,
+      .stack {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--studio-space-12);
+      }
+      form :is(fieldset, input, .studio-select-trigger) {
+        min-width: 0;
+        max-width: 100%;
+      }
+      .line,
+      label {
+        display: grid;
+        gap: var(--studio-space-4);
+        font: var(--studio-type-control);
+      }
+      .line > .studio-select-trigger {
+        width: 100%;
+        justify-content: space-between;
+      }
+      footer,
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--studio-space-8);
+        flex-wrap: wrap;
+      }
+      footer {
+        justify-content: flex-end;
+        border-top: thin solid var(--studio-border);
+        padding-top: var(--studio-space-12);
+      }
+      footer output {
+        margin-inline-end: auto;
+        color: var(--studio-success-fg);
+      }
+      summary {
+        cursor: pointer;
+        overflow-wrap: anywhere;
+      }
+      .protocol,
+      details.child[open] > .row {
+        margin-block: var(--studio-space-12);
+      }
+      pre {
+        font: var(--studio-type-code);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: var(--studio-surface-muted);
+        padding: var(--studio-space-12);
+        border-radius: var(--studio-radius-4);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      /* component script */
+    </script>
+  </body>
+</html>

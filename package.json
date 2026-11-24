@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "node tools/engineering/dev.mjs",
     "dev:all": "node tools/engineering/dev.mjs --all",
+    "dev:agent": "node tools/engineering/dev.mjs --agent",
     "dev:api": "pnpm --filter @form-engine/api dev",
+    "dev:recover": "node tools/engineering/dev-recover.mjs",
     "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p tsconfig.tests.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -17,13 +19,20 @@
     "test:integration": "vitest run && pnpm --filter @form-engine/api test:integration",
     "test:e2e": "playwright test",
     "packages:check": "node tools/engineering/check-packages.mjs",
+    "handbook:build": "vite build --config prototypes/studio-components/playground.config.mjs && vite build --config prototypes/studio-components/business-playground.config.mjs",
     "docs:build": "node tools/engineering/docs.mjs",
     "docs:check": "node tools/engineering/docs.mjs --check",
     "check": "node tools/engineering/check.mjs",
     "prepare": "husky",
     "toolchain:update": "node tools/engineering/install-toolchain.mjs",
     "protocol:schema:check": "pnpm --filter @form-engine/protocol schema:check",
-    "test:e2e:devtools": "playwright test --config playwright.devtools.config.ts"
+    "test:e2e:devtools": "playwright test --config playwright.devtools.config.ts",
+    "asset:new": "node tools/engineering/assets/cli.mjs new",
+    "asset:change": "node tools/engineering/assets/cli.mjs change",
+    "assets:check": "node tools/engineering/assets/cli.mjs check",
+    "release:plan": "node tools/engineering/assets/cli.mjs plan",
+    "release:apply": "node tools/engineering/assets/cli.mjs apply",
+    "release:check": "node tools/engineering/assets/cli.mjs release-check"
   },
   "keywords": [],
   "author": "",
@@ -43,7 +52,9 @@
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "9.39.5",
     "@form-engine/compiler": "workspace:*",
+    "@form-engine/devtools": "workspace:*",
     "@form-engine/protocol": "workspace:*",
+    "@form-engine/pure-functions": "workspace:*",
     "@form-engine/runtime": "workspace:*",
     "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^7.0.1",
@@ -63,11 +74,10 @@
     "prettier": "^3.9.10",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "sucrase": "3.35.1",
     "turbo": "^2.11.9",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vitest": "^5.0.5",
-    "@form-engine/pure-functions": "workspace:*",
-    "@form-engine/devtools": "workspace:*"
+    "vitest": "^5.0.5"
   }
 }

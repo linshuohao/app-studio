@@ -1,70 +1,60 @@
-import { afterEach, expect, it } from 'vitest';
-import { registerDevtoolsSource, getDevtoolsHook } from '@form-engine/runtime/devtools';
-import { connectDevtools } from '../src/client/client.js';
-import { pageRequest } from '../src/bridge/page-request.js';
+import { afterEach, expect, it, vi } from 'vitest';
+import {
+  registerObservedProducer,
+  emitObservedEvent,
+  type ObservationProducer,
+} from '@form-engine/runtime/devtools';
+import { createObservationClient } from '../src/client/observation-client.js';
+import { observationPageRequest } from '../src/bridge/observation-request.js';
 afterEach(() => {
   Reflect.deleteProperty(globalThis, '__FORM_ENGINE_DEVTOOLS__');
+  vi.useRealTimers();
 });
-it('连接只取目录，检查才读副本；事件缓存有界，断开清空并拒绝旧查询', async () => {
-  let reads = 0;
-  const source = registerDevtoolsSource(
-    {},
-    { kind: 'runtime', label: 'form', formId: 'form' },
-    () => {
-      reads++;
-      return { data: { name: 'A' } };
-    },
-  );
-  const client = connectDevtools(getDevtoolsHook())!;
-  expect(client.list()).toHaveLength(1);
-  expect(reads).toBe(0);
-  expect(client.inspect(source.id)?.value).toEqual({ data: { name: 'A' } });
-  for (let i = 0; i < 150; i++) {
-    source.publish('change', { i });
-    await Promise.resolve();
-  }
-  expect(client.events()).toHaveLength(100);
-  expect(client.dropped()).toBe(50);
-  client.disconnect();
-  source.publish('late');
-  await Promise.resolve();
-  expect(client.list()).toEqual([]);
-  expect(client.events()).toEqual([]);
-  expect(client.inspect(source.id)).toBeUndefined();
-  source.dispose();
+const factory = (ref: ObservationProducer['ref']): ObservationProducer => ({
+  ref,
+  snapshot: () => ({ revision: 0, rows: [{ record: 'header' }] }),
+  revision: () => 0,
+  inputVersion: () => ({ dataRevision: 0, contextRevision: 0 }),
+  inspect: () => ({ status: 'unsupported' }),
 });
-it('扩展页面桥接自包含、晚连接 / 重连、协议检查和断开均不暴露写能力', async () => {
-  const source = registerDevtoolsSource(
-    {},
-    { kind: 'view', label: 'main', formId: 'form' },
-    () => ({ tree: 'current' }),
-  );
-  // 模拟 inspectedWindow.eval：不能依赖打包模块的外部词法变量。
+it('公开新版接缝到客户端：发现不取值、录制与游标重试、关闭资源', async () => {
+  const owner = {},
+    stop = registerObservedProducer(owner, factory);
   const evaluate = new Function(
     'command',
-    `return (${pageRequest.toString()})(command);`,
-  ) as typeof pageRequest;
-  expect(evaluate({ op: 'poll', session: 'test' })).toMatchObject({
-    status: 'connected',
-    sources: [{ kind: 'view' }],
-  });
-  expect(evaluate({ op: 'inspect', session: 'test', id: source.id }).snapshot?.value).toEqual({
-    tree: 'current',
-    diagnostics: [],
-    diagnosticsTruncated: false,
-  });
-  source.publish('diagnostic', { message: 'example' });
-  await Promise.resolve();
-  expect(evaluate({ op: 'poll', session: 'test' }).events).toHaveLength(1);
-  evaluate({ op: 'disconnect', session: 'test' });
-  expect(evaluate({ op: 'poll', session: 'test' }).events).toEqual([]);
-  evaluate({ op: 'disconnect', session: 'test' });
-  source.dispose();
-  Reflect.deleteProperty(globalThis, '__FORM_ENGINE_DEVTOOLS__');
-  expect(evaluate({ op: 'poll', session: 'missing' }).status).toBe('waiting');
+    `return (${observationPageRequest.toString()})(command);`,
+  ) as typeof observationPageRequest;
+  const client = createObservationClient({ request: async (command) => evaluate(command) }, () =>
+    crypto.randomUUID(),
+  );
+  const discovery = (await client.query({ op: 'discover' })).result;
+  if (discovery.status !== 'ok' || !('producers' in discovery)) throw Error('discover');
+  const producer = discovery.producers[0]!.ref;
+  const open = (await client.query({ op: 'openObservation', producer })).result;
+  if (open.status !== 'ok' || !('sessionId' in open)) throw Error('open');
+  const target = { producer, sessionId: open.sessionId };
+  emitObservedEvent(owner, 'diagnostic', () => ({ code: 'test' }));
+  const prepared = client.prepare({ op: 'readUpdates', ...target, cursor: open.cursor });
+  const first = await client.send(prepared);
+  expect(first.result).toMatchObject({ status: 'ok', events: [{ payload: { code: 'test' } }] });
+  expect(await client.send(prepared)).toEqual(first);
+  await client.query({ op: 'closeObservation', ...target });
+  expect((await client.send(prepared)).result).toEqual({ status: 'session-expired' });
+  stop();
+});
+it('页面晚加载与旧版本拒绝，不访问旧read/subscribe', () => {
+  expect(observationPageRequest({ version: 2, requestId: 'r', op: 'discover' }).result.status).toBe(
+    'waiting',
+  );
+  const read = vi.fn(),
+    subscribe = vi.fn();
   Object.defineProperty(globalThis, '__FORM_ENGINE_DEVTOOLS__', {
-    value: { version: 99 },
+    value: { version: 1, read, subscribe },
     configurable: true,
   });
-  expect(evaluate({ op: 'poll', session: 'missing' }).status).toBe('incompatible');
+  expect(observationPageRequest({ version: 2, requestId: 'r', op: 'discover' }).result.status).toBe(
+    'incompatible',
+  );
+  expect(read).not.toHaveBeenCalled();
+  expect(subscribe).not.toHaveBeenCalled();
 });

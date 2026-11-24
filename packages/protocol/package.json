@@ -36,6 +36,11 @@
       "development": "./src/internal/prepared.ts",
       "types": "./dist/internal/prepared.d.ts",
       "import": "./dist/internal/prepared.js"
+    },
+    "./internal/schema": {
+      "development": "./src/internal/schema.ts",
+      "types": "./dist/internal/schema.d.ts",
+      "import": "./dist/internal/schema.js"
     }
   },
   "files": [
@@ -86,6 +91,10 @@
       "./internal/prepared": {
         "types": "./dist/internal/prepared.d.ts",
         "import": "./dist/internal/prepared.js"
+      },
+      "./internal/schema": {
+        "types": "./dist/internal/schema.d.ts",
+        "import": "./dist/internal/schema.js"
       }
     }
   },

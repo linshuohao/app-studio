@@ -7,6 +7,7 @@ export default defineConfig({
     'src/capability/index.ts',
     'src/prepared/index.ts',
     'src/internal/json.ts',
+    'src/internal/schema.ts',
     'src/internal/prepared.ts',
   ],
   format: 'esm',

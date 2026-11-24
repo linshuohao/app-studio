@@ -1,3 +1,4 @@
+import { listProducers, readMetadata } from './observation.js';
 import type { PreparedForm } from '@form-engine/protocol/prepared';
 import { StrictMode, useState } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -426,13 +427,13 @@ it('根装配失败仍登记 DevTools 视图并展示诊断，不要求内部执
   );
   expect(screen.getByRole('alert')).toBeVisible();
   const hook = getDevtoolsHook()!;
-  const view = hook
-    .list()
-    .find((source) => source.kind === 'view' && source.formId === form.prepared.definition.id)!;
+  const view = listProducers(hook).find((source) => source.kind === 'view')!;
   expect(view).toBeDefined();
-  expect(hook.read(view.id)!.value).toMatchObject({
-    diagnostics: [{ code: 'RENDERER_UNAVAILABLE' }],
-  });
+  expect(readMetadata(hook, view.ref)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ record: 'diagnostic', code: 'RENDERER_UNAVAILABLE' }),
+    ]),
+  );
   expect(reports).toContainEqual(expect.objectContaining({ code: 'RENDERER_UNAVAILABLE' }));
   page.unmount();
   form.runtime.dispose();
@@ -484,12 +485,13 @@ it('工具与呈现读取同一接管的 Prepared，不随 Host 修改原始对�
   root.props = { label: 'Changed outside' };
   expect(screen.getByRole('textbox', { name: 'Original' })).toHaveValue('Alice');
   const hook = getDevtoolsHook()!;
-  const view = hook
-    .list()
-    .find((source) => source.kind === 'view' && source.formId === input.definition.id)!;
-  expect(hook.read(view.id)!.value).toMatchObject({
-    tree: { main: { props: { label: 'Original' } } },
-  });
+  const view = listProducers(hook).find((source) => source.kind === 'view')!;
+  expect(readMetadata(hook, view.ref)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ record: 'renderer-view', formId: input.definition.id }),
+    ]),
+  );
+  expect(JSON.stringify(readMetadata(hook, view.ref))).not.toContain('Changed outside');
   await act(() => form.runtime.flush());
   page.unmount();
   form.runtime.dispose();

@@ -1,0 +1,152 @@
+.reaction-field-filters,
+.reaction-field-filters label {
+  display: grid;
+  gap: 0.35rem;
+}
+.reaction-field-filters {
+  gap: 0.7rem;
+  margin-block: 0.75rem;
+}
+.reaction-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.7rem;
+}
+
+.reaction-scope-summary {
+  display: grid;
+  gap: var(--studio-space-4);
+}
+.reaction-scope-summary h3 {
+  margin: 0;
+  color: var(--studio-text-muted);
+  font: var(--studio-type-caption);
+}
+.reaction-scope-summary > .studio-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--studio-space-8);
+  width: 100%;
+  min-width: 0;
+}
+.reaction-scope-summary > .studio-button > span:last-child {
+  flex: none;
+}
+.reaction-scope-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reaction-scope-form {
+  display: grid;
+  gap: var(--studio-space-16);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.reaction-scope-source {
+  padding-block-start: var(--studio-space-16);
+  border-block-start: 1px solid var(--studio-border);
+}
+.reaction-scope-source-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(10rem, 0.8fr);
+  align-items: end;
+  gap: var(--studio-space-12);
+}
+.reaction-scope-field,
+.reaction-scope-alias {
+  display: grid;
+  gap: var(--studio-space-4);
+  min-width: 0;
+}
+.reaction-scope-source-fields .studio-input {
+  width: 100%;
+}
+.reaction-scope-field > .studio-button {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reaction-scope-warning {
+  margin: 0;
+  padding: var(--studio-space-8);
+  color: var(--studio-danger-fg);
+  background: var(--studio-danger-bg);
+}
+.reaction-scope-actions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--studio-space-8);
+}
+.reaction-scope-dialog > .editor-view-switch {
+  flex: none;
+  padding-block-end: var(--studio-space-8);
+  margin-block-end: var(--studio-space-12);
+  border-block-end: 1px solid var(--studio-border);
+}
+@media (max-width: 560px) {
+  .reaction-scope-source-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.reaction-observation-dialog {
+  height: min(720px, calc(100dvh - 32px));
+  --selection-accent: var(--studio-primary);
+}
+.reaction-observation-dialog > .studio-modal-body {
+  flex: 1 1 0;
+  display: flex;
+  overflow: hidden;
+}
+.reaction-observation-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--studio-space-12);
+  min-width: 0;
+  min-height: 0;
+}
+.reaction-observation-source {
+  flex: none;
+  width: min(100%, 18rem);
+}
+.reaction-observation-body > .field-picker-body {
+  flex: 1 1 0;
+  min-height: 0;
+  border-top: 1px solid var(--studio-border);
+  padding-block-start: var(--studio-space-12);
+  margin: 0;
+}
+.reaction-observation-body .layout-field-tree,
+.reaction-observation-body .field-picker-selection {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+.reaction-observation-body .field-picker-searchbar,
+.reaction-observation-body .field-picker-selection > h3 {
+  flex: none;
+}
+.reaction-observation-body .studio-tree,
+.reaction-observation-body .field-picker-selection > ul {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.reaction-observation-dialog .studio-modal-actions {
+  border-top: 1px solid var(--studio-border);
+  padding-block-start: var(--studio-space-12);
+}

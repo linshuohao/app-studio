@@ -9,6 +9,7 @@ modules:
 tags: []
 related:
   decisions:
+  - ADR-FE-027
   - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-019
@@ -27,6 +28,8 @@ related:
   - ADR-FE-013
   - ADR-FE-014
 sources:
+- SRC-PLATFORMMODULES
+- SRC-PLATFORMBLUEPRINT
 - SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-REACTIONSTATE
@@ -38,7 +41,7 @@ sources:
 navigation:
   group: 01 · 架构全貌
   order: 10
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 status_note: 分层与主体语义已确认，公开接口与生产实现未完成
 relocated_sections:
 - source: docs/design/platform-studio.md
@@ -51,13 +54,13 @@ reading_next: MAP-CAPABILITIES
 
 这是一个面向复杂动态表单与数据录入的声明式引擎。先看系统怎样分层、各层如何协作，再沿[能力图谱](capability-map.md)进入具体设计。当前仍处于设计讨论与规范细化阶段，已有共识、候选机制与未决问题分别标明。
 
-## 整体产品与建设蓝图（待审阅） {#product-blueprint}
+## 整体产品与建设蓝图（分项确认） {#product-blueprint}
 
-2026-10-20 用户确认方向二：以核心引擎建设为主线，通过 Host 串联，再由平台管理和组织能力；开始前先讨论清楚完整蓝图，不进入具体技术细节。以下产品组织和阶段安排仍为讨论稿，不能因保存而视为确认。原 [Platform P1–P4](platform-studio.md#platform-draft) 保留待定，本轮先审阅蓝图。
+2026-10-20 用户确认方向二：以核心引擎建设为主线，通过 Host 串联，再由平台管理和组织能力；开始前先讨论清楚完整蓝图，不进入具体技术细节。2026-11-08 已确认通用动态表单平台定位及[环节—页面—模型组织](platform-studio.md#platform-blueprint)，用户权限等基础管理纳入范围；具体页面、模型与 MVP 待设计，先展开表单管理和工作台。以下其余产品组织和阶段安排保留原确认范围，不能由局部确认扩大。原 [Platform P1–P4 候选](platform-studio.md#platform-draft)保留取舍追溯，具体首期范围与 P2–P4 行为仍待设计。
 
 ### 目标与使用者
 
-建议目标：让复杂业务表单能够被定义、验证、交付、运行和持续演进。核心可独立嵌入业务应用，平台提高复用与交付效率，Agent 提高创作与使用效率。
+当前目标：建设通用动态表单低代码平台，让复杂业务表单能够被定义、验证、交付、运行和持续演进。平台不扩张为完整业务应用搭建系统，也不独立建设数据结构设计器。核心可独立嵌入业务应用，平台提高复用与交付效率，Agent 提高创作与使用效率。
 
 使用者包括引擎 / 物料开发者、表单作者、业务接入开发者、资产维护 / 发布人员和最终填写者；这是工作角色，同一人可以兼任，不据此决定账号或组织系统。初期作者是否以开发人员和技术配置人员为主仍待确认。
 
@@ -87,14 +90,14 @@ flowchart TB
     Runtime <--> Renderer[L4 呈现与物料]
     User[填写者] <--> Renderer
     Host <--> Business[业务服务 / 持久化]
-    Agent[Agent 执行能力：后续候选] -. 创作辅助 .-> Studio
+    Agent[Agent 执行能力：蓝图已确认] -. 创作辅助 .-> Studio
     Agent -. 填写辅助 .-> Host
     Operations[运行保障与问题治理：后续建设] -. 运行证据 .-> Host
     Operations -. 版本与发布关联 .-> Platform
     Agent -. 诊断与修复辅助 .-> Operations
 ```
 
-这是协作关系，不是部署或逐跳调用图。取得确定制品后，表单运行不依赖 Studio / 平台管理服务持续在线。Agent 不增加为表单第五层。平台治理与独立 Agent 执行的具体产品组织仍为候选。
+这是协作关系，不是部署或逐跳调用图。取得确定制品后，表单运行不依赖 Studio / 平台管理服务持续在线。Agent 不增加为表单第五层。Agent 六类职责与共享执行蓝图已确认，完整资产治理仍待细化。
 
 ### 两条完整工作流 {#blueprint-workflows}
 
@@ -158,6 +161,12 @@ flowchart TB
 
 ### Agent 在完整蓝图中的位置 {#blueprint-agent}
 
+Agent 采用 Python / FastAPI / LangChain / LangGraph / LangSmith 独立服务，六类职责共用 Harness，按任务需要启用三层 Loop。首期通过 Studio → Platform → Agent 统一处理问答与表单创建。Agent 拥有会话与任务事实，API Server 转发本轮消息并独立保存已交付的草稿。用户审阅候选后，由 Platform 原子保存首个配置版本，Agent 会话可继续用于该表单。以 Agent 生成的旅险候选运行真实 Runtime 场景作为首期验收，运行结果和配置检查各自保有证据。详见 [ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)、[ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)及[首期验收](platform-studio.md#agent-create-runtime-acceptance)。具体实施进展见[治理状态](governance.md#layer-progress)。
+
+CreateForm 接收自由格式需求，先保留来源并整理标准需求，再由创作阶段结合固定版本协议和目标能力形成配置映射。候选仍经真实 Compiler 检查并交由用户审阅。需求澄清、能力验证与候选保存的边界见[需求理解与配置交接](platform-studio.md#agent-create-requirements)。
+
+[智能表单工作台](platform-studio.md#agent-form-workspace)连接两条产品工作流。创作侧由 Studio 组织定义、候选预览和版本审阅，后续加入已有配置的定向编辑与场景测试。填写侧由业务 Host 授权接入助手，获准的数据修改与用户操作进入同一表单实例的 Command 路径。预览和测试拥有隔离的 Runtime 实例，实际填写与业务提交留在 Host 边界。
+
 场景覆盖创作生成 / 修改、诊断与测试、填写解释 / 提取 / 补全、业务知识和工具协作、运维分析。知识 / RAG、模型与 Prompt、工具与 Skills、记忆、单 / 多 Agent 执行、结构化与流式交互、权限 / 观测 / 评测继续使用[平台主题中的完整清单](platform-studio.md#agent-capability-plan)，不另建平行体系。
 
 纳入蓝图不等于首期全部建设或全部自建。创作结果先作为候选定义检查；填写建议经授权与适用性检查走受控写入；解释不代替权威业务校验。表单与 Agent 会话分别管理生命周期。生成新表单与热改正在填写的表单属于不同能力，当前不默认支持后者。
@@ -165,6 +174,8 @@ flowchart TB
 ### 运行保障与问题治理（纳入蓝图，后续建设） {#blueprint-operations}
 
 2026-10-20 用户确认：将可观测性、监控、问题处理及 Agent 辅助错误处理纳入完整蓝图，实现可以后置，不作为当前核心引擎建设的前置。该确认限定能力覆盖与建设节奏，具体接口、监控产品、部署方式和自动处置权限仍待设计。
+
+2026-11-22 已确认[首期错误事件采集与查询](platform-studio.md#platform-diagnostic-events)的受信 Host 接入、脱敏存储和管理员查看范围，待授权开发。完整监控告警与问题处置继续分阶段设计。
 
 这是一项贯穿创作、构建、发布、运行与外部调用的横向能力，沿用六部分协作及四层内核边界，不新增引擎层。
 
@@ -234,7 +245,7 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
     "把已验证能力纳入治理",
     "在已有闭环上扩展"
   ],
-  "note": "表示价值与依赖方向，不是严格串行排期。预览 / 诊断从核心阶段就需要；Studio 与 Agent 的具体先后及范围待确认。"
+  "note": "表示价值与依赖方向，不是严格串行排期。预览 / 诊断从核心阶段就需要；Studio 修复入口与 Agent 独立服务首期已确认，尚未开发。"
 }
 ```
 
@@ -250,7 +261,7 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 | 运行保障深化（可后置） | 监控告警、问题处理闭环及 Agent 辅助，按场景集成或建设 | 问题可定位、处置可追踪、恢复可验证；不作为核心纵切前置 |
 | Agent 场景落地 | 选择有价值场景，决定集成 / 自建及配套治理 | 一个辅助工作流产生可检查结果，再逐步扩展 |
 
-这是价值与依赖顺序，不要求上一阶段全部结束才允许下一阶段探索。预览和诊断从首个纵切就需要，完整 Studio 可后续深化；Agent 现在规划，当前不转为核心建设前置。不等所有库全部完成才接 Host。首期已选 Web/TS + React 及六包目录；具体业务场景、公共 API、存储与部署后续确定；工具组合与初始化流程已在[工程方案](engineering.md)确认并完成工程底座本地验证。
+这是价值与依赖顺序，不要求上一阶段全部结束才允许下一阶段探索。预览和诊断从首个纵切就需要，完整 Studio 可后续深化；Agent 蓝图与首期已确认，当前仅归档，具体范围见 Agent 专题。不等所有库全部完成才接 Host。首期已选 Web/TS + React 及六包目录；具体业务场景、公共 API、存储与部署后续确定；工具组合与初始化流程已在[工程方案](engineering.md)确认并完成工程底座本地验证。
 
 ### 本轮集中审阅点
 
@@ -259,11 +270,11 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 - B3：是否采用核心库与 Host 纵切共同推进，再补齐最小平台与创作体验的顺序？
 - B4：Agent 是否完整规划、按场景接入，独立于表单内核执行，暂不决定全部自建？
 
-以上待用户整体审阅。蓝图覆盖不将 Platform / Studio 提升为设计完成，也不替代正式契约与生产验收。
+上述早期集中审阅点按各自确认范围保留；本轮平台定位与组织方式确认见[现行蓝图](platform-studio.md#platform-blueprint)，AI 下一阶段再议。蓝图覆盖不将 Platform / Studio 提升为设计完成，也不替代正式契约与生产验收。
 
 ## 应用与工程架构：首期边界与目录 {#application-engineering}
 
-2026-10-20 讨论收敛：首期 Web/TypeScript 与 React，六个 TS 包直接位于 packages，后续 Flutter 使用顶层 packages-flutter。用户已授权建立目录占位并统一归档，初始只完成 .gitkeep 骨架；应用产品范围、后端部署、正式契约与运行实现仍待落地。工具链已在后续[工程方案](engineering.md)确认，且后续已按授权完成工程底座初始化与本地联验；生产核心契约仍未完成。本节只将确认的范围和边界固化，不将保存文档或建立目录解释为生产模块完成。
+2026-10-20 讨论收敛：首期 Web/TypeScript 与 React，六个 TS 包直接位于 packages，后续 Flutter 使用顶层 packages-flutter。用户已授权建立目录占位并统一归档，初始只完成 .gitkeep 骨架；应用产品范围、后端部署、正式契约与运行实现仍待落地。工具链已在后续[工程方案](engineering.md)确认，且后续已按授权完成工程底座初始化与本地联验；后续已实现 TS 核心、React SDK 与首批资产，真实 Host、跨端和生产验收仍待完成。本节只将确认的范围和边界固化，不将保存文档或建立目录解释为生产模块完成。
 
 ### 1. 架构需要定到什么程度
 
@@ -271,23 +282,23 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 
 当前在本项目仓库组织核心包与后续应用 / 服务，便于跨包契约联验；工作区与依赖管理已采用 pnpm / Turborepo，实施见[工程方案](engineering.md)；未来 Dart 可使用自身工具链，不要求现在搭建多语言工作区管理。库是可复用代码，应用是用户入口，服务是具有运行边界的后端能力，领域模块不必独立部署。
 
-### 2. 应用与服务组织（候选）
+### 2. 应用与服务组织（平台方向已确认，其余按需展开）
 
 | 组成 | 职责 / 所有权 | 首期安排与扩展 |
 | --- | --- | --- |
 | Host Playground | 可运行的参考业务应用，消费公开 SDK，负责示例请求、业务数据与提交 | 核心纵切入口，从第一阶段建设；测试可用模拟服务，模拟不作为真实集成证据 |
-| Platform Web / Studio | 平台管理和表单创作入口，共用预览与诊断能力 | 初期最小编辑 / 预览，完整管理与创作后续建设；暂建议同一应用中的不同功能区 |
-| Platform API | Form / Capability Registry、构建记录、发布 / 分发、访问与审计等领域模块 | 预留逻辑边界；需要平台闭环时落地。建议先在一个服务内模块化，不按模块逐个建微服务 |
+| Platform Web / Studio | 平台管理和表单创作入口，共用预览与诊断能力 | 已确认同一前端应用承载平台管理与 Studio；页面及具体交互逐项设计 |
+| Platform API | Form / Capability Registry、构建记录、发布 / 分发、访问与审计等领域模块 | 已确认 DDD 思路的模块化单体，首期一个 API 部署；具体模块按业务流程细化，不拆微服务 |
 | 编译执行入口 | 本地 CLI / 创作工具 / 服务调用同一编译库 | 初期本地运行；耗时或隔离需求出现后可增加构建 Worker，不另实现一套编译器 |
-| Agent Executor | 模型、知识、工具、记忆、任务 / 流式执行的候选接入位置 | 未来独立服务或外部平台集成，当前只保留架构位置；不创建空 Agent 框架 |
+| Agent Executor | 六类职责共享 Harness，按需编排任务、工具与验证反馈；模型、知识与执行恢复 | Python / FastAPI 独立服务方向已确认，首期覆盖 Studio 问答和配置创建，见[统一助手 Graph](platform-studio.md#agent-turn-graph) |
 | 外部业务与基础设施 | 业务 API、组织身份、元数据 / 制品存储；未来任务基础设施 | 通过明确边界接入，按场景选型。引擎库不直连平台数据库或业务数据库 |
 
-Platform API 的业务元数据与不可变制品分别拥有存储边界，存储产品后选。业务订单 / 填写草稿归 Host 系统，Agent 会话 / 记忆归对应执行系统；不共用一张泛化“状态表”。构建 Worker 与 Agent Executor 是可能的运行隔离边界，不是当前部署承诺。
+Platform API 的业务元数据与不可变制品分别拥有存储边界。业务订单和填写草稿归 Host。首期会话、内部候选、续办资料和知识归 Agent，已交付草稿及版本归 Platform，分别使用独立的 PostgreSQL 数据域。具体部署与构建 Worker 的隔离方式按实际运行需求确定，见[存储与运行](platform-studio.md#agent-storage-routing)。
 
 ```diagram
 {
   "id": "figure-application-engineering",
-  "title": "应用与工程组织（候选）：库可独立使用，服务按需落地",
+  "title": "应用与工程组织：库独立使用，平台模块化单体，其余按需落地",
   "rows": [
     [
       {
@@ -312,8 +323,8 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
         "body": "复用编译库，无平台服务也能验证"
       },
       {
-        "title": "Platform API（预留）",
-        "body": "注册、构建、发布 / 分发、访问与审计模块"
+        "title": "Platform API · 模块化单体",
+        "body": "方向已确认，具体业务模块待设计与实现"
       },
       {
         "title": "Agent 执行（后续）",
@@ -325,9 +336,106 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
     "应用消费公开接口",
     "工具与服务按职责复用；不表示核心反向依赖服务"
   ],
-  "note": "这是代码与运行边界的组织草案，不是逐层调用图。取得确定制品的业务应用不要求平台管理服务在线。"
+  "note": "这是代码与运行边界图，不是逐层调用图。平台模块化单体方向已确认，独立 Worker / Agent 为后续边界；取得确定制品的业务应用不要求平台管理服务在线。"
 }
 ```
+
+### 平台模块化单体：DDD 思路与业务边界 {#platform-modular-monolith}
+
+2026-11-08 用户确认按 DDD 思路构建模块化单体，首期不拆微服务，并要求先从表单创作管理展开业务模型、状态与操作流程。决策见 [ADR-FE-027](decisions/ADR-FE-027-platform-modular-monolith.md)，来源见 [SRC-PLATFORMMODULES](source-map.md#src-platform-modules)。本节固化大的方向与拆分方法，不将具体聚合、数据库表、接口或服务数量视为已经冻结。
+
+**DDD 用于职责、业务语言、规则与数据所有权。** 先确定业务边界，再落到代码模块，独立部署由运行需求驱动。页面不等于服务，业务对象也不等于服务；不按草稿、修订、构建、发布各自建立微服务。简单查询保持直接，复杂状态变化集中表达规则，不强制全部对象采用复杂聚合，也不默认引入 CQRS、事件溯源、消息总线或通用领域框架。
+
+#### 初步业务划分与所有权
+
+以下五块作为逐项设计的职责起点；边界方向已确认，具体限界上下文、聚合与接口仍须用真实业务流程校验，数量不是固定目标。
+
+| 模块 | 业务职责 | 所有权 | 前端消费 |
+| --- | --- | --- | --- |
+| 成员与访问管理 | 成员资格、角色分配、授权判断 | 空间、成员、角色关联及授权变更 | 成员权限设置与各页面操作 |
+| 表单创作管理 | 表单身份、编辑内容、修订与生命周期 | 表单、不可变配置版本、归档状态 | 表单列表、工作台、修订查看 |
+| 能力资产管理 | 提供可选物料 / 函数及确定版本 | 能力说明、契约、版本、制品引用 | 能力目录与工作台选择 |
+| 构建与发布管理 | 固定输入、编译、交付、发布与回滚 | 构建记录、发布版本、发布记录 | 检查反馈、版本与发布详情 |
+| 运行问题治理 | 问题证据关联与处理跟踪 | 问题、版本关联、处理结果 | 问题列表与详情 |
+
+修订由创作管理拥有，构建发布读取确定修订，不反向修改其内容。资产管理提供确定契约与版本，构建发布选择锁定集合。Compiler 仍是可复用包，由构建用例调用，不新增一套编译器。访问管理提供授权规则，各业务模块负责资源归属与自身业务条件。审计是共同支撑能力，各模块产生自己的操作事实，不先独立部署审计服务。正式填写及业务提交继续由 Host 与 Runtime / Renderer 承担。
+
+#### 初期应用、模块与存储关系
+
+平台采用一个前端应用承载管理与 Studio，一个 Platform API 承载业务模块。现有 `services/api` 是 NestJS 工程入口，当前基础代码不代表五块业务已实现。核心包保持独立，平台按需消费。
+
+平台元数据与不可变制品保留不同存储职责，数据库已选 PostgreSQL，Platform 与 Agent 分域；对象存储按后续场景接入；多个业务模块可共用一个数据库，但写入所有权必须清晰。独立构建执行、分发或观测服务均是将来按需求评估的运行边界，不在首期预建。
+
+```diagram
+{
+  "id": "figure-platform-modular-monolith",
+  "title": "平台初期组织：一个前端应用与一个模块化 API",
+  "rows": [
+    [
+      {
+        "title": "Platform Web / Studio",
+        "body": "管理页面、表单列表与工作台"
+      }
+    ],
+    [
+      {
+        "title": "Platform API · 模块化单体",
+        "body": "成员与访问 · 表单创作 · 能力资产 · 构建发布 · 问题治理",
+        "major": true
+      }
+    ],
+    [
+      {
+        "title": "元数据存储",
+        "body": "明确模块的数据写入所有权"
+      },
+      {
+        "title": "不可变制品存储",
+        "body": "交付产物与完整性信息"
+      },
+      {
+        "title": "现有 Compiler 包",
+        "body": "静态编译，复用现有契约"
+      }
+    ]
+  ],
+  "arrows": [
+    "平台 API 调用",
+    "按职责访问存储及复用编译包；不是逐层执行顺序"
+  ],
+  "note": "正式填写由外部业务 Host 与现有 Runtime / Renderer 承担。核心不反向依赖平台。具体存储与接口待设计。"
+}
+```
+
+#### 模块协作与一致性
+
+- 每份业务数据有明确所属模块；跨模块修改通过公开业务接口，不使用其他模块 Repository 直接改数据。
+- 组合查询通过公开查询接口或明确的查询组合层完成，不将页面数据需求变成新的业务所有权。
+- 关键操作的原子性与事务边界须在模块专题明确；不因模块化而默认异步或最终一致。
+- HTTP 入口处理参数与响应，应用用例协调完整操作，业务模型维护规则，基础设施适配数据库、身份系统、制品存储及 Compiler；按复杂度组织，不机械创建层级和空目录。
+- 不把角色检查或发布编排放在前端。Controller 也不直接拼接各模块的数据库写入。
+
+**发布贯穿流程：**检查发布资格 → 创作模块提供确定修订 → 资产模块提供确定能力集合 → 构建发布调用 Compiler 并记录结果 → 形成不可变制品 → 确认制品可用后改变交付选择并记录历史 → 前端展示结果。协调归构建发布的应用用例。普通编辑检查可以直接复用编译能力返回即时结果，不强制创建正式构建记录。
+
+发布失败、重试、幂等、存储与记录一致性、并发撤权继续在发布专题细化；已确认 RBAC 的延迟发布再次检查规则继续适用。
+
+#### 按运行需要演进
+
+| 真实需求 | 可评估的独立运行边界 |
+| --- | --- |
+| 编译占用 CPU、需要限流 / 隔离失败 | 构建 Worker，继续属于构建发布领域 |
+| 制品交付流量或可用性要求提高 | 独立分发入口或对象存储 / CDN |
+| 运行事件规模和保留策略不同 | 观测采集与处理 |
+| 模块由独立团队维护且边界稳定 | 评估独立领域服务 |
+| 后续 AI 长任务与资源隔离 | 独立执行或外部服务接入 |
+
+拆分前明确数据所有权、重试、幂等、恢复与跨服务一致性；不只是把函数调用改为 HTTP。构建 Worker 独立进程化也不意味着整个平台微服务化。
+
+#### 细化顺序与交付边界
+
+表单创作管理已确认[最小 MVP](platform-studio.md#platform-authoring-mvp)：表单直接组织不可变配置版本，每次保存追加原文，Host 按 releaseId 在线消费；列表和工作台的接口、持久化及装载进入实施准备；访问管理按已确认 RBAC 同步提供身份与执行机制；随后细化构建发布、能力资产及问题治理。
+
+每模块产物包括职责与边界、对象及状态、关键用例、公开接口、协作与事务、失败处理、验收场景。具体存储、ORM、聚合划分、API 字段、同步异步方案及 MVP 实施计划保持待设计；本轮没有编码授权，不关闭 M18 / M19。
 
 ### 3. 首期 TS 包与依赖方向
 
@@ -345,7 +453,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 | packages/materials-react | React 基础字段、容器和展示物料及具体 Manifest | 与 Renderer 分开，业务方可选择自有物料；Manifest 与 UI 实现可分别消费，编译侧不能被迫加载 React 组件；后续物料集按实际分发需要再拆 |
 | packages/pure-functions | TS 基础同步确定性纯函数与签名，运行端注册实现，编译侧读取确定契约 | 不依赖 UI、网络或 Runtime 可变内部；签名与实现归具体函数集，通用 Manifest 结构归 protocol，Compiler 不执行函数 |
 
-2026-10-27 已确认[首批资产方案](extension-integration.md#first-assets)：materials-react / pure-functions 内公开资产按单目录平铺，测试放 tests 镜像，Manifest 静态入口与运行实现分开；不按职责分类强制分层或拆逐资产 npm 包。[模板与版本工具](engineering.md#asset-tooling)先于正式资产交付，能力版本与包版本独立，复用 Changesets，不改变本节依赖方向。正式资产、工具和真实 Host 尚未实现，见 ADR-FE-024。
+2026-10-27 已确认[首批资产方案](extension-integration.md#first-assets)：materials-react / pure-functions 内公开资产按单目录平铺，测试放 tests 镜像，Manifest 静态入口与运行实现分开；不按职责分类强制分层或拆逐资产 npm 包。[模板与版本工具](engineering.md#asset-tooling)先于正式资产交付，能力版本与包版本独立，复用 Changesets，不改变本节依赖方向。2026-10-28 工具第 0 批及 text.isNonBlank 已有[本地实施证据](engineering.md#asset-tooling-implementation)，首批全部 14 个物料亦有[本地证据](engineering.md#interaction-materials-implementation)，随后第 4 批全部 7 个业务函数与完整可控表单亦有[本地证据](engineering.md#business-travel-implementation)；真实 Host 待交付，见 ADR-FE-024。
 
 **接入与开发支持的归属：**不另建 host-sdk 包。实例与 Host 能力注册接口归 Runtime，呈现装配归 renderer-react，查询 / 上传 / 保存 / 提交 / 业务恢复归 Host 应用。capabilities 保留能力总称，UI 物料与纯函数分别组织构建与交付。testkit 先作为内部测试支持，出现真实外部消费者后再判断公开发布；现有 docs/validation 不直接提升为生产协议或 testkit。
 
@@ -378,13 +486,13 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界，存�
 └── docs/                         # 保留现有设计、阅读视图、历史与验证证据
 ```
 
-最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。工程初始化时只有接入样例；后续已完成 Protocol 首批三领域类型与 Schema 结构验收，仍无完整核心执行实现，详见[实际初始化记录](engineering.md#engineering-implementation)。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
+最初建立 10 个空文件占位；现已由脚手架生成工作区、六个 TS 库、Next Playground 和 Nest API，建立 package.json、单一锁文件与统一质量脚本，并移除已有内容目录的占位；packages-flutter 继续预留。工程初始化时只有接入样例；后续已完成 Protocol 首批三领域类型与 Schema 结构验收，随后已实现 Compiler / Runtime / React Renderer 与完整可控资产表单，真实服务仍待接入，详见[实际初始化记录](engineering.md#engineering-implementation)。后端不按能力预建微服务，Platform API 的模块组织、构建 Worker 与 Agent Executor 保留规划，出现真实需求再部署 / 拆分。Host Playground、平台 / Studio 应用、CLI 以及 tests 的具体子目录亦在实际建设时创建，不因方案讨论生成空框架。
 
 单元测试随模块维护，tests 承载跨模块验收与可复用行为用例；具体 fixture / support / conformance / integration / e2e 组织在工具选型后细化。CLI 初期可放 tools，只有需要独立分发时再提升为包。普通子目录与文件名可合理演进，无须逐项重新决策。
 
 #### 多语言与一致性的最小准备
 
-当前只实现 TS。统一协议源可位于 packages/protocol，未来 Dart 绑定由它派生，不能在 packages-flutter 重新维护一份协议。生成适合覆盖类型、枚举、编解码及结构检查的可支持部分，不承诺由协议结构生成完整 Runtime 或跨框架 UI。2026-10-21 已确认以原生 TS 类型声明及 JSDoc 为权威结构源，自动生成 JSON Schema，Compiler 使用 Ajv 做结构校验；见 [L1 结构源与校验链路](l1/08-decisions-release.md#protocol-structure-source)及 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。具体 TS → Schema 生成器、约束注解及支持子集仍待实施固化，优先复用现成工具，不首期自建通用生成平台。协议生成产物不得把允许业务不合法的 Working Data 强制收窄为始终合法的业务模型。
+当前只实现 TS。统一协议源可位于 packages/protocol，未来 Dart 绑定由它派生，不能在 packages-flutter 重新维护一份协议。生成适合覆盖类型、枚举、编解码及结构检查的可支持部分，不承诺由协议结构生成完整 Runtime 或跨框架 UI。2026-10-21 已确认以原生 TS 类型声明及 JSDoc 为权威结构源，自动生成 JSON Schema，Compiler 使用 Ajv 做结构校验；见 [L1 结构源与校验链路](l1/08-decisions-release.md#protocol-structure-source)及 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。TS → Schema 生成已使用 ts-json-schema-generator 与本地受限方言适配实现，见[协议实施记录](engineering.md#protocol-implementation)；不首期自建通用生成平台。协议生成产物不得把允许业务不合法的 Working Data 强制收窄为始终合法的业务模型。
 
 TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同一执行语义，Flutter Renderer / 物料按框架实现，React 与 Vue 可共享 TS Runtime。Compiler 可面向 Flutter 目标生成可消费的 Prepared，不要求随 Flutter 重写一份 Dart Compiler。共享规则语义应一致，目标视图、能力实现和锁定信息可以不同。正式输入仍遵循 JSON、未知字段、Missing / null、数值和已有快照 / Scope / Flush 等契约，不以语言默认行为代替公共规范。
 
@@ -409,7 +517,7 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 
 ### 6. 已确认范围与后续工作
 
-已确认先确定应用 / 包 / 目录与工程要求，再推进技术选型和实现；Web/TS、React、六包位置与 Flutter 顶层预留已经明确。工程底座已初始化；包管理 / 工作区、构建 / 测试与 UI 组合及通过脚手架、pnpm latest 初始化的流程已在[工程方案](engineering.md)确认。E1–E4 已完成配置与本地联验，远端 CI / 分支保护未运行；下一步推进正式核心契约与实现，协议结构源仍待选，同时整合正式消费契约，按首个业务纵切落地。参考 Host / Studio 产品组织和 Platform P1–P4、后端存储与部署、微服务拆分、Agent 方案继续保留各自待定状态，不重新开放既有 L1–L4 原则。
+已确认先确定应用 / 包 / 目录与工程要求，再推进技术选型和实现；Web/TS、React、六包位置与 Flutter 顶层预留已经明确。工程底座已初始化；包管理 / 工作区、构建 / 测试与 UI 组合及通过脚手架、pnpm latest 初始化的流程已在[工程方案](engineering.md)确认。E1–E4 已完成配置与本地联验，远端 CI / 分支保护未运行；下一步推进正式核心契约与实现，协议结构源仍待选，同时整合正式消费契约，按首个业务纵切落地。参考 Host / Studio 产品组织和 Platform P1–P4、后端存储与部署、微服务拆分继续保留各自待定状态；Agent 蓝图与首期范围已由 ADR-FE-030 确认，仅归档未开发，不重新开放既有 L1–L4 原则。
 
 完整专题先在对话中讨论，用户确认收敛结果后统一整理当前设计、演进 / 必要 ADR、治理与来源，再构建检查；讨论中不逐段保存候选或把助手建议记为共识。
 
@@ -568,3 +676,8 @@ Host        → 基于已校验快照构造业务输出、检查业务条件 →
 | 3 · 具体设计 | 每项能力的数据、接口、流程与边界是什么？ | 从图谱或左侧的 L1 / L2 / L3 / L4 进入 |
 
 要继续参与设计，进入[设计进展与待讨论事项](governance.md)；了解取舍原因时，再查[设计决策与讨论演进](design-history.md)。来源、历史、审查证据都是按需入口，不是主线的必读前置。
+
+
+### PostgreSQL 数据域 {#postgresql-data-domains}
+
+2026-11-15 确认 PostgreSQL，初期同实例分 platform_db / agent_db 和独立账号。Platform 管业务数据与运行授权 / 检查凭据，Agent 管知识及未来记忆 / checkpoint，经 API 使用 Platform 能力。见[运行设计](platform-studio.md#agent-storage-routing)、[迁移范围与顺序](platform-studio.md#platform-postgresql-migration)及 [ADR-FE-031](decisions/ADR-FE-031-postgresql-agent-runtime.md)。当前仅归档，尚未迁移开发，Redis / 对象存储 / 向量索引按需求引入。

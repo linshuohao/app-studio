@@ -1,3 +1,10 @@
+import { emitObservedEvent, observedEntityId, observedProducerRef } from '../devtools/index.js';
+import type {
+  ObservationPayloads,
+  MetadataValue,
+  EventRef,
+  EligibilityLoss,
+} from '../devtools/observation-protocol.js';
 import type { ErrorObject, ValidateFunction } from 'ajv';
 import type { DataReference } from '@form-engine/protocol/definition';
 import type { PreparedConstraint, PreparedForm, DataWatch } from '@form-engine/protocol/prepared';
@@ -26,12 +33,14 @@ import {
 } from '../scope/registry.js';
 import { childPath, overlaps, copyJson, readAt } from '../data/json.js';
 import { fieldLocation, currentFieldPath } from './fields.js';
-import { createSchemaCompiler, DATA_SCHEMA_BASE } from './schema.js';
+import { compileDataSchema } from '@form-engine/protocol/internal/schema';
 import { ValidationCall, ValidationWork } from './work.js';
 import { observeRejection, toPromise } from '../lifecycle/async.js';
 
 /** 一个校验结果来源：整体 Schema，或一条 Constraint 在具体 Scope 下的实例。 */
 interface Source {
+  observationCauses?: EventRef[];
+  observationCausesTruncated?: boolean;
   /** schema，或规则 ID + 稳定 Scope 绑定键，用于隔离同规则的不同成员实例。 */
   readonly key: string;
   /** Schema 来源无 rule；其余来源保留对应 Prepared Constraint。 */
@@ -62,10 +71,13 @@ interface Source {
     readonly generation: number;
     /** 可选 Host 取消回调，仅调用一次，失败记录诊断。 */
     cancel?: () => void;
+    revokedReason?: EligibilityLoss;
   };
 }
 /** Runtime 注入的协作接口，避免校验管理器直接拥有 Store、观察器或调度器。 */
 interface Dependencies {
+  observationOwner?: object;
+  observationCause?: () => EventRef | undefined;
   /** 读取当前 Data + Scope 版本。 */
   view: () => ReadView;
   /** 取得独立于 Data revision 的 Context 版本。 */
@@ -75,7 +87,7 @@ interface Dependencies {
   /** 登记内部 Data 订阅，变化时撤销旧校验资格。 */
   observe: (watch: readonly DataWatch[], scope: ScopeBinding, callback: () => void) => () => void;
   /** 发布字段校验投影变化，可触发显式 Validation watch。 */
-  publish: (paths: readonly string[], origin?: DiagnosticOrigin) => void;
+  publish: (paths: readonly string[], origin?: DiagnosticOrigin, event?: EventRef) => void;
   /** 预约联动排空后的同步校验阶段。 */
   schedule: () => void;
   /** 捕获任务启动编号；异步回报只保留此来源，不捕获本轮 Journal。 */
@@ -123,10 +135,7 @@ export class ValidationManager {
     /** 动态读输入、发布状态和调用 Host 的依赖出口。 */
     private readonly deps: Dependencies,
   ) {
-    this.schema = createSchemaCompiler(prepared.resources.schemas)(
-      prepared.definition.data.schema,
-      DATA_SCHEMA_BASE,
-    );
+    this.schema = compileDataSchema(prepared.definition.data.schema, prepared.resources.schemas);
     this.sources.set('schema', {
       key: 'schema',
       scope: {},
@@ -136,6 +145,102 @@ export class ValidationManager {
       generation: 0,
       triggers: [],
     });
+  }
+  private observed<K extends keyof ObservationPayloads>(
+    kind: K,
+    payload: () => ObservationPayloads[K],
+  ) {
+    if (!this.deps.observationOwner) return;
+    return emitObservedEvent(this.deps.observationOwner, kind, payload);
+  }
+  observeInitialization(cause: EventRef | undefined) {
+    if (!cause) return;
+    for (const source of this.sources.values()) source.observationCauses = [cause];
+  }
+  private sourceFact(source: Source, generation = source.generation) {
+    const owner = this.deps.observationOwner!;
+    const ref = observedProducerRef(owner);
+    if (!ref) throw Error('disposed');
+    return { source: { ...ref, entityId: observedEntityId(owner, source) }, generation };
+  }
+  private workFact(source: Source, work: ValidationWork, generation?: number) {
+    return {
+      ...this.sourceFact(source, work.generation),
+      workId: work.id,
+      eligibilityGeneration: generation ?? null,
+    };
+  }
+  private version() {
+    return {
+      dataRevision: this.deps.view().revision,
+      contextRevision: this.deps.contextRevision(),
+    };
+  }
+  /** 读取现有来源 / 工作 / 调用；不启动校验，不保留完整输入或 Host 句柄。 */
+  inspectMetadata(
+    id: (identity: object) => string,
+    maximum: number,
+  ): readonly MetadataValue[] | undefined {
+    if (this.draining) return;
+    if (this.sources.size > maximum) throw Error('budget');
+    const rows: MetadataValue[] = [];
+    const add = (row: MetadataValue) => {
+      if (rows.length >= maximum) throw Error('budget');
+      rows.push(row);
+    };
+    for (const source of this.sources.values()) {
+      add({
+        record: 'validation-source',
+        entityId: id(source),
+        kind: source.rule?.kind ?? 'schema',
+        ruleId: source.rule?.id ?? 'schema',
+        binding: source.scope as unknown as MetadataValue,
+        lifecycle: 'active',
+        generation: source.generation,
+        status: source.status,
+        issueCount: source.issues.length,
+        ...(source.reason ? { reason: source.reason } : {}),
+        ...(source.work ? { workId: source.work.id } : {}),
+      });
+      for (const issue of source.issues)
+        add({
+          record: 'validation-issue',
+          source: id(source),
+          code: issue.code,
+          field: issue.field as unknown as MetadataValue,
+        });
+      if (source.work) {
+        if (source.work.calls.size > maximum) throw Error('budget');
+        add({
+          record: 'validation-work',
+          workId: source.work.id,
+          source: id(source),
+          phase: source.work.phase,
+          calls: [...source.work.calls],
+          eligibility: source.task
+            ? source.task.generation === source.generation
+              ? 'eligible'
+              : 'revoked'
+            : source.work.phase === 'cancelled'
+              ? 'revoked'
+              : 'not-applicable',
+        });
+      }
+    }
+    const call = this.currentCall;
+    if (call && !call.closed) {
+      if (call.required.size > maximum) throw Error('budget');
+      add({
+        record: 'validation-call',
+        callId: call.id,
+        requiredWorks: [...call.required.values()].map((work) => work.id),
+        inputVersion: {
+          dataRevision: call.input.dataRevision,
+          contextRevision: call.input.contextRevision,
+        },
+      });
+    }
+    return rows;
   }
   /** 按当前 Scope 增删来源；新实例进入待校验集合，删除实例撤销任务并移除问题贡献。 */
   refresh() {
@@ -155,7 +260,20 @@ export class ValidationManager {
           triggers: [this.deps.diagnostics.captureTrigger(this.deps.diagnosticInput(scope))],
           dispose: this.deps.observe(rule.watch, scope, () => this.invalidate(key)),
         };
+        const cause = this.deps.observationCause?.();
+        if (cause) source.observationCauses = [cause];
         this.sources.set(key, source);
+        this.observed('entity.added', () => ({
+          entity: this.sourceFact(source).source,
+          row: {
+            record: 'validation-source',
+            entityId: this.sourceFact(source).source.entityId,
+            ruleId: source.rule!.id,
+            binding: source.scope as unknown as MetadataValue,
+            lifecycle: 'active',
+            status: source.status,
+          },
+        }));
         this.pending.add(key);
       }
     }
@@ -168,8 +286,19 @@ export class ValidationManager {
             .filter((path): path is string => path !== undefined),
         ];
         this.retireWork(source);
-        this.revoke(source);
+        this.revoke(source, 'source-removed');
         source.dispose();
+        this.observed('entity.disposed', () => ({
+          entity: this.sourceFact(source).source,
+          row: {
+            record: 'validation-source',
+            entityId: this.sourceFact(source).source.entityId,
+            ruleId: source.rule!.id,
+            binding: source.scope as unknown as MetadataValue,
+            lifecycle: 'disposed',
+            status: source.status,
+          },
+        }));
         this.sources.delete(key);
         this.pending.delete(key);
         this.deps.publish(paths);
@@ -187,15 +316,17 @@ export class ValidationManager {
       .get('schema')!
       .triggers.push(this.deps.diagnostics.captureTrigger(this.deps.diagnosticInput({})));
     this.change(this.sources.get('schema')!, 'unverified', []);
-    if (context) for (const key of this.sources.keys()) if (key !== 'schema') this.invalidate(key);
+    if (context)
+      for (const key of this.sources.keys())
+        if (key !== 'schema') this.invalidate(key, 'context-replaced');
     this.deps.schedule();
   }
   /** 撤销一个来源的旧任务 / 结果，标记 unverified 并预约重跑。 */
-  invalidate(key: string) {
+  invalidate(key: string, reason: EligibilityLoss = 'input-invalidated') {
     const source = this.sources.get(key);
     if (!source || this.disposed) return;
     this.retireWork(source);
-    this.revoke(source);
+    this.revoke(source, reason);
     source.triggers.push(
       this.deps.diagnostics.captureTrigger(this.deps.diagnosticInput(source.scope)),
     );
@@ -204,11 +335,16 @@ export class ValidationManager {
     this.deps.schedule();
   }
   /** 先递增代次撤销发布资格，再延后调用 Host cancel；调用等待由工作结果独立管理。 */
-  private revoke(source: Source) {
+  private revoke(source: Source, reason: EligibilityLoss = 'eligibility-changed') {
     source.generation++;
     const task = source.task;
     source.task = undefined;
     if (task) {
+      task.revokedReason = reason;
+      this.observed('work.eligibility-revoked', () => ({
+        ...this.workFact(source, task.work, task.generation),
+        reason,
+      }));
       const cancel = task.cancel;
       task.cancel = undefined;
       const trace = this.deps.diagnostics.execution(
@@ -220,12 +356,22 @@ export class ValidationManager {
         },
         task.trace.triggers,
       );
-      if (cancel) this.deps.deferEffect(() => this.invokeCancel(cancel, trace, task.origin));
+      if (cancel)
+        this.deps.deferEffect(() =>
+          this.invokeCancel(cancel, trace, task.origin, source, task.work, task.generation),
+        );
     }
   }
 
   /** 两条取消路径共用同步调用与异步拒绝隔离；销毁后的迟到拒绝仅消费。 */
-  private invokeCancel(cancel: () => void, trace: ExecutionTrace, origin: DiagnosticOrigin): void {
+  private invokeCancel(
+    cancel: () => void,
+    trace: ExecutionTrace,
+    origin: DiagnosticOrigin,
+    source: Source,
+    work: ValidationWork,
+    generation: number,
+  ): void {
     const report = (error: unknown) =>
       this.deps.diagnostics.error(
         'validator.cancel.error',
@@ -235,26 +381,62 @@ export class ValidationManager {
         undefined,
         origin,
       );
+    this.observed('work.cancel-attempted', () => this.workFact(source, work, generation));
     try {
       const returned: unknown = this.deps.diagnostics.run(trace, cancel);
+      this.observed('work.cancel-returned', () => ({
+        ...this.workFact(source, work, generation),
+        outcome: 'returned',
+        scope: 'cancel-callback',
+      }));
       observeRejection(returned, (error) => {
+        this.observed('work.cancel-returned', () => ({
+          ...this.workFact(source, work, generation),
+          outcome: 'rejected',
+          scope: 'cancel-callback',
+        }));
         if (!this.disposed) report(error);
       });
     } catch (error) {
+      this.observed('work.cancel-returned', () => ({
+        ...this.workFact(source, work, generation),
+        outcome: 'threw',
+        scope: 'cancel-callback',
+      }));
       report(error);
     }
   }
 
   /** 输入 / 实例失效只退休对应工作；网络任务由 revoke 独立撤销资格。 */
   private retireWork(source: Source): void {
-    if (source.work) source.work.phase = 'cancelled';
+    if (source.work) {
+      const work = source.work;
+      const finished = work.phase === 'done' || work.phase === 'cancelled';
+      work.phase = 'cancelled';
+      if (!finished)
+        this.observed('work.finished', () => ({
+          ...this.workFact(source, work),
+          outcome: 'cancelled',
+        }));
+    }
     source.work = undefined;
   }
 
   /** 以来源实例去重；待执行和在途工作复用，已完成外部结果不跨完整调用缓存。 */
   private request(source: Source): ValidationWork {
     let work = source.work;
-    if (!work?.reusable()) source.work = work = new ValidationWork(++this.workSequence, source.key);
+    if (!work?.reusable()) {
+      source.work = work = new ValidationWork(++this.workSequence, source.key, source.generation);
+      const created = work;
+      this.observed('work.created', () => ({
+        ...this.workFact(source, created),
+        causes: source.observationCauses ?? [],
+        causesComplete: !!source.observationCauses?.length && !source.observationCausesTruncated,
+        inputVersion: this.version(),
+      }));
+      source.observationCauses = undefined;
+      source.observationCausesTruncated = undefined;
+    }
     if (!this.executing.has(work)) this.pending.add(source.key);
     if (!source.rule && work.phase === 'queued') this.schemaDirty = true;
     return work;
@@ -283,6 +465,7 @@ export class ValidationManager {
     reason?: string,
   ): void {
     work.phase = 'settling';
+    this.observed('work.phase', () => ({ ...this.workFact(source, work), phase: 'settling' }));
     work.result = Object.freeze({
       coverage: Object.freeze({
         instance: source.key,
@@ -295,8 +478,11 @@ export class ValidationManager {
   }
 
   /** 发布及错误采集结束后完成工作，避免完整调用先返回而漏掉错误现场。 */
-  private completeWork(work: ValidationWork): void {
-    if (work.phase === 'settling') work.phase = 'done';
+  private completeWork(work: ValidationWork, source: Source): void {
+    if (work.phase === 'settling') {
+      work.phase = 'done';
+      this.observed('work.finished', () => ({ ...this.workFact(source, work), outcome: 'done' }));
+    }
     if (!this.draining) this.finishCall();
   }
 
@@ -329,6 +515,14 @@ export class ValidationManager {
         (item.status === 'blocked' && item.reason !== 'business-prerequisite'),
     );
     const diagnostics = this.deps.diagnostics.endCall(call.id);
+    this.observed('call.finished', () => ({
+      callId: call.id,
+      outcome: forced ?? (incomplete ? 'incomplete' : issues.length ? 'invalid' : 'valid'),
+      inputVersion: {
+        dataRevision: call.input.dataRevision,
+        contextRevision: call.input.contextRevision,
+      },
+    }));
     call.finish(
       Object.freeze({
         call: call.id,
@@ -375,6 +569,26 @@ export class ValidationManager {
     source.status = status;
     source.issues = issues;
     source.reason = reason;
+    const observedEvent = this.observed(
+      status === 'unverified' ? 'source.invalidated' : 'source.result-published',
+      () => ({
+        ...this.sourceFact(source),
+        cause: this.deps.observationCause?.() ?? null,
+        status,
+        reason: reason ?? null,
+        issueCount: issues.length,
+        workId: source.work?.id ?? null,
+        inputVersion: this.version(),
+      }),
+    );
+    if (status === 'unverified' && observedEvent) {
+      source.observationCauses ??= [];
+      source.observationCauses.push(observedEvent);
+      if (source.observationCauses.length > 64) {
+        source.observationCauses.shift();
+        source.observationCausesTruncated = true;
+      }
+    }
     this.deps.publish(
       [
         ...oldPaths,
@@ -384,6 +598,7 @@ export class ValidationManager {
           .filter((path): path is string => path !== undefined),
       ],
       origin,
+      observedEvent,
     );
   }
   /** 将 Ajv 错误转成成员身份定位的问题，并应用 Definition 中的错误消息映射。 */
@@ -427,6 +642,13 @@ export class ValidationManager {
         this.schemaDirty = false;
         this.pending.delete('schema');
         work.phase = 'running';
+        if (!work.started) {
+          work.started = true;
+          this.observed('work.started', () => ({
+            ...this.workFact(source, work),
+            inputVersion: this.version(),
+          }));
+        }
         this.executing.add(work);
         const trace = this.deps.diagnostics.execution(
           'schema',
@@ -453,7 +675,7 @@ export class ValidationManager {
             this.publishResult(source, work, 'incomplete', [], 'schema-error');
           } finally {
             this.executing.delete(work);
-            this.completeWork(work);
+            this.completeWork(work, source);
           }
         });
       }
@@ -474,12 +696,19 @@ export class ValidationManager {
         this.pending.delete(key);
         if (visiting.has(key)) {
           this.publishResult(source, work, 'incomplete', [], 'prerequisite-cycle');
-          this.completeWork(work);
+          this.completeWork(work, source);
           return source;
         }
         visiting.add(key);
         this.executing.add(work);
         work.phase = 'running';
+        if (!work.started) {
+          work.started = true;
+          this.observed('work.started', () => ({
+            ...this.workFact(source, work),
+            inputVersion: this.version(),
+          }));
+        }
         const { rule, scope } = source;
         const trace = this.deps.diagnostics.execution(
           'constraint',
@@ -634,7 +863,7 @@ export class ValidationManager {
             visiting.delete(key);
             completed.set(key, work);
             this.executing.delete(work);
-            this.completeWork(work);
+            this.completeWork(work, source);
           }
         });
         return source;
@@ -691,9 +920,14 @@ export class ValidationManager {
       work,
       generation,
       cancel: undefined as (() => void) | undefined,
+      revokedReason: undefined as EligibilityLoss | undefined,
     };
     source.task = task;
     work.phase = 'pending';
+    this.observed('work.phase', () => ({
+      ...this.workFact(source, work, generation),
+      phase: 'pending',
+    }));
     this.change(source, 'pending', []);
     if (source.task !== task || this.disposed) return;
     let hostTask: ValidatorTask;
@@ -733,7 +967,7 @@ export class ValidationManager {
         this.deps.diagnostics.error('validator.error', error, trace, 'invoke', undefined, origin);
         this.publishResult(source, work, 'incomplete', [], 'validator-error');
       }
-      this.completeWork(work);
+      this.completeWork(work, source);
       return;
     }
     // cancel 是尽力通知，真正防止旧结果覆盖依赖此处的资格校验。
@@ -743,12 +977,25 @@ export class ValidationManager {
       source.task === task &&
       source.generation === generation;
     if (eligible()) task.cancel = cancel;
-    else if (cancel) this.invokeCancel(cancel, trace, origin);
+    else if (cancel) this.invokeCancel(cancel, trace, origin, source, work, generation);
     // 同时处理 Promise 拒绝与非法返回结构；已过期任务的错误不再污染当前诊断。
+    let returned = false;
     void result
       .then((result) =>
         this.deps.diagnostics.run(trace, () => {
-          if (!eligible()) return;
+          returned = true;
+          const returnedRef = this.observed('work.returned', () => ({
+            ...this.workFact(source, work, generation),
+            outcome: 'resolved',
+          }));
+          if (!eligible()) {
+            this.observed('work.discarded', () => ({
+              ...this.workFact(source, work, generation),
+              reason: task.revokedReason ?? 'eligibility-changed',
+              returned: returnedRef ?? null,
+            }));
+            return;
+          }
           const json = copyJson(result) as unknown as readonly ValidatorIssue[];
           trace.parameters = json as unknown as import('../types.js').ReadonlyJson;
           if (!Array.isArray(json)) throw Error('validator: issues must be an array');
@@ -780,18 +1027,31 @@ export class ValidationManager {
             undefined,
             origin,
           );
-          this.completeWork(work);
+          this.completeWork(work, source);
         }),
       )
       .catch((error: unknown) =>
         this.deps.diagnostics.run(trace, () => {
-          if (!eligible()) return;
+          const returnedRef = !returned
+            ? this.observed('work.returned', () => ({
+                ...this.workFact(source, work, generation),
+                outcome: 'rejected',
+              }))
+            : undefined;
+          if (!eligible()) {
+            this.observed('work.discarded', () => ({
+              ...this.workFact(source, work, generation),
+              reason: task.revokedReason ?? 'eligibility-changed',
+              returned: returnedRef ?? null,
+            }));
+            return;
+          }
           source.task = undefined;
           task.cancel = undefined;
           this.prepareResult(source, work, 'incomplete', [], 'validator-error');
           this.deps.diagnostics.error('validator.error', error, trace, 'result', undefined, origin);
           this.publishResult(source, work, 'incomplete', [], 'validator-error', origin);
-          this.completeWork(work);
+          this.completeWork(work, source);
         }),
       );
   }
@@ -833,7 +1093,7 @@ export class ValidationManager {
     return Object.freeze({ status, issues: Object.freeze(issues) });
   }
   /** 捕获本次 Data / Context 版本；等待期间输入变化则返回 stale，不把旧证据当作新结果。 */
-  validate(): Promise<FullValidationResult> {
+  validate(operation?: EventRef): Promise<FullValidationResult> {
     this.finishCall('stale');
     const input = this.deps.diagnosticInput({});
     const call = new ValidationCall(
@@ -842,12 +1102,22 @@ export class ValidationManager {
       this.deps.diagnostics.beginCall(this.call, input),
     );
     this.currentCall = call;
+    this.observed('call.started', () => ({
+      callId: call.id,
+      operation: operation ?? null,
+      inputVersion: { dataRevision: input.dataRevision, contextRevision: input.contextRevision },
+    }));
     this.deps.diagnostics.run(call.trace, () => {
       for (const source of this.sources.values()) {
         const reused = source.work?.reusable();
         const work = this.request(source);
         work.calls.add(call.id);
         call.required.set(source.key, work);
+        this.observed('call.attached-work', () => ({
+          ...this.workFact(source, work),
+          callId: call.id,
+          reused: !!reused,
+        }));
         if (reused)
           this.deps.diagnostics.record(
             'validation.work.reuse',
@@ -868,7 +1138,7 @@ export class ValidationManager {
     this.finishCall('stale');
     this.sources.forEach((source) => {
       this.retireWork(source);
-      this.revoke(source);
+      this.revoke(source, 'runtime-disposed');
       source.dispose();
     });
     this.pending.clear();

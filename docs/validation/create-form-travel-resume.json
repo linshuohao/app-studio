@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-23",
+  "model_transport": "local ChatGPT via Codex",
+  "session": "66dfab04-9bb6-43c8-b2c2-3acc05e771c8",
+  "first_turn_ms": 32272,
+  "resume_ms": 155,
+  "resume_requests": [
+    "GET collection",
+    "GET session"
+  ],
+  "resume_model_calls": 0,
+  "second_turn_ms": 129344,
+  "result": "proposal",
+  "model_calls": [
+    {
+      "node": "understand",
+      "seconds": 30.05,
+      "input": 17668,
+      "cached_input": 0,
+      "output": 1139
+    },
+    {
+      "node": "understand",
+      "seconds": 27.94,
+      "input": 18991,
+      "cached_input": 3968,
+      "output": 1075
+    },
+    {
+      "node": "compose",
+      "seconds": 10.36,
+      "input": 22327,
+      "cached_input": 0,
+      "output": 47
+    },
+    {
+      "node": "compose",
+      "seconds": 12.7,
+      "input": 36745,
+      "cached_input": 12928,
+      "output": 83
+    },
+    {
+      "node": "compose",
+      "seconds": 12.38,
+      "input": 46017,
+      "cached_input": 21632,
+      "output": 81
+    },
+    {
+      "node": "compose",
+      "seconds": 24.76,
+      "input": 38183,
+      "cached_input": 12928,
+      "output": 754
+    },
+    {
+      "node": "compose",
+      "seconds": 24.73,
+      "input": 38896,
+      "cached_input": 12928,
+      "output": 757
+    },
+    {
+      "node": "compose",
+      "seconds": 14.44,
+      "input": 39464,
+      "cached_input": 10880,
+      "output": 226
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_protocol",
+      "duration_ms": 84
+    },
+    {
+      "name": "query_capabilities",
+      "duration_ms": 32
+    },
+    {
+      "name": "query_capabilities",
+      "duration_ms": 32
+    },
+    {
+      "name": "query_capabilities",
+      "duration_ms": 7
+    },
+    {
+      "name": "query_capabilities",
+      "duration_ms": 16
+    },
+    {
+      "name": "query_capabilities",
+      "duration_ms": 16
+    },
+    {
+      "name": "record_configuration_mapping",
+      "duration_ms": 2
+    },
+    {
+      "name": "check_candidate",
+      "duration_ms": 73
+    }
+  ]
+}

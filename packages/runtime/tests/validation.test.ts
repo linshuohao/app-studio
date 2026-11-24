@@ -398,6 +398,10 @@ it('前置规则别名不同仍绑定同一稳定成员；移动后异步读取�
     'remote-A',
   ]);
   expect(runtime.getValidation(data('/rows/0/name')).issues.map((i) => i.code)).toEqual(['age']);
+  runtime.dispatch({ op: 'array.remove', target: data('/rows'), item: { $scope: 'row' } }, a);
+  await runtime.flush();
+  expect(runtime.getValidation(data('/rows/0/name')).issues.map((i) => i.code)).toEqual(['age']);
+  expect(runtime.getValidation(data('/rows/1/name')).issues).toEqual([]);
   runtime.dispose();
 });
 it('前置错误在另一个字段时，后置字段被阻断而非通过；stale 证据不混入新输入的问题', async () => {
@@ -503,4 +507,54 @@ it('取消回调同步写回后，不再用取消前捕获的旧输入启动 Val
   await runtime.flush();
   expect(names).toEqual(['A', 'B']);
   runtime.dispose();
+});
+
+it('成员不再适用时只撤销自己的旧 Issue，删除后其余成员仍保留原归属', async () => {
+  const runtime = createRuntime({
+    prepared: prepared({
+      constraints: [
+        {
+          id: 'root',
+          kind: 'internal',
+          assert: false,
+          issue: { target: data('/name'), code: 'root' },
+        },
+        {
+          id: 'member',
+          kind: 'internal',
+          scope: { from: data('/rows'), as: 'row', mode: 'each' },
+          when: { op: 'core.gte', args: [{ ref: data('/age', 'row') }, 18] },
+          assert: false,
+          issue: { target: data('/name', 'row'), code: 'member' },
+        },
+      ],
+    }),
+    data: {
+      name: 'root',
+      rows: [
+        { name: 'A', age: 30 },
+        { name: 'B', age: 30 },
+      ],
+    },
+    functions,
+  });
+  const issues = (path: string) => runtime.getValidation(data(path)).issues.map(({ code }) => code);
+  try {
+    await runtime.flush();
+    expect(issues('/name')).toEqual(['root']);
+    expect(issues('/rows/0/name')).toEqual(['member']);
+    expect(issues('/rows/1/name')).toEqual(['member']);
+    const [a] = runtime.bind({ from: data('/rows'), as: 'row', mode: 'each' });
+    runtime.dispatch({ op: 'set', target: data('/age', 'row'), value: 12 }, a);
+    await runtime.flush();
+    expect(issues('/rows/0/name')).toEqual([]);
+    expect(issues('/rows/1/name')).toEqual(['member']);
+    expect(issues('/name')).toEqual(['root']);
+    runtime.dispatch({ op: 'array.remove', target: data('/rows'), item: { $scope: 'row' } }, a);
+    await runtime.flush();
+    expect(issues('/rows/0/name')).toEqual(['member']);
+    expect(issues('/rows/1/name')).toEqual([]);
+  } finally {
+    runtime.dispose();
+  }
 });

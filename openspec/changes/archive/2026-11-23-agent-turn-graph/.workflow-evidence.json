@@ -1,0 +1,47 @@
+{
+  "fingerprint": "0f605e088408b3287743fedd345d1e9f6cbef0b864e0b86d50eb95aef3e7c98c",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--dir",
+      "services/api",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.config.e2e.ts",
+      "test/creation-session.e2e-spec.ts"
+    ],
+    [
+      "node",
+      "--check",
+      "apps/studio/tests/verify-agent-turn.mjs"
+    ]
+  ]
+}

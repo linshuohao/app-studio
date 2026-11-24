@@ -517,3 +517,21 @@ describe('compile: first executable slice', () => {
     );
   });
 });
+
+it('accepts a conditional numeric refinement and rejects an unexecutable data schema before delivery', () => {
+  const source = input();
+  source.definition.data.schema = {
+    type: 'object',
+    properties: { name: { type: 'string' }, age: { type: 'integer' } },
+    if: { required: ['age'] },
+    then: { properties: { age: { maximum: 5 } } },
+  };
+  expect(compiler.compile(source).success).toBe(true);
+  source.definition.data.schema = {
+    type: 'object',
+    properties: { name: { type: 'string', pattern: '[' } },
+  };
+  expect(errors(compiler.compile(source))).toContainEqual(
+    expect.objectContaining({ code: 'DATA_SCHEMA_INVALID', sourcePointer: '/data/schema' }),
+  );
+});

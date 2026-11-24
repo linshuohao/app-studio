@@ -1,6 +1,6 @@
 # Compiler
 
-本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前已实现 I01–I04 的编译主链，包括表达式依赖和 watch 准备；保持 private / 0.0.0，稳定性 / 性能基准及 Runtime / Adapter 联验仍待完成。
+本包按 [Compiler 详细设计](../../docs/design/l2/compiler.md)实施。当前已实现 I01–I04 的编译主链，包括表达式依赖和 watch 准备；保持 private / 0.0.0，已有真实 Runtime / React Adapter 与浏览器业务纵切消费；完整稳定性 / 性能基准及生产验收仍待完成。
 
 成功结果 prepared 为 ReadonlyPreparedForm，并递归冻结。修订时先 structuredClone(result.prepared) as PreparedForm，再编辑克隆；变更后重新进入检查。同进程 Runtime / Renderer 可复用真实检查入口登记的不可变产物，普通冻结、克隆或 JSON 往返不携带验证身份；格式、实际能力与执行兼容检查仍保留。
 
@@ -98,7 +98,7 @@ if (result.success) {
 - 基础类型、简单对象、同构数组及可判定的简单联合的保守结构连接；已知不兼容与无法证明分别拒绝，不将业务数值 / 长度限制变成写入门禁。
 - 使用能力的 Manifest SHA-256 和输入制品摘要分别锁定，确定静态节点 ID，产物经过 Prepared Schema 自检。
 
-当前 `PREPARED_FORMAT_VERSION` 为 `form-engine.prepared/2`，只是未发布交换格式身份；Runtime 尚未实现，不代表已有兼容运行端。
+当前 `PREPARED_FORMAT_VERSION` 为 `form-engine.prepared/2`，只是未发布交换格式身份；当前 Runtime 与 React Renderer 已消费该格式；不代表已冻结公开版本或具备跨端兼容承诺。
 
 例如输入 `label: { $expr: { ref: { source: 'data', path: '/name' } } }`，输出在同一包装中加入 `watch: [{ source: 'data', path: '/name' }]`；内部 AST 不变。相同表达式出现在 Command / Payload 时只检查，不附加 watch。Issue target 不自动成为 Constraint 输入，Reaction 的 when / then 读取不变成触发来源。
 
@@ -124,7 +124,7 @@ const functionCheck = validatePureFunctionManifest({
 
 这两个入口目前检查结构、嵌入 Schema 语法和固定参数可选顺序；不证明实现符合声明，也不独立完成外部 Schema 资源闭包检查。Compiler 使用点另行处理相关资源、平台与模型连接。后续契约资源自检和能力开发工具沿同一规则演进。
 
-验证命令：`pnpm --filter @form-engine/compiler test`、`typecheck`、`lint`、`build`。隔离打包消费者由根 `pnpm packages:check` 验证，根 `pnpm check` 串联工程门禁。I05 的完整基准与浏览器消费、I06 的 Runtime / Adapter 联验仍待完成。
+验证命令：`pnpm --filter @form-engine/compiler test`、`typecheck`、`lint`、`build`。隔离打包消费者由根 `pnpm packages:check` 验证，根 `pnpm check` 串联工程门禁。I05 的完整复杂度 / 体积及目标设备基准待验收；I06 的 TS / React 本地联验已落地，见 [L4 证据](../../docs/design/engineering.md#renderer-implementation)与[完整资产表单证据](../../docs/design/engineering.md#business-travel-implementation)。真实 Host、跨端与生产性能仍待完成。
 
 Reaction 支持显式 Data / Validation 观察与有序 Command / host.emit 响应项，复用 Host
 事件名称 / Payload 检查，需求独立于 View 收集。Validation 引用仅在 Reaction 条件和动作

@@ -1,0 +1,32 @@
+name: form-change
+version: 1
+description: Reference authoritative docs; track only change-local deltas
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Confirmed scope and authority references
+    template: proposal.md
+    instruction: Reference docs/design/ and confirmation; no duplicate architecture.
+    requires: []
+  - id: specs
+    generates: specs/**/*.md
+    description: Change-local acceptance deltas, never a second authority
+    template: spec.md
+    instruction: Write only this change's behavioral delta and scenarios; cite authoritative docs/design/ sections. Never sync into openspec/specs.
+    requires: [proposal]
+  - id: design
+    generates: design.md
+    description: Implementation choices and impact
+    template: design.md
+    instruction: Describe internal choices, affected consumers, risks and evidence invalidation.
+    requires: [proposal]
+  - id: tasks
+    generates: tasks.md
+    description: Single task list with verification
+    template: tasks.md
+    instruction: Use numbered checkboxes per observable slice with verification commands. Reopen affected tasks after changes. Do not create a Superpowers plan copy.
+    requires: [specs, design]
+apply:
+  requires: [tasks]
+  tracks: tasks.md
+  instruction: Read docs/design authority and pending tasks. Use project form-workflow and load delivery/debug capabilities as needed; use applicable Superpowers methods within the same task. Verify before checking tasks. Reassess affected evidence after changes. Archive only using project wrapper with --skip-specs after knowledge maintenance and gates.

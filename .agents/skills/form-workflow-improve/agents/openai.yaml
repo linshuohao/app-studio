@@ -1,4 +1,0 @@
-interface:
-  display_name: "表单项目 · 流程改进"
-  short_description: "动态表单引擎项目的流程改进工作流，按现行契约推进并报告实际结果"
-  default_prompt: "使用 $form-workflow-improve 处理动态表单引擎项目的流程改进任务。"

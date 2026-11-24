@@ -24,8 +24,8 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 134
-last_reviewed: '2026-10-27'
-status_note: 完整草案及后续目录 / 版本 / 工具调整已确认，仅授权本轮归档；实现与真实 Host 验收未完成
+last_reviewed: '2026-10-28'
+status_note: 完整方案已确认，后续授权交付工具第 0 批及首个函数；首批 14 个物料、7 个业务函数及完整可控表单本地已交付，真实 Host 未完成
 ---
 
 # ADR-FE-024：首批正式资产与版本工程
@@ -55,3 +55,18 @@ L1–L3 核心、React L4 本期实现及 review / 修复已有本地证据，�
 顺序为工具批次 0 → 基础输入呈现 → 组合 / 成员 → 日期 / 远程交互 → 业务函数和完整可控纵切 → 真实 Host。每批依据现行 W3 预检和适用验证；结构构建不代表产品实现。真实服务、费率、业务输出 / 提交和生产性能未完成；本次没有新增实现、变更包版本、启用发布或运行工具版本应用。
 
 目录命名、模板编码和声明正文格式在契约内由实施者细化；原子日期更新、弹层回滚等新增可观察行为须另议。来源和演进见 [SRC-ASSETDESIGN](../source-map.md#src-asset-design)与[确认记录](../design-history.md#first-assets-confirmed)。
+
+
+## 实施进展
+
+2026-10-28 用户后续要求提交设计并继续，fd96b3c 后实施工具第 0 批及 text.isNonBlank，见[工程证据](../engineering.md#asset-tooling-implementation)。此前“仅归档”的授权记录保留其当时时点；本次实现不变更本 ADR 的决策、版本语义或外部发布边界。
+
+
+同日第 1 批 7 个正式输入 / 字段物料已有[实施证据](../engineering.md#first-materials-implementation)，其余资产按原批次继续；本 ADR 不新增核心函数模块化或版本迁移决策。
+
+
+同日第 2 批组合成员亦有[实施证据](../engineering.md#member-materials-implementation)，正式物料累计 12 个，日期 / 搜索及完整业务纵切后续推进；不变更本 ADR 的状态所有权或版本边界。
+
+同日第 3 批 date-range / remote-select 亦有[实施证据](../engineering.md#interaction-materials-implementation)，首批物料累计 14 个；其余 6 个业务函数、完整目标表单和真实 Host 继续推进，未应用真实版本或外部发布。
+
+同日第 4 批全部 7 个业务函数与完整可控表单亦有[实施证据](../engineering.md#business-travel-implementation)，与前批合计 14 个物料 / 7 个函数。仍采用同步计算、显式规则与独立 Host，未改变本 ADR 的架构决策或发布权限；真实产品服务后续验收。

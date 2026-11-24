@@ -1,0 +1,21 @@
+{
+  "fingerprint": "4e53ade1accef01bd331985607a1e66b42cc890dfbd50c34ce11ce8bbeeffbc6",
+  "checks": [
+    ["pnpm", "exec", "eslint", "apps/studio", "services/api", "--max-warnings", "0"],
+    [
+      "pnpm",
+      "exec",
+      "depcruise",
+      "--config",
+      ".dependency-cruiser.mjs",
+      "apps/studio/src",
+      "services/api/src"
+    ],
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "build"],
+    ["pnpm", "--filter", "@form-engine/api", "test:integration"],
+    ["pnpm", "--filter", "@form-engine/studio", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/studio", "build"],
+    ["pnpm", "exec", "playwright", "test", "--config", "apps/studio/playwright.config.ts"]
+  ]
+}

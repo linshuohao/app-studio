@@ -1,0 +1,16 @@
+{
+  "fingerprint": "1f63720054179a467321248dff4fb862bb346c91d7d5a7cf37ebf3617bfb2b12",
+  "checks": [
+    [
+      "pnpm",
+      "check"
+    ],
+    [
+      "pnpm",
+      "audit",
+      "--prod",
+      "--audit-level",
+      "low"
+    ]
+  ]
+}

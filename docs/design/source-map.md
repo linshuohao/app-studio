@@ -8,11 +8,20 @@ modules: []
 tags: []
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-024
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-PLATFORMDIAGNOSTICS
+- SRC-AGENTBLUEPRINT
+- SRC-PLATFORMSIMPLIFIED
+- SRC-PLATFORMMVP
+- SRC-PLATFORMMODULES
+- SRC-PLATFORMRBAC
+- SRC-OBSERVABILITY
+- SRC-PLATFORMBLUEPRINT
 - SRC-ASSETDESIGN
 - SRC-RUNTIMEIMPLEMENTATION
 - SRC-REACTIONSTATE
@@ -21,7 +30,7 @@ sources:
 navigation:
   group: 09 · 决策与追溯
   order: 102
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 status_note: 本地资料范围的来源索引与覆盖记录
 ---
 
@@ -50,11 +59,89 @@ status_note: 本地资料范围的来源索引与覆盖记录
 
 ## 来源编号与精确定位 {#source-register}
 
+### SRC-PLATFORMSIMPLIFIED：创作简化与首期交付确认 {#src-platform-simplified}
+
+2026-11-10 至 11-11，创作会话确认取消分支，采用配置文本原文、逐次追加、首次保存生成版本、允许从归档版本复制。访问会话确认首期单人、内置账号及 GitHub 登录。发布会话确认按 releaseId 在线读取。总协调会话合并发布输入锁定、提交资格与四个验收切片，用户确认按工作流归档、提案、评审及执行。见[现行设计](platform-studio.md#platform-authoring-mvp)与 [ADR-FE-029](decisions/ADR-FE-029-platform-config-versions.md)。
+
+2026-11-11，用户在发布实施会话确认 Host 读取无需凭证，并确认发布同键异参冲突、成功回执长期保留且按当前查看权限重放、未完成操作检查当前发布资格。用户随后确认收口并授权归档 `platform-release-host`。
+
+2026-11-14，用户在总协调会话（`01a19b21-7758-78a2-9a7e-20c6c04d2063`）明确确认 GitHub 绑定、解绑及会话规则，并授权实施。确认内容见[现行设计](platform-studio.md#platform-github-login)。
+
+
+2026-11-14，用户在总协调会话进一步明确：“把最小物料和纯函数目录、成员与角色管理也纳入这次 MVP，先统一更新范围和任务拆分，再同步到工作台设计会话里。每一块都要覆盖 API 和页面，按现有工作流逐步推进。”这次确认扩展交付范围，取代先前物料后台全部后置及仅单人首用的限制；完整资产治理仍后置。工作台先用 frontend-design 做设计稿、web-design-guidelines 检查，再交用户确认。见[补齐任务](platform-studio.md#platform-mvp-completion)。未据此冻结新增 API、身份创建流程或标记实现验收完成。
+
+2026-11-14，工作台用户选择 Linear 轻量风并确认管理员创建账号和初始密码，随后授权逐页修复发布确认、导航、目录、成员账号与 Host。用户追加共用 JSON 查看 / 节点编辑组件、对象 / 数组整块四空格格式化编辑、保存校验并压缩、页面宽高 / 换行边界及自定义发布名称。现行增量见 [Studio 页面](platform-studio.md#authoring-pages)，本轮实施与证据归入 `studio-review-json-editor`；既有不可变版本、releaseId 身份及无凭证 Host 读取规则保留。 同日用户再次授权实际使用逐页修复，明确文本自动格式化、物料效果预览、沉浸式表单编辑，并追加物料与纯函数按用途和实现技术分类；该增量与证据归入 `studio-immersive-catalog`。 2026-11-14，用户进一步要求物料列表改为带效果预览的卡片网格，上方展示效果、下方显示名称 / 分类 / 简短说明，点击进入详情，延续 Linear 轻量风；该 UI 细化直接落在现有目录组件与页面契约。同日继续要求收紧卡片但不裁切复杂物料、给配置历史与发布记录可读名称、统一下拉组件，并将物料 Host 能力参数 / 返回值及字段含义表格化，补齐参数说明与数据结构文档。本轮采用版本匹配的目录说明元数据保留旧运行制品不可变性，详见资产主题的目录结构说明。
+
+2026-11-15，同一总协调会话中，用户先选择“允许 GitHub 自助注册，再申请加入团队”，随后对完整方案回复“确认”。确认覆盖平台账号与团队资格分离、注册确认、申请撤回及拒绝后重申、管理员审批授予角色、GitHub 原生账号重新验证后首次设密、唯一登录方式保护、绑定冲突、会话撤销和迟到回调，以及三个 API / 页面纵向切片。见[现行设计](platform-studio.md#platform-account-admission)与[演进](design-history.md#platform-account-admission-confirmed)。确认是设计依据，不表示实现或真实 OAuth 已验收。 随后用户明确授权按账号分离、申请审批、登录方式三个切片持续实施，并要求每片验收与独立review通过后再继续；本轮已按该顺序完成本地交付，运行证据维护于platform-account-admission变更，真实OAuth不在本轮通过范围。
+
+2026-11-22，用户在 Studio 视觉统一讨论中确认首期范围限 Studio、复用 Base UI Select 和原生 Modal、采用系统字体栈与单一浅色主题，并以版本工作流为样板。随后授权归档与文档检查。见[现行契约](platform-studio.md#studio-ui-contract)。
+
+2026-11-22，用户确认 Studio 字段内部、相邻字段、内容与操作区、独立区块及容器边缘的间距，并指定发布弹窗和工作台一处密集区为首批验证。见[表单与布局间距](platform-studio.md#studio-ui-spacing)。
+
+2026-11-22，用户确认 Studio 页面、导航、筛选栏和弹窗布局，以工作区可用宽度呈现表单和列表，并将宽表格的横向滚动限定在结果区；本轮授权归档与文档检查。见[现行规范](platform-studio.md#studio-ui-layout)。
+
+2026-11-22，用户在可视化编辑讨论中明确基本信息独立于编辑界面，并要求先归档再逐部分设计。字段与布局分离、定义级联动和额外校验作为专题边界，四个 Tab 及内部交互保留候选身份。见[可视化编辑职责与待设计入口](platform-studio.md#studio-visual-editing-boundary)。
+
+同日，用户审阅数据模型交互稿后确认按当前方向先落地，其他部分暂经 JSON 配置，实施与后续设计分开进行。确认范围和验收见[数据模型首期可视化](platform-studio.md#studio-data-model-visual)。
+
+同日，用户审阅布局交互稿后要求复核、归档并交给独立对话实施。多布局、物料配置、结构化字段与跨容器拖动的确认范围、原型边界及实施验收见[布局可视化编辑与实施交接](platform-studio.md#studio-layout-visual)。
+
+用户要求按协议复核联动，重点核对数组成员作用域与字段引用，通过后交接独立实施。示例、可视化与 JSON 边界、原型复验范围及生产验收见[联动可视化编辑与实施交接](platform-studio.md#studio-reaction-visual)。
+
+用户确认多规则自定义校验交互方向，要求复核适用条件、同步前置和数组成员作用域后归档并独立实施。交接范围与验收见[自定义校验可视化编辑与实施交接](platform-studio.md#studio-constraint-visual)。
+
+### SRC-PLATFORMMVP：最小 MVP、分支更新与发布身份确认 {#src-platform-mvp}
+
+2026-11-10 当前对话。用户确认发布内容不可变、Host 按 releaseId 消费，要求梳理表单 / 分支 / 草稿 / 修订 / 发布关系与列表、工作台闭环；随后选择最简 MVP、不做实时协作，冲突时提示新开分支或覆盖。用户澄清覆盖是版本更新，确认每次保存追加不可变修订、分支前移、旧版本保留，并明确要求统一归档及调整旧不一致方案。
+
+现行规则见[创作 MVP](platform-studio.md#platform-authoring-mvp)、[ADR-FE-028](decisions/ADR-FE-028-platform-authoring-mvp.md)，演进见[确认记录](design-history.md#platform-mvp-confirmed)。先前保存不产生修订、检查通过才形成修订、覆盖丢失旧内容、Fork 仅限确定版本等助手候选已替代；不是历史已接受 ADR 被整体废弃。此次未授权编码，未保存逐字会话附件。
+
+
+### SRC-PLATFORMMODULES：平台 DDD 模块化单体方向确认 {#src-platform-modules}
+
+2026-11-08 当前对话。用户确认 RBAC 后提出 DDD、微服务和服务拆分问题。助手提出先区分领域、代码模块与部署服务，以五块业务职责作为细化起点，采用一个前端与一个模块化 API，复用核心包，按真实需求评估 Worker 等运行隔离。用户明确“按 DDD 的思路做模块化单体，先不拆微服务”，授权整合文档，并要求从表单创作管理开始结合列表和工作台设计模型、状态和流程。
+
+确认范围见[整体架构](architecture.md#platform-modular-monolith)、[ADR-FE-027](decisions/ADR-FE-027-platform-modular-monolith.md)及[演进](design-history.md#platform-modules-confirmed)。具体聚合、草稿模型、状态、API、数据库与实施仍待后续专题；本轮不将新提出的创作方案写为共识。未保存逐字会话附件。
+
+
+### SRC-PLATFORMRBAC：单团队 RBAC 与操作权限确认 {#src-platform-rbac}
+
+2026-11-08 当前对话。用户先确认单团队共用空间、RBAC、少量内建角色及未来多团队扩展边界，要求形成完整方案并细化表单管理 / 工作台权限。助手提供身份 / 成员 / 角色 / 权限分层、四角色五权限、成员管理、操作映射、撤权时点、审计和反例验收；用户明确“OK，我可以确认这个方案”，随后转入 DDD 与服务拆分讨论。
+
+确认正文见[权限专题](platform-studio.md#platform-rbac)，决策见 [ADR-FE-026](decisions/ADR-FE-026-platform-rbac.md)。权限确认不扩大为新一轮领域划分或微服务部署方案，也不代表授权实现；未保存逐字会话附件。
+
+
+### SRC-OBSERVABILITY：通用观测结构、上报与四视图确认 {#src-observability}
+
+2026-11-08 用户在 DevTools 视觉讨论中，从字段列表推进到 Reaction / 校验执行图、连锁与条件 / 异步场景、四视图选择保持、上下游聚焦、嵌套对象 / 数组、跨对象影响和大量成员折叠，随后要求完整设计通用观测数据结构及上报契约。用户明确“这套方案可以，三个原则都确认”，并授权统一归档、契约与治理一致性检查及分阶段范围 / 验收整理，明确暂时不改实现。
+
+现行正文见[通用观测契约](l3-observability.md#observation-contract)，决定见 [ADR-FE-025](decisions/ADR-FE-025-observation-contract.md)，演进见[观测模型确认](design-history.md#general-observation-confirmed)，状态见[治理记录](governance.md#observability-contract-status)。三原则为可能 / 实际分离、自动订阅与按需读取、有界且不干扰业务。视觉 demo 为设计验证，不是正式协议制品或实现证据；未保存逐字会话附件，不用本来源摘要冒充完整原始记录。
+
+
+同一专题后续用户要求详细技术方案，确认接口、采集、快照 / 游标、Store / 图投影、会话录制租约和固定版本分页失败语义，并授权统一归档、补齐接口和分阶段清单、暂不改实现。用户随后将最初确认的 V1 / V2 渐进兼容改为直接破坏性升级，明确“不需要兼容”，再要求继续。现行以[技术方案](l3-observability.md#observation-technical)及 [ADR-FE-025 技术修订](decisions/ADR-FE-025-observation-contract.md#adr-025-technical)为准，旧兼容方向仅作演进追溯。此段属于 SRC-OBSERVABILITY 的补充来源，不扩大为业务协议升级授权。
+
+### SRC-PLATFORMBLUEPRINT：动态表单平台蓝图组织与基础权限范围确认 {#src-platform-blueprint}
+
+2026-11-02 至 2026-11-08 当前对话。用户澄清目标为通用动态表单低代码平台，否定向完整业务应用平台扩张，并明确数据结构设计属于底层包支撑，不形成独立平台功能。经用户故事草案审阅，用户要求总结典型场景、抽象共用业务环节，关联前端页面与后端业务模型；AI 下一阶段再议。HTML 审阅稿经修改后，2026-11-08 用户明确要求将该组织蓝图整合进文档，具体页面和模型保留待设计，从表单管理与工作台逐个补齐，并补入用户权限等基础能力管理。
+
+现行正文见[产品蓝图](platform-studio.md#platform-blueprint)，确认边界见[后续设计](platform-studio.md#blueprint-next-design)，演进见[归档记录](design-history.md#platform-blueprint-confirmed)。临时 HTML 仅为审阅载体，不作为第二套权威正文；未保存逐字对话附件。用户确认不包含具体页面路由、模型字段、权限策略、MVP 实施授权或旧 P2–P4 候选取舍。
+
+
 ### SRC-ASSETDESIGN：首批正式资产、单资产目录及版本工具确认 {#src-asset-design}
 
 2026-10-27 当前会话基线 d2b1598。用户要求用 form-design 从已有业务场景提出首批正式物料 / 业务纯函数完整草案，本轮只在对话讨论。草案覆盖家庭短期出行投保单、14 个物料、7 个函数、输入和请求交付、测试批次及 Host 路线；随后用户提出每资产独立目录、平铺 / 分层、能力与包版本，以及模板和 CLI / npm scripts 编排。后续方案采用包内平铺、tests 镜像、单一 Manifest、独立能力版本 / 包汇总分发、Changesets 加资产薄层和先工具后资产路线。用户最终明确“可以，就按照这个草案去生成正式的文档吧”。
 
 确认归档见 [首批资产正文](extension-integration.md#first-assets)、[工程工具](engineering.md#asset-tooling)、[ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)与[演进](design-history.md#first-assets-confirmed)。业务数值只为本期验收假设，真实费率和 Host 业务契约留后续；本次不自动授权编码、安装、版本应用、提交或发布。未保存逐字会话附件；归档命令结果不能证明物料 / 函数 / CLI 已实现。
+
+2026-10-28 同一会话后续，用户要求“把这一部分提交之后就继续”，并再次指令“继续”。设计提交 fd96b3c；W3 执行工具第 0 批及 text.isNonBlank 试点，实际入口 / 反例 / 验证边界见[工程证据](engineering.md#asset-tooling-implementation)。本次未在真实仓库应用版本、发布 npm 或新增业务表单浏览器验收；与此前仅设计归档的时间点区分，未保存逐字会话附件。
+
+同日用户进一步要求继续，并只读评估核心函数模块化。执行第 1 批已确认的 7 个基础输入 / 字段物料；核心函数只读分析和现有测试留在对话，不作为架构变更归档。实际入口、反例与证据见[第 1 批工程记录](engineering.md#first-materials-implementation)，真实 Host、目标完整表单及其余资产仍未完成。
+
+同日用户再次指令“继续”，沿原批次交付 5 个组合成员物料及实际成员页，见[第 2 批工程记录](engineering.md#member-materials-implementation)。没有扩大为核心函数重构、日期 / 搜索或真实业务函数交付，仍未执行真实版本应用或外部发布。
+
+同日用户继续既定批次，交付 date-range / remote-select 和可控交互验收页，见[第 3 批工程记录](engineering.md#interaction-materials-implementation)。复用现有 Adapter / Request 与非原子双写语义，未改 core、独立 DevTools 或真实版本；业务纵切与真实服务仍待推进。
+
+同日用户再次继续，沿第 4 批补齐其余 6 个同步函数及完整家庭出行表单，见[业务纵切工程记录](engineering.md#business-travel-implementation)。政策字段、私有共享算法及可控 Host 属于已确认语义内的实现细化；未重构 core 或接入真实保险服务，未应用版本或发布。
 
 ### SRC-DEVTOOLS：独立工具与无业务装配确认 {#src-devtools}
 
@@ -208,6 +295,14 @@ status_note: 本地资料范围的来源索引与覆盖记录
 2026-10-24 本次会话用户提供 AI 辅助研发的方法论材料，讨论后明确要求“按照这个理论去对我们的整个工作流和整个项目的规范规则做调整”。据此确认以现行契约为权威，补强行为影响决策分级、只读预检、行为切片、深度审查及契约 / 实现 / 运行证据关联，统一更新规则、五类流程、辅助审查 skill 与工程要求；不把材料中的运行时示意、工具清单或外部厂商观点转成业务协议或必装项。实际范围与验证局限见[演进](design-history.md#workflow-contract-evidence-adopted)。本次核对[官方 Skills 说明](https://developers.openai.com/plugins/concepts/skills)的指引 / 资源定位；项目流程由用户授权决定，官方说明不证明项目提效或宿主已发现新技能。
 
 调研用于选型参考，不将厂商案例或研究直接提升为项目共识：[SDD 层次分析](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html)、[SDD 实践研究（2026-10-15 修订）](https://arxiv.org/abs/2608.25202v4)、[长任务 harness](https://www.anthropic.com/engineering/harness-design-long-running-apps)、[DORA](https://dora.dev/research/2025/dora-report/)、[METR 更新](https://metr.org/blog/2026-02-24-uplift-update/)。仓库 skill 发现机制依据 [官方文档](https://learn.chatgpt.com/docs/build-skills)。查阅日期为 2026-10-20；这些资料不证明本项目已提效，候选第三方工具未安装。
+
+
+2026-11-02 用户在本次对话确认完整 OpenSpec 组合方案、独立审查及本地提交原则，并授权隔离验证后接入。验证使用环境已有 OpenSpec 1.15.0 的 CLI / 本地 schema 与实际执行，不以此前上游 main 文档替代版本证据。依据：[OpenSpec 自定义机制](https://github.com/Fission-AI/OpenSpec/blob/main/docs/customization.md)、[工作流](https://github.com/Fission-AI/OpenSpec/blob/main/docs/workflows.md)；项目现行细则见[适配](workflows.md#workflow-openspec)。
+
+
+2026-11-04 用户明确确认“先理解整体变更，再看问题和验证结果”进入 review，并授权修复前次两项 P2 与补充回归。以本次对话确认和当前源码 / 测试为依据，未引用外部材料证明收益；现行细则见[深度审查](workflows.md#deep-review)。
+
+2026-11-10 用户在本次会话明确确认“只保留 form-workflow 一个入口，移除旧入口并同步更新项目指引，原有能力和约束都保留”。现行工作流改为统一编排、按需能力，保留历史任务类型与协作边界；同步旧调用方与生成阅读页，不据此宣称宿主发现已刷新或实际提效。未引用外部材料作为本次授权依据。
 
 ## 设计者阅读结构的内容迁移 {#reading-migrations}
 
@@ -421,3 +516,39 @@ flowchart LR
 ### 2026-10-21：请求开发接入与遗漏报错目标
 
 用户要求梳理物料到 Host 的输入输出开发流程、明确缺失注册错误，并以“这一块要把它加进来，至少我们在实现的时候，得知道我们的实现目标是什么”确认归档。范围见 [演进](design-history.md#request-integration-confirmed)、[现行验收](l1/05-view-material-host.md#request-development-contract)及 ADR-FE-016 的增量修订；未冻结 SDK 函数名、生成工具或宣称生产实现完成。
+
+SRC-OBSERVABILITY 补充（2026-11-09）：用户明确确认“端到端订阅和自动推送，去掉轮询和手动录制”，并要求事件接收与视图刷新解耦、样式保持与原视觉 demo 一致；替代前述显式录制原则，保留旧确认作追溯。
+
+
+### SRC-AGENTBLUEPRINT：Agent 蓝图与统一归档确认 {#src-agent-blueprint}
+
+2026-11-23 用户确认会话前置路由、显式修复节点、动作经 observe 返回 route、一份共享状态按节点依赖复用，并授权实施。见[统一助手 Graph](platform-studio.md#agent-turn-graph)。
+
+2026-11-23 用户确认[数据归属与全量清洗](platform-studio.md#agent-conversation-draft-ownership)。删除对话保留平台草稿；Agent 和 API 分别维护所拥有的数据，实施直接切换。
+
+2026-11-24，SRC-AGENTBLUEPRINT 增量确认来自本次 Studio 会话反馈。用户明确要求保存用户消息、LLM 请求和返回及每一步结果，并在重开和继续时复用。见[确认契约](platform-studio.md#agent-turn-recovery)。
+
+
+2026-11-15 当前会话中，用户指定 Python、FastAPI、LangChain、LangGraph、LangSmith 与独立微服务；确认 Studio 编辑页诊断修复、人工审阅应用。随后要求完整 Harness / Loop、接口、知识清洗更新与记忆设计，认可六类 Agent 和三层 Loop 蓝图，最终明确授权统一归档并暂不开发。依据为本会话逐轮确认；完整对话原文尚未另存仓库，不编造历史附件。现行正文见[Agent 蓝图](platform-studio.md#agent-confirmed-blueprint)，决策见[ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)。归档包含首期同步接口 / 状态流、工具授权失败处理、版本化知识包、记忆边界与后续阶段。模型供应方、真实数据传输与后续具体工具 / 持久化契约继续待细化。
+
+2026-11-15，SRC-AGENTBLUEPRINT 增量确认：同一会话中用户认可内部凭证、运行状态和路由方案，要求使用主流持久化技术，最终确认 PostgreSQL 统一持久化、Platform 与 Agent 分别管理数据域，要求归档并明确迁移范围和顺序，暂不开发。见 [ADR-FE-031](decisions/ADR-FE-031-postgresql-agent-runtime.md)及[迁移方案](platform-studio.md#platform-postgresql-migration)。
+
+2026-11-17 同会话用户在只读迁移预检后确认“OK，那就按建议的取舍来实施”。本次授权为 Platform PostgreSQL 存储迁移实现、演练与验收准备；不扩展为 Agent 编码或无目标环境的业务库切换。权威实施范围见[迁移方案](platform-studio.md#platform-postgresql-migration)，证据见 `openspec/changes/archive/2026-11-18-platform-postgresql-migration/`。
+
+2026-11-18 同会话增量授权：用户在剩余门禁修复阶段明确“全切了，我们没发生产”，将本机实际数据切换纳入本轮范围。完成本机PostgreSQL持久实例、独立账号、源库保留、恢复校验与Studio实际验收；没有生产发布或Agent编码。
+
+2026-11-18 SRC-AGENTBLUEPRINT增量确认：用户认可“统一Studio聊天助手入口，首批接诊断修复，AI新建后续复用同一面板”，并明确“先归档，把第一批的内容讨论清楚”。本次仅归档入口及分批方向，第一批具体交互、会话、路由等方案继续对话审阅；未授权实现。见[现行主题](platform-studio.md#agent-assistant-entry)与[ADR-FE-032](decisions/ADR-FE-032-studio-assistant-entry.md)。
+
+2026-11-19 SRC-AGENTBLUEPRINT 增量确认：用户明确“先不做编辑场景，还是只做创建场景”，并在审阅仅创建接口后授权“归档，把接口契约和三个会话各自的设计范围整理好，同步给他们，先做详细设计，不开始开发”。包括多轮澄清、Platform 持久会话、Agent 异步受理、候选审阅与保存归档；不包含已有版本编辑或开发授权。依据为当前对话确认，无另造原文附件。见[创建契约](platform-studio.md#agent-create-contract)和[ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)。
+
+2026-11-19 SRC-AGENTBLUEPRINT 再次增量确认：用户明确“首期还是完成 Studio 创建闭环，MCP 和插件放到后续”，授权归档扩展方向并同步三个会话，要求“设计时保证业务能力能复用，先不开发”。现行范围见[MCP 扩展方向](platform-studio.md#agent-mcp-extension)，ADR-FE-033 增量承接。此前工具名、外部授权和保存确认仅作为后续设计方向，不冒充已冻结接口。
+
+2026-11-22 SRC-AGENTBLUEPRINT 增量确认：用户审阅交互原型及完整方案后明确“首期仍只做创建闭环，用 Agent 生成的旅险候选跑真实 Runtime 场景作为验收”，授权统一归档、检查并修正整体架构旧表述。来源为本轮对话确认。归入[工作台蓝图](platform-studio.md#agent-form-workspace)、[旅险验收](platform-studio.md#agent-create-runtime-acceptance)与 [ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)。
+
+2026-11-22 SRC-AGENTBLUEPRINT 三方收口确认：用户同意按评审稿统一归档接口、状态、失败恢复、实施切片和真实 Runtime 验收，明确模型供应方、具体限额和保留期限留到实施预检，授权范围为归档和文档构建检查。来源为本轮对话确认。见[创建契约](platform-studio.md#agent-create-contract)与 [ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)。
+
+### SRC-PLATFORMDIAGNOSTICS：首期错误事件采集方案确认 {#src-platform-diagnostics}
+
+2026-11-22 用户先明确“首期先只把脱敏的错误事件存到 PostgreSQL，完整复现现场留在 Host”，随后确认上报链路、表结构、查询与保留方案，限定受信 Host 转发和管理员查询，确认 30 天平台保留、7 天 Host 默认现场保留、24 小时重试上限，并要求“按这个结论归档，先不开发”。来源为本次设计对话，见[现行设计](platform-studio.md#platform-diagnostic-events)与 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)。
+
+同日增量确认按[事件映射表](platform-studio.md#platform-diagnostic-mapping)的白名单上报。用户明确 Schema 异常、Validator 缺注册、Reaction 叶命令异常留 Host，Renderer 保存现有回调字段，`flush.aborted` 按事件名精确匹配并去重。授权限于归档。

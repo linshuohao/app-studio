@@ -1,0 +1,71 @@
+.studio-action-editor,
+.studio-action-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--studio-space-12);
+  min-width: 0;
+}
+.studio-action-editor {
+  margin: 0;
+  border: thin solid var(--studio-border);
+  padding: var(--studio-space-12);
+  border-radius: var(--studio-radius-8);
+  background: var(--studio-surface);
+}
+.studio-action-fields > label,
+.studio-action-target-row > label,
+.studio-action-target {
+  display: grid;
+  gap: var(--studio-space-4);
+  min-width: 0;
+}
+.studio-action-fields {
+  container-type: inline-size;
+}
+.studio-action-target-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--studio-space-12);
+}
+.studio-action-target-row > label {
+  gap: var(--studio-space-8);
+}
+.studio-action-target > span {
+  margin-block-end: var(--studio-space-4);
+}
+.studio-action-target small {
+  overflow-wrap: anywhere;
+}
+@container (min-width: 440px) {
+  .studio-action-target-row:has(> .studio-action-target) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}
+.studio-action-editor :is(fieldset, input, button) {
+  min-width: 0;
+  max-width: 100%;
+}
+.studio-action-editor footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--studio-space-8);
+}
+.studio-action-editor summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.studio-action-editor > .studio-button,
+.studio-action-fields > .studio-button {
+  justify-self: start;
+}
+
+.reaction-action-dialog .studio-action-editor {
+  border: 0;
+  padding: var(--studio-space-8) 0;
+}
+.reaction-action-view-bar {
+  flex: none;
+  padding-block-end: var(--studio-space-8);
+  border-bottom: 1px solid var(--studio-border);
+}

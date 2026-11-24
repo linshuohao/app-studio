@@ -1,3 +1,4 @@
+import { compileDataSchema } from '@form-engine/protocol/internal/schema';
 import type { CompileInput, CompileResult } from '../types.js';
 import { PREPARED_FORMAT_VERSION } from '../types.js';
 import { Diagnostics } from '../diagnostics/collector.js';
@@ -95,6 +96,17 @@ export function compile(input: CompileInput): CompileResult {
   });
   if (diagnostics.failed || !view) return fail();
   // 只在所选视图检查通过后组装产物，携带实际引用的资源和能力锁。
+  const schemas = models.resources();
+  try {
+    compileDataSchema(definition.data.schema, schemas);
+  } catch (error) {
+    diagnostics.error(
+      'DATA_SCHEMA_INVALID',
+      '/data/schema',
+      error instanceof Error ? error.message : String(error),
+    );
+    return fail();
+  }
   const prepared = assemblePrepared(
     {
       definition,
@@ -102,7 +114,7 @@ export function compile(input: CompileInput): CompileResult {
       platform: target.platform,
       catalogSnapshotId: catalog.id,
       view,
-      schemas: models.resources(),
+      schemas,
       capabilityLock: capabilities.locks(),
       constraints: rules.constraints,
       reactions: rules.reactions,

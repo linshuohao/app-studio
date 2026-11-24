@@ -8,8 +8,8 @@
   <title>工程工具链与初始化方案 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=7385fbcb9321" defer></script>
-
+  <script src="assets/knowledge-index.js?v=a021b081cf45" defer></script>
+<script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
 <body>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="design-history.html">设计决策与讨论演进</a>
 <a href="design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="architecture.html#glossary">术语与语义边界</a>
 <a href="../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="usage-guide.html">使用与开发指南</a>
@@ -360,7 +373,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 </tr>
 <tr>
 <td>pnpm packages:check</td>
-<td>pack 后隔离安装，验证协议 / 纯函数 / Compiler → Runtime 的 JS、d.ts、exports 与 Schema；物料 / CSS 待真实实现</td>
+<td>pack 后隔离安装，验证协议 / 纯函数 / Compiler → Runtime / React 物料的 JS、d.ts、exports、Schema、静态 Manifest 与 CSS 消费</td>
 </tr>
 <tr>
 <td>pnpm docs:check</td>
@@ -368,7 +381,7 @@ pnpm<span class="syn-w"> </span>outdated<span class="syn-w"> </span>-r
 </tr>
 <tr>
 <td>pnpm check</td>
-<td>format:check、lint、boundaries、typecheck、test、integration、build、packages:check、docs:check；E2E 在 CI 另设必需任务</td>
+<td>protocol:schema:check、assets:check、format:check、lint、boundaries、build、typecheck、test、test:integration、packages:check、docs:check；E2E 在 CI 另设必需任务</td>
 </tr>
 </tbody>
 </table></div>
@@ -471,12 +484,12 @@ chore(tooling): 初始化工作区
 <p>破坏性变更使用 <code>!</code> 或 BREAKING CHANGE，PR 标题同样检查，保证 Squash 后历史有效。commit-msg 由本地 commitlint 检查，CI 校验 PR 标题及必要提交信息；Hook 可绕过，因此不能代替 CI。<a href="https://www.conventionalcommits.org/en/v1.0.0/" rel="noopener noreferrer">规范</a>、<a href="https://commitlint.js.org/guides/local-setup.html" rel="noopener noreferrer">commitlint</a></p>
 <p>Changesets 在出现对外库变更时记录影响和理由；内部工具 / 文档改动允许明确无包发布影响。应用 / 服务保持 private；需要维护应用发布身份时另行定义。包版本不替代 L1 / Prepared / 能力锁的独立兼容规则；初始生成版本不表示已发布。发布工作流以后单独授权接入凭证与发布，不把 build 自动等同 npm publish。</p>
 <h3 id="asset-tooling">资产模板与版本编排</h3>
-<p>2026-10-27 用户确认将资产生成与版本工程化纳入<a href="extension-integration.html#first-assets" rel="noopener noreferrer">首批物料 / 函数交付</a>，并授权本轮正式文档归档。见 <a href="decisions/ADR-FE-024-first-assets-tooling.html" rel="noopener noreferrer">ADR-FE-024</a>。以下为待实现的命令和行为设计，不是当前可执行入口；现有 Changesets 只有安装 / 初始化证据，不能据此宣称完整版本编排已建成。</p>
+<p>2026-10-27 用户确认将资产生成与版本工程化纳入<a href="extension-integration.html#first-assets" rel="noopener noreferrer">首批物料 / 函数交付</a>，并授权本轮正式文档归档。见 <a href="decisions/ADR-FE-024-first-assets-tooling.html" rel="noopener noreferrer">ADR-FE-024</a>。以下保留已确认行为设计；2026-10-28 工具第 0 批已提供本地可执行入口与首个真实函数，具体实现和验证范围见<a href="#asset-tooling-implementation" rel="noopener noreferrer">实施证据</a>。外部发布尚未启用。</p>
 <p>先在 tools/engineering 中实现仓库内脚本，通过 pnpm scripts 暴露；日常复用锁定工具，不每次下载 latest，不新增独立 CLI 包或工程框架。未来有真实外部分发需求再判断是否发布 CLI。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>规划命令</th>
+<th>命令</th>
 <th>行为</th>
 <th>修改范围</th>
 </tr>
@@ -500,20 +513,20 @@ chore(tooling): 初始化工作区
 <tr>
 <td><code>pnpm assets:check</code></td>
 <td>核对资产完整、契约入口及变更遗漏</td>
-<td>只读；后续接入 pnpm check</td>
+<td>只读；已接入 pnpm check</td>
 </tr>
 <tr>
-<td><code>pnpm release:plan</code></td>
+<td><code>pnpm release:plan --base &lt;commit-or-tag&gt;</code></td>
 <td>展示资产、包、依赖升级及风险</td>
 <td>只读；支持机器可读结果</td>
 </tr>
 <tr>
-<td><code>pnpm release:apply</code></td>
+<td><code>pnpm release:apply --plan &lt;plan.json&gt;</code></td>
 <td>按已核对计划应用版本与变更日志</td>
 <td>Manifest、package.json、相应日志和待发布声明</td>
 </tr>
 <tr>
-<td><code>pnpm release:check</code></td>
+<td><code>pnpm release:check --plan &lt;plan.json&gt;</code></td>
 <td>检查声明 / 升级 / 发布准备的一致性</td>
 <td>只读；不发布</td>
 </tr>
@@ -581,6 +594,335 @@ tools/engineering/release/
   check.mjs
 </code></pre></div>
 <p>以上为职责落点，普通文件拆分可随实现精简。先交付工具，再让首个真实资产跑通一次生成 / 修改 / 版本演练；工具检查、隔离场景和真实使用效率分别报告。无收益的包装可合并，但生成完整性、明确版本影响和不可变交付约束不能靠重复人工提醒替代。</p>
+<h3 id="asset-tooling-implementation">工具第 0 批与首个函数实施</h3>
+<p>2026-10-28，用户要求提交已确认设计后继续实施；设计提交为 <code>fd96b3c</code>。本轮沿用 ADR-FE-024，完成本地工具第 0 批及 <code>text.isNonBlank</code> 试点，未在真实工作区执行 release:apply、变更包版本或发布。批次 0 结束时 14 个正式 UI 物料、其余 6 个业务函数及目标表单仍待后续批次，第 1 批进展见下节；该工具批次没有扩张 Runtime / Adapter 状态契约或 DevTools 装配范围。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>契约 / 行为</th>
+<th>实现位置</th>
+<th>验证入口与范围</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>独立目录、静态 Manifest、镜像测试及受控导出</td>
+<td>tools/engineering/assets/create.mjs、catalog.mjs、templates/</td>
+<td>tests/integration/assets-tooling.test.ts：预览无写入、重复 / 非法 / 冲突 / 符号链接拒绝，真实 SDK 模板类型检查；模板显式抛未实现错误与 todo 测试，发布计划拒绝未完成资产</td>
+</tr>
+<tr>
+<td>同一声明关联两级版本、检查遗漏</td>
+<td>assets/change.mjs、check.mjs、libraries.mjs、consumed.mjs</td>
+<td>同资产最高影响、共享实现逐资产覆盖、包级公共代码 / exports / 依赖遗漏、保守 major 检查、已消费声明与实际版本核对；无法静态证明任意行为兼容</td>
+</tr>
+<tr>
+<td>只读计划、受控应用与恢复</td>
+<td>release/changesets.mjs、plan.mjs、apply.mjs、check.mjs、assets/files.mjs</td>
+<td>已安装 Changesets 公共 API 经薄适配；临时工作区实际演练 private 包、首发不二次递增、依赖传播、过期 / 篡改拒绝、重复应用拒绝、写入及最终校验失败回滚</td>
+</tr>
+<tr>
+<td>无 UI 的编译契约入口</td>
+<td>两资产包的 ./manifests、独立构建入口</td>
+<td>tools/engineering/check-packages.mjs：真实 tarball 的 Node 消费者拒绝加载 React / Renderer / Runtime，物料契约入口无 use client 指令</td>
+</tr>
+<tr>
+<td>首个真实业务函数</td>
+<td>packages/pure-functions/src/text-is-non-blank/、src/types.ts</td>
+<td>tests/text-is-non-blank/implementation.test.ts 与根 business-functions.test.ts：空白 / 非字符串为 false、不裁剪输入、错误参数数目拒绝，真实 Compiler → Runtime Constraint 从 invalid 变 valid，工作快照保留原文本</td>
+</tr>
+</tbody>
+</table></div>
+<p>入口及完整操作示例维护在 tools/engineering/assets/README.md。<code>asset:change</code> 使用 <code>--id</code> 或 <code>--package</code> 二选一，可显式 <code>--no-release --summary</code> 记录无公开影响整理；不能用此选项跳过契约 / exports / 依赖变化。声明正文仅一个 capability-changes JSON 段，包变更仍是标准 Changesets Frontmatter；普通包级 Changesets 继续可用，没有第二份长期台账。</p>
+<p>计划必须传确定 Git 基线，先记录相关源码 / 测试 / 工具 / 配置摘要，再生成版本前后内容并复核输入。真实仓库在计划阶段只读，Changesets 仅在一次性镜像中写入。应用前校验摘要和完整复算，用互斥锁防止多个工具写入；各文件替换前检查原文，可恢复异常回滚本次写入，最终一致性检查失败也进入恢复。发生并发编辑冲突时保留对方内容并报告恢复冲突；硬中断不能保证跨文件原子，须检查锁中 PID 及保存计划的前后内容，不能盲目删除锁。没有后台自动恢复、跨进程编辑锁或发布服务。</p>
+<p>版本准备建议先提交代码和待发布声明，再单独准备版本变更。release:plan 的基线用于计算相对上次交付的影响；应用后的 assets:check 使用包含待发布声明的版本准备前提交来核对消费结果，默认 HEAD 适用于尚未提交版本应用的工作树。CI 当前使用 PR base / push before，因此独立版本变更应以包含声明的提交为分支基线；不从任意更早历史自动重建已消费声明。未提交声明的临时演练须保存计划作为恢复依据。完整版本准备在临时 Git 工作区验证，真实仓库只生成并检查计划。</p>
+<p>实际本地证据：工具与跨包纵切共 19 项测试通过，根 integration 类型检查通过；函数包原有及新增测试共 17 项通过。先前完整检查中 HTTP 监听受沙箱限制，已在允许临时 loopback 监听后单独补验通过。隔离 tarball 消费检查已通过，包含默认 / development 入口与静态契约入口。本机原生 pnpm 未读取原环境变量缓存写法，check-packages 现显式转交 --store-dir，使用既有缓存离线验证；锁文件只增加两个内部 workspace 依赖，没有升级第三方版本。最终执行 <code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code> 返回 0，协议 Schema / 资产遗漏 / 格式 / lint / 依赖边界 / 9 个构建任务 / 类型 / 单元与集成 / HTTP / 隔离打包 / 文档同步均通过。</p>
+<p>实际浏览器已检查本节阅读页的表格、正文与导航，文档统一构建及 --check 通过，覆盖 54 页、100 条类型记录及 7875 个本地链接 / 资源；本轮未修改协议示例源，无须重跑候选协议样例验证。</p>
+<p>本轮为实现者自审：覆盖生成 / AST 契约 / 声明 / 计划镜像 / 应用回滚 / 旧声明消费及现有包消费者路径。修复了手写导出和非托管目录覆盖风险、静态入口任意重导出、包级遗漏、函数返回契约破坏检查、模板组件返回类型和最终校验未纳入回滚等反例；对应测试已复验。未执行独立上下文代码审查，远端 CI、真实发布、生产性能与新增浏览器业务表单 E2E 不在本批证据范围。</p>
+<h3 id="first-materials-implementation">首批输入与字段物料实施</h3>
+<p>2026-10-28 用户要求继续既定路线，同时只读评估核心函数模块化。沿现行<a href="extension-integration.html#first-assets-materials" rel="noopener noreferrer">物料契约</a>完成第 1 批 7 个物料：text-input、number-input、checkbox、select、button、field、value-display。核心函数本轮未修改，模块化意见只在对话提出，没有作为已确认规范或版本迁移归档；第 1 批结束时，其余布局 / 复合物料、6 个函数、完整目标表单和真实 Host 后续推进；组合成员的后续交付见下节。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>行为契约</th>
+<th>源码 / 消费入口</th>
+<th>反例与证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文本与数字输入只经 Adapter 写入一次</td>
+<td>materials-react/src/text-input/、number-input/，_internal/use-text-editor.ts / number.ts</td>
+<td>tests 镜像：原空白 / 空串、清空 null、非法文本、拒绝指数 / 逗号 / 隐式空白、不安全整数与小数精度损失；组合输入一次交付、Host 更新撤销旧组合、取消后再编辑同文本、失败写入恢复</td>
+</tr>
+<tr>
+<td>勾选与固定选项保留非法初值</td>
+<td>src/checkbox/、select/</td>
+<td>不在挂载时修复工作值；未知 ID 不换值；DOM 选项索引与业务 ID 分开，空字符串 ID 不与清空冲突；disabled / clearable=false 保护</td>
+</tr>
+<tr>
+<td>字段消费已有校验与 DOM 关联</td>
+<td>src/field/、_internal/field-context.tsx</td>
+<td>真实 Compiler / Runtime 已发布 Issues 与状态，不新建 touched；DOM ID 各控件独立、标签聚焦第一个控件、帮助与问题描述关联；不让子输入重复输出 Issues 列表</td>
+</tr>
+<tr>
+<td>操作与只读格式化</td>
+<td>src/button/、value-display/</td>
+<td>activate 无 Payload 且只触发一次，type=button；CNY 安全整数分按十进制位展示、不用浮点除法，非法格式占位、不输出对象技术 JSON</td>
+</tr>
+<tr>
+<td>静态与运行消费分开</td>
+<td>src/manifests.ts、index.ts、styles.css、tsdown.config.ts / exports</td>
+<td>7 份 Manifest 可由无 UI Node 消费，运行工厂与 Props 类型公开，样式通过 ./styles.css 显式导入；隔离 tarball 验证真实 value-display 与样式资源</td>
+</tr>
+<tr>
+<td>验收 Host 与完整交付</td>
+<td>Playground /materials 的 catalog.tsx、session.ts、page.tsx</td>
+<td>根 material-session 集成验证实际 Catalog 装配；tests/e2e/materials.spec.ts 操作正式输入，经完整校验后 Host 交付对应快照；/l4 原夹具保留</td>
+</tr>
+</tbody>
+</table></div>
+<p>每个资产包含 manifest.ts、implementation.tsx、README，测试在 tests 镜像；Props 类型随实现公开。_internal 仅共享 DOM / 输入解析 / 操作失败反馈，不拥有业务值或校验状态。Field 私有 Context 只登记 DOM ID 和描述；复合控件不调用另一注册物料的 Hook。样式独立复制到 dist，Manifest 子入口不加载 CSS / React / Renderer / Runtime。生产根入口保留 use client，源码物料声明客户端边界；构建器对内部指令给出提示，实际消费者与生产页面验证的是最终入口。</p>
+<p>第 1 批验收页当时使用 verification.layout 应用内部测试布局；第 2 批已替换为正式 section，不将当时的测试布局计作正式资产；它的查询 / 核保 / 报价 / 草稿 / 提交服务也未连接。页面仅保留只读快照展示和本地 Host，初始化非法方案以验证未知选项；真实产品规则仍待后续 Host 阶段。</p>
+<p>本地验证先观测 26 个模板行为失败，再实现修复；最终物料 30 项、根页面装配 1 项通过。三浏览器完整 test:e2e 共 9 项通过，覆盖新 /materials、既有 /l4 和首页 / API。实际浏览器另查看字段 / 错误 / 样式及 Host 改值后快照交付。初次生产构建暴露 BigInt 字面量与应用编译目标不兼容，改为安全整数十进制分位；首次浏览器装配暴露 enum / const 未显式声明类型，页面 Schema 补齐 type 并增加实际装配回归，未放宽 Compiler。带必填标记的标签测试改按实际 label 元素定位，焦点断言保留。</p>
+<p>最终执行 <code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code> 返回 0：10 根 Schema、资产 / 格式 / lint / 边界、9 项构建与类型任务、全部包内测试、26 项根集成与 HTTP、隔离打包及文档同步通过。另执行 <code>PLAYWRIGHT_BROWSERS_PATH=/private/tmp/l4-playwright pnpm --store-dir /Users/samuel/Library/pnpm/store test:e2e</code>，9 项通过。文档 build / --check 同步 54 页、100 条记录及 7887 个本地链接 / 资源；本批未修改协议示例源。本轮为实现者按 W3 / 深度路径及 React 清单自审，没有独立上下文代码审查；并发 / 多成员布局 / 日期确认 / 搜索请求是后续批次，真实服务、远端 CI 和生产性能尚未验收。未应用真实版本、提交或发布；工具第 0 批遗留实现与本批改动在同一工作区，设计提交仍是 fd96b3c。</p>
+<h3 id="member-materials-implementation">组合成员与同实例 Profile 实施</h3>
+<p>2026-10-28 用户继续已确认批次，新增 section、grid、condition、dialog-editor、insured-summary，正式物料累计 12 个。沿用<a href="extension-integration.html#first-assets-materials" rel="noopener noreferrer">首批契约</a>与既有 Typed Template / each Scope，不新增 Repeat、子表单 Store 或业务临时副本；日期范围、远程搜索、其余 6 个业务函数及真实 Host 留后续。core 组织与版本本轮未改。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>契约 / 不变量</th>
+<th>代码与消费者</th>
+<th>验证路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>容器只控制呈现，不删除 Data / 关闭规则</td>
+<td>materials-react/src/section/、grid/、condition/</td>
+<td>对应 tests 镜像：defaultExpanded 只初始化挂载、收起 / 隐藏卸载 Slot 但值和适用校验保留、重显读取 Host 新值；浏览器实际比较窄屏控件位置证明网格单列</td>
+</tr>
+<tr>
+<td>弹层输入实时生效，关闭没有整组回滚</td>
+<td>src/dialog-editor/implementation.tsx、_internal/modal-focus.ts（第 3 批由原 focus.ts 提取）</td>
+<td>原生 dialog + Portal；完成 / 关闭 / Escape 保留输入；回到仍存活的原触发器；jsdom 仅模拟开闭 API，焦点与 inert 交浏览器实际验证</td>
+</tr>
+<tr>
+<td>身份随成员移动，不按数组下标复用旧编辑会话</td>
+<td>Renderer / Runtime 既有 Scope，tests/dialog-editor/members.test.tsx</td>
+<td>Typed Template 显式传 insured；打开中移动保持同一编辑器和成员，删除清 Portal；整数组替换撤销旧会话，旧输入节点不更新替换成员；Strict Mode 与双 Profile 回归</td>
+</tr>
+<tr>
+<td>摘要只读成员和已有 Issues，不计算价格 / 证明整单有效</td>
+<td>src/insured-summary/、_internal/display-value.ts</td>
+<td>姓名和年龄安全呈现、非法对象不输出 JSON、显示传入金额及子树问题；共享无 Hook 格式化，不嵌套调用其他注册物料的 Adapter</td>
+</tr>
+<tr>
+<td>两份 Profile 共用执行模型和同一实例</td>
+<td>Playground /materials/members 的 definition.ts、session.ts、page.tsx</td>
+<td>desktop 平铺字段，compact 摘要 + 弹层；换视图不重建 Runtime，原快照身份 / 编辑值保留；完整结果交付对应 snapshot</td>
+</tr>
+</tbody>
+</table></div>
+<p>每个新增物料继续采用单目录 / 单 Manifest / 镜像测试，Props 类型随工厂公开；无新增 Request 或 Event，成员操作由既有 button.activate 映射数组 Command。原基础页移除 verification.layout，使用正式 section。成员验收页使用显式 showGuardian 测试开关验证条件与规则独立，固定 500 分只验证金额呈现；它不实现年龄政策或真实试算，不是完整目标投保单。1–5 人限制由样例 Schema 及 core.length / 比较表达式控制按钮，Runtime 仍接受结构可执行的普通 Command，不把业务约束提升为写入门禁。</p>
+<p>源码推导的生命周期：用户打开 → 只挂载 content Slot 并 showModal → 普通字段经 Adapter 立即写 Runtime → 成员移动保留 Scope / React 身份 → 关闭 / 删除 / 替换 / Profile 更换卸载旧呈现和 Portal。关闭聚焦尚在文档中的原触发按钮，已删除触发器不再被聚焦；不迁移业务数据或回滚。浏览器轨迹和单测分别覆盖上述主要分支，不据最终快照外推全部异步行为。</p>
+<p>初始 8 个模板行为用例先失败。实际装配又发现枚举 Props 只写 enum 时，混合静态 variant 与动态 disabled 无法证明兼容：补齐等价 type 信息，并添加按钮回归，未放宽 Compiler 或修改允许值集合。首次三浏览器发现原生弹层不能满足应用内 Tab 首尾循环，新增本弹层键盘边界处理并保留原生模态 / Escape；修复后三浏览器成员用例通过。实际查看另外修正了通用 CSS 重置下原生弹层的居中 margin，并显示实时写入提示。</p>
+<p>最终执行 <code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code> 返回 0：物料 43 项、根集成 27 项及 HTTP、10 根 Schema、资产 / 格式 / lint / 边界、9 项构建与类型任务、隔离打包及文档同步通过。另执行 <code>PLAYWRIGHT_BROWSERS_PATH=/private/tmp/l4-playwright pnpm --store-dir /Users/samuel/Library/pnpm/store test:e2e</code>，最终三浏览器全量 12 项通过；实际浏览器另核对平铺、摘要切换、居中弹层与实时写入提示。文档统一构建 / --check 同步 54 页、100 条记录和 7895 个本地链接 / 资源；未修改候选协议示例源。隔离打包消费者读取全部 12 个静态 Manifest 时拒绝 React / Renderer / Runtime，真实 value-display 和样式消费继续回归。新增能力各自声明 minor，版本只读计划仍基于 fd96b3c，不在真实仓库应用或发布。</p>
+<p>本批为实现者自审，审查单元覆盖 5 个 Manifest / 实现 / README 与测试、弹层焦点辅助、共用格式化、既有枚举 Props、聚合导出 / 样式、成员 Definition / Host / Profile、实际消费者与派生文档；未执行独立上下文审查。既有核心 / Adapter 只作为消费调用链和回归依据，本批不修改；真实网络请求、日期确认、业务计算、远端 CI 和生产性能尚未验证。没有新增公共状态语义或 ADR，未把核心函数模块化建议写为已确认决策。</p>
+<h3 id="interaction-materials-implementation">日期确认与远程选择实施</h3>
+<p>2026-10-28 用户继续第 3 批，完成 date-range / remote-select，首批正式物料累计 14 个。权威为<a href="extension-integration.html#first-assets-materials" rel="noopener noreferrer">首批物料契约</a>，沿用现行 Adapter、Request latest / discarded、Runtime 状态所有权与非原子写入；core.* 没有重构或版本变更，独立 DevTools 没有业务装配依赖。其余 6 个业务函数、完整目标投保单和真实 Host 未因此完成。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>行为 / 不变量</th>
+<th>实现位置（packages/materials-react/ 下）</th>
+<th>实际反例与验收入口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>日期草稿局部持有，确认前不写；严格公历输入</td>
+<td>src/date-range/implementation.tsx、date.ts、manifest.ts</td>
+<td>tests/date-range/implementation.test.tsx：取消、非法闰日 / 月日 / 年界 / 空白、0001 / 9999、清空 null；起止倒置可写，业务范围由后续 Constraint 判断</td>
+</tr>
+<tr>
+<td>任一已呈现端点被 Host 改变则整体重读；确认非原子双写</td>
+<td>同上 DateRange / confirm / reload</td>
+<td>外部改 end 重置两端；首端失败不写第二端；真实 Runtime endState 为 null 时 start 成功、end 失败，提示部分写入并重读实际值，取消不回滚</td>
+</tr>
+<tr>
+<td>查询和请求不写选中值，选择写完整 Option，清空写 null</td>
+<td>src/remote-select/implementation.tsx、requests.ts、manifest.ts</td>
+<td>tests/remote-select/implementation.test.tsx：完整对象、显式清空、空结果 / 失败保留原选择、完整校验不等待搜索、禁用与不可清空</td>
+</tr>
+<tr>
+<td>挂载、查询、过滤键和请求序号约束结果资格</td>
+<td>同上 Owner / useLayoutEffect / search / choose</td>
+<td>A / B 后发先至、迟到成功 / 异常、排队旧结果、A→B→A、重复同 query、显式取消、条件隐藏 / 卸载 / 重挂载、Strict Mode；旧候选节点不能写入</td>
+</tr>
+<tr>
+<td>类型贯穿物料 → Host，静态契约不加载 UI</td>
+<td>src/remote-select/requests.ts、src/manifests.ts、src/index.ts</td>
+<td>tests/remote-select/type-contracts.ts、隔离打包消费者：正确输入结果、错误 items、缺 filterKey / Host 注册类型负例；14 个静态 Manifest 拒绝 React / Renderer / Runtime</td>
+</tr>
+<tr>
+<td>共享 UI 不嵌套注册物料 Hook，不持有业务校验</td>
+<td>src/_internal/modal.tsx、modal-focus.ts、validation-messages.tsx；field / dialog-editor 消费方</td>
+<td>全部原有输入和组合成员测试回归；浏览器验证日期 Escape / 返回焦点及成员 Tab 循环 / 移动 / 删除。日期两端直接展示 Adapter 已发布状态 / Issues</td>
+</tr>
+</tbody>
+</table></div>
+<p>源码推导的搜索生命周期如下，测试覆盖表中分支；图不代表每一条浏览器轨迹都被逐事件采集。</p>
+<figure class="architecture-diagram mermaid-figure"><figcaption>Mermaid 图示</figcaption><pre class="mermaid">sequenceDiagram
+    participant U as 用户
+    participant M as remote-select
+    participant A as 既有 Adapter
+    participant H as Host
+    U-&gt;&gt;M: 搜索 query / filterKey
+    M-&gt;&gt;A: request(search, input)
+    A-&gt;&gt;H: 类型化调用与 signal
+    U-&gt;&gt;M: 改查询 / 条件 / 隐藏
+    M-&gt;&gt;M: 旧 Owner 或 serial 失效，清候选
+    M-&gt;&gt;A: cancel
+    A-&gt;&gt;H: 撤销交付资格与取消信号
+    H--&gt;&gt;A: 仍可能迟到返回
+    A--&gt;&gt;M: discarded 或既有已排队结果
+    M-&gt;&gt;M: 提交 UI 更新时再次核对资格
+</pre><p class="mermaid-error" hidden>图表未能渲染；完整源码保留在下方。</p><details><summary>查看 Mermaid 源码</summary><pre><code>sequenceDiagram
+    participant U as 用户
+    participant M as remote-select
+    participant A as 既有 Adapter
+    participant H as Host
+    U-&gt;&gt;M: 搜索 query / filterKey
+    M-&gt;&gt;A: request(search, input)
+    A-&gt;&gt;H: 类型化调用与 signal
+    U-&gt;&gt;M: 改查询 / 条件 / 隐藏
+    M-&gt;&gt;M: 旧 Owner 或 serial 失效，清候选
+    M-&gt;&gt;A: cancel
+    A-&gt;&gt;H: 撤销交付资格与取消信号
+    H--&gt;&gt;A: 仍可能迟到返回
+    A--&gt;&gt;M: discarded 或既有已排队结果
+    M-&gt;&gt;M: 提交 UI 更新时再次核对资格
+</code></pre></details></figure>
+<p><code>apps/playground/src/demos/interactions/</code> 是真实 Compiler / Runtime / Renderer 的可控验收页：手动 Host 可返回成功、空列表、失败或忽略取消的迟到结果；国家清空城市明确写为 Definition Reaction；日期故障按钮令结束端父容器不可写，用于实际部分写入反例。页面仅使用本地合成数据，没有真实网络、防抖 / 缓存、保险产品规则或提交服务。根集成入口为 tests/integration/interaction-session.test.ts，UI 入口为 tests/e2e/interactions.spec.ts；/l4 和前两批验收页继续回归。</p>
+<p>实现内将 dialog-editor 的原 focus.ts 提取为 _internal/modal-focus.ts，共享弹层保留原生 dialog、Escape、Tab 边界及关闭焦点，不引入新的公共 API。field 的既有校验文案也只提取为共用呈现。各资产仍单目录 / 单静态 Manifest / README / 镜像测试；新增 Request 类型从根入口导出，样式由 Host 显式加载。</p>
+<p>新增行为用例先失败，补齐实现后物料测试通过；另补 Host 导入尾随换行日期的严格解析回归，累计 67 项。浏览器初跑的两处失败为验收定位器问题：Next 路由公告也有 alert 角色，以及 select 的 DOM option 使用内部编码；分别限制到搜索错误文案、按可见国家标签选择后复跑，不放宽业务断言。实际浏览器另核对日期弹层居中、双字段标签、确认边界提示及焦点。</p>
+<p>实际执行 <code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code> 返回 0：10 根 Schema、资产 / 格式 / lint / 边界、9 项构建与类型任务、全部包内测试、28 项根集成及 HTTP、隔离打包与文档同步通过。另执行 <code>PLAYWRIGHT_BROWSERS_PATH=/private/tmp/l4-playwright pnpm --store-dir /Users/samuel/Library/pnpm/store test:e2e</code>，三浏览器全量 15 项通过。文档 build / --check 同步 54 页、100 条记录和 7904 个本地链接 / 资源，实际查看本节表格与 Mermaid；本批未改协议候选验证源，无须复跑该验证器。两个新增资产各声明 minor；基于 fd96b3c 的只读版本计划包含 14 个物料与 text.isNonBlank，真实仓库未应用计划、未提交或发布。版本计划只供审阅，后续工作区变化需重算。</p>
+<p>本批为实现者按 W3 / 深度路径及 React 清单自审，未执行独立上下文审查。审查单元覆盖两资产的 Manifest / 代码 / README / 镜像测试与类型例、共享弹层 / 焦点 / 校验辅助及原消费方、聚合导出 / 样式、Playground Catalog / Definition / Host / 页面、集成和浏览器 / 打包消费者、变更声明与派生文档；本轮均按上述行为路径取证。既有 Compiler / Runtime / Adapter / core 只作未修改调用链和回归依据，前批工具代码不宣称重新完整独立审查。基线是设计提交 fd96b3c 加工具 0 与资产 1–3 的未提交工作区。真实服务、远端 CI、其他端、目标设备性能及完整业务纵切仍未验收；没有新增 ADR 或把核心函数模块化建议提升为已确认规则。</p>
+<h3 id="business-travel-implementation">业务纯函数与完整目标表单实施</h3>
+<p>2026-10-28 用户继续第 4 批，补齐 travel.isEligibleAge、travel.requiresGuardian、date.inclusiveDays、travel.isTripRangeAllowed、travel.personPremium、travel.totalPremium；连同 text.isNonBlank，首批 7 个同步函数全部本地交付。Playground <code>/demos/travel</code> 使用首批全部 14 个物料，装配<a href="extension-integration.html#first-assets-scenario" rel="noopener noreferrer">完整目标表单</a>。这是合成政策与可控本地 Host 的验收，不代表真实保险定价、资格、持久化或提交服务已经接入。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>契约 / 不变量</th>
+<th>实现与消费者</th>
+<th>实际反例 / 证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>普通 JSON 非法工作值 false / null；配置错误与溢出抛求值错误</td>
+<td>packages/pure-functions/src/ 各资产目录、_internal/policy.ts；静态 manifests.ts 与根工厂 / 类型入口</td>
+<td>镜像 tests 的年龄 0 / 阈值 / 字符串 / 越界 / 缺值、参数个数、政策形状 / 自洽 / 安全整数、零费率、乘法 / 汇总溢出；单人及总价 Golden</td>
+</tr>
+<tr>
+<td>严格公历、含首尾，无时钟 / 时区 / I/O</td>
+<td>src/_internal/date.ts、date-inclusive-days 与 travel-is-trip-range-allowed</td>
+<td>0001 / 9999、1900 / 2000 世纪闰年、2028-02-28 至 03-01 为 3、同日 / 倒序 / 超限 / 非法日期；两包分别消费 tests/fixtures/gregorian-dates.ts，无生产跨包导入</td>
+</tr>
+<tr>
+<td>总价不返回部分金额，输入顺序不影响非法值退化</td>
+<td>travel-total-premium 先检查全部年龄，再复用 personPremium / checkedAmount</td>
+<td>成人 + 儿童 basic 2 天为 500 分；非法成员放在溢出成员前后均 null；仅全部可试算时检查算术溢出</td>
+</tr>
+<tr>
+<td>显式 Reaction 维护总价并清旧价，独立 Constraint 检查存量一致性</td>
+<td>apps/playground/src/demos/travel/definition.ts、policy.ts</td>
+<td>显式 watch 日期、方案及整个 insureds，runOnActivate；年龄 <code>-</code> / 缺失 / 错误日期 / 超人数后为 null；仅覆盖存量金额 999 不自动重算，ESTIMATE_MISMATCH 阻止完整通过</td>
+</tr>
+<tr>
+<td>同一 Runtime 的双 Profile、成员身份与监护人独立规则</td>
+<td>travel/definition.ts 的 Typed Template / Scope、session.ts 的 profiles、demo.tsx</td>
+<td>条件显示与必填分别调用同一 guardian 判断；0 岁仍需监护人，18 岁隐藏且不删原值；compact 编辑 / 移首 / Escape / 切回保持成员及数据；日期确认与国家清城市 / 搜索选择贯通</td>
+</tr>
+<tr>
+<td>搜索与外部资格由 Host 承接，完整校验等待适用义务</td>
+<td>travel/session.ts 类型化 searchCities 与 ValidatorTask；既有 Runtime / Adapter</td>
+<td>资格通过 / 业务拒绝 / 技术失败 / 手动返回；pending 无 Issue 仍不交提交；编辑得到 stale；替换成员取消旧任务，销毁后不交付</td>
+</tr>
+<tr>
+<td>草稿允许非法工作值，提交只交付当前 valid 证明的 snapshot</td>
+<td>session.ts saveDraft / submit / attempt、Delivery 与页面消费</td>
+<td>invalid / incomplete / stale 均无提交快照；重复提交只允许最新意图发布；有效结果交付 proof.snapshot，交付前复核稳定根快照且不再 await；草稿可保存错误金额、未确认或空白数据</td>
+</tr>
+</tbody>
+</table></div>
+<p>政策是显式输入：AgePolicy 为 minAge / maxAge / adultAge；RatePolicy 使用 agePolicy / maxDays / maxInsureds / rates，basic / plus 的日费率字段为 adultDailyMinor / childDailyMinor。字段与验证细节见 <a href="../../packages/pure-functions/README.md" rel="noopener noreferrer">pure-functions README</a>和各 Manifest，属已确认语义内的实现细化。覆盖年龄范围要求 minAge ≤ maxAge，成年阈值独立，可覆盖全成年人或全未成年人；限制为正安全整数、日费率为非负安全整数。验收固定采用 0–80 岁、18 岁成年、30 天、1–5 人及已确认合成日费率，不引入真实产品假设。姓名、证件、监护人和外部资格不参与价格计算，分别独立校验。</p>
+<p>源码推导的交付路径如下；集成与浏览器覆盖表中分支，图不表示生产服务或每条通知的完整采集轨迹。</p>
+<figure class="architecture-diagram mermaid-figure"><figcaption>Mermaid 图示</figcaption><pre class="mermaid">sequenceDiagram
+    participant U as 用户 / 正式物料
+    participant R as Runtime
+    participant F as 同步业务函数
+    participant H as 本地 Host
+    U-&gt;&gt;R: 当前输入 / 日期确认 / 成员操作
+    R-&gt;&gt;F: Reaction 计算试算
+    F--&gt;&gt;R: 安全整数分或 null
+    U-&gt;&gt;H: host.emit 提交意图
+    H-&gt;&gt;R: flush 后 validate
+    R-&gt;&gt;F: Schema / Internal Constraint
+    R-&gt;&gt;H: 适用成员的资格核验
+    alt 等待时数据变化
+        R--&gt;&gt;H: stale / 撤销旧资格
+        H-&gt;&gt;H: 不交付提交快照
+    else 业务拒绝或技术未完成
+        H--&gt;&gt;R: Issue 或拒绝 Promise
+        R--&gt;&gt;H: invalid 或 incomplete
+    else 完整通过
+        H--&gt;&gt;R: 空 Issues
+        R--&gt;&gt;H: valid 与捕获 snapshot
+        H-&gt;&gt;H: 最新意图 / 当前快照复核后本地交付
+    end
+</pre><p class="mermaid-error" hidden>图表未能渲染；完整源码保留在下方。</p><details><summary>查看 Mermaid 源码</summary><pre><code>sequenceDiagram
+    participant U as 用户 / 正式物料
+    participant R as Runtime
+    participant F as 同步业务函数
+    participant H as 本地 Host
+    U-&gt;&gt;R: 当前输入 / 日期确认 / 成员操作
+    R-&gt;&gt;F: Reaction 计算试算
+    F--&gt;&gt;R: 安全整数分或 null
+    U-&gt;&gt;H: host.emit 提交意图
+    H-&gt;&gt;R: flush 后 validate
+    R-&gt;&gt;F: Schema / Internal Constraint
+    R-&gt;&gt;H: 适用成员的资格核验
+    alt 等待时数据变化
+        R--&gt;&gt;H: stale / 撤销旧资格
+        H-&gt;&gt;H: 不交付提交快照
+    else 业务拒绝或技术未完成
+        H--&gt;&gt;R: Issue 或拒绝 Promise
+        R--&gt;&gt;H: invalid 或 incomplete
+    else 完整通过
+        H--&gt;&gt;R: 空 Issues
+        R--&gt;&gt;H: valid 与捕获 snapshot
+        H-&gt;&gt;H: 最新意图 / 当前快照复核后本地交付
+    end
+</code></pre></details></figure>
+<p>Host 的请求、待处理核验、模式、草稿及模拟提交结果属于验收应用；业务数据与校验仍归 Runtime，没有复制成员业务 Store。两个 Profile 编译同一 Definition 的执行部分，切换不重建 Runtime。直接受约束的 Props / 标量比较保留引用类型证据，Missing 用既有 exists / if 或短路显式处理；未放宽 Compiler 的可证明兼容要求。真实服务接入后仍须自行检查适用性、权限、输出转换、服务新鲜度及恢复，不能因本地 valid 证明就跳过这些 Host 义务。</p>
+<p>先运行新函数反例，在未实现模板上有 65 项失败；实现后并补总价顺序反例，函数包累计 106 项通过（含既有 core / text.isNonBlank）。完整表单初始集成缺入口 / 类型证据时失败，补齐真实装配及保持类型证明后，6 项专用集成通过。日期 UI 与领域向量最初跨包私有导入被 lint 拒绝，改为镜像单测共享根测试向量；Turbo test / typecheck inputs 同步包含该夹具，未放宽边界。额外修正测试数据的联合类型声明后通过全量类型检查；没有修改 core 实现、身份、版本或 Runtime / Adapter / Compiler 公共行为。</p>
+<p>实际执行 <code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code> 返回 0：10 根 Schema、21 个资产检查、格式 / lint / 依赖边界、9 项构建与类型任务、全部包内测试（业务函数包 106、物料包 68）、34 项根集成与 Nest HTTP、隔离打包消费者及当时文档同步通过。隔离消费者读取 7 个业务静态 Manifest 不加载 UI / Runtime，并运行总价 500 与闰日 3 天；createCoreFunctions 不隐含注册业务函数。另执行 <code>PLAYWRIGHT_BROWSERS_PATH=/private/tmp/l4-playwright pnpm --store-dir /Users/samuel/Library/pnpm/store test:e2e</code>，三浏览器全量 21 项通过，包含原 /l4 及资产 1–3 页；实际浏览器另核对完整表单、摘要 / 字段切换、两成员价格 / 总价及 valid 快照交付。</p>
+<p>文档统一 build / --check 同步 54 页、100 条记录与 7920 个本地链接 / 资源；本批未更改协议候选示例源，无须复跑候选验证器。首次本机门禁自动审批因审批服务额度未能完成，命令未执行；用户继续后重试恢复，以上结果均来自实际成功执行。所有新增函数各声明 minor，版本只读计划重算后供审阅，不在真实仓库 apply / 提交 / 发布。</p>
+<p>本批按 W3 / form-deep-review 与 React 清单自审，未执行独立上下文代码审查。审查单元为：六函数的 Manifest / 实现 / README / 测试、共享政策 / 日期算法及导出；两个包的共享日期向量 / 测试与 Turbo 输入；完整 Definition / 政策 / Host 会话 / 页面和两份 Profile；集成 / 三浏览器 / 隔离打包消费者；六项变更声明与派生文档。均按表内行为路径核对，未把读过文件等同于覆盖全部行为。既有 core / Runtime / Compiler / Adapter 与前批资产仅作为未修改调用链及回归依据，工具 0 / 资产 1–3 的历史自审边界仍保留。本轮基线为 fd96b3c 加工具 0 与资产 1–4 的未提交工作区；没有新增 ADR / 状态所有权或执行语义决策，核心模块化建议未提升为共识。</p>
+<p>首批本地资产 0–4 批完成；真实查询 / 核保 / 费率 / 草稿 / 提交、实际制品留存与发布、远端 CI、跨端及生产性能仍待验收。下一步先明确真实 Host 的服务契约和业务适用性，再替换本地模拟能力；不新增 host-sdk、不把 DevTools 放入业务装配，也不把合成政策作为真实承保规则。</p>
+<h3 id="assets-batch-closure">当前资产与 Playground 批次收口</h3>
+<p>2026-10-31 按用户授权收口 fd96b3c14f0ec668d5174762ff84c55255a8fc6c 之后的未提交工作区：工具第 0 批、14 个正式物料、7 个业务函数、四个场景 Demo 与首页导航，以及实现状态同步。开始时固定 296 项变更 / 删除 / 未跟踪文件及内容哈希，覆盖暂存与未暂存；下述证据适用于本次收口后的工作区，不代表已有新提交或外部发布。</p>
+<p>三个独立上下文分别审查物料、纯函数 / Host / Playground、资产与版本工具。逐文件清单覆盖实现、Manifest、测试、静态入口、构建 / 版本声明和必要消费者；跨文件核对 Binding / Projection / Interaction、异步取消与卸载、日期 / 金额算法、完整校验快照交付、路由会话生命周期、生成写入及版本计划保护。文档由维护者核对源码及已有证据，生成物经统一构建检查；不是独立架构全量审查。上方各批历史自审记录保留，本节补齐本次独立审查。</p>
+<p>发现并关闭一项 P2：资产生成器只检查运行时工厂导出，未检查手写静态 Manifest 导出，可能生成重复导出并破坏编译。tools/engineering/assets/create.mjs 在任何模板写入前复用导出检查；tests/integration/assets-tooling.test.ts 新增 function / material 反例，覆盖预览和实际生成、入口内容不变及无半成品目录。两项反例先失败，修复后工具 20 项通过；原独立审查者复验反例与最终两文件并关闭问题。其他已审查代码哈希未漂移，本范围没有剩余已确认缺陷；这不证明未覆盖行为无缺陷。</p>
+<p>实际执行并通过：</p>
+<ul>
+<li><code>pnpm --store-dir /Users/samuel/Library/pnpm/store install --frozen-lockfile</code>：10 个工作区、锁文件保持一致，无依赖升级。</li>
+<li><code>npm_config_store_dir=/Users/samuel/Library/pnpm/store pnpm --store-dir /Users/samuel/Library/pnpm/store check</code>：10 根 Schema、21 个资产、格式 / lint / 依赖边界、构建 / 类型、529 项包内测试、36 项根集成与 1 项 Nest HTTP 集成、隔离打包 JS / d.ts / 静态 Manifest / CSS 消费以及文档同步。</li>
+<li><code>pnpm exec playwright test --output /private/tmp/form-batch-close/e2e-results</code>：Chromium / Firefox / WebKit 共 18 项通过，包含首页跳转与返回重建会话、旧入口移除、基本输入、成员 / 焦点 / 窄屏、复合交互及完整家庭出行提交。</li>
+<li><code>pnpm exec playwright test --config playwright.devtools.config.ts --output /private/tmp/form-batch-close/devtools-results</code>：真实 Chromium MV3 面板发现、只读状态 / 轨迹、断开与重连 1 项通过；业务填写继续。</li>
+</ul>
+<p>本轮同时清理 L2 / L3 仍将现有 SDK、Scope、任务取消、完整校验结果或执行队列列为未来实现的描述，删除“旧 /l4 保留”的现行说法，保留生产验收缺口。结论是当前本地开发批次收口，不新增公共行为、ADR 或平台设计共识。真实 Host 服务、业务政策、性能预算、其他目标端、远端 CI、制品留存与外部发布仍未完成；实际版本 apply、Git 提交和发布均未执行。协议候选样例源未改，不重复运行候选验证器。</p>
 </section>
 <section class="section" id="engineering-gates"><div class="section-head"><div class="kicker">08 · FORM ENGINE</div><div class="section-title"><h2>8. 质量门禁、测试与环境治理</h2></div></div>
 
@@ -625,14 +967,14 @@ tools/engineering/release/
 <h3 id="engineering-contract-review">契约、行为理解与审查收口</h3>
 <p>2026-10-24 用户确认按契约驱动与证据验证调整协作规则；执行步骤及产物以<a href="workflows.html#workflow-contract-evidence" rel="noopener noreferrer">项目工作流</a>为唯一流程正文。工程任务先引用现行模块契约做<a href="workflows.html#implementation-preflight" rel="noopener noreferrer">只读预检</a>，明确本轮行为、不变量、反例、消费者、验证入口与真实阻塞，再按可观察行为小批实现。内部方案是否自主决定取决于是否改变对外语义，不由文件或类名判断。</p>
 <ul>
-<li>复杂状态、调度、异步、跨层一致性、权限 / 数据正确性改动及用户单独要求的审查，使用辅助 <code>form-deep-review</code>；普通修改做针对性差异和适用检查，不强制完整图表 / 报告。按<a href="workflows.html#deep-review" rel="noopener noreferrer">深度审查</a>固定提交 / 工作区基线，纳入暂存、未暂存、未跟踪、生成物及必要未修改调用方 / 消费者；逐文件记录去向，按跨文件行为路径审查。</li>
+<li>复杂状态、调度、异步、跨层一致性、权限 / 数据正确性改动及用户单独要求的审查，由统一入口 <code>form-workflow</code> 按需加载 <code>references/review.md</code>；普通修改做针对性差异和适用检查，不强制完整图表 / 报告。按<a href="workflows.html#deep-review" rel="noopener noreferrer">深度审查</a>固定提交 / 工作区基线，纳入暂存、未暂存、未跟踪、生成物及必要未修改调用方 / 消费者；逐文件记录去向，按跨文件行为路径审查。</li>
 <li>还原关键入口、状态所有权、执行 / 通知顺序、错误传播、取消 / 失效和清理；图表标明源码推导或实际运行。依赖边界检查只约束导入 / 清单，类型检查只约束类型，均不能证明联动收敛、稳定通知或异步资格正确。</li>
 <li>重要契约按<a href="workflows.html#contract-verification" rel="noopener noreferrer">关联表</a>连接实现符号、正反例和真实结果。异步时序可控；验证通知应检查观察者所见状态和顺序，不能只查最终数据。新增 / 修复行为先确认测试能捕获缺失或原故障，再在实现后复验；不为低影响文档 / 样式修改生成只重复实现的测试。</li>
 <li>源码事实、运行结果、分析推断和未验证项分别标注。记录实际命令、结果、环境限制及适用代码基线；检查失败不因属于已有问题而隐去，也不能宣称由本次改动引入。文档构建、候选探针、代码覆盖率和 AI 解释各自有范围，不构成全引擎正确性证明。</li>
 <li>高风险改动在既有授权和能力支持下优先独立上下文审查，从原始契约与源码取证后再核对作者说明；没有独立能力时如实披露自审与残余风险。只读审查不改业务代码、测试或规范；修复交 W3 / W4，完成后在最终基线复核相关路径与发现。</li>
 <li>交付同时报告已验证范围、未覆盖高风险条件、问题与合并建议。P0 / P1 未关闭、必需门禁失败 / 未执行或重要契约偏差未解决时暂缓合并；无发现不等于无缺陷。沿用既有本地 / CI 门禁，不新增名义通过的 AI 检查脚本，不宣称远端分支保护已经启用。</li>
 </ul>
-<p>审查发现反向进入既有流程：实现违反契约直接修复并加回归，公共行为真实缺口集中讨论、确认后归档；重复缺陷优先落实为反例测试或静态规则。重要权衡记录在当前任务 / PR，必要设计变化回所属主题及 ADR，不另建长期契约副本或逐函数台账。不自动提交、合并或发布，不因检查通过推导外部操作授权。</p>
+<p>审查发现反向进入既有流程：实现违反契约直接修复并加回归，公共行为真实缺口集中讨论、确认后归档；重复缺陷优先落实为反例测试或静态规则。重要权衡记录在当前任务 / PR，必要设计变化回所属主题及 ADR，不另建长期契约副本或逐函数台账。本任务本地提交按<a href="workflows.html#workflow-openspec" rel="noopener noreferrer">已确认工作流策略</a>执行，不自动合并或发布，不因检查通过推导外部操作授权。</p>
 </section>
 <section class="section" id="engineering-acceptance"><div class="section-head"><div class="kicker">09 · FORM ENGINE</div><div class="section-title"><h2>9. 实施批次、验收与未决项</h2></div></div>
 
@@ -788,6 +1130,7 @@ pnpm<span class="syn-w"> </span>--filter<span class="syn-w"> </span>@form-engine
 </section>
 <section class="section" id="renderer-implementation"><div class="section-head"><div class="kicker">15 · FORM ENGINE</div><div class="section-title"><h2>React L4 首期实现与本地证据</h2></div></div>
 
+<p>当前 Playground 已按场景整理：首页导航到 <code>/demos/basic</code>、<code>/demos/members</code>、<code>/demos/interactions</code>、<code>/demos/travel</code>，页面 / Definition / 本地 Host 位于 <code>apps/playground/src/demos</code>。旧 <code>/l4</code> 专用物料夹具已移除，DevTools 浏览器联验改用正式家庭出行场景。下方早期 <code>/l4</code> 及测试计数仅记录当时证据，不作为当前运行入口；当前用法见 <a href="../../apps/playground/README.md" rel="noopener noreferrer">Playground README</a>。</p>
 <p>2026-10-26 按用户确认的四批计划实现 packages/renderer-react、Runtime 公共消费接缝、Playground <code>/l4</code> 夹具与真实 UI 验收。源码入口、职责图、状态生命周期、API 和命令维护在 <a href="../../packages/renderer-react/README.md" rel="noopener noreferrer">Renderer README</a>，本轮工作区基线为 29bb90d；本地检查不代表远端 CI、已发布 SDK、Flutter 或真实业务后端完成。</p>
 <ul>
 <li>首读 / Binding / Host 改值、表达式 / Validation / Scope / 模板、Interaction / Request / 清理、错误 / Profile / 端到端四批均使用真实 Compiler 与 Runtime。类型负例覆盖请求名 / 输入输出 / 必需注册与 Binding；打包消费者另验证构建后的 JS 呈现和 d.ts 负例。</li>
@@ -808,7 +1151,8 @@ pnpm<span class="syn-w"> </span>--filter<span class="syn-w"> </span>@form-engine
 <p>验证入口：pnpm test、pnpm test:integration、pnpm typecheck、pnpm lint、pnpm format:check、pnpm boundaries、pnpm build、pnpm packages:check、pnpm test:e2e，以及新增 pnpm test:e2e:devtools。后者真实装载 Chromium MV3，通过 Chrome inspectedWindow.eval 自动发现、按需查看状态 / 请求轨迹、断开后继续填写并重连；测试宿主定位使用 Chromium 前端测试协议，不成为扩展产品依赖。常规三浏览器另验证默认生产页面无发现标记、无技术诊断面板。</p>
 <p>独立只读审查发现并以隔离探针复验关闭六项 P2：poll / inspect 丢轨迹、根装配失败不可见、长键截断未标记、初次 Host 错误交接误用工具限额、快速重连复活旧轮询链、原 Prepared 身份字段漂移导致重挂。仓库保留相应红绿回归；另覆盖查询不重算表达式 / 新增业务观察、工具副本字符预算及配置接管一致性。测试结果仅支持所覆盖范围，无法据此宣布全局无缺陷。</p>
 <p>本期为主 frame 的只读工具，扩展通过本地解压加载；未发布商店，Firefox / Safari 扩展适配、跨 frame、编辑、时间旅行、完整因果轨迹与生产设备性能未验收。必要异常完整现场继续走原 Host 诊断出口，工具的截断副本不能替代原报告。</p>
-<p>2026-10-27 用户授权落实本阶段入口 Review 与 Runtime 内部命名整理。增加非法根配置 / 访问器、同一配置注册变更不重复接管 / checkView、销毁后拒绝、首次诊断多消费者与开发历史窗口回归；Runtime 主编排归一化语法对照修改前快照，除私有模块名 / helper 名外保持一致。配置复制与检查的调用次数减少，不代表已取得生产性能基准；数据写入链的复制与错误返回语义保留。相关源文件、命名规则和剩余性能范围集中在两个包 README，未新增 ADR 或发布 API。</p></section>
+<p>2026-10-27 用户授权落实本阶段入口 Review 与 Runtime 内部命名整理。增加非法根配置 / 访问器、同一配置注册变更不重复接管 / checkView、销毁后拒绝、首次诊断多消费者与开发历史窗口回归；Runtime 主编排归一化语法对照修改前快照，除私有模块名 / helper 名外保持一致。配置复制与检查的调用次数减少，不代表已取得生产性能基准；数据写入链的复制与错误返回语义保留。相关源文件、命名规则和剩余性能范围集中在两个包 README，未新增 ADR 或发布 API。</p>
+<p>2026-11-02 用户确认阶段检查通过后允许本任务范围的本地提交，替代此前“不自动提交”的一般限制；推送 / 合并 / 发布仍依实际授权。具体边界、OpenSpec 适配及隔离验证入口统一见<a href="workflows.html#workflow-openspec" rel="noopener noreferrer">工作流</a>。</p></section>
 
 
 
@@ -833,7 +1177,7 @@ pnpm<span class="syn-w"> </span>--filter<span class="syn-w"> </span>@form-engine
 <a href="#compiler-static-analysis" data-to="compiler-static-analysis" title="Compiler：共享分析与运行准备"><span class="nav-num">14</span><span>Compiler：共享分析与运行准备</span></a>
 <a href="#renderer-implementation" data-to="renderer-implementation" title="React L4 首期实现与本地证据"><span class="nav-num">15</span><span>React L4 首期实现与本地证据</span></a>
 <a href="#devtools-implementation" data-to="devtools-implementation" title="独立 DevTools 首期实现与验证"><span class="nav-num">16</span><span>独立 DevTools 首期实现与验证</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>工程与 TS 核心 / React / DevTools 已有本地证据；资产模板和版本编排设计已确认待实现，真实 Host、全端性能与远端 CI 未完成</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 15</summary><ul><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="compiler.html">Compiler 详细设计与实施</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 7</summary><ul><li><a href="source-map.html#src-asset-design">SRC-ASSETDESIGN · 首批正式资产、单资产目录及版本工具确认</a></li><li><a href="source-map.html#src-workflows">SRC-WORKFLOWS · 项目工作流确认与调研依据</a></li><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION · Protocol 首批代码与本地验收</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ENGINEERING-FE-001</dd><dt>所属层级</dt><dd>系统</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>状态范围</summary><p>核心 / React / DevTools、资产工具、14 个物料 / 7 个业务函数及完整可控表单已有本地证据；真实 Host、全端性能与远端 CI 未完成</p></details><details><summary>关联模块 · 4</summary><ul><li><a href="governance.html#M01">M01 全局分层</a></li><li><a href="governance.html#M06">M06 能力与发布治理</a></li><li><a href="governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="governance.html#M17">M17 文档与候选验证工具</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a></li><li><a href="decisions/ADR-FE-013-ts-react-packages.html">ADR-FE-013：TS / React 首期包边界与 Flutter 预留</a></li><li><a href="decisions/ADR-FE-014-engineering-toolchain.html">ADR-FE-014：首期工程工具链与脚手架初始化</a></li></ul></details><details><summary>相关正文与历史 · 18</summary><ul><li><a href="decisions/ADR-FE-015-protocol-source.html">ADR-FE-015：原生 TS 协议源与 JSON Schema 校验链路</a></li><li><a href="decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a></li><li><a href="architecture.html">整体架构设计</a></li><li><a href="compiler.html">Compiler 详细设计与实施</a></li><li><a href="extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="l2-preparation.html">L2 预处理与编译</a></li><li><a href="l3-observability.html">L3 诊断与 Trace</a></li><li><a href="l3-reactive-engine.html">L3 运行时总览与 Flush</a></li><li><a href="l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="governance.html">设计进展与待讨论事项</a></li><li><a href="workflows.html">项目工作流与使用说明</a></li><li><a href="design-history.html">设计决策与讨论演进</a></li><li><a href="l1/08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="l1/05-view-material-host.html#view">视图、物料与宿主契约</a></li><li><a href="capability-map.html">纵向与横向能力图谱</a></li><li><a href="design-review.html">架构约束与一致性审查</a></li><li><a href="source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 7</summary><ul><li><a href="source-map.html#src-asset-design">SRC-ASSETDESIGN · 首批正式资产、单资产目录及版本工具确认</a></li><li><a href="source-map.html#src-workflows">SRC-WORKFLOWS · 项目工作流确认与调研依据</a></li><li><a href="source-map.html#src-compiler-implementation">SRC-COMPILERIMPLEMENTATION · Compiler 源码与真实编译验收</a></li><li><a href="source-map.html#src-compiler-io-types">SRC-COMPILERIOTYPES · 编译输入输出协议类型同步授权与实现</a></li><li><a href="source-map.html#src-protocolimplementation">SRC-PROTOCOLIMPLEMENTATION · Protocol 首批代码与本地验收</a></li><li><a href="source-map.html#src-protocolbaseline">SRC-PROTOCOLBASELINE · 协议包完整草案确认与开发准备</a></li><li><a href="source-map.html#src-engineering">SRC-ENGINEERING · 工程工具链确认与官方命令依据</a></li></ul></details></section>
       </aside>
       </div>
     </div>

@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>成员管理 · Studio 预览</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      html {
+        font-size: 13px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        background: var(--studio-surface);
+        color: var(--studio-text);
+        font: var(--studio-type-body);
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font: var(--studio-type-title);
+      }
+      h2 {
+        font: var(--studio-type-section);
+      }
+      button,
+      select,
+      input,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      button:not(:disabled),
+      select {
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.55;
+      }
+      :focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        height: 100dvh;
+      }
+      aside {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--studio-space-12);
+        padding: var(--studio-space-8);
+        background: var(--studio-bg);
+        border-right: 1px solid var(--studio-border);
+      }
+      .brand,
+      .avatar,
+      .rail-icon {
+        display: grid;
+        place-items: center;
+        border-radius: var(--studio-radius-8);
+        width: 36px;
+        height: 36px;
+      }
+      .brand {
+        background: var(--studio-primary);
+        color: var(--studio-on-primary);
+        font-weight: 600;
+      }
+      .avatar {
+        border-radius: 50%;
+        background: var(--studio-surface-muted);
+        font-weight: 600;
+      }
+      .rail-icon {
+        color: var(--studio-text-muted);
+      }
+      .rail-icon[aria-current] {
+        margin-top: auto;
+        background: var(--studio-selected);
+        color: var(--studio-info-fg);
+      }
+      .top {
+        min-height: 48px;
+        border-bottom: 1px solid var(--studio-border);
+        padding: var(--studio-space-8) var(--gutter);
+        background: var(--studio-bg);
+      }
+      .workspace {
+        --gutter: var(--studio-space-24);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+      }
+      main {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        padding: var(--studio-space-24) var(--gutter) 0;
+      }
+      main > :is(.bar, .tabs),
+      [role='tabpanel'] > :is(.tools, .foot) {
+        flex: none;
+      }
+      [role='tabpanel'] {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+      }
+      #notice {
+        order: -1;
+        flex: none;
+      }
+      #notice:empty {
+        display: none;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--studio-space-8) var(--studio-space-16);
+      }
+      .muted,
+      small {
+        color: var(--studio-text-muted);
+      }
+      small {
+        display: block;
+        font: var(--studio-type-caption);
+      }
+      .tabs {
+        display: flex;
+        margin-top: var(--studio-space-24);
+        gap: var(--studio-space-16);
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .tabs button {
+        padding: var(--studio-space-8) var(--studio-space-4);
+        min-height: var(--studio-control-height);
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: var(--studio-text-muted);
+      }
+      .tabs [aria-selected='true'] {
+        color: var(--studio-text);
+        border-color: var(--studio-primary);
+        font-weight: 600;
+      }
+      .tools {
+        min-height: 68px;
+        padding-block: var(--studio-space-12);
+      }
+      .tools > .search {
+        margin-left: auto;
+      }
+      .search {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--studio-space-8);
+        max-width: 100%;
+      }
+      .group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--studio-space-8);
+        align-items: center;
+      }
+      .search .group {
+        align-items: stretch;
+        flex-wrap: nowrap;
+        border-left: 1px solid var(--studio-border);
+        padding-left: var(--studio-space-8);
+      }
+      .search :is(input, button),
+      .tools select {
+        height: var(--studio-control-height);
+      }
+      .search button {
+        white-space: nowrap;
+      }
+      input[type='search'],
+      select,
+      textarea {
+        min-height: var(--studio-control-height);
+        border: 1px solid var(--studio-control-border);
+        border-radius: var(--studio-radius-8);
+        background: var(--studio-surface);
+        padding: var(--studio-space-4) var(--studio-space-8);
+      }
+      input[type='search'] {
+        width: 250px;
+        flex: 1 1 120px;
+        min-width: 120px;
+      }
+      .results {
+        overflow: auto;
+        min-height: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 570px;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--studio-border);
+        padding: var(--studio-space-12) var(--studio-space-16);
+      }
+      th {
+        background: var(--studio-surface-muted);
+        white-space: nowrap;
+        font: var(--studio-type-control);
+      }
+      th:last-child,
+      td:last-child {
+        text-align: right;
+        white-space: nowrap;
+      }
+      td:first-child {
+        min-width: 130px;
+      }
+      td:nth-child(2) {
+        overflow-wrap: anywhere;
+      }
+      .results tbody tr:hover {
+        background: var(--studio-bg);
+      }
+      .pill {
+        display: inline-block;
+        white-space: nowrap;
+        padding: 1px var(--studio-space-8);
+        border-radius: var(--studio-radius-8);
+        background: var(--studio-surface-muted);
+        color: var(--studio-text-muted);
+        font: var(--studio-type-caption);
+      }
+      .pill[data-state='active'],
+      .pill[data-state='approved'] {
+        background: var(--studio-success-bg);
+        color: var(--studio-success-fg);
+      }
+      .pill[data-state='pending'] {
+        background: var(--studio-warning-bg);
+        color: var(--studio-warning-fg);
+      }
+      .pill[data-state='rejected'] {
+        background: var(--studio-danger-bg);
+        color: var(--studio-danger-fg);
+      }
+      .foot {
+        margin-top: auto;
+        padding-block: var(--studio-space-12);
+        border-top: 1px solid var(--studio-border);
+      }
+      .foot [data-page-number] {
+        min-width: 5ch;
+        text-align: center;
+        white-space: nowrap;
+      }
+      #notice {
+        margin-top: var(--studio-space-8);
+        color: var(--studio-success-fg);
+      }
+      dialog {
+        width: min(560px, calc(100% - 32px));
+        max-height: calc(100dvh - 32px);
+        padding: 0;
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-12);
+        color: inherit;
+        background: var(--studio-surface);
+        box-shadow: var(--studio-overlay-shadow);
+      }
+      dialog::backdrop {
+        background: #23272f66;
+      }
+      dialog[open] {
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-head,
+      .modal-actions {
+        padding: var(--studio-space-16) var(--gutter);
+      }
+      .modal-head {
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .modal-actions {
+        border-top: 1px solid var(--studio-border);
+        justify-content: flex-end;
+      }
+      .modal-body {
+        display: grid;
+        overflow-y: auto;
+        gap: var(--studio-space-16);
+        padding: var(--gutter);
+      }
+      .modal-body fieldset {
+        min-width: 0;
+        display: grid;
+        gap: var(--studio-space-8);
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-8);
+        padding: var(--studio-space-12);
+      }
+      .modal-body textarea {
+        width: 100%;
+        display: block;
+        resize: vertical;
+      }
+      .stack {
+        display: grid;
+        gap: var(--studio-space-4);
+      }
+      .warning {
+        background: var(--studio-warning-bg);
+        color: var(--studio-warning-fg);
+        padding: var(--studio-space-12);
+        border-radius: var(--studio-radius-8);
+      }
+      .error {
+        color: var(--studio-danger-fg);
+      }
+      .audit {
+        border-bottom: 1px solid var(--studio-border);
+        padding-bottom: var(--studio-space-12);
+      }
+      @media (max-width: 650px) {
+        .workspace {
+          --gutter: var(--studio-space-16);
+        }
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          display: none;
+        }
+        .tools > .search {
+          width: 100%;
+          margin: 0;
+        }
+      }
+      @media (max-width: 350px) {
+        .search input {
+          flex-basis: 100%;
+        }
+        .search .group {
+          width: 100%;
+          border-left: 0;
+          border-top: 1px solid var(--studio-border);
+          padding: var(--studio-space-8) 0 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside aria-label="Studio 导航示意">
+        <div class="brand" title="Studio">S</div>
+        <span class="rail-icon" title="Agent" data-icon="Bot"></span>
+        <span class="rail-icon" title="表单" data-icon="FileText"></span>
+        <span class="rail-icon" title="物料" data-icon="Component"></span>
+        <span class="rail-icon" title="纯函数" data-icon="FunctionSquare"></span>
+        <span class="rail-icon" title="成员管理" aria-current="page" data-icon="Users"></span>
+        <span class="avatar" title="林岚">林</span>
+      </aside>
+      <div class="workspace">
+        <header class="bar top">
+          <span><span class="muted">默认团队 /</span> 成员管理</span>
+          <div class="group">
+            <small>交互预览 · 模拟数据</small
+            ><button class="studio-button" data-variant="text" id="simulate-conflict">
+              演示编辑冲突
+            </button>
+          </div>
+        </header>
+        <main>
+          <div class="bar">
+            <h1>成员管理</h1>
+            <button class="studio-button" data-variant="secondary" id="guide">角色说明</button>
+          </div>
+          <div class="tabs" role="tablist" aria-label="成员管理视图">
+            <button id="members-tab" role="tab" aria-selected="true" aria-controls="members">
+              成员
+            </button>
+            <button
+              id="requests-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="requests"
+              tabindex="-1"
+            >
+              加入申请 <span class="pill" data-state="pending" id="pending-count">2</span>
+            </button>
+          </div>
+          <section id="members" role="tabpanel" aria-labelledby="members-tab">
+            <div class="bar tools">
+              <form class="search" id="search">
+                <input
+                  type="search"
+                  id="keyword"
+                  aria-label="搜索成员"
+                  placeholder="用户名、GitHub 或用户 ID"
+                />
+                <div class="group">
+                  <button type="reset" class="studio-button" data-variant="secondary">重置</button>
+                  <button type="submit" class="studio-button" data-variant="primary">筛选</button>
+                  <button
+                    type="button"
+                    class="studio-button"
+                    data-variant="secondary"
+                    id="refresh-members"
+                    aria-label="刷新成员列表"
+                  >
+                    刷新
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div class="results">
+              <table aria-label="成员列表">
+                <thead>
+                  <tr>
+                    <th scope="col">成员</th>
+                    <th scope="col">角色</th>
+                    <th scope="col">状态</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="member-rows"></tbody>
+              </table>
+            </div>
+            <nav class="bar foot" id="members-pagination" aria-label="成员列表分页"></nav>
+          </section>
+          <section id="requests" role="tabpanel" aria-labelledby="requests-tab" hidden>
+            <div class="bar tools">
+              <div class="group">
+                <label for="filter">申请状态</label>
+                <select id="filter">
+                  <option value="pending">待审批</option>
+                  <option value="approved">已批准</option>
+                  <option value="rejected">已拒绝</option>
+                  <option value="withdrawn">已撤回</option>
+                  <option value="all">全部申请</option>
+                </select>
+              </div>
+              <button
+                class="studio-button"
+                data-variant="secondary"
+                id="refresh-requests"
+                aria-label="刷新申请列表"
+              >
+                刷新
+              </button>
+            </div>
+            <div class="results">
+              <table aria-label="加入申请列表">
+                <thead>
+                  <tr>
+                    <th scope="col">申请人</th>
+                    <th scope="col">申请说明</th>
+                    <th scope="col">状态</th>
+                    <th scope="col">提交时间</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="request-rows"></tbody>
+              </table>
+            </div>
+            <nav class="bar foot" id="requests-pagination" aria-label="加入申请分页"></nav>
+          </section>
+          <p id="notice" role="status"></p>
+        </main>
+        <dialog id="dialog" aria-labelledby="dialog-title">
+          <header class="bar modal-head">
+            <h2 id="dialog-title"></h2>
+            <button class="studio-button" data-variant="text" id="close" type="button">关闭</button>
+          </header>
+          <div class="modal-body" id="dialog-body"></div>
+          <footer class="bar modal-actions" id="dialog-actions"></footer>
+        </dialog>
+      </div>
+    </div>
+    <template id="pagination">
+      <span class="muted" data-count aria-live="polite"></span>
+      <div class="group">
+        <label
+          >每页
+          <select aria-label="每页条数">
+            <option selected>5</option>
+            <option>10</option>
+            <option>20</option>
+          </select>
+          条</label
+        >
+        <button type="button" class="studio-button" data-variant="secondary" data-page-step="-1">
+          上一页
+        </button>
+        <span data-page-number aria-live="polite"></span>
+        <button type="button" class="studio-button" data-variant="secondary" data-page-step="1">
+          下一页
+        </button>
+      </div>
+    </template>
+    <script>
+      const navigationIcons = {
+        Bot: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot" aria-hidden="true" focusable="false"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>',
+        FileText:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
+        Component:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-component" aria-hidden="true" focusable="false"><path d="M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"></path><path d="M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z"></path><path d="M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z"></path><path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"></path></svg>',
+        FunctionSquare:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-function lucide-function-square" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><path d="M9 17c2 0 2.8-1 2.8-2.8V10c0-2 1-3.3 3.2-3"></path><path d="M9 11.2h5.7"></path></svg>',
+        Users:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+      };
+      document.querySelectorAll('[data-icon]').forEach((item) => {
+        item.innerHTML = navigationIcons[item.dataset.icon];
+      });
+    </script>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const escapeText = (value) =>
+        String(value).replace(
+          /[&<>"']/g,
+          (char) =>
+            ({
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;',
+            })[char],
+        );
+      const roleInfo = {
+        viewer: ['查看者', '查看表单、历史与能力目录。'],
+        editor: ['编辑者', '查看并编辑、保存表单。'],
+        publisher: ['发布者', '查看并发布已保存的版本。'],
+        admin: ['管理员', '管理表单、发布和团队成员。'],
+      };
+      const members = [
+        {
+          id: 'stu-admin',
+          name: '林岚',
+          github: 'lin-lan',
+          roles: ['admin'],
+          active: true,
+          self: true,
+        },
+        {
+          id: 'stu-river',
+          name: '周予',
+          github: 'zhou-yu',
+          roles: ['editor', 'publisher'],
+          active: true,
+        },
+        { id: 'stu-wei', name: '许维', github: 'xu-wei', roles: ['editor'], active: true },
+        { id: 'stu-ming', name: '陈明', github: 'chen-ming', roles: ['viewer'], active: true },
+        { id: 'stu-xia', name: '宋夏', github: 'song-xia', roles: ['viewer'], active: false },
+        { id: 'stu-kai', name: '邱凯', github: 'qiu-kai', roles: ['editor'], active: true },
+        { id: 'stu-ke', name: '孟可', github: 'meng-ke', roles: ['viewer'], active: true },
+      ];
+      const requests = [
+        {
+          id: 'r-1',
+          name: '顾然',
+          github: 'gu-ran',
+          text: '加入表单团队，维护采购审批模板。',
+          state: 'pending',
+          time: '11-24 10:42',
+        },
+        {
+          id: 'r-2',
+          name: '贺星',
+          github: 'he-xing',
+          text: '协助验证差旅申请表的发布版本。',
+          state: 'pending',
+          time: '11-24 09:18',
+        },
+        {
+          id: 'r-3',
+          name: '陈明',
+          github: 'chen-ming',
+          text: '查看财务相关表单。',
+          state: 'approved',
+          time: '11-23 16:20',
+        },
+        {
+          id: 'r-4',
+          name: '魏宁',
+          github: 'wei-ning',
+          text: '申请查看演示表单。',
+          state: 'rejected',
+          time: '11-22 11:10',
+          reason: '请先补充所属团队。',
+        },
+        {
+          id: 'r-5',
+          name: '程佳',
+          github: 'cheng-jia',
+          text: '参与维护入职表单。',
+          state: 'withdrawn',
+          time: '11-21 15:35',
+        },
+        {
+          id: 'r-6',
+          name: '陆青',
+          github: 'lu-qing',
+          text: '协助整理供应商资料。',
+          state: 'approved',
+          time: '11-20 14:30',
+        },
+      ];
+      const states = {
+        pending: '待审批',
+        approved: '已批准',
+        rejected: '已拒绝',
+        withdrawn: '已撤回',
+      };
+      const history = {
+        'stu-river': [
+          { action: '调整角色', time: '11-23 14:25', detail: '编辑者 → 编辑者、发布者' },
+        ],
+        'stu-ming': [{ action: '批准加入', time: '11-23 16:35', detail: '授予查看者' }],
+        'stu-xia': [{ action: '停用成员', time: '11-22 10:30', detail: '已启用 → 已停用' }],
+      };
+      const preset = {
+        viewer: ['viewer'],
+        editor: ['editor'],
+        publisher: ['publisher'],
+        combined: ['editor', 'publisher'],
+        admin: ['admin'],
+      };
+      const tabs = [$('members-tab'), $('requests-tab')];
+      const dialog = $('dialog');
+      const membersPagination = pagination('members-pagination', '位成员', drawMembers);
+      const requestsPagination = pagination('requests-pagination', '条申请', drawRequests);
+      let query = '';
+      let returnFocus = null;
+      let focusAfterClose = null;
+
+      function button(label, action, key = '', name = label, variant = 'text') {
+        return `<button type="button" class="studio-button" data-variant="${variant}" data-action="${action}" data-key="${key}" aria-label="${escapeText(name)}">${escapeText(label)}</button>`;
+      }
+
+      function roleNames(roles) {
+        return roles.map((role) => roleInfo[role][0]).join('、');
+      }
+
+      function identity(person, self = false) {
+        return `<strong>${escapeText(person.name)}${self ? '（你）' : ''}</strong><small>@${escapeText(person.github)}</small>`;
+      }
+
+      function pill(text, state) {
+        return `<span class="pill" data-state="${state}">${text}</span>`;
+      }
+
+      function tell(message) {
+        $('notice').textContent = message;
+      }
+
+      function pagination(id, unit, render) {
+        const nav = $(id);
+        nav.append($('pagination').content.cloneNode(true));
+        const size = nav.querySelector('select');
+        const prev = nav.querySelector('[data-page-step="-1"]');
+        const next = nav.querySelector('[data-page-step="1"]');
+        const count = nav.querySelector('[data-count]');
+        const number = nav.querySelector('[data-page-number]');
+        let page = 1;
+        size.onchange = () => {
+          page = 1;
+          render();
+        };
+        [prev, next].forEach((control) => {
+          control.onclick = () => {
+            page += Number(control.dataset.pageStep);
+            render();
+            if (control.disabled) (control === prev ? next : prev).focus();
+          };
+        });
+        return {
+          reset() {
+            page = 1;
+          },
+          items(rows) {
+            const pageSize = Number(size.value);
+            const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+            page = Math.min(totalPages, Math.max(page, 1));
+            count.textContent = `共 ${rows.length} ${unit}`;
+            number.textContent = `${page} / ${totalPages}`;
+            prev.disabled = page === 1;
+            next.disabled = page === totalPages;
+            return rows.slice((page - 1) * pageSize, page * pageSize);
+          },
+        };
+      }
+
+      function drawMembers() {
+        const found = members.filter((member) =>
+          `${member.name} ${member.github} ${member.id}`.toLowerCase().includes(query),
+        );
+        $('member-rows').innerHTML =
+          membersPagination
+            .items(found)
+            .map(
+              (member) => `
+      <tr><td>${identity(member, member.self)}</td><td>${roleNames(member.roles)}</td>
+        <td>${pill(member.active ? '已启用' : '成员停用', member.active ? 'active' : 'inactive')}</td>
+        <td>${button('编辑', 'edit', member.id, '编辑成员 ' + member.name)}
+          ${button('操作记录', 'records', member.id, member.name + '的操作记录')}</td></tr>
+    `,
+            )
+            .join('') || '<tr><td colspan="4">没有匹配的成员。</td></tr>';
+      }
+
+      function drawRequests() {
+        const filter = $('filter').value;
+        const found = requests.filter((request) => filter === 'all' || request.state === filter);
+        $('pending-count').textContent = requests.filter(
+          (request) => request.state === 'pending',
+        ).length;
+        $('request-rows').innerHTML =
+          requestsPagination
+            .items(found)
+            .map(
+              (request) => `
+      <tr><td>${identity(request)}</td><td>${escapeText(request.text)}</td>
+        <td>${pill(states[request.state], request.state)}${request.reason ? '<small>' + escapeText(request.reason) + '</small>' : ''}</td>
+        <td>${request.time}</td><td>${request.state === 'pending' ? button('审批', 'review', request.id, '审批申请 ' + request.name) : ''}</td></tr>
+    `,
+            )
+            .join('') ||
+          `<tr><td colspan="5">${filter === 'pending' ? '当前没有待审批申请。' : '没有匹配的加入申请。'}</td></tr>`;
+      }
+
+      function openDialog(title, body, actions, source) {
+        returnFocus = source;
+        focusAfterClose = null;
+        $('dialog-title').textContent = title;
+        $('dialog-body').innerHTML = body;
+        $('dialog-actions').innerHTML = actions;
+        $('dialog-actions').hidden = !actions;
+        dialog.showModal();
+      }
+
+      function record(member, action, detail, actor = '林岚') {
+        const time = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        (history[member.id] ??= []).unshift({ action, time, detail, actor });
+      }
+
+      function openEdit(member, source, simulateConflict = false) {
+        const options = Object.entries(roleInfo)
+          .map(
+            ([id, [name, description]]) => `
+      <label><input type="checkbox" name="role" value="${id}" ${member.roles.includes(id) ? 'checked' : ''}>
+        ${name}<small>${description}</small></label>
+    `,
+          )
+          .join('');
+        openDialog(
+          '编辑成员',
+          `
+      <div>${identity(member, member.self)}<small>用户 ID · ${escapeText(member.id)}</small></div>
+      <fieldset><legend>角色（可多选）</legend>${options}</fieldset>
+      <label><input type="checkbox" id="access" ${member.active ? 'checked' : ''}> 启用成员访问</label>
+      <p id="suspension" class="warning" hidden>确认后，${escapeText(member.name)}将立即失去团队访问权限。成员身份和操作记录会保留。</p>
+      <p id="conflict" class="warning" role="status" hidden></p>
+      <p class="error" id="edit-error" role="alert" hidden></p>
+    `,
+          button('取消', 'cancel', '', '取消', 'secondary') +
+            button('保存成员设置', 'save', '', '保存成员设置', 'primary'),
+          source,
+        );
+
+        const access = $('access');
+        const save = dialog.querySelector('[data-action="save"]');
+        const conflict = $('conflict');
+        const selected = () =>
+          [...dialog.querySelectorAll('input[name="role"]:checked')].map((input) => input.value);
+        const rolesEqual = (roles) =>
+          roles.length === member.roles.length &&
+          roles.every((role) => member.roles.includes(role));
+        const sync = () => {
+          const label =
+            member.active && !access.checked
+              ? '确认停用'
+              : !member.active && access.checked
+                ? '确认恢复'
+                : '保存成员设置';
+          save.textContent = label;
+          save.setAttribute('aria-label', label);
+          save.disabled =
+            selected().length === 0 || (rolesEqual(selected()) && access.checked === member.active);
+          $('suspension').hidden = member.active === access.checked || access.checked;
+          $('edit-error').hidden = true;
+          if (!conflict.hidden) {
+            conflict.textContent =
+              '另一位管理员更新了成员。最新角色为「' +
+              roleNames(member.roles) +
+              '」，你勾选的是「' +
+              (roleNames(selected()) || '未选择角色') +
+              '」。请核对后再保存。';
+          }
+        };
+        $('dialog-body').addEventListener('change', sync, { signal: closeSignal() });
+        sync();
+        save.onclick = () => {
+          const roles = selected();
+          const active = access.checked;
+          if (simulateConflict) {
+            simulateConflict = false;
+            const latest = roles.includes('publisher') ? ['viewer'] : ['publisher'];
+            record(member, '调整角色', roleNames(member.roles) + ' → ' + roleNames(latest), '周予');
+            member.roles = latest;
+            conflict.hidden = false;
+            drawMembers();
+            sync();
+            return;
+          }
+          if (
+            !members.some((other) =>
+              other.id === member.id
+                ? active && roles.includes('admin')
+                : other.active && other.roles.includes('admin'),
+            )
+          ) {
+            $('edit-error').textContent =
+              '团队须至少保留一位有效管理员，请先为其他成员授予管理员角色。';
+            $('edit-error').hidden = false;
+            return;
+          }
+          if (!rolesEqual(roles))
+            record(member, '调整角色', roleNames(member.roles) + ' → ' + roleNames(roles));
+          if (member.active !== active)
+            record(
+              member,
+              active ? '恢复成员' : '停用成员',
+              active ? '已停用 → 已启用' : '已启用 → 已停用',
+            );
+          const message =
+            member.active === active
+              ? '成员设置已保存。'
+              : active
+                ? '成员访问已恢复。'
+                : '成员已停用。';
+          Object.assign(member, { roles, active });
+          drawMembers();
+          focusAfterClose = () =>
+            $('member-rows').querySelector(`[data-key="${member.id}"][data-action="edit"]`) ??
+            $('keyword');
+          dialog.close();
+          tell(message);
+        };
+      }
+
+      function closeSignal() {
+        const controller = new AbortController();
+        dialog.addEventListener('close', () => controller.abort(), { once: true });
+        return controller.signal;
+      }
+
+      function openRecords(member, source) {
+        const entries = (history[member.id] ?? [])
+          .map(
+            (row) =>
+              `<div class="audit"><strong>${escapeText(row.action)}</strong><p>${escapeText(row.detail)}</p>
+      <small>${escapeText(row.time)} · ${escapeText(row.actor ?? '林岚')} · 成功</small></div>`,
+          )
+          .join('');
+        openDialog(
+          '成员操作记录',
+          `<div>${identity(member, member.self)}</div>${entries || '<p class="muted">暂无操作记录。</p>'}`,
+          '',
+          source,
+        );
+      }
+
+      function openReview(request, source) {
+        const options = Object.keys(preset)
+          .map(
+            (id) =>
+              `<option value="${id}">${id === 'combined' ? '编辑＋发布' : roleInfo[id][0]}</option>`,
+          )
+          .join('');
+        openDialog(
+          '审批加入申请',
+          `
+      <div>${identity(request)}<small>提交于 ${request.time}</small></div>
+      <p>${escapeText(request.text)}</p>
+      <fieldset><legend>审批决定</legend>
+        <div class="group"><label><input type="radio" name="decision" value="approve" checked> 批准</label>
+        <label><input type="radio" name="decision" value="reject"> 拒绝</label></div>
+      </fieldset>
+      <div id="approval" class="stack"><label for="approval-role">授予角色</label>
+        <select id="approval-role"><option value="" disabled selected>请选择角色</option>${options}</select>
+        <small>编辑权和发布权可以分别授予。</small>
+      </div>
+      <div id="rejection" class="stack" hidden><label for="reason">拒绝原因</label>
+        <textarea id="reason" rows="3" maxlength="1000"></textarea><small>申请人可查看原因并重新申请。</small>
+      </div>
+    `,
+          button('取消', 'cancel', '', '取消', 'secondary') +
+            button('批准并授予角色', 'decide', '', '批准并授予角色', 'primary'),
+          source,
+        );
+        const approve = () => dialog.querySelector('[name="decision"]:checked').value === 'approve';
+        const submit = dialog.querySelector('[data-action="decide"]');
+        const sync = () => {
+          $('approval').hidden = !approve();
+          $('rejection').hidden = approve();
+          const label = approve() ? '批准并授予角色' : '确认拒绝';
+          submit.textContent = label;
+          submit.setAttribute('aria-label', label);
+          submit.disabled = approve() ? !$('approval-role').value : !$('reason').value.trim();
+        };
+        $('dialog-body').addEventListener('input', sync, { signal: closeSignal() });
+        sync();
+        submit.onclick = () => {
+          if (approve()) {
+            const member = {
+              id: 'stu-' + request.id,
+              name: request.name,
+              github: request.github,
+              roles: preset[$('approval-role').value],
+              active: true,
+            };
+            members.push(member);
+            record(member, '批准加入', '授予' + roleNames(member.roles));
+            request.state = 'approved';
+            tell('申请已批准，成员权限已生效。');
+          } else {
+            request.state = 'rejected';
+            request.reason = $('reason').value.trim();
+            tell('申请已拒绝。');
+          }
+          drawMembers();
+          drawRequests();
+          focusAfterClose = () =>
+            $('request-rows').querySelector('[data-action="review"]') ?? $('filter');
+          dialog.close();
+        };
+      }
+
+      function selectTab(tab) {
+        tabs.forEach((item) => {
+          item.setAttribute('aria-selected', item === tab);
+          item.tabIndex = item === tab ? 0 : -1;
+          $(item.getAttribute('aria-controls')).hidden = item !== tab;
+        });
+        tell('');
+        tab.focus();
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.onclick = () => selectTab(tab);
+        tab.onkeydown = (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          selectTab(tabs[event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - index]);
+        };
+      });
+      $('search').onsubmit = (event) => {
+        event.preventDefault();
+        query = $('keyword').value.trim().toLowerCase();
+        membersPagination.reset();
+        drawMembers();
+      };
+      $('search').onreset = () => {
+        query = '';
+        membersPagination.reset();
+        drawMembers();
+      };
+      $('filter').onchange = () => {
+        requestsPagination.reset();
+        drawRequests();
+      };
+      $('refresh-members').onclick = () => {
+        drawMembers();
+        tell('已刷新成员列表。');
+      };
+      $('refresh-requests').onclick = () => {
+        drawRequests();
+        tell('已刷新申请列表。');
+      };
+      $('close').onclick = () => dialog.close();
+      $('simulate-conflict').onclick = (event) => {
+        openEdit(
+          members.find((member) => member.id === 'stu-wei'),
+          event.currentTarget,
+          true,
+        );
+      };
+      $('guide').onclick = (event) =>
+        openDialog(
+          '内建角色',
+          Object.values(roleInfo)
+            .map(
+              ([name, description]) =>
+                `<div><strong>${name}</strong><p class="muted">${description}</p></div>`,
+            )
+            .join('') + '<p>组合角色取权限并集。团队须保留至少一位有效管理员。</p>',
+          '',
+          event.currentTarget,
+        );
+      dialog.addEventListener('close', () => {
+        const target = focusAfterClose?.() ?? returnFocus;
+        if (target?.isConnected) target.focus({ preventScroll: true });
+      });
+      document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('button[data-action]');
+        if (!trigger) return;
+        const { action, key } = trigger.dataset;
+        if (action === 'cancel') dialog.close();
+        if (action === 'review')
+          openReview(
+            requests.find((request) => request.id === key),
+            trigger,
+          );
+        if (action === 'edit' || action === 'records') {
+          const member = members.find((row) => row.id === key);
+          if (action === 'edit') openEdit(member, trigger);
+          else openRecords(member, trigger);
+        }
+      });
+      drawMembers();
+      drawRequests();
+    </script>
+  </body>
+</html>

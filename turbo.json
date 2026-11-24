@@ -25,11 +25,13 @@
     },
     "typecheck": {
       "dependsOn": ["source"],
-      "outputs": []
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tests/fixtures/**"]
     },
     "test": {
       "dependsOn": ["source"],
-      "outputs": []
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tests/fixtures/**"]
     },
     "test:integration": {
       "dependsOn": ["build"],

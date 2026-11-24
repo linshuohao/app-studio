@@ -38,7 +38,7 @@ reading_next: DESIGN-INTEGRATION
 
 ## 范围、状态与三个概念 {#dependency-baseline}
 
-2026-10-21 用户已确认[保留领域结构的输入输出](l2-preparation.md#compiler-io-contract)：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式实现仍待迁移。
+2026-10-21 用户已确认[保留领域结构的输入输出](l2-preparation.md#compiler-io-contract)：Dependency Plan 继续表示静态观察关系，但交付为规则和完整动态表达式就地 watch，不再强制中央表 / 计划 ID。以下旧计划代码保留为比较来源，不是有效 SDK；正式 Compiler / Runtime 已按就地 watch 实现；旧草图不作为待迁移生产代码。
 
 本专题连接 [L1 表达式与约束](l1/03-expression-validation.md#expression)、[L2 静态编译](l2-preparation.md#l2-dependencies) 和 [Runtime](l3-reactive-engine.md#runtime) / [Renderer](l4-renderer.md)，解决各类消费者重复发现依赖的问题。各层完整职责、能力治理和发布机制仍在原主题维护。
 
@@ -334,7 +334,7 @@ interface SubscribeOptions {
 
 External Constraint 要分开三件事：依赖变化立即撤销旧结论并登记 Pending；Flush 结束后与内部校验统一执行，先根 Schema，再按同步前置与稳定顺序发起就绪任务；返回成功 / 异常均核对输入、请求代次、Scope 与实例。External 发起不阻塞独立规则，普通增量不扩为全表完整校验。没有 Reaction 时有独立校验入口。请求、重试和实际取消仍归 Host。
 
-明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不依赖结果反向 PubSub；显式 ValidationWatch 另行消费已发布状态。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；算法、SDK 与旧类型同步仍待实施，见 [L2](l2-preparation.md#compiler-io-differences)。
+明确匹配完成后只消费本轮校验 Pending，不在 Runner 扫描全部 Constraint 再查读依赖；根 Schema 保守登记整份数据待校验。Reaction 正常收敛后执行根 Schema 与本轮有序 Constraint，前置检查不依赖结果反向 PubSub；显式 ValidationWatch 另行消费已发布状态。字段 Issue 聚合属于结果消费，不能重新触发 Data-only Reaction；完整校验显式覆盖全部适用规则。Validation 由 L2 补全可推导读取与前置传递依赖，L3 从命中任务递归补齐前置实例，使用本轮结果；不要求作者重复声明可推导依赖，未知 Host 依赖仍须显式提供。该规则不改变 Reaction 显式 Watch，也不代表立即发送外部请求。具体 [校验链、结果与新鲜度](l3-validation.md) 不在本篇复制。现行 requires 和规则 watch 的输出结构已确认；Compiler 依赖补全、Runtime 实例前置与 SDK 已实现；生产性能与跨端待验收，见 [L2](l2-preparation.md#compiler-io-differences)。
 
 初始化校验、主动校验、首次 View 读取和 Reaction 是否初始化执行都有独立入口。`subscribe` 本身不隐含“注册时必然执行一次”；初始数据已违反 Constraint 也必须能被初始化 / 主动校验发现。
 

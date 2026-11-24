@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>表达式编辑器 · 两种交互草案</title>
+  <link rel="stylesheet" href="../../apps/studio/src/app/studio.css" />
+  <link rel="stylesheet" href="../../apps/studio/src/app/studio-ui.css" /><link
+    rel="stylesheet"
+    href="../../apps/studio/src/components/field-picker/field-picker.css"
+  />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--studio-surface);
+      color: var(--studio-text);
+      font: var(--studio-type-body);
+    }
+    main {
+      max-width: none;
+      margin: 0;
+      padding: var(--studio-space-32);
+    }
+    h1 {
+      font: var(--studio-type-title);
+    }
+    h2 {
+      font: var(--studio-type-section);
+    }
+    h1,
+    h2,
+    p {
+      margin: var(--studio-space-8) 0;
+    }
+    #comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
+      gap: var(--studio-space-24);
+      align-items: start;
+      margin-top: var(--studio-space-24);
+    }
+    #comparison > section {
+      min-width: 0;
+      border: 1px solid var(--studio-border);
+      border-radius: var(--studio-radius-12);
+      padding: var(--studio-space-16);
+    }
+    #comparison > section > header,
+    #comparison > section > footer {
+      padding: var(--studio-space-12) 0;
+    }
+    small,
+    header p {
+      color: var(--studio-text-muted);
+      font: var(--studio-type-caption);
+    }
+    .expr-row,
+    .compact,
+    #comparison > section > footer {
+      display: flex;
+      align-items: center;
+      gap: var(--studio-space-8);
+      flex-wrap: wrap;
+    }
+    .node,
+    .directory {
+      display: grid;
+      gap: var(--studio-space-12);
+      justify-items: start;
+    }
+    .node {
+      padding: var(--studio-space-12) 0;
+    }
+    .argument {
+      border-left: 1px solid var(--studio-border);
+      padding-left: var(--studio-space-12);
+      max-width: 100%;
+    }
+    .directory {
+      padding: var(--studio-space-12);
+      border: 1px solid var(--studio-border);
+      border-radius: var(--studio-radius-8);
+    }
+    .directory small {
+      display: block;
+    }
+    .expr-row input {
+      width: 8ch;
+    }
+    .help {
+      position: relative;
+    }
+    .help button {
+      display: inline-grid;
+      place-content: center;
+      width: var(--studio-space-16);
+      height: var(--studio-space-16);
+      padding: 0;
+      font: var(--studio-type-caption);
+      border: 1px solid var(--studio-border);
+      border-radius: 50%;
+      background: var(--studio-surface);
+      color: var(--studio-text-muted);
+      cursor: help;
+    }
+    .help span {
+      display: none;
+      position: absolute;
+      z-index: 1;
+      bottom: 100%;
+      left: 0;
+      width: 14em;
+      background: var(--studio-primary);
+      color: var(--studio-on-primary);
+      padding: var(--studio-space-8);
+      border-radius: var(--studio-radius-4);
+    }
+    .help:hover span,
+    .help:focus-within span {
+      display: block;
+    }
+    #comparison > section > footer {
+      border-top: 1px solid var(--studio-border);
+      justify-content: space-between;
+    }
+    summary {
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: var(--studio-type-code);
+    }
+
+    #comparison > section > header {
+      border-bottom: thin solid var(--studio-border);
+      margin-bottom: var(--studio-space-16);
+    }
+    #comparison .argument > small {
+      display: block;
+      margin-bottom: var(--studio-space-4);
+    }
+    #comparison .expr-row > strong {
+      font: var(--studio-type-control);
+    }
+    #comparison .node {
+      width: 100%;
+    }
+    #comparison .compact {
+      row-gap: var(--studio-space-8);
+    }
+    #comparison .fn-choice {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--studio-space-12);
+    }
+    #comparison .argument {
+      padding-block: var(--studio-space-4);
+    }
+    #comparison footer details {
+      min-width: 0;
+    }
+    #studio-main a {
+      color: var(--studio-info-fg);
+      font: var(--studio-type-caption);
+    }
+  </style>
+  <body>
+    <main id="studio-main">
+      <article data-studio-ui>
+        <a href="expression-editor.html">表达式编辑器手册</a>
+        <h1>配置一条投保条件</h1>
+        <p>
+          已有条件为「当前被保人年龄小于 18
+          岁」。分别在两版中加入「出行方案等于增强方案」，比较选择函数与填写条件的过程。
+        </p>
+        <div id="comparison"></div>
+      </article>
+    </main>
+    <script src="assets/expression-compare.js"></script>
+  </body>
+</html>

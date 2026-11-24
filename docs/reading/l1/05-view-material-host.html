@@ -8,7 +8,7 @@
   <title>视图、物料与宿主契约 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
 
-  <script src="../assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="../assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="../l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="../dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="../extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="../governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="../design-history.html">设计决策与讨论演进</a>
 <a href="../design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="../decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="../decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="../decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="../decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="../decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="../decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="../decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="../decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="../decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="../decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="../decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="../decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="../decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="../decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="../decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -367,7 +380,7 @@
 <p>MaterialManifest.services、HostContract.services 及 Prepared HostRequirements.services 退出正式协议；Host 内部服务组织不受约束。已有通知不变；旧 services 配置须显式迁移到页面 requests 映射，不能按名称自动猜测。Prepared 新增必填空字典 / 数组须同步生产者消费者及格式兼容判断，不虚构已发布版本。</p>
 <p>实现验收覆盖名称解耦、显式与直通参数、Schema 错误、未绑定 / 未注册、同步异常、异步拒绝、latest 后发先至、parallel、卸载 / 改绑 / 数组移动删除及取消失败。当前协议类型与结构测试不证明桥接运行时已实现。</p>
 <h3 id="request-development-contract">请求开发接入与缺失诊断验收</h3>
-<p>2026-10-21 用户进一步确认：交付目标必须贯通“物料公开请求类型 → Host 实现 → 注册 → 页面映射 → 编译 / 装配核对”。仅提供 Manifest Schema 或各端各自声明类型不足以证明完整接入。以下为实现目标，尚未实现对应 SDK 或 Compiler。</p>
+<p>2026-10-21 用户进一步确认：交付目标必须贯通“物料公开请求类型 → Host 实现 → 注册 → 页面映射 → 编译 / 装配核对”。仅提供 Manifest Schema 或各端各自声明类型不足以证明完整接入。以下目标已由 Compiler 请求检查、React 请求类型辅助和装配预检实现，见 <a href="../engineering.html#renderer-implementation" rel="noopener noreferrer">React 本地证据</a>；真实 Host 与跨端仍待验收。</p>
 <p>物料公开每个请求的输入输出类型及可关联的契约；物料侧桥接以该契约约束请求名、输入和成功结果。Host 编写处理函数时可直接引用物料请求契约，自动得到参数提示与返回类型检查，不要求重抄签名或逐物料包装。直接转发时复用物料契约；页面转换输入时 Host 使用自己的明确输入契约，Compiler 检查映射结果到 Host 输入、Host 输出到物料结果的有限结构连接。首期没有结果转换 DSL。TS 类型与 Schema 保持同源；自动推导或公开显式类型的工具方式留给实现选择，公共辅助函数名称尚未冻结。</p>
 <p>静态已知页面与注册集合的装配接口应提供必需请求名的类型约束，缺少处理函数、输入或返回类型不匹配时给 TS 编译错误。动态加载 JSON 无法由 TS 提前推导全部请求，因此必须提供编译 / 装配检查，不用泛型断言伪造保证。HostContract 可选并不使实际实现注册变成可选。</p>
 <div class="table-wrap"><table>
@@ -421,7 +434,7 @@
 <a href="#interaction" data-to="interaction" title="Interaction：通知命令、宿主事件与独立请求"><span class="nav-num">06</span><span>Interaction：通知命令、宿主事件与独立请求</span></a>
 <a href="#host" data-to="host" title="Host Integration：明确三条路径"><span class="nav-num">07</span><span>Host Integration：明确三条路径</span></a>
 <a href="#material-requests" data-to="material-requests" title="物料请求与 Host 输入输出"><span class="nav-num">08</span><span>物料请求与 Host 输入输出</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-VIEW</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="../decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="../decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 14</summary><ul><li><a href="../decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../architecture.html#glossary">术语与语义边界</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>L1-VIEW</dd><dt>所属层级</dt><dd>L1</dd><dt>声明状态</dt><dd>现行文档</dd></dl><details><summary>关联模块 · 3</summary><ul><li><a href="../governance.html#M04">M04 L1 View / Template / Binding</a></li><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M15">M15 Host / 实例生命周期</a></li></ul></details><details open><summary>关联 ADR · 3</summary><ul><li><a href="../decisions/ADR-FE-017-compiler-io.html">ADR-FE-017：保留领域结构的编译输入输出与表达式级观察</a></li><li><a href="../decisions/ADR-FE-003-view-material.html">ADR-FE-003：静态视图复用与容器物料呈现</a></li><li><a href="../decisions/ADR-FE-005-watch-subscription.html">ADR-FE-005：读取、触发与活跃订阅分离</a></li></ul></details><details><summary>相关正文与历史 · 15</summary><ul><li><a href="../decisions/ADR-FE-001-boundaries.html">ADR-FE-001：唯一业务数据与四层责任边界</a></li><li><a href="../decisions/ADR-FE-016-material-requests.html">ADR-FE-016：物料请求与 Host 输入输出解耦</a></li><li><a href="../dependency-reactivity.html">跨层依赖与订阅</a></li><li><a href="../extension-integration.html">物料扩展与 Host 集成</a></li><li><a href="../l2-preparation.html">L2 预处理与编译</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../architecture.html#glossary">术语与语义边界</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../usage-guide.html">使用与开发指南</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="08-decisions-release.html#boundaries">类型概念稿与规范固化</a></li><li><a href="../l1-definition-protocol.html">L1 协议设计</a></li><li><a href="../design-review.html">架构约束与一致性审查</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 3</summary><ul><li><a href="../source-map.html#src-compiler-io">SRC-COMPILERIO · 编译输入输出、精确表达式观察及默认易用性</a></li><li><a href="../source-map.html#src-contracts">SRC-CONTRACTS · 物料声明与 Host 输入确认</a></li><li><a href="../source-map.html#src-l1">SRC-L1 · 六组专题、定稿与包装修订</a></li></ul></details></section>
       </aside>
       </div>
     </div>

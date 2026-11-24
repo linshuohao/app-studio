@@ -1,0 +1,40 @@
+{
+  "authority": ["docs/design/platform-studio.md"],
+  "scope": [
+    "apps/studio/src",
+    "apps/studio/tests",
+    "apps/studio/next.config.ts",
+    "apps/studio/playwright.config.ts",
+    "services/api/src/platform/forms.ts",
+    "services/api/src/platform/releases.ts",
+    "services/api/src/platform/platform.controller.ts"
+  ],
+  "checks": [
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "build"],
+    ["pnpm", "--filter", "@form-engine/api", "test:integration", "--testTimeout=15000"],
+    ["pnpm", "--filter", "@form-engine/studio", "typecheck"],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-workbench",
+      "PLATFORM_API_URL=http://127.0.0.1:3318",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "build"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-workbench",
+      "STUDIO_TEST_PORT=3218",
+      "STUDIO_TEST_API_PORT=3318",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "--dir",
+      "apps/studio",
+      "exec",
+      "playwright",
+      "test"
+    ]
+  ]
+}

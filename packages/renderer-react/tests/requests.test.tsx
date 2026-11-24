@@ -1,3 +1,7 @@
+import { Projection } from '../src/adapter/projection.js';
+import { createRenderEnvironment } from '../src/renderer/create-render-environment.js';
+import { DiagnosticEmitter } from '../src/diagnostics/emitter.js';
+import { listProducers, readMetadata, openSession, request } from './observation.js';
 import type { PreparedForm } from '@form-engine/protocol/prepared';
 import { getDevtoolsHook } from '@form-engine/runtime/devtools';
 import { afterEach, expect, it } from 'vitest';
@@ -222,12 +226,15 @@ it('诊断 / 业务降级回调变化及 DevTools 断开重连不替换 Projecti
   const page = render(<FormRenderer {...form} requests={host.requests} onDiagnostic={first} />);
   fireEvent.click(screen.getByRole('button'));
   const hook = getDevtoolsHook()!;
-  expect(hook.list().some((source) => source.kind === 'material')).toBe(true);
-  const off = hook.subscribe(() => {
-    throw Error('tool failed');
+  expect(listProducers(hook).some((source) => source.kind === 'material')).toBe(true);
+  const producer = listProducers(hook).find((source) => source.kind === 'material')!;
+  const firstSession = openSession(hook, producer.ref);
+  request(hook, {
+    op: 'closeObservation',
+    producer: producer.ref,
+    sessionId: firstSession.sessionId,
   });
-  off();
-  const again = hook.subscribe(() => undefined);
+  const again = openSession(hook, producer.ref);
   page.rerender(
     <FormRenderer
       {...form}
@@ -239,7 +246,7 @@ it('诊断 / 业务降级回调变化及 DevTools 断开重连不替换 Projecti
   expect(host.queue[0]!.signal.aborted).toBe(false);
   host.queue[0]!.resolve(['still current']);
   expect(await form.calls[0]!.result).toEqual({ status: 'success', value: ['still current'] });
-  again();
+  request(hook, { op: 'closeObservation', producer: producer.ref, sessionId: again.sessionId });
   page.unmount();
   form.runtime.dispose();
 });
@@ -249,23 +256,46 @@ it('开发采集只读缓存，不额外执行 Props 纯函数或注册业务观
     host = pending();
   const page = render(<FormRenderer {...form} requests={host.requests} />);
   const hook = getDevtoolsHook()!;
-  const source = hook
-    .list()
-    .find((source) => source.kind === 'material' && source.formId === form.prepared.definition.id)!;
-  expect(hook.read(source.id)!.value).toMatchObject({ alive: true, requests: [] });
+  const source = listProducers(hook).find((source) => source.kind === 'material')!;
+  expect(readMetadata(hook, source.ref)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ record: 'renderer-material', requests: [] }),
+    ]),
+  );
+  const session = openSession(hook, source.ref);
+  const target = { producer: source.ref, sessionId: session.sessionId };
   fireEvent.click(screen.getByRole('button'));
-  expect(hook.read(source.id)!.value).toMatchObject({
-    requests: [{ name: 'search', status: 'pending' }],
-  });
+  expect(readMetadata(hook, source.ref)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        requests: [expect.objectContaining({ name: 'search', status: 'pending' })],
+      }),
+    ]),
+  );
   host.queue[0]!.resolve(['finished']);
   await form.calls[0]!.result;
-  expect(hook.read(source.id)!.value).toMatchObject({ requests: [] });
+  expect(readMetadata(hook, source.ref)).toEqual(
+    expect.arrayContaining([expect.objectContaining({ requests: [] })]),
+  );
+  const events = request(hook, { op: 'readUpdates', ...target, cursor: session.cursor });
+  if (events.status !== 'ok' || !('events' in events)) throw Error('updates');
+  expect(
+    events.events
+      .filter((event) => event.kind === 'renderer.request')
+      .map((event) => event.payload.status),
+  ).toEqual(['pending', 'returned', 'success']);
+  expect(events.events.find((event) => event.kind === 'renderer.request')).toMatchObject({
+    payload: {
+      runtime: expect.objectContaining({ producerId: expect.any(String) }),
+      view: expect.objectContaining({ producerId: expect.any(String) }),
+    },
+  });
+  expect(JSON.stringify(events.events)).not.toContain('finished');
+  request(hook, { op: 'closeObservation', ...target });
   await act(() => form.runtime.flush());
   page.unmount();
   form.runtime.dispose();
-  expect(
-    hook.list().filter((source) => source.formId === form.prepared.definition.id),
-  ).toHaveLength(0);
+  expect(listProducers(hook)).toHaveLength(0);
 });
 
 it('Host 原对象的身份字段被外部修改后，回调更新不得重挂视图或取消请求', async () => {
@@ -341,4 +371,102 @@ it('物料内部切换 Hook 消费组件不撤销请求，真实卸载仍立即 
     page.unmount();
     form.runtime.dispose();
   }
+});
+
+it('显式取消后晚返回或拒绝只上报丢弃事实，不再次交付结果', async () => {
+  const form = fixture('parallel'),
+    host = pending();
+  const page = render(<FormRenderer {...form} requests={host.requests} />);
+  const hook = getDevtoolsHook()!,
+    producer = listProducers(hook).find((p) => p.kind === 'material')!;
+  const session = openSession(hook, producer.ref),
+    target = { producer: producer.ref, sessionId: session.sessionId };
+  fireEvent.click(screen.getByRole('button'));
+  fireEvent.click(screen.getByRole('button'));
+  form.calls[0]!.cancel();
+  form.calls[1]!.cancel();
+  host.queue[0]!.resolve(['secret-result']);
+  host.queue[1]!.reject(Error('secret-error'));
+  await act(() => form.runtime.flush());
+  const updates = request(hook, { op: 'readUpdates', ...target, cursor: session.cursor });
+  if (updates.status !== 'ok' || !('events' in updates)) throw Error('updates');
+  const facts = updates.events.filter((e) => e.kind === 'renderer.request');
+  expect(facts.filter((e) => e.payload.requestId === 1).map((e) => e.payload.status)).toEqual([
+    'pending',
+    'discarded',
+    'returned',
+    'late-discarded',
+  ]);
+  expect(facts.filter((e) => e.payload.requestId === 2).map((e) => e.payload.status)).toEqual([
+    'pending',
+    'discarded',
+    'rejected',
+    'late-discarded',
+  ]);
+  expect(JSON.stringify(updates)).not.toContain('secret-');
+  expect(await form.calls[0]!.result).toEqual({ status: 'discarded' });
+  expect(await form.calls[1]!.result).toEqual({ status: 'discarded' });
+  page.unmount();
+  form.runtime.dispose();
+});
+
+it('同一 Projection 重启后，旧请求晚返回不污染新挂载代次', async () => {
+  const form = fixture('parallel'),
+    host = pending();
+  const compiled = structuredClone(form.prepared) as unknown as PreparedForm;
+  const environment = createRenderEnvironment(
+    { compiledForm: compiled, runtime: form.runtime },
+    { materials: form.materials, requests: host.requests },
+    { compiledForm: compiled, inspectionOwner: {}, diagnostics: new DiagnosticEmitter() },
+  );
+  const node = compiled.definition.views[compiled.build.profile]!;
+  if (!('material' in node)) throw Error('material');
+  const projection = new Projection(environment, node, {}, form.materials.search!, 'root', [], {});
+  projection.start();
+  const old = projection.request('search', 'old');
+  projection.stop();
+  expect(await old.result).toEqual({ status: 'discarded' });
+  projection.start();
+  const hook = getDevtoolsHook()!,
+    producer = listProducers(hook).find((p) => p.kind === 'material')!;
+  const session = openSession(hook, producer.ref),
+    target = { producer: producer.ref, sessionId: session.sessionId };
+  host.queue[0]!.resolve(['late-old']);
+  await Promise.resolve();
+  await Promise.resolve();
+  const before = request(hook, { op: 'readUpdates', ...target, cursor: session.cursor });
+  expect(before).toMatchObject({ events: [] });
+  const current = projection.request('search', 'new');
+  host.queue[1]!.resolve(['new-result']);
+  expect(await current.result).toEqual({ status: 'success', value: ['new-result'] });
+  if (before.status !== 'ok' || !('events' in before)) throw Error('events');
+  const after = request(hook, { op: 'readUpdates', ...target, cursor: before.nextCursor });
+  if (after.status !== 'ok' || !('events' in after)) throw Error('events');
+  expect(
+    after.events.filter((e) => e.kind === 'renderer.request').map((e) => e.payload.requestId),
+  ).toEqual([2, 2, 2]);
+  projection.stop();
+  form.runtime.dispose();
+});
+
+it('停止时 Host abort 同步重启不能遗留旧物料生产者', async () => {
+  const form = fixture('parallel'),
+    host = pending();
+  const compiled = structuredClone(form.prepared) as unknown as PreparedForm;
+  const environment = createRenderEnvironment(
+    { compiledForm: compiled, runtime: form.runtime },
+    { materials: form.materials, requests: host.requests },
+    { compiledForm: compiled, inspectionOwner: {}, diagnostics: new DiagnosticEmitter() },
+  );
+  const node = compiled.definition.views[compiled.build.profile]!;
+  if (!('material' in node)) throw Error('material');
+  const projection = new Projection(environment, node, {}, form.materials.search!, 'root', [], {});
+  projection.start();
+  const call = projection.request('search', 'input');
+  host.queue[0]!.signal.addEventListener('abort', projection.start);
+  projection.stop();
+  projection.stop();
+  expect(await call.result).toEqual({ status: 'discarded' });
+  expect(listProducers(getDevtoolsHook()!).filter((p) => p.kind === 'material')).toEqual([]);
+  form.runtime.dispose();
 });

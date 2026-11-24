@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiteralValueList · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+  </head>
+  <body class="studio-content">
+    <main id="studio-main">
+      <article data-studio-ui>
+        <header class="hero">
+          <a href="../studio-design-handbook.html">组件总览</a>
+          <h1>LiteralValueList 值列表</h1>
+          <p>
+            用于允许值和示例值等可增删的配置列表。每行复用
+            <a href="literal-value-editor.html">LiteralValueEditor</a>，右侧提供删除操作。
+          </p>
+        </header>
+        <section class="section">
+          <h2>用法</h2>
+          <pre><code>&lt;LiteralValueList label="允许值" value={values} type="object" onChange={setValues} /&gt;</code></pre>
+          <p>
+            type 决定新项的初始类型。onChange 返回更新后的整组值，调用方负责折叠布局、草稿与保存。
+          </p>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>

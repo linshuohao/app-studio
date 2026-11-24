@@ -2,15 +2,16 @@ import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
+  // Demo owns disposable Runtime sessions; leaving a route must unmount its page.
+  cacheComponents: false,
   transpilePackages: [
     '@form-engine/protocol',
     '@form-engine/compiler',
     '@form-engine/runtime',
     '@form-engine/pure-functions',
     '@form-engine/renderer-react',
+    '@form-engine/materials-react',
   ],
-  partialPrefetching: true,
   turbopack: {
     rules: {
       '*.ts': {

@@ -27,7 +27,7 @@ last_reviewed: '2026-10-22'
 
 这套框架把表单的数据、规则和呈现分开描述，让不同界面共享同一份业务语义。本指南面向表单配置者、宿主接入者和后续参与开发的同事：先理解一个字段如何工作，再按需求学习计算、联动、重复项、外部业务和排障。设计思想、完整分层与取舍见 [设计者指南](architecture.md)，具体协议只在对应主题维护。
 
-当前处于方案设计与规范固化阶段，没有可供照抄安装的生产 SDK。本指南展示已形成的使用语义，接口草图保留候选状态；正式类型、Schema、Prepared ABI、运行时及框架适配仍待交付。阅读和运行现有协议验证的方法见 [协议样例的复现说明](../validation/README.md#reproduce)。
+当前已实现 TS 协议 / Schema、Compiler、Runtime、React Renderer、首批物料 / 业务函数及完整可控表单，尚未发布生产 SDK。实际接入以 [Compiler](../../packages/compiler/README.md)、[Runtime](../../packages/runtime/README.md)和 [Renderer](../../packages/renderer-react/README.md)为准；本指南的概念草图不作为可直接复制的 API。真实 Host、跨端与生产性能仍待交付或验收。阅读和运行现有协议验证的方法见 [协议样例的复现说明](../validation/README.md#reproduce)。
 
 ## 先理解框架替你完成什么 {#usage-purpose}
 
@@ -80,7 +80,7 @@ Expression 可以调用内置或注册的 Pure Function，二者都同步、确�
 
 可以把校验理解为“结构约束 + 业务判断 → 字段错误”：完整 JSON Schema 检查必填、类型和范围；Constraint 表达跨字段判断与外部义务。普通有效修改先完成必要联动，再执行根 Schema 和本轮命中的 Constraint；批量命中同一实例会去重，不重新扫描全部业务规则找依赖。
 
-例如 age 同时超过 Schema 上限、又不满足某条业务规则，字段可以展示两个来源的错误。Schema 重跑只撤销自己的旧错误；异步核验过期也只撤销该外部来源。字段组件读取聚合结果，不需要逐一监听每个校验器。前置 A 通过才执行 B 属于较高级的校验链能力，requires 语法及“本轮缺少 A”仍待验证，普通表单可先使用独立 Constraint。详见 [校验故事与字段结果](l3-validation.md#validation-story)。
+例如 age 同时超过 Schema 上限、又不满足某条业务规则，字段可以展示两个来源的错误。Schema 重跑只撤销自己的旧错误；异步核验过期也只撤销该外部来源。字段组件读取聚合结果，不需要逐一监听每个校验器。前置 A 通过才执行 B 属于较高级的校验链能力，requires 类型、编译补全及运行时递归补齐已有实现与本地用例，普通表单可先使用独立 Constraint。详见 [校验故事与字段结果](l3-validation.md#validation-story)。
 
 学完应能判断“只需要显示计算值，还是必须保存一个业务字段”。前者直接读表达式，后者才引入修改命令。完整语法与使用位置见 [Expression](l1/03-expression-validation.md#expression)、[Constraint](l1/03-expression-validation.md#constraint) 和 [跨字段例子](dependency-reactivity.md#dependency-usage)。
 
@@ -97,9 +97,9 @@ Expression 可以调用内置或注册的 Pure Function，二者都同步、确�
 4. 若其他 Reaction 观察 premium，继续在本轮执行，直到收敛或保护停止。
 ```
 
-因此“立即读到刚输入的年龄”和“保费联动已经完成”是两种状态。Operation 表示一次外部修改来源；Flush 是集中完成待执行联动的一轮，多个 Operation 可以合并进入同轮。Flush 完成也不证明远程校验或 UI 绘制已完成。正式 SDK 的等待收敛 / 状态读取方法仍待固化，不能假设 dispatch 返回即满足全部提交条件。
+因此“立即读到刚输入的年龄”和“保费联动已经完成”是两种状态。Operation 表示一次外部修改来源；Flush 是集中完成待执行联动的一轮，多个 Operation 可以合并进入同轮。Flush 完成也不证明远程校验或 UI 绘制已完成。当前 SDK 以 flush() 等待同步收敛，以 validate() 获取完整校验结果，不能假设 dispatch 返回即满足全部提交条件。
 
-`batch` 是有序修改组合，各条有效 Command 实时生效，不默认把整组作为可回滚事务。旧 Snapshot 不随新数据更新而改变。可隔离的单条 Command 错误记录后，后续独立 Command 继续尝试；其他 Reaction 只按实际数据变化和自己的 watch 响应，不检查“上游是否成功”。业务校验失败、可隔离执行错误与整个 Flush 超限分别处理，准确错误类型和 API 仍待固化。
+`batch` 是有序修改组合，各条有效 Command 实时生效，不默认把整组作为可回滚事务。旧 Snapshot 不随新数据更新而改变。可隔离的单条 Command 错误记录后，后续独立 Command 继续尝试；其他 Reaction 只按实际数据变化和自己的 watch 响应，不检查“上游是否成功”。业务校验失败、可隔离执行错误与整个 Flush 超限分别处理，当前结果与诊断类型见 Runtime SDK；稳定发布兼容承诺尚未冻结。
 
 还要区分初始缺失与用户清空。没有年龄时可以由 when 跳过，或让纯函数按空值契约返回 null；若用户清空年龄后保费也应清空，就明确写入 premium=null。只跳过不会自动清掉旧值，0 / false 也不能按统一 falsy 当成未初始化。框架不增加通用 Reaction Ready 状态机，见 [缺失与清空](l3-reactive-engine.md#l3-missing-values)。
 
@@ -120,11 +120,11 @@ B 的稳定 Scope 身份仍是 B。
 B 的校验、订阅与 Trace 不能变成 A 的状态。
 ```
 
-操作某一项时使用稳定实例身份，而不是长期保存当前下标。删除后释放该项规则与状态，晚到的外部报告不能再应用；整体替换的身份复用规则仍待详细契约。UI 虚拟列表只释放未挂载行的 View 订阅，业务 Reaction / Constraint 继续有效。
+操作某一项时使用稳定实例身份，而不是长期保存当前下标。删除后释放该项规则与状态，晚到的外部报告不能再应用；整体替换按下文已确认的身份规则执行。UI 虚拟列表只释放未挂载行的 View 订阅，业务 Reaction / Constraint 继续有效。
 
 若 B 的年龄没有变化，跟随 B 的相对年龄观察不应只因移动而重算；固定位置 `/insureds/0/age` 则观察“当前位置 0”，前后值不同会失效。需要成员序号或排序的业务，应明确观察位置 / 集合，不能只观察年龄。框架在父 Scope 下存相对位置，移动被保人不要求为全部受益人重写路径，View 行也无需手工改绑物理下标。
 
-替换某一行对象保留该行身份，子字段逐项比较；整数组替换即重建成员 Scope 已确认，即使数据相同也不复用身份，不按业务 ID / 姓名 / 内容匹配。新 Scope 按显式首次激活策略运行，默认不执行已确认，正式字段名仍待固化。连续“改 A 年龄→移动 A→再次改 A 年龄”会逐条检测，但 A 的同一保费实例在 Flush 前只待执行一份，执行读最终年龄，见 [逐 Command 轨迹](l3-data-scope.md#l3-command-sequence)。
+替换某一行对象保留该行身份，子字段逐项比较；整数组替换即重建成员 Scope 已确认，即使数据相同也不复用身份，不按业务 ID / 姓名 / 内容匹配。新 Scope 按显式首次激活策略运行，默认不执行已确认，当前字段为 runOnActivate，已由协议 / Compiler / Runtime 消费。连续“改 A 年龄→移动 A→再次改 A 年龄”会逐条检测，但 A 的同一保费实例在 Flush 前只待执行一份，执行读最终年龄，见 [逐 Command 轨迹](l3-data-scope.md#l3-command-sequence)。
 
 学完应能说明“当前项位置”和“当前项是谁”的区别，以及为什么移动数组不能只做普通 splice。详见 [ScopeBinder](l1/02-data-reference-scope.md#scope)、[ScopeHandle](l1/02-data-reference-scope.md#scope-handle) 与 [跨层实例生命周期](dependency-reactivity.md#dependency-scope)。
 
@@ -164,7 +164,7 @@ Host 真正提交前需要显式完整校验，覆盖全部适用规则，由 Ho
 | 规则持续互相覆盖 | 有效写入链、实例执行次数、预算停止原因 | [保护](l3-reactive-engine.md#l3-protection) |
 | 有命令报错但其他规则仍运行 | 可隔离错误不阻断独立行为；Trace 区分错误与成功 Change | [错误隔离](l3-reactive-engine.md#l3-errors) |
 | 字段没有错误但无法提交 | 是否有未执行、过期或异常的必要规则；是否请求了完整校验 | [完整性](l3-validation.md#validation-completeness) |
-| 后置校验被跳过 | 本轮前置是否存在且通过；严格缺失策略仍待验证 | [本轮校验链](l3-validation.md#validation-round) |
+| 后置校验被跳过 | 本轮前置是否存在且通过；结合 blocked 状态与 coverage 检查，本地前置用例已有覆盖 | [本轮校验链](l3-validation.md#validation-round) |
 | 整轮预算停止后队列空 | 本轮是中止；剩余 Reaction 已清空且不自重试，后续新有效触发正常建轮 | [整体熔断](l3-reactive-engine.md#l3-errors) |
 | 只改保费却未按年龄重算 | 现存规则只 watch age，age 同值就不新增执行；结果不是 Runtime 主动修复的职责 | [已确认执行边界](l3-reactive-engine.md#l3-runtime-host-boundary) |
 | Host 想知道规则是否执行 | 使用执行事件观察 / Trace；数据订阅只表达所观察数据是否失效 | [两类订阅](l3-data-scope.md#l3-array-lifecycle) |
@@ -172,7 +172,7 @@ Host 真正提交前需要显式完整校验，覆盖全部适用规则，由 Ho
 
 异常 Trace 用有序执行、实际 Change 和 triggeredBy 说明“谁因何执行、改了哪里”。同一规则多次执行有独立 ID。正常生产 Flush 不保留完整历史，异常先提取受限报告；Devtools 可独立保存记录，关闭它不能改变业务结果。Trace 截断时只能解释保留下来的证据，不能据此承诺历史值恢复或确定性重放。
 
-发生安全预算停止时中止整个 Flush，保留已写数据并报告；不要自动无限重启同一批待执行任务。已替代局部 Health 与失败下游禁用方案，Trace 只解释实际过程。剩余 Pending 如何处理、后续输入怎样重新触发、Validation / Submit 如何衔接仍待确认。记录内容与复现能力见 [Trace](l3-observability.md#l3-trace) 和 [三档复现](l3-observability.md#l3-devtools)。
+发生安全预算停止时中止整个 Flush，保留已写数据并报告；不要自动无限重启同一批待执行任务。已替代局部 Health 与失败下游禁用方案，Trace 只解释实际过程。当前实现清空本轮剩余 Reaction Pending，不自动续跑；后续新有效变化建立新轮。独立完整校验仍可进行，Host 只交付当前 valid 证明对应快照；真实提交服务待接入。记录内容与复现能力见 [Trace](l3-observability.md#l3-trace) 和 [三档复现](l3-observability.md#l3-devtools)。
 
 ## 参与开发：从一个业务链路进入对应契约 {#usage-contributing}
 

@@ -1,0 +1,11 @@
+{
+  "packages/materials-react/src/remote-select/implementation.tsx": "e81dbcdbec91edbafa0bf0d0b98e868f1ef218319346b86e4b191080bd82b13d",
+  "packages/materials-react/tests/remote-select/implementation.test.tsx": "87098a549c4e000cc86292cc29ca86a8d890ec63b2885a6362c2d0ba922c249e",
+  "apps/studio/src/app/github-account.tsx": "610fe645f41c9126b8d72973ca37b719d0f4fb5a9f6d4cee9645db294b87a14c",
+  "apps/studio/src/app/password-settings.tsx": "13955554ceb2ebf90cac3f4f9f054a1cbc307f0e0e89df23e2fad5c85c0f8213",
+  "apps/studio/src/app/modal.tsx": "193c3ec101f3737c94867286d8330b70f7fd3e6c0674a7c5847e5cfcf6262021",
+  "apps/studio/src/app/members.tsx": "5744273ee10c810c5033239852faa7ca9b1b43a27d5d502caa06dcbc68f8663a",
+  "apps/studio/src/app/studio.css": "d83ae4d300a10b1a93bedffb263bcd1af54dd0a27ed47bf6803ef25157bbabbe",
+  "apps/studio/tests/experience-feedback.spec.ts": "f539bfedcb6b29312d9bbc9ac096dac0148c7aa2477bf29fcd80d5119da1804f",
+  ".changeset/asset-e268ebad-3e20-4d34-9e90-252bee27dc89.md": "14884b9ceec61d0a43d930f2526d07a4533e2a49ff6b84ebe1abf345c17af79d"
+}

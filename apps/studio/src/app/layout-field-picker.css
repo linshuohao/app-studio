@@ -1,0 +1,192 @@
+.layout-field-tree {
+  display: grid;
+  gap: var(--studio-space-8);
+  min-width: 0;
+}
+.layout-field-tree input[type='search'] {
+  width: 100%;
+  min-width: 0;
+}
+.layout-field-tree .studio-tree,
+.field-picker-selection ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.field-picker-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+}
+.field-picker-dialog.field-picker-multiple {
+  width: min(60rem, calc(100vw - 2rem));
+}
+.field-picker-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-block: 0.75rem;
+}
+.field-picker-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.field-picker-body {
+  display: grid;
+  gap: 0.85rem;
+  margin-block-start: 0.7rem;
+}
+.field-picker-body[data-multiple] {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+}
+.field-picker-dialog .layout-field-tree .studio-tree,
+.field-picker-selection {
+  max-height: 48dvh;
+  overflow: auto;
+}
+.field-picker-selection {
+  background: var(--studio-surface-muted);
+  border: 1px solid var(--studio-border);
+  border-radius: 0.45rem;
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.field-picker-selection h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.85rem;
+}
+.field-picker-selection li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  margin-block-start: 0.35rem;
+  background: white;
+  border: 1px solid var(--studio-border);
+  border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+.field-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+.layout-field-control {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: start;
+}
+.layout-field-control > small {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 620px) {
+  .field-picker-multiple .field-picker-body {
+    grid-template-columns: 1fr;
+  }
+  .field-picker-selection {
+    max-height: 20dvh;
+  }
+}
+
+.field-picker-search {
+  position: relative;
+}
+.field-picker-searchbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+.field-picker-search {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.field-picker-search::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0.8rem;
+  inset-block-start: 50%;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1.5px solid var(--studio-text-muted);
+  border-radius: 50%;
+  transform: translateY(-60%);
+  pointer-events: none;
+}
+.field-picker-search::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 1.37rem;
+  inset-block-start: calc(50% + 0.22rem);
+  width: 0.31rem;
+  height: 1.5px;
+  background: var(--studio-text-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.layout-field-tree .field-picker-search input {
+  padding-inline-start: 1.95rem;
+  border: 1px solid var(--studio-control-border);
+  background: var(--studio-surface);
+}
+.field-picker-dialog .field-picker-body {
+  gap: 0;
+  margin: 0;
+}
+.field-picker-dialog .layout-field-tree {
+  padding: 0.9rem 1rem;
+  align-content: start;
+}
+.field-picker-dialog .field-picker-options {
+  margin: 0;
+  color: var(--studio-text-muted);
+  font-size: 0.8rem;
+}
+.field-picker-dialog .field-picker-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.field-picker-dialog .field-picker-options select {
+  background: white;
+  border-color: var(--studio-border);
+  min-height: var(--studio-control-height);
+  font: var(--studio-type-control);
+}
+.field-picker-dialog .layout-field-tree .studio-tree {
+  max-height: 49dvh;
+  padding: 0.2rem 0.75rem 0.2rem 0.2rem;
+  scrollbar-gutter: stable;
+}
+.field-picker-dialog .field-picker-selection {
+  max-height: 100%;
+  border: 0;
+  border-inline-start: 1px solid var(--studio-border);
+  border-radius: 0;
+  padding: 1rem;
+}
+.field-picker-dialog .field-picker-selection ul {
+  max-height: 45dvh;
+  overflow: auto;
+}
+.field-picker-dialog .field-picker-footer {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--studio-border);
+}
+@media (max-width: 620px) {
+  .field-picker-dialog .field-picker-selection {
+    border-inline-start: 0;
+    border-top: 1px solid var(--studio-border);
+  }
+  .field-picker-dialog .field-picker-selection ul {
+    max-height: 16dvh;
+  }
+}
+
+.layout-outline nav,
+.layout-outline .layout-field-tree {
+  grid-template-columns: minmax(0, 1fr);
+}

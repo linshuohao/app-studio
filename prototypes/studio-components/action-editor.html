@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ActionEditor · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+    <link rel="stylesheet" href="../studio-technical-samples.css" />
+    <link rel="stylesheet" href="../../apps/studio/src/components/field-picker/field-picker.css" />
+  </head>
+  <body class="studio-content">
+    <div class="shell">
+      <aside>
+        <header><span class="mark" aria-hidden="true">S</span>Form Studio</header>
+        <nav aria-label="组件目录">
+          <a href="../studio-design-handbook.html">组件总览</a><a href="tokens.html">Design Token</a
+          ><a href="../studio-design-handbook.html#design-icon">Design Icon · 图标</a><b>通用</b
+          ><a href="button.html">Button · 按钮</a><a href="icon.html">Icon · 图标</a
+          ><a href="icon-button.html">IconButton · 图标按钮</a
+          ><a href="feedback.html">Feedback · 状态反馈</a><b>表单</b
+          ><a href="form.html">Form · 表单</a><a href="field.html">Field · 表单字段</a
+          ><a href="input.html">Input · 输入框</a><a href="select.html">Select · 下拉选择</a
+          ><a href="textarea.html">Textarea · 多行文本</a
+          ><a href="field-layout.html">Field · 带提示的字段布局</a
+          ><a href="studioselect.html">StudioSelect · 选项选择器</a><b>数据筛选</b
+          ><a href="listfilterbar.html">ListFilterBar · 筛选栏</a><b>数据展示</b
+          ><a href="treeview.html">TreeView · 树视图</a
+          ><a href="datatable.html">DataTable · 数据表格</a
+          ><a href="cardlist.html">CardList · 卡片列表</a
+          ><a href="tableresults.html">TableResults · 表格结果区域</a><b>导航</b
+          ><a href="pagination.html">Pagination · 分页器</a
+          ><a href="tabs.html">Tabs · 标签页 · 切换同页内容</a><b>布局</b
+          ><a href="grid.html">Grid · 栅格</a><a href="griditem.html">GridItem · 栅格子项</a
+          ><a href="formlayout.html">FormLayout · 表单布局</a
+          ><a href="masterdetail.html">MasterDetail · 主从布局</a><b>浮层</b
+          ><a href="menu.html">Menu · 下拉菜单</a><a href="modal.html">Dialog · 弹窗</a
+          ><a href="drawer.html">Drawer · 抽屉</a><a href="tooltip.html">Tooltip · 悬浮提示</a
+          ><a href="native-modal.html">Modal · 原生模态框</a><b>业务组件</b
+          ><a href="field-picker.html">FieldPicker · 字段选择器 · 单选与多选</a
+          ><a href="expression-editor.html">ExpressionEditor · 取值来源与表达式编辑</a
+          ><a href="json-editor.html">JsonEditor · JSON 原文与层级编辑</a
+          ><a aria-current="page" href="action-editor.html">ActionEditor · 联动动作配置</a
+          ><b>物料与契约</b
+          ><a href="material-detail-preview.html">MaterialDetailPreview · 物料详情预览</a
+          ><a href="record-identity.html">RecordIdentity · 记录标识</a
+          ><a href="contract-table.html">ContractTable · 契约字段表</a
+          ><a href="contract-panel.html">ContractPanel · 契约面板</a
+          ><a href="material-card.html">MaterialCard · 物料卡片</a
+          ><a href="material-description.html">MaterialDescription · 物料说明</a
+          ><a href="manifest-input.html">ManifestInput · 物料常量输入</a
+          ><a href="value-input.html">ValueInput · 物料属性值</a><b>配置工具</b
+          ><a href="json-source.html">JsonSource · 配置工作稿</a
+          ><a href="schema-navigation.html">SchemaNavigation · 编辑离开确认</a
+          ><a href="json-editor-view.html">JsonEditorView · 共享历史的 JSON 编辑视图</a
+          ><a href="config-inspection.html">ConfigInspection · 配置检查与预览</a
+          ><a href="preview-runtime.html">PreviewRuntime · 运行时试填</a
+          ><a href="diff-result.html">DiffResult · 差异结果</a
+          ><a href="config-diff.html">ConfigDiff · 配置版本对比</a><b>字段与表达式</b
+          ><a href="expression-verification-panel.html">ExpressionVerificationPanel · 表达式验证</a
+          ><a href="regex-input.html">RegexInput · 正则输入</a
+          ><a href="field-tree.html">FieldTree · 字段树</a
+          ><a href="field-picker-dialog.html">FieldPickerDialog · 字段选择对话框</a
+          ><a href="field-picker-control.html">FieldPickerControl · 字段选择入口</a
+          ><a href="layout-field-picker.html">LayoutFieldPicker · 布局绑定字段选择</a
+          ><a href="reaction-field-picker.html">ReactionFieldPicker · 联动字段选择</a
+          ><a href="reaction-scope-editor.html">ReactionScopeEditor · 联动作用域</a
+          ><a href="expression-display.html">ExpressionDisplay · 表达式摘要</a
+          ><a href="expression-definition.html">ExpressionDefinition · 表达式定义</a
+          ><a href="function-help.html">FunctionHelp · 函数说明</a
+          ><a href="argument-help.html">ArgumentHelp · 参数说明</a
+          ><a href="layout-expression-dialog.html">LayoutExpressionDialog · 布局表达式对话框</a
+          ><b>助手</b><a href="agent-merge.html">AgentMerge · 候选合并</a
+          ><a href="agent-panel.html">AgentPanel · 助手对话面板</a
+          ><a href="agent-reply.html">AgentReply · 助手回复</a
+          ><a href="agent-candidate-card.html">AgentCandidateCard · 候选配置卡片</a
+          ><a href="agent-issues.html">AgentIssues · 需求缺口</a><b>Host 接入</b
+          ><a href="requirements.html">Requirements · Host 能力需求</a
+          ><a href="release-host-example.html">ReleaseHostExample · Host 接入示例</a
+          ><a href="release-integration.html">ReleaseIntegration · 发布接入说明</a><b>管理操作</b
+          ><a href="copy-form.html">CopyForm · 复制表单</a
+          ><a href="form-management.html">FormManagement · 表单管理操作</a
+          ><a href="operation-records.html">OperationRecords · 操作记录</a
+          ><a href="account-security.html">AccountSecurity · 账号安全设置</a>
+        </nav>
+      </aside>
+      <main id="studio-main">
+        <article data-studio-ui>
+          <header class="hero">
+            <small>业务组件 / 联动</small>
+            <h1>ActionEditor · 动作配置</h1>
+            <p>配置规则中的一条动作。选择类型后，在同一列填写对应字段，应用后写入当前工作稿。</p>
+          </header>
+          <section class="section">
+            <h2>交互预览</h2>
+            <p>
+              试着将设置字段切换为更新对象，添加属性并配置表达式。批量命令可展开子项，整批一起应用或取消。
+            </p>
+            <p>
+              从动作顶部的「JSON
+              编辑」查看完整结构。使用值编辑区下方的「验证表达式」打开样例试算弹窗，关闭后继续编辑动作。
+            </p>
+            <p>
+              有目标字段或目标数组的动作在空间充足时把动作类型和目标放在同一行，窄面板中自动换行。
+            </p>
+            <section class="handbook-preview">
+              <iframe
+                class="component-playground"
+                title="动作配置"
+                sandbox="allow-scripts"
+                src="assets/business-playground-runner.html?run#action"
+              ></iframe>
+            </section>
+            <details class="handbook-source">
+              <summary>组件使用代码 · JSX</summary>
+              <iframe
+                class="component-playground"
+                title="ActionEditor JSX"
+                src="business-playground.html?code#action"
+              ></iframe>
+            </details>
+            <a href="business-playground.html#action">单独打开示例</a>
+          </section>
+          <section class="section">
+            <h2>属性与行为</h2>
+            <dl>
+              <dt>initial? · string</dt>
+              <dd>
+                已有动作的 JSON 原文；新增可省略。更换编辑对象时使用新的 React key 隔离工作稿。
+              </dd>
+              <dt>kind? · ActionKind</dt>
+              <dd>
+                新增时的初始类型，默认 set。支持
+                set、patch、remove、array.insert、array.remove、array.move、host.emit、batch。
+              </dd>
+              <dt>fields · ReactionField[]</dt>
+              <dd>
+                当前可见字段，包含 ref、schema、label、depth 和可选 title、description。scope
+                提供当前规则的词法绑定。
+              </dd>
+              <dt>manifests · PureFunctionManifest[]</dt>
+              <dd>
+                当前函数目录。named、functionDocs 和 verification
+                可按场景提供具名表达式、函数说明与验证上下文。
+              </dd>
+              <dt>onApply(raw, isCurrent) · Promise&lt;void&gt;</dt>
+              <dd>
+                提交结构有效的动作原文；异步检查结束后核对 isCurrent()
+                再写入。失败抛出错误，编辑器显示原因并保留输入。
+              </dd>
+              <dt>onPending(pending: boolean)、discard()</dt>
+              <dd>
+                报告草稿或检查中状态；取消由调用方恢复已应用的动作或移除未应用的新建项。组件没有自定义
+                slot。
+              </dd>
+            </dl>
+            <p>
+              <a href="../../apps/studio/src/app/reaction-action-editor.tsx">组件实现</a> ·
+              <a href="../../apps/studio/src/app/reaction-editor.tsx">联动规则接入</a>
+            </p>
+          </section>
+          <section class="section">
+            <h2>新增和编辑动作</h2>
+            <p>
+              从有序动作列表打开标准宽弹窗。顶部使用
+              <a href="editor-view-switch.html">EditorViewSwitch</a> 切换表单和
+              JSON，底部应用动作时执行规则校验。取消会丢弃弹窗中的动作草稿。
+            </p>
+          </section>
+        </article>
+      </main>
+    </div>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

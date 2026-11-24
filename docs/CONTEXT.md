@@ -8,15 +8,18 @@ modules: []
 tags: []
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-018
   - ADR-FE-019
 sources:
+- SRC-PLATFORMRBAC
+- SRC-OBSERVABILITY
 - SRC-ASSETDESIGN
 - SRC-L3BASELINE
 navigation:
   group: 09 · 决策与追溯
   order: 150
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 ---
 
 # 术语与语义边界
@@ -170,3 +173,58 @@ _Avoid_：basicInfo 协议域。
 ## Request（物料请求）
 
 物料声明 JSON 输入输出，通过页面 requests 映射到 Host 函数的有返回交互；区别于无返回 Event。公共 Adapter 管调用交付有效性，物料消费结果，业务写入沿用 Binding / Command；不等同 Host Validator 或 Reaction。见 [现行契约](design/l1/05-view-material-host.md#material-requests)。
+
+## DevTools 观测语义 {#observation-terms}
+
+**观测实体与执行身份**：定义描述规则，规则实例由定义和完整 ScopeBinding 定位，executionId / workId 标识一次执行 / 工作；数组成员身份来自 Runtime，索引只是位置。跨视图选择沿用同一引用，不使用显示名称或下标替代。
+
+**潜在影响 / 实际路径**：前者来自声明、编译推导与绑定关系，后者来自实际事件和明确因果引用；静态可达不证明发生，缺失事件也不证明未发生。
+
+**观测游标与完整性**：游标用于快照与增量的接续，不替代 Data / Context 版本。观测完整性分别描述结构、状态、事件窗口、因果引用和值的可用性；不同于完整校验 Coverage，轨迹完整不代表业务有效。
+
+**排队身份（queueEntryId）**：某规则实例的一次待执行入队；合并原因保留同一编号，执行中再次入队产生新编号。它不等于实例或实际 executionId。
+
+**事件序号 / 交付游标**：前者在生产者与 epoch 内标识不可变事实；后者记录会话消费确认位置。过滤导致的序号跳跃不自动等于丢包，缺口需要显式报告。
+
+**录制租约（captureId）**：会话拥有的采集范围及起止边界；停止或租约到期不取消业务任务，也不停止其他会话录制。
+
+**聚合边**：折叠时将原始关系映射到可见容器的展示连接，保留类型、原始引用和去重统计；不是新业务依赖或新触发源。详见[通用观测契约](design/l3-observability.md#observation-contract)。
+
+## 平台访问与权限 {#platform-access-language}
+
+**管理空间（Management Space）**：平台成员与表单资产的管理范围；首期团队共用一个空间。
+_Avoid_：Runtime Scope、表单数据作用域，或已实现的多租户隔离产品。
+
+**空间成员（Space Member）**：某个用户在管理空间中的访问资格与角色关联。
+_Avoid_：登录成功就自动取得平台访问权，或以全局用户角色替代空间内资格。
+
+**内建角色（Built-in Role）**：平台提供的固定业务权限组合，可为成员组合分配。
+_Avoid_：把创建人视为资源独占所有者，或将业务状态校验当成角色权限。
+
+
+## 平台创作与发布身份 {#platform-authoring-language}
+
+**表单（formId）**：团队资产的稳定身份，组织分支与发布历史。Fork 成独立表单产生新身份。
+
+**草稿**：当前编辑器内的未保存文本，与 Host 的填写草稿分开。
+
+**配置版本（versionId）**：一次成功保存追加的完整不可变原文。允许未完成或无法解析的 JSON。来源版本用于追溯，最近保存提供默认编辑起点。
+
+**发布版本（releaseId）**：确定修订、依赖与目标经检查构建形成的不可变交付身份，供 Host 精确消费；不是本地拼接 formId 与版本号，也不是某次填写实例 ID。详见[最小 MVP](design/platform-studio.md#platform-authoring-mvp)。
+
+
+## Agent 任务、执行与记忆 {#agent-terms}
+
+| 术语 | 本项目含义 |
+| --- | --- |
+| Studio 助手 | 统一聊天面板与上下文入口，按权限和已上线能力发起任务；Conversation 是持久创建任务，Turn 是一轮输入，Run 是执行，Proposal 是候选；首期仅创建，保存配置版本后会话完成归档 |
+| 智能表单工作台 | 连接 Studio 创作与审阅、后续场景测试和业务 Host 辅助填写的产品蓝图，入口及状态归属见[工作台](design/platform-studio.md#agent-form-workspace) |
+| Agent 能力 | 具备输入输出、工具权限、记忆策略和预算的职责工作流，六类见[蓝图](design/platform-studio.md#agent-roles-harness) |
+| Harness | 能力共享的上下文、工具执行、授权、预算、状态、取消恢复、输出验证与观测机制 |
+| 任务协调器 | 用显式状态图选择工作流，分配子预算及授权子集，组织结构化产物交接 |
+| 三层 Loop | 任务阶段循环、Agent 内部工具 / 修正循环、跨 Agent 的验证反馈循环；独立于表单 Flush |
+| 检查上下文 | 一次任务冻结的 Compiler 构建、目标与实际能力快照，候选验证绑定原文和候选摘要 |
+| 知识包 | 从权威白名单构建、版本化发布的 PostgreSQL 只读知识集，运行绑定确定版本 |
+| 工作 / 短期 / 长期记忆 | 单次任务状态 / 会话交互与澄清 / 经确认的跨会话偏好约定；生命周期和授权按[记忆契约](design/platform-studio.md#agent-memory) |
+
+运行凭证是服务身份之外的短期任务授权。Platform 保存 Token 摘要、运行授权、检查凭据和轮次投影，Agent 保存 Run 执行状态与恢复资料。业务会话和候选归 Platform。见[创建生命周期](design/platform-studio.md#agent-create-lifecycle)。

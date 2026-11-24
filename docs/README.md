@@ -6,13 +6,20 @@
 
 **整体架构 → 纵向与横向能力图谱 → 每层 / 每项能力的独立设计。**
 
-- [整体架构](design/architecture.md)：产品蓝图（待审阅）、系统边界、完整逻辑架构图、双工作流、建设路径、责任与贯穿案例，以及已确认的 TS / React 首期包与目录。
+- [整体架构](design/architecture.md)：产品全貌与平台蓝图状态、系统边界、完整逻辑架构图、双工作流、建设路径、责任与贯穿案例，以及已确认的 TS / React 首期包与目录。
 - [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁，以及初始化后的实际命令 / 版本 / 本地验收；远端 CI 尚未运行。
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
 - [L1 协议](design/l1/README.md)：模型 → 数据 / 引用 / Scope → 表达式 / 校验 → 命令 / 联动 → 视图 → 生命周期 → 示例与类型。八份主题分别生成 HTML，不再合成长页。
 - [L2 预处理](design/l2-preparation.md)与[Compiler 详细设计 / 实施](design/l2/compiler.md)、[L3 数据与执行](design/l3-reactive-engine.md)、[L3 校验](design/l3-validation.md)、[L4 呈现](design/l4-renderer.md)：各层完整现行说明与明确的未闭环边界。
-- [跨层依赖](design/dependency-reactivity.md)、[物料 / Host](design/extension-integration.md)：横向能力契约，以及已确认的首批正式物料 / 业务函数与整体验收方案；资产模板和版本编排见[工程工具](design/engineering.md#asset-tooling)，均待实施。
-- [Platform / Studio](design/platform-studio.md)：已有范围与待设计工作；尚未形成整体产品、模块或接口方案。
+- [跨层依赖](design/dependency-reactivity.md)、[物料 / Host](design/extension-integration.md)：横向能力契约，以及已确认的首批正式物料 / 业务函数与整体验收方案；资产模板和版本编排见[工程工具](design/engineering.md#asset-tooling)，工具第 0 批及首个函数已有[本地实施证据](design/engineering.md#asset-tooling-implementation)，全部 14 个物料、7 个业务函数与完整可控目标表单已有[交付证据](design/engineering.md#business-travel-implementation)，真实 Host 待推进。
+- [诊断与 DevTools](design/l3-observability.md#observation-contract)：通用观测数据、上报契约、四视图与对象折叠；[详细技术契约](design/l3-observability.md#observation-technical)含接口、自动订阅 / 推送、固定快照及直接破坏性升级；[分阶段范围与验收](design/l3-observability.md#observation-delivery)已整理，页面协议与四视图入口已同步切换，完整元数据增量、图布局与统计及成本验收仍待完成。
+- [Platform / Studio](design/platform-studio.md)：产品定位与组织方式已确认，包含业务环节、页面与模型关系及用户权限基础管理；单团队 RBAC 与表单操作权限已确认；DDD 模块化单体方向已确认，首期不拆微服务；[最小 MVP](design/platform-studio.md#platform-authoring-mvp)及配置版本追加、内置账号和 GitHub 登录、releaseId 在线消费已确认；发布 API、Studio 发布和示例 Web Host 公开装载已通过本地验收，2026-11-14 增补[最小物料与纯函数目录、成员角色管理及 Admin 工作台补齐任务](design/platform-studio.md#platform-mvp-completion)，各块API与页面已完成本地自动验收；2026-11-15新增[GitHub自助注册、团队申请审批及登录方式管理](design/platform-studio.md#platform-account-admission)已分片实施并通过本地验收与独立review，真实OAuth和用户最终人工验收仍待完成；平台整体进展见[治理状态](design/governance.md#layer-progress)。
+
+Agent 的[六类职责、共享 Harness 与三层 Loop](design/platform-studio.md#agent-confirmed-blueprint)保留。首期采用[统一助手 Graph](design/platform-studio.md#agent-turn-graph)，覆盖 Studio 普通问答、多轮澄清、候选生成和检查、审阅与保存归档。Agent 持久化消息与跨轮状态；Platform 持久化已交付草稿，详见[数据归属](design/platform-studio.md#agent-conversation-draft-ownership)。旧异步接口已转为历史设计。Studio 问答、转创建、插问与续办已通过本地浏览器验收。[MCP / 插件扩展](design/platform-studio.md#agent-mcp-extension)放到后续。[Platform PostgreSQL 迁移](design/platform-studio.md#platform-postgresql-migration)已完成本机切换与验收。
+
+2026-11-22 确认[智能表单工作台蓝图](design/platform-studio.md#agent-form-workspace)，连接 Studio 创作、后续场景测试及业务 Host 辅助填写。创建部分交付时用 Agent 生成的[旅险候选运行真实 Runtime 场景](design/platform-studio.md#agent-create-runtime-acceptance)，再审阅保存。
+
+实现状态按“已有代码 / 尚待实现 / 已有实现但待对应环境验收”区分，当前源码与既有证据的对应关系统一见[设计进展](design/governance.md#layer-progress)。历史批次中的“当时未实现”只作追溯，不能直接作为当前待办；设计完成度也不代替实现或验收状态。
 
 继续讨论统一进入[设计进展与待讨论事项](design/governance.md)，按层看缺口、选具体问题、按前置推进。取舍背景、旧方案与决策总账在[独立设计演进](design/design-history.md)及 `design/decisions/`；[约束与审查证据](design/design-review.md)、[来源映射](design/source-map.md)按需查阅，不与主阅读顺序混排。
 
@@ -20,9 +27,9 @@
 
 ## 项目研发工作流
 
-[项目工作流与使用说明](design/workflows.md)按真实场景说明方案讨论、确认归档、开发交付、问题修复、流程改进五类任务，包含步骤、例子、结束条件与安装候选。可直接用自然语言交代任务；仓库 `.agents/skills/` 提供对应执行入口。工作流复用下方维护程序及已确认工程工具链，不新增第二套设计规范。第三方工具由用户选择后安装，当前五类流程无必装插件。
+[项目工作流与使用说明](design/workflows.md)按真实场景说明方案讨论、确认归档、开发交付、问题修复、流程改进五类任务及深度审查能力，包含步骤、例子、结束条件与安装候选。可直接用自然语言交代任务或显式使用 `$form-workflow`；仓库 `.agents/skills/form-workflow/SKILL.md` 是唯一项目工作流入口，按当前缺口加载能力，不将任务类型串成必跑阶段。工作流复用下方维护程序及已确认工程工具链，不新增第二套设计规范。第三方工具由用户选择后安装，当前工作流无必装插件。
 
-研发采用[决策权限与证据规则](design/workflows.md#workflow-contract-evidence)：实现前只读预检，将本轮行为、反例和验证入口关联到权威契约；按可观察行为交付，再对照契约审查和验证。重要语义缺口集中确认，契约内实现自主推进。复杂变更与单独审查使用辅助技能 `form-deep-review`，覆盖文件、执行路径、状态 / 时序及证据，服务 W3 / W4。完整产物结构维护在[预检](design/workflows.md#implementation-preflight)及[深度审查](design/workflows.md#deep-review)，不另建重复规范或每轮报告页。
+研发采用[决策权限与证据规则](design/workflows.md#workflow-contract-evidence)：实现前只读预检，将本轮行为、反例和验证入口关联到权威契约；按可观察行为交付，再对照契约审查和验证。重要语义缺口集中确认，契约内实现自主推进。复杂变更与单独审查由统一入口按需加载 `references/review.md`，覆盖文件、执行路径、状态 / 时序及证据，服务 W3 / W4。完整产物结构维护在[预检](design/workflows.md#implementation-preflight)及[深度审查](design/workflows.md#deep-review)，不另建重复规范或每轮报告页。
 
 ## 讨论标记不代表发布版本
 
@@ -139,3 +146,7 @@ Python 测试覆盖元数据、引用 / 前置、正常互链、重复锚点、�
 浏览器验收使用本地 HTTP：搜索 `Baseline` 并筛选 ADR，结果能进入 ADR-FE-008；治理选择 M11 / 高 / 已说明差异且非阻塞可找到 REV-02；本轮确认后 REV-01 / REV-02 / REV-03 均不再作为架构决策阻塞，不能以接口尚未实现恢复旧阻塞标记；模块对照保留“可进入的工作”；代码复制显示反馈；Mermaid 图及其放大视图正常。页面主题、目录与来源链接复用同一外壳。上述验证只涉及文档阅读系统，不能证明表单 Runtime、Prepared ABI 或跨端实现已完成。
 
 设计者路径验收另覆盖：整体架构→能力图谱→L1 独立主题；桌面与窄屏分层导航；搜索默认隔离历史；旧协议 / Trace 书签迁移到当前能力。分层说明中的原模型、代码和图示继续通过来源保留检查。
+
+OpenSpec 复杂变更接入及恢复 / hooks / 本地提交策略见 [工作流适配](design/workflows.md#workflow-openspec)。现行设计仍是唯一权威正文；变更目录只作增量与执行记录。
+
+Review 阅读顺序为整体变更与设计 → 基线覆盖 → 问题 → 验证与结论 → 修复后最终模型，详见[深度审查](design/workflows.md#deep-review)。

@@ -8,7 +8,7 @@
   <title>ADR-FE-023：独立 DevTools 与开发态观测接缝 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
 
-  <script src="../assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="../assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="../l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="../dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="../extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="../governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group" open><summary>09 · 决策与追溯</summary><div><a href="../design-history.html">设计决策与讨论演进</a>
 <a href="../design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a class="active" aria-current="page" href="ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -94,8 +107,12 @@
 
 <p>详细契约统一维护在 <a href="../l3-observability.html#independent-devtools" rel="noopener noreferrer">独立 DevTools</a>。工具首期只读；不依赖其安装、连接或正常工作才能执行业务。查询不触发纯函数重算、指令、校验或额外业务观察。业务错误提示和必要诊断 / 异常完整现场仍留在引擎及 Host 原出口。</p>
 <p>替代 L4 首批的内嵌技术详情和 diagnosticMode 实现选择；ADR-FE-022 的 Renderer / 共用 Hook、状态所有权、请求与生命周期决定继续有效，不整体废弃该 ADR。移除展示 API 和修复诊断回调改动造成重建属于本次确认范围。</p>
-<p>开发发现具有额外小量目录和通知成本；完整 UI / 桥接 / 缓存归工具包，默认生产产物不注册发现入口。连接、断开、重连及工具抛错不应改变业务调度、数据结果或请求资格。工具展示限额与 Trace 缺失须明确，不降低已有必要异常现场要求。编辑、时间旅行、重放、跨 frame 及其他浏览器宿主适配留后续。</p></section>
-<section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认独立包、浏览器扩展及只读首期方案并授权落地；不代表全端发布验收</p><nav class="decision-path"><a href="#adr-023-context">背景与决定</a><span>→</span><a href="#adr-023-decision">约束与取舍</a></nav></section>
+<p>开发发现具有额外小量目录和通知成本；完整 UI / 桥接 / 缓存归工具包，默认生产产物不注册发现入口。连接、断开、重连及工具抛错不应改变业务调度、数据结果或请求资格。工具展示限额与 Trace 缺失须明确，不降低已有必要异常现场要求。编辑、时间旅行、重放、跨 frame 及其他浏览器宿主适配留后续。</p>
+</section>
+<section class="section" id="adr-023-observation-extension"><div class="section-head"><div class="kicker">03 · FORM ENGINE</div><div class="section-title"><h2>后续观测能力扩展</h2></div></div>
+
+<p>2026-11-08 <a href="ADR-FE-025-observation-contract.html" rel="noopener noreferrer">ADR-FE-025</a>确认通用观测数据、结构化上报与四视图；本决定的独立工具、只读、环境和所有权边界继续有效。首期实现与后续目标分开记录，详见<a href="../l3-observability.html#observation-contract" rel="noopener noreferrer">通用观测契约</a>。</p></section>
+<section class="decision-context" aria-label="决策阅读路径"><p class="caption">用户确认独立包、浏览器扩展及只读首期方案并授权落地；不代表全端发布验收</p><nav class="decision-path"><a href="#adr-023-context">背景与决定</a><span>→</span><a href="#adr-023-decision">约束与取舍</a><span>→</span><a href="#adr-023-observation-extension">后续观测能力扩展</a></nav></section>
 
 
         <footer class="document-foot">架构设计持续讨论中 · 当前设计、待讨论事项与决策演进分别维护。</footer>
@@ -104,8 +121,9 @@
         <div class="nav-caption">本页目录</div>
         <div class="search-wrap"><input id="tocSearch" type="search" placeholder="筛选本页章节…" aria-label="搜索本页目录"></div>
         <nav class="toc" id="toc" aria-label="本页目录"><a href="#adr-023-context" data-to="adr-023-context" title="背景与决定"><span class="nav-num">01</span><span>背景与决定</span></a>
-<a href="#adr-023-decision" data-to="adr-023-decision" title="约束与取舍"><span class="nav-num">02</span><span>约束与取舍</span></a></nav>
-<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-023</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认独立包、浏览器扩展及只读首期方案并授权落地；不代表全端发布验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 1</summary><ul><li><a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../architecture.html">整体架构设计</a></li><li><a href="../l3-observability.html">L3 诊断与 Trace</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 1</summary><ul><li><a href="../source-map.html#src-devtools">SRC-DEVTOOLS · 独立工具与无业务装配确认</a></li></ul></details></section>
+<a href="#adr-023-decision" data-to="adr-023-decision" title="约束与取舍"><span class="nav-num">02</span><span>约束与取舍</span></a>
+<a href="#adr-023-observation-extension" data-to="adr-023-observation-extension" title="后续观测能力扩展"><span class="nav-num">03</span><span>后续观测能力扩展</span></a></nav>
+<section class="context-group" id="related-docs"><h3>关联与来源</h3><dl class="document-facts"><dt>文档 ID</dt><dd>ADR-FE-023</dd><dt>所属层级</dt><dd>跨层</dd><dt>声明状态</dt><dd>已确认决策</dd></dl><details><summary>状态范围</summary><p>用户确认独立包、浏览器扩展及只读首期方案并授权落地；不代表全端发布验收</p></details><details><summary>关联模块 · 2</summary><ul><li><a href="../governance.html#M14">M14 L4 / Material Adapter</a></li><li><a href="../governance.html#M16">M16 Trace / Devtools</a></li></ul></details><details open><summary>关联 ADR · 2</summary><ul><li><a href="ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a></li><li><a href="ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a></li></ul></details><details><summary>相关正文与历史 · 7</summary><ul><li><a href="../architecture.html">整体架构设计</a></li><li><a href="../l3-observability.html">L3 诊断与 Trace</a></li><li><a href="../l4-renderer.html">L4 呈现与交互适配</a></li><li><a href="../engineering.html">工程工具链与初始化方案</a></li><li><a href="../governance.html">设计进展与待讨论事项</a></li><li><a href="../design-history.html">设计决策与讨论演进</a></li><li><a href="../source-map.html">来源映射与知识覆盖</a></li></ul></details><details open><summary>原始来源 · 2</summary><ul><li><a href="../source-map.html#src-observability">SRC-OBSERVABILITY · 通用观测结构、上报与四视图确认</a></li><li><a href="../source-map.html#src-devtools">SRC-DEVTOOLS · 独立工具与无业务装配确认</a></li></ul></details></section>
       </aside>
       </div>
     </div>

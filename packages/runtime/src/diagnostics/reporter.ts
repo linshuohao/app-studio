@@ -270,6 +270,20 @@ export class DiagnosticReporter {
   }
 
   /** 返回最近事件的只读数组副本，跨轮查询不等于保留完整轮次历史。 */
+  /** 有界定位现存完整现场，不复制整份 Trace，也不延长错误输入保留期。 */
+  hasEvidence(sequences: readonly number[], maximum: number): boolean {
+    if (sequences.length > maximum) throw Error('budget');
+    const remaining = new Set(sequences);
+    if (!remaining.size) return false;
+    let visited = 0;
+    for (let index = this.recent.length - 1; index >= 0; index--) {
+      if (++visited > maximum) throw Error('budget');
+      const entry = this.recent[index]!;
+      if (entry.evidence) remaining.delete(entry.sequence);
+      if (!remaining.size) return true;
+    }
+    return false;
+  }
   read(): readonly Diagnostic[] {
     return Object.freeze(this.recent.slice());
   }

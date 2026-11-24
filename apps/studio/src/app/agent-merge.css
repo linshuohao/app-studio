@@ -1,0 +1,37 @@
+.agent-merge-row {
+  padding-block: 12px;
+  border-block-start: 1px solid var(--studio-border, #d9dee6);
+  overflow-wrap: anywhere;
+}
+.agent-merge-row dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.agent-merge-row dl div {
+  padding: 8px;
+  background: var(--studio-surface-muted, #f2f4f7);
+  border-radius: 6px;
+}
+.agent-merge-row dt {
+  color: var(--studio-text-muted, #525966);
+}
+.agent-merge-row dd {
+  margin: 0;
+}
+.agent-merge-row pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 14em;
+}
+.agent-merge-row fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .agent-merge-row dl {
+    grid-template-columns: 1fr;
+  }
+}

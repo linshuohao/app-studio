@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Studio · 工作区布局评审</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      html {
+        font-size: 13px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--studio-bg);
+        color: var(--studio-text);
+        font: var(--studio-type-body);
+      }
+      button,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      #shell {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        height: 100dvh;
+      }
+      #shell.wide {
+        grid-template-columns: 168px minmax(0, 1fr);
+      }
+      aside,
+      header,
+      .list,
+      .box,
+      .compose {
+        background: var(--studio-surface);
+      }
+      .rail {
+        display: flex;
+        flex-direction: column;
+        padding: var(--studio-space-8) var(--studio-space-4);
+        border-right: 1px solid var(--studio-border);
+        gap: var(--studio-space-16);
+        z-index: 2;
+      }
+      .rail button,
+      .side button,
+      .bread,
+      .menubtn {
+        background: transparent;
+        border: 0;
+        border-radius: var(--studio-radius-8);
+        font: var(--studio-type-control);
+        text-align: left;
+      }
+      .rail button {
+        height: 44px;
+        width: 100%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .rail button:hover,
+      .side button:hover,
+      .menubtn:hover,
+      .bread:hover {
+        background: var(--studio-hover);
+      }
+      .rail button[aria-current],
+      .side button[aria-current] {
+        background: var(--studio-selected);
+      }
+      .wide .rail button {
+        justify-content: flex-start;
+        padding-inline: var(--studio-space-12);
+      }
+      .rail nav,
+      .side nav,
+      .menu {
+        display: grid;
+        gap: var(--studio-space-4);
+      }
+      .rail .bottom {
+        margin-top: auto;
+        border-top: 1px solid var(--studio-border);
+        padding-top: var(--studio-space-8);
+      }
+      .avatar,
+      .mark {
+        display: grid;
+        place-items: center;
+        width: var(--studio-space-32);
+        height: var(--studio-space-32);
+        border-radius: var(--studio-radius-8);
+        background: var(--studio-primary);
+        color: var(--studio-on-primary);
+        font: var(--studio-type-control);
+      }
+      .avatar {
+        border-radius: 50%;
+        background: var(--studio-selected);
+        color: var(--studio-info-fg);
+      }
+      .wideLabel {
+        display: none;
+      }
+      .wide .wideLabel {
+        display: inline;
+        margin-left: var(--studio-space-8);
+      }
+      .wide .short {
+        display: none;
+      }
+      .wide .wideLabel:first-child,
+      .wide .short + .wideLabel {
+        margin: 0;
+      }
+      .rail [data-tip]:is(:hover, :focus-visible)::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 100%;
+        margin-left: var(--studio-space-8);
+        background: var(--studio-primary);
+        color: var(--studio-on-primary);
+        padding: var(--studio-space-4) var(--studio-space-8);
+        border-radius: var(--studio-radius-4);
+        font: var(--studio-type-caption);
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .wide .rail [data-tip]::after {
+        display: none;
+      }
+      main {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: 48px minmax(0, 1fr);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: var(--studio-space-8);
+        padding: 0 var(--studio-space-24);
+        border-bottom: 1px solid var(--studio-border);
+        font: var(--studio-type-control);
+      }
+      .bread {
+        padding: var(--studio-space-4);
+        color: var(--studio-text-muted);
+      }
+      .sep,
+      small,
+      .meta {
+        color: var(--studio-text-muted);
+        font: var(--studio-type-caption);
+      }
+      .area {
+        min-height: 0;
+        overflow: auto;
+      }
+      .split {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 224px minmax(0, 1fr);
+      }
+      .side {
+        border-right: 1px solid var(--studio-border);
+        padding: var(--studio-space-16);
+        overflow: auto;
+      }
+      .side nav {
+        margin-top: var(--studio-space-16);
+      }
+      .side button {
+        text-align: left;
+        width: 100%;
+        min-height: var(--studio-control-height);
+        padding: var(--studio-space-8);
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font: var(--studio-type-title);
+      }
+      h2 {
+        font: var(--studio-type-section);
+      }
+      .page,
+      .thread {
+        padding: var(--studio-space-24);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--studio-space-24);
+        min-width: 0;
+      }
+      .thread {
+        background: var(--studio-surface);
+        overflow: auto;
+      }
+      .message,
+      .compose {
+        width: min(100%, 720px);
+        margin-inline: auto;
+      }
+      .message {
+        display: grid;
+        gap: var(--studio-space-8);
+      }
+      .box,
+      .compose,
+      .list {
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-8);
+      }
+      .box,
+      .compose {
+        padding: var(--studio-space-16);
+      }
+      .compose {
+        margin-top: auto;
+      }
+      .compose textarea {
+        display: block;
+        resize: vertical;
+        min-height: 64px;
+        width: 100%;
+        background: var(--studio-surface);
+        border: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--studio-space-12);
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .list > .row {
+        padding: var(--studio-space-12) var(--studio-space-16);
+      }
+      .list > .row + .row {
+        border-top: 1px solid var(--studio-border);
+      }
+      .menu {
+        position: fixed;
+        inset: auto auto var(--studio-space-8) 56px;
+        z-index: 3;
+        width: 208px;
+        padding: var(--studio-space-8);
+        background: var(--studio-surface);
+        border: 1px solid var(--studio-border);
+        box-shadow: var(--studio-overlay-shadow);
+        border-radius: var(--studio-radius-8);
+      }
+      .wide .menu {
+        left: 168px;
+      }
+      .menubtn {
+        padding: var(--studio-space-8);
+      }
+      .menu small {
+        padding: var(--studio-space-8);
+      }
+      .field {
+        display: grid;
+        gap: var(--studio-space-8);
+      }
+      .field textarea {
+        padding: var(--studio-space-8);
+        background: var(--studio-surface);
+        border: 1px solid var(--studio-control-border);
+        border-radius: var(--studio-radius-8);
+      }
+      .end {
+        justify-content: flex-end;
+      }
+      dialog {
+        border: 1px solid var(--studio-border);
+        border-radius: var(--studio-radius-12);
+        background: var(--studio-surface);
+        color: var(--studio-text);
+        padding: var(--studio-space-24);
+      }
+      dialog .row {
+        margin-top: var(--studio-space-16);
+      }
+      .box {
+        display: grid;
+        gap: var(--studio-space-12);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--studio-control-height);
+      }
+      .wide .brand {
+        justify-content: flex-start;
+        padding-left: var(--studio-space-8);
+      }
+      #toggle {
+        height: var(--studio-control-height);
+        font: var(--studio-type-caption);
+        color: var(--studio-text-muted);
+      }
+      #toggle:hover {
+        color: var(--studio-text);
+      }
+      /* Both sidebars use the same Lucide icons for the same directions. */
+      .collapse-toggle svg,
+      .rail nav svg,
+      .rail .bottom svg {
+        flex: none;
+      }
+      /* The first navigation row and workspace headings share a vertical axis. */
+      #shell {
+        --shell-header-height: 48px;
+        --workspace-heading-height: 44px;
+        --workspace-heading-inset: var(--studio-space-16);
+      }
+      main {
+        grid-template-rows: var(--shell-header-height) minmax(0, 1fr);
+      }
+      .rail {
+        padding-block-start: 0;
+        gap: var(--workspace-heading-inset);
+      }
+      .rail-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--shell-header-height);
+        flex: none;
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .rail-header .brand {
+        display: none;
+      }
+      .wide .rail-header {
+        justify-content: space-between;
+      }
+      .wide .rail-header .brand {
+        display: flex;
+        white-space: nowrap;
+      }
+      .rail-header #toggle,
+      .wide .rail-header #toggle {
+        width: var(--studio-control-height);
+        justify-content: center;
+        padding: 0;
+        flex: none;
+      }
+      .page,
+      .thread {
+        padding-block-start: var(--workspace-heading-inset);
+      }
+      .page h1,
+      .thread h1,
+      .side h2 {
+        display: flex;
+        align-items: center;
+        min-height: var(--workspace-heading-height);
+      }
+      .conversation-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--studio-space-8);
+        min-height: var(--workspace-heading-height);
+      }
+      .conversation-head .collapse-toggle {
+        display: grid;
+        place-items: center;
+        width: var(--studio-control-height);
+        height: var(--studio-control-height);
+        padding: 0;
+        color: var(--studio-text-muted);
+      }
+      .conversations-collapsed {
+        position: relative;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .conversations-collapsed .conversation-side {
+        position: absolute;
+        inset: var(--workspace-heading-inset) auto auto var(--studio-space-16);
+        background: transparent;
+        border: 0;
+        padding: 0;
+        overflow: visible;
+        z-index: 1;
+      }
+      .conversations-collapsed .conversation-head h2 {
+        display: none;
+      }
+      .conversations-collapsed .collapse-toggle {
+        background: var(--studio-surface);
+        border: 1px solid var(--studio-border);
+      }
+      .conversations-collapsed .thread h1 {
+        padding-inline-start: calc(var(--studio-control-height) + var(--studio-space-16));
+      }
+    </style>
+  </head>
+  <body>
+    <div id="shell">
+      <aside class="rail" aria-label="全局导航">
+        <div class="rail-header">
+          <div class="brand">
+            <span class="mark">S</span><strong class="wideLabel">Studio</strong>
+          </div>
+          <button
+            id="toggle"
+            class="collapse-toggle"
+            aria-controls="dest workspace-links"
+            aria-label="展开导航"
+          ></button>
+        </div>
+        <nav id="dest" aria-label="创作入口"></nav>
+        <div class="bottom" id="workspace-links">
+          <button data-page="成员管理" data-tip="成员" aria-label="成员管理" id="members"></button
+          ><button
+            id="account"
+            aria-expanded="false"
+            aria-controls="menu"
+            data-tip="我的账号"
+            aria-label="我的账号"
+          >
+            <span class="avatar">林</span><span class="wideLabel">林小满</span>
+          </button>
+        </div>
+      </aside>
+      <div id="menu" class="menu" hidden>
+        <small>林小满 · 管理员</small
+        ><button class="menubtn" data-page="账号与权限">账号与权限</button
+        ><button class="menubtn" data-page="安全记录">安全记录</button
+        ><button class="menubtn" id="logout">退出登录</button>
+      </div>
+      <main>
+        <header id="crumb"></header>
+        <div id="area" class="area"></div>
+      </main>
+    </div>
+    <dialog id="confirm">
+      <h2>退出示例账号？</h2>
+      <div class="row end">
+        <button class="studio-button" data-variant="secondary" onclick="confirmDialog.close()">
+          取消</button
+        ><button class="studio-button" id="exit">退出</button>
+      </div>
+    </dialog>
+    <script>
+      const $ = (s) => document.querySelector(s),
+        shell = $('#shell'),
+        area = $('#area'),
+        menu = $('#menu'),
+        account = $('#account'),
+        toggle = $('#toggle'),
+        confirmDialog = $('#confirm');
+      const icons = {
+        PanelLeftOpen:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-open lucide-sidebar-open" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg>',
+        PanelLeftClose:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left-close lucide-sidebar-close" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg>',
+        Bot: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot" aria-hidden="true" focusable="false"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>',
+        FileText:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>',
+        Component:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-component" aria-hidden="true" focusable="false"><path d="M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"></path><path d="M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z"></path><path d="M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z"></path><path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"></path></svg>',
+        FunctionSquare:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-function lucide-function-square" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><path d="M9 17c2 0 2.8-1 2.8-2.8V10c0-2 1-3.3 3.2-3"></path><path d="M9 11.2h5.7"></path></svg>',
+        Users:
+          '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+      };
+      const pages = ['Agent', '表单', '物料', '纯函数'],
+        chats = ['员工请假流程', '差旅报销规则'],
+        forms = ['员工请假申请', '差旅报销申请'],
+        fields = ['申请人', '开始日期', '结束日期'],
+        notes = new Map(),
+        drafts = new Map(),
+        sent = new Map();
+      let page = 'Agent',
+        chat = chats[0],
+        form = '',
+        field = fields[0],
+        section = '';
+      const esc = (v) =>
+        String(v ?? '').replace(
+          /[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+        );
+      const control = (label, action, value = '', variant = 'secondary') =>
+        '<button class="studio-button" data-variant="' +
+        variant +
+        '" data-action="' +
+        action +
+        '" data-value="' +
+        esc(value) +
+        '">' +
+        esc(label) +
+        '</button>';
+      const labels = {
+        Agent: 'Bot',
+        表单: 'FileText',
+        物料: 'Component',
+        纯函数: 'FunctionSquare',
+      };
+      function navLabel(label, icon) {
+        return icons[icon] + '<span class="wideLabel">' + label + '</span>';
+      }
+      $('#dest').innerHTML = pages
+        .map(
+          (label) =>
+            '<button data-page="' +
+            label +
+            '" data-tip="' +
+            label +
+            '" aria-label="' +
+            label +
+            '">' +
+            navLabel(label, labels[label]) +
+            '</button>',
+        )
+        .join('');
+      $('#members').innerHTML = navLabel('成员', 'Users');
+
+      function showToggle(button, expanded, label) {
+        const action = (expanded ? '收起' : '展开') + label;
+        button.innerHTML = icons[expanded ? 'PanelLeftClose' : 'PanelLeftOpen'];
+        button.setAttribute('aria-expanded', expanded);
+        button.setAttribute('aria-label', action);
+        button.title = action;
+      }
+      function width(wide) {
+        shell.classList.toggle('wide', wide);
+        showToggle(toggle, wide, '导航');
+      }
+      let conversationsOpen = true;
+      function updateConversations() {
+        const button = $('#conversation-toggle');
+        if (!button) return;
+        button.closest('.split').classList.toggle('conversations-collapsed', !conversationsOpen);
+        $('#conversation-list').hidden = !conversationsOpen;
+        showToggle(button, conversationsOpen, '对话列表');
+        button.onclick = () => {
+          conversationsOpen = !conversationsOpen;
+          updateConversations();
+        };
+      }
+      try {
+        width(localStorage.getItem('studio-shell-review-wide') === 'yes');
+      } catch {
+        width(false);
+      }
+      toggle.onclick = () => {
+        width(!shell.classList.contains('wide'));
+        try {
+          localStorage.setItem(
+            'studio-shell-review-wide',
+            shell.classList.contains('wide') ? 'yes' : 'no',
+          );
+        } catch {}
+      };
+      function closeMenu(focus = false) {
+        menu.hidden = true;
+        account.setAttribute('aria-expanded', 'false');
+        if (focus) account.focus();
+      }
+      account.onclick = () => {
+        if (!menu.hidden) return closeMenu(true);
+        menu.hidden = false;
+        account.setAttribute('aria-expanded', 'true');
+        menu.querySelector('button').focus();
+      };
+      document.addEventListener('keydown', (e) => {
+        if (!menu.hidden) {
+          if (e.key === 'Escape') closeMenu(true);
+          if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+            const items = [...menu.querySelectorAll('button')];
+            items[
+              (items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : 2)) % 3
+            ].focus();
+          }
+        }
+      });
+      document.addEventListener('focusin', (e) => {
+        if (!menu.hidden && !menu.contains(e.target) && e.target !== account) closeMenu();
+      });
+      function side(title, items, selected, action) {
+        return (
+          '<aside class="side"><h2>' +
+          title +
+          '</h2><nav>' +
+          items
+            .map(
+              (x) =>
+                '<button ' +
+                (x === selected ? 'aria-current="true"' : '') +
+                ' data-action="' +
+                action +
+                '" data-value="' +
+                esc(x) +
+                '">' +
+                esc(x) +
+                '</button>',
+            )
+            .join('') +
+          '</nav></aside>'
+        );
+      }
+      function list(rows) {
+        return (
+          '<div class="list">' +
+          rows
+            .map(
+              ([name, meta, action]) =>
+                '<div class="row"><div><strong>' +
+                name +
+                '</strong><div class="meta">' +
+                meta +
+                '</div></div>' +
+                (action || '') +
+                '</div>',
+            )
+            .join('') +
+          '</div>'
+        );
+      }
+      function screen() {
+        if (page === 'Agent') {
+          const first = chat === chats[0];
+          return (
+            '<div class="split">' +
+            '<aside class="side conversation-side"><div class="conversation-head"><h2>对话</h2><button type="button" class="collapse-toggle" id="conversation-toggle" aria-controls="conversation-list"></button></div><nav id="conversation-list" aria-label="对话列表">' +
+            chats
+              .map(
+                (title) =>
+                  '<button ' +
+                  (title === chat ? 'aria-current="true" ' : '') +
+                  'data-action="chat" data-value="' +
+                  esc(title) +
+                  '">' +
+                  esc(title) +
+                  '</button>',
+              )
+              .join('') +
+            '</nav></aside>' +
+            '<section class="thread"><h1>' +
+            chat +
+            '</h1><div class="message"><small>你</small><p>' +
+            (first
+              ? '请帮我整理员工请假申请的字段和校验规则。'
+              : '差旅报销需要检查哪些金额规则？') +
+            '</p></div><div class="message"><small>Agent</small><p>' +
+            (first
+              ? '申请人和请假日期已整理在表单草稿中。'
+              : '可以从费用类型、报销金额和限额开始。') +
+            '</p>' +
+            list([
+              [
+                first ? forms[0] : forms[1],
+                '表单草稿',
+                control('查看表单', 'form', first ? forms[0] : forms[1]),
+              ],
+            ]) +
+            '</div>' +
+            (sent.get(chat) || [])
+              .map((m) => '<div class="message"><small>你</small><p>' + esc(m) + '</p></div>')
+              .join('') +
+            '<form class="compose"><textarea aria-label="对话输入" placeholder="继续这段对话…">' +
+            esc(drafts.get(chat)) +
+            '</textarea><div class="row end"><button class="studio-button">发送</button></div></form></section></div>'
+          );
+        }
+        if (page === '表单' && form)
+          return (
+            '<div class="split">' +
+            side('字段大纲', fields, field, 'field') +
+            '<section class="page"><div><h1>' +
+            form +
+            '</h1><small>工作版本</small></div><div class="box"><h2>' +
+            field +
+            '</h2><label class="field">字段说明<textarea id="note">' +
+            esc(notes.get(form + field)) +
+            '</textarea></label></div></section></div>'
+          );
+        let content =
+          page === '表单'
+            ? forms.map((f) => [f, '工作版本', control('打开', 'form', f)])
+            : page === '物料'
+              ? [['日期范围', 'date-range · 0.1.0', control('查看详情', 'detail', '日期范围')]]
+              : page === '纯函数'
+                ? [['相等比较', 'core.eq · 1', control('查看详情', 'detail', '相等比较')]]
+                : page === '成员管理'
+                  ? [
+                      ['林小满', '管理员'],
+                      ['陈之远', '编辑者'],
+                    ]
+                  : page === '安全记录'
+                    ? [['本地开发账号登录', '当前会话']]
+                    : [
+                        ['登录方式', '本地开发账号'],
+                        ['当前访问权限', '管理员'],
+                      ];
+        return (
+          '<section class="page"><h1>' +
+          esc(section || page) +
+          '</h1>' +
+          (section
+            ? '<div class="box"><h2>' +
+              (page === '物料' ? '属性与绑定' : '参数与返回值') +
+              '</h2><p>' +
+              (page === '物料' ? '开始日期、结束日期' : 'core.eq(arg0, arg1) → boolean') +
+              '</p></div>'
+            : list(content)) +
+          '</section>'
+        );
+      }
+      const details = {};
+      function render() {
+        document
+          .querySelectorAll('.rail [aria-current]')
+          .forEach((b) => b.removeAttribute('aria-current'));
+        const active =
+          [...document.querySelectorAll('.rail [data-page]')].find(
+            (b) => b.dataset.page === page,
+          ) || account;
+        active.setAttribute('aria-current', 'page');
+        const child = page === 'Agent' ? chat : page === '表单' ? form : section;
+        $('#crumb').innerHTML =
+          '<span class="meta">默认空间</span><span class="sep">/</span>' +
+          (child
+            ? '<button class="bread" data-action="up">' +
+              page +
+              '</button><span class="sep">/</span><span>' +
+              esc(child) +
+              '</span>'
+            : '<span>' + page + '</span>');
+        area.innerHTML = screen();
+        updateConversations();
+      }
+      function navigate(next) {
+        page = next;
+        section = details[next] || '';
+        closeMenu();
+        render();
+      }
+      document.onclick = (e) => {
+        const b = e.target.closest('button');
+        if (!menu.hidden && !menu.contains(e.target) && !account.contains(e.target)) closeMenu();
+        if (!b) return;
+        if (b.dataset.page) {
+          navigate(b.dataset.page);
+          if (menu.contains(b)) account.focus();
+          return;
+        }
+        let v = b.dataset.value;
+        switch (b.dataset.action) {
+          case 'form':
+            form = v;
+            navigate('表单');
+            break;
+          case 'field':
+            field = v;
+            render();
+            break;
+          case 'chat':
+            chat = v;
+            render();
+            break;
+          case 'detail':
+            details[page] = section = v;
+            render();
+            break;
+          case 'up':
+            if (page === 'Agent') {
+              (
+                area.querySelector('.side [aria-current]:not([hidden] *)') ||
+                $('#conversation-toggle')
+              ).focus();
+              return;
+            }
+            section = details[page] = '';
+            if (page === '表单') form = '';
+            render();
+            break;
+          default:
+            return;
+        }
+        const dest = [...area.querySelectorAll('button')].find(
+          (x) => x.dataset.action === b.dataset.action && x.dataset.value === v,
+        );
+        if (dest) dest.focus();
+        else {
+          const h = area.querySelector('h1');
+          h.tabIndex = -1;
+          h.focus();
+        }
+      };
+      area.oninput = (e) => {
+        if (e.target.id === 'note') notes.set(form + field, e.target.value);
+        else if (e.target.matches('textarea')) drafts.set(chat, e.target.value);
+      };
+      area.onsubmit = (e) => {
+        e.preventDefault();
+        const value = (drafts.get(chat) || '').trim();
+        if (value) {
+          sent.set(chat, [...(sent.get(chat) || []), value]);
+          drafts.delete(chat);
+          render();
+          area.querySelector('textarea').focus();
+        }
+      };
+      $('#logout').onclick = () => {
+        closeMenu(true);
+        confirmDialog.showModal();
+      };
+      $('#exit').onclick = () => {
+        confirmDialog.close();
+        shell.hidden = true;
+        $('#login').hidden = false;
+        $('#login button').focus();
+      };
+      render();
+    </script>
+    <div id="login" class="page" hidden>
+      <h1>表单 Studio</h1>
+      <div>
+        <button
+          class="studio-button"
+          onclick="
+            this.closest('#login').hidden = true;
+            shell.hidden = false;
+            account.focus();
+          "
+        >
+          返回示例工作区
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

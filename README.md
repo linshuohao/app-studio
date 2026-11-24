@@ -4,9 +4,13 @@
 
 开发模式通过包名直接消费工作区源码，无需预构建库；生产构建和打包验证继续消费 dist。
 
-日常使用：`pnpm install --frozen-lockfile`、`pnpm dev`、`pnpm dev:api`、`pnpm check`。浏览器测试先运行 `pnpm build`，再运行 `pnpm test:e2e`；新环境先安装 Playwright 浏览器。文档环境按下方维护入口准备。
+日常使用：`pnpm install --frozen-lockfile`、`pnpm dev`、`pnpm dev:all`、`pnpm check`。
 
-研发使用[五类项目工作流](docs/reading/workflows.html)：实现前核对契约和验收，按行为增量交付，复杂变更还原执行逻辑并进行深度审查，最终以实际测试 / 轨迹核对契约。可直接用自然语言提出任务；单独只读审查可使用仓库辅助技能 `form-deep-review`。决策权限、产物及裁剪规则统一维护在工作流正文。
+`pnpm dev:all` 同时启动 Studio、playground、API 和 Agent。首次使用前安装 uv，并按 [API 本地开发说明](services/api/README.md#当前本机开发环境)准备 PostgreSQL 与迁移。Agent 默认监听 `127.0.0.1:8100`，可用 `AGENT_PORT` 覆盖。只启 Agent 用 `pnpm dev:agent`，只启 API 用 `pnpm dev:api`。
+
+浏览器测试先运行 `pnpm build`，再运行 `pnpm test:e2e`；新环境先安装 Playwright 浏览器。文档环境按下方维护入口准备。
+
+研发使用[统一项目工作流](docs/reading/workflows.html)：实现前核对契约和验收，按行为增量交付，复杂变更还原执行逻辑并进行深度审查，最终以实际测试 / 轨迹核对契约。可直接用自然语言提出任务或显式使用 `$form-workflow`；单独只读审查也由同一入口按需加载能力。决策权限、产物及裁剪规则统一维护在工作流正文。
 
 设计者按以下顺序阅读：
 

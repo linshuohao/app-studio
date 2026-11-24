@@ -1623,7 +1623,7 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 
 ## 实施现状与证据边界 {#implementation-status}
 
-**核对日期：2026-10-22。** 本期设计提交 6a0d97b 后先实施 I01，现已接入同一期 I02–I04 的共享分析和运行准备。拆批不改变本期范围，表达式依赖和 watch 生成不是后期平台功能。下表是实际状态，不把代码主链实现等同性能 / 运行端已验收。
+**状态核对日期：2026-10-31；依据当前工作区源码与既有本地验证记录，本轮不重跑业务测试。** 本期设计提交 6a0d97b 后先实施 I01，现已接入同一期 I02–I04 的共享分析和运行准备。拆批不改变本期范围，表达式依赖和 watch 生成不是后期平台功能。下表是实际状态，不把代码主链实现等同性能 / 运行端已验收。
 
 | 项目 | 当前实际情况 | 可核对依据 / 限制 |
 | --- | --- | --- |
@@ -1631,20 +1631,20 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 | 协议与 Schema | 三领域类型、10 个 2020-12 根 Schema、48 个协议测试已有 | 协议结构测试不等于依赖推导实现 |
 | Compiler SDK | 真实 compile、CompileInput / CompileResult / Diagnostic 已导出 | 同步纯内存输入，Error 不返回 Prepared；仍 private / 0.0.0 |
 | I01 静态视图 | 简写 / 默认目标、原位置、静态 Props / Literal、根 Binding、Slot、资源、锁与输出自检 | 初次 41 个用例保留并更新已支持语义的预期，纳入当前回归 |
-| 能力自校验 | 可独立调用 Material / Pure Function 结构与参数顺序检查 | 不执行实现；独立自检尚不处理外部资源闭包；Registry / CLI 未建设 |
+| 能力自校验 | 可独立调用 Material / Pure Function 结构与参数顺序检查 | 不执行实现；独立自检尚不处理外部资源闭包；本地资产 CLI 已落地，平台 Registry 服务待建设 |
 | Schema 模型 | 基础 / 简单对象 / 数组 / 简单联合连接、局部 / 外部引用、资源基址与闭包 | 复杂组合、联合对象路径投影、Tuple、命名锚点 / 动态引用不放行；Context 缺少类型证据按 unproven 处理 |
 | 共享表达式分析 | 命名引用 / 环、参数数 / optional / rest / 返回形状、全部可能读取、Literal 边界 | ReferenceAnalyzer / ExpressionAnalyzer / ValueCompiler 共用，无纯函数执行或结果缓存 |
 | 规则与 watch | 逐完整 Props $expr 独立 watch；Constraint 合并及 requires 传递；Reaction 仅保留显式触发 | 前置唯一 Scope 绑定、field.constraintIds、环 / External 拒绝、根 Schema 保守失效与命令检查已有用例 |
 | 视图与交互 | Scope / 模板参数 / 共享闭包、Event / Request Payload、双向契约、并发默认、资源 / Host 需求与消息定位 | 调用时值不生成 watch；模板不展开；请求 Schema 根基址显式化；Runtime 实例 / 并发不在编译时运行 |
-| 生产消费 | Node 生产编译入口已实际导入；隔离打包 JS / 类型消费纳入统一检查 | 不代表浏览器视觉、Runtime / Adapter 或更新性能已验收 |
-| Runtime / Adapter | 生产入口仍为工程占位 | I06 需要真实消费者实现后联验 |
+| 生产消费 | Node 生产编译入口已实际导入；隔离打包 JS / 类型消费纳入统一检查 | 后续 React / 浏览器消费已有本地证据；不代表生产更新性能已验收 |
+| Runtime / Adapter | 真实 Runtime、React Renderer、正式物料及完整可控表单已消费 Prepared /2 | I06 的 TS / React 本地联验已有[证据](../engineering.md#business-travel-implementation)；真实 Host、跨端与生产性能待验收 |
 | 平台 | 独立分析报告、可视化与 Trace 联动仍为后期蓝图 | 不计入 I01 完成，不冻结其公共格式 |
 
-实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/2 为未发布交换格式，不代表 Runtime 已支持。
+实现入口见 packages/compiler/src/index.ts；用法与当前限制见 packages/compiler/README.md。新增 Ajv 8.20.0 与跨环境 SHA-256 库 @noble/hashes 1.8.0，复用仓库已有确定版本；Manifest 内容按递归键排序的紧凑 JSON 计算摘要，实现制品摘要原样锁定。当前格式身份 form-engine.prepared/2 为未发布交换格式，当前 Runtime 已支持该格式，但不代表已发布稳定版本。
 
-初次 I01 的全仓检查及资源 / 来源回归记录见[基础工程实施](../engineering.md#compiler-i01)。当前共享分析与运行准备的用例、打包消费和门禁证据见[工程实施](../engineering.md#compiler-static-analysis)。复杂度 / 体积基准、浏览器消费、精确失效和实际性能仍须后续证据，不因产物已有 watch 就宣称运行收益已通过。
+初次 I01 的全仓检查及资源 / 来源回归记录见[基础工程实施](../engineering.md#compiler-i01)。当前共享分析与运行准备的用例、打包消费和门禁证据见[工程实施](../engineering.md#compiler-static-analysis)。React 表达式失效、Scope / 请求与浏览器消费已有[本地证据](../engineering.md#renderer-implementation)；完整复杂度 / 体积基准及实际性能仍待验收，不因产物已有 watch 就宣称运行收益已通过。
 
-文档 / 附件的示例、锚点、资源和脚本检查不能代替浏览器视觉检查；此前本地文件导航被安全策略拒绝，未取得浏览器视觉证据。
+文档 / 附件的示例、锚点、资源和脚本检查不能代替浏览器视觉检查；早期本地文件导航受限的记录仅适用于当时批次；后续 L4 与资产批次已取得浏览器 UI 证据，本次状态同步未新增视觉验收。
 
 ## 取舍与后期扩展 {#tradeoffs}
 
@@ -1672,11 +1672,11 @@ eligibility: { watch: [insured.amount, <mark>insured.age</mark>] }</code></pre>
 | I01 基础闭环 | 输入结构 / 规范化、默认目标、诊断 / OriginMap、Catalog 读取、必要 Manifest 自检、静态物料输出 | 真实 compile 对简单静态定义产出合法 Prepared；错误位置可定位；输入不变 | 已完成首批静态纵切，见实施现状 |
 | I02 共享分析 | 声明、Scope、引用、Schema 资源与连接、Expression / ValueSpec 分析、Props watch | 同一内核完成类型 / 读取；递归、Literal、命名环、模板参数环境正反例；保留必要来源 | 主链已实现；有限 Schema 证明边界保留 |
 | I03 规则 | Reaction / Command、Internal / External、requires、依赖传递 | Reaction 不补触发；约束失效覆盖前置输入；Scope 唯一绑定；环与缺契约失败 | 主链已实现；持续纳入全量回归 |
-| I04 完整视图与交付 | 模板共享闭包、Binding / Slot / Event / Request、资源 / 双摘要锁 / Host 需求、输出自检 | 实际编译贯穿样例，与手写预期独立比较；无关能力不进入锁；请求契约与闭包完整 | 主链已实现；消费者实测仍由 I06 提供 |
-| I05 稳定性与消费准备 | 正反例回归、确定性、复杂度 / 体积基准、exports 与浏览器消费 | 生产 SDK 类型导出、语义测试、标准门禁通过；性能给出实际测量而非估计 | 已有语义回归与产物消费；完整基准 / 浏览器消费待完成 |
-| I06 消费联验 | 将真实 Prepared 接入 Runtime / Adapter | 依赖后续消费者实现；表达式精确失效、模板复用、Scope 生命周期与请求边界真实验证 | 未开始；受消费者实现进度约束 |
+| I04 完整视图与交付 | 模板共享闭包、Binding / Slot / Event / Request、资源 / 双摘要锁 / Host 需求、输出自检 | 实际编译贯穿样例，与手写预期独立比较；无关能力不进入锁；请求契约与闭包完整 | 主链已实现；I06 已有 TS / React 本地消费者实测 |
+| I05 稳定性与消费准备 | 正反例回归、确定性、复杂度 / 体积基准、exports 与浏览器消费 | 生产 SDK 类型导出、语义测试、标准门禁通过；性能给出实际测量而非估计 | 已有语义回归、隔离打包及浏览器消费；完整复杂度 / 体积与设备基准待验收 |
+| I06 消费联验 | 将真实 Prepared 接入 Runtime / Adapter | 使用真实消费者验证表达式失效、模板复用、Scope 生命周期与请求边界 | TS / React 本地联验已实现并有记录；真实 Host、跨端及生产性能待验收 |
 
-Compiler 包自身可在 I05 完成其契约内交付；跨层收益与端到端完成须等 I06 证据，不能因为消费者未完成就假装已证明运行性能，也不能要求先建设平台才实现 Compiler。
+Compiler 包自身可在 I05 完成其契约内交付；I06 已有本地行为证据，跨层性能收益仍须专门基准，不能从消费者行为通过推断运行性能，也不能要求先建设平台才实现 Compiler。
 
 ### 后期平台路线
 

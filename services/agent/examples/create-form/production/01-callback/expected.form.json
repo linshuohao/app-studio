@@ -1,0 +1,167 @@
+{
+  "protocolVersion": "1.0",
+  "id": "travel-callback",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "required": ["contactName", "mobile", "callbackSlot", "tripType", "travelerCount"],
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "mobile": {
+          "type": "string",
+          "pattern": "^1[0-9]{10}$"
+        },
+        "callbackSlot": {
+          "type": "string",
+          "enum": ["morning", "afternoon"]
+        },
+        "tripType": {
+          "type": "string",
+          "enum": ["domestic", "international"]
+        },
+        "travelerCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "memo": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "门店旅险咨询回访登记单"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "回访安排"
+          },
+          "children": [
+            {
+              "material": "field",
+              "bind": "/contactName",
+              "props": {
+                "label": "联系人"
+              },
+              "children": [
+                {
+                  "bind": "/contactName",
+                  "material": "text-input"
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "bind": "/mobile",
+              "props": {
+                "label": "联系手机"
+              },
+              "children": [
+                {
+                  "bind": "/mobile",
+                  "material": "text-input"
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "bind": "/callbackSlot",
+              "props": {
+                "label": "回访时段"
+              },
+              "children": [
+                {
+                  "bind": "/callbackSlot",
+                  "material": "select",
+                  "props": {
+                    "options": [
+                      {
+                        "id": "morning",
+                        "label": "上午（09:00–12:00）"
+                      },
+                      {
+                        "id": "afternoon",
+                        "label": "下午（14:00–18:00）"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "行程意向"
+          },
+          "children": [
+            {
+              "material": "field",
+              "bind": "/tripType",
+              "props": {
+                "label": "旅行范围"
+              },
+              "children": [
+                {
+                  "bind": "/tripType",
+                  "material": "select",
+                  "props": {
+                    "options": [
+                      {
+                        "id": "domestic",
+                        "label": "境内"
+                      },
+                      {
+                        "id": "international",
+                        "label": "境外"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "bind": "/travelerCount",
+              "props": {
+                "label": "预计人数"
+              },
+              "children": [
+                {
+                  "bind": "/travelerCount",
+                  "material": "number-input"
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "bind": "/memo",
+              "props": {
+                "label": "顾问备注"
+              },
+              "children": [
+                {
+                  "bind": "/memo",
+                  "material": "text-input"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

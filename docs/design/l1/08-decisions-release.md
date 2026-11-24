@@ -122,7 +122,7 @@ Runtime 不在每次表达式求值、命令执行或联动时重复整份协议
 
 2026-10-21 已在 packages/protocol/src/definition、capability、prepared 实现三领域命名类型与公共入口，并提供 schemas 下 10 个自动生成的 2020-12 根 Schema。生成约束来源是 TS / JSDoc，正式结构以实际类型、派生物和契约测试共同验收；下方旧汇编仍为概念稿，不再作为复制发布的类型源。用法与命令见[工程实施](../engineering.md#protocol-implementation)。
 
-已验证结构正反例和包消费，未发布稳定协议版本；Compiler 语义、Runtime / Dart 及全链路尚未实现。旧 docs/validation 样本保留候选来源身份，不视为符合新 Canonical 的生产样本；正式包测试夹具独立核对当前契约，后续迁移旧样本须改生成源并另跑验证。
+已验证结构正反例和包消费，未发布稳定协议版本；后续 Compiler、TS Runtime 与 React 全链路已有本地证据，Dart 待实现，真实 Host 与生产验收待完成。旧 docs/validation 样本保留候选来源身份，不视为符合新 Canonical 的生产样本；正式包测试夹具独立核对当前契约，后续迁移旧样本须改生成源并另跑验证。
 
 ## 附录：完整的核心类型关系（概念稿） {#types}
 
@@ -243,14 +243,14 @@ type FormDefinition = {
 
 > 状态：已收敛
 
-- [ ] 生成完整 `form-definition.types.ts`，消除占位和不严谨 Union
-- [ ] 生成完整 `form-definition.schema.json`，与 TypeScript 一致
-- [ ] 校验简单表单 / 动态数组 / 多端保险表单三类样例
-- [ ] 反例验收：非法引用、Scope 越界、模板参数类型不匹配、端口不兼容
+- [x] 已以 packages/protocol/src 的分领域 TS 类型实现协议结构，替代早期单文件命名设想
+- [x] 已由 TS / JSDoc 派生 10 个根 Schema，并接入同步与结构检查
+- [ ] 简单表单、动态数组与完整旅行表单已有 TS / React 本地证据；多端等价待实现 / 验收
+- [x] Compiler 已有非法引用、Scope 越界、模板参数类型不匹配、端口不兼容的本地反例；不代表任意 Schema 组合均受支持
 - [ ] 冻结 Material Manifest 版本解析约定及 Pure Function 合约
 - [ ] 发布规范语义说明、版本兼容说明与变更记录
 
-上述勾选仅供阅读时自查，不自动代表项目真实完成状态。后续阶段 L2、L3、L4 只能在遵守这份 L1 语义的前提下选择自己的实现策略。
+上述状态按当前源码与[协议](../engineering.md#protocol-implementation)、[Compiler](../engineering.md#compiler-static-analysis)及[资产表单](../engineering.md#business-travel-implementation)既有记录同步；勾选仅限定本地交付范围，不代表公开发布或生产验收。后续阶段 L2、L3、L4 只能在遵守这份 L1 语义的前提下选择自己的实现策略。
 
 > 最终决策：**停止 L1 的开放式抽象扩张，进入 Canonical Type / JSON Schema / 反例验收**。需要修订时提出能复现的协议冲突，而不是重新设计已确定的领域层次。
 
@@ -262,7 +262,7 @@ ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须�
 
 跨 Template 参数、Binding Port、函数参数等类型连接，仅接受明确可判定且能证明兼容的结构；已知不兼容与无法证明兼容均拒绝编译，但诊断码 / 原因应区分。不用运行时兜底、作者强制断言或静默降级绕过连接检查。受限的是静态连接兼容检查能力，不将业务数据根 Schema 改成局部 Schema，也不声称任意 JSON Schema 包含关系均可判定。可判定子集、Union 完整形状、签名与正反例仍需正式固化。
 
-本轮只确认检查策略；候选类型汇编 / Schema 尚未迁移，不能将本节或附录视为正式发布包。
+该轮原先只确认检查策略；后续已实现 packages/protocol 正式 TS 结构与派生 Schema。上方候选汇编仍保留其来源身份，不作为实际类型入口或正式发布包。
 
 
 ### 物料 Request 协议增量

@@ -9,7 +9,8 @@ import { FlushContext } from './context.js';
  */
 export class ReactionScheduler {
   /** 规则 + Scope 实例键去重；执行前移除键，因此执行中再次失效可重新入队。 */
-  private pending = new Map<string, () => void>();
+  private pending = new Map<string, { id: number; execute: (id: number) => void }>();
+  private queueSequence = 0;
   /** 已预约微任务但尚未开始 drain，用来合并同一同步调用栈中的调度请求。 */
   private scheduled = false;
   /** 正在执行的单轮上下文；结束即解除引用，期间新增任务直接进入本轮队列。 */
@@ -30,17 +31,37 @@ export class ReactionScheduler {
     private readonly afterReactions: () => boolean,
     /** 实例诊断出口；只在 drain 期间接入本轮临时 Journal。 */
     private readonly diagnostics: DiagnosticReporter,
+    private readonly discarded?: (
+      id: number,
+      reason: 'source-removed' | 'aborted' | 'runtime-disposed',
+    ) => void,
   ) {}
   /** 合并尚未执行的同键任务，并确保存在一次延迟调度；运行中入队属于本轮。 */
-  enqueue(key: string, execute: () => void) {
-    if (!this.disposed) {
-      this.pending.set(key, execute);
-      this.schedule();
-    }
+  enqueue(key: string, execute: (id: number) => void) {
+    if (this.disposed) return;
+    const previous = this.pending.get(key);
+    const id = previous?.id ?? ++this.queueSequence;
+    this.pending.set(key, { id, execute });
+    this.schedule();
+    return { id, merged: !!previous };
   }
   /** 成员 / 规则实例销毁时移除其待执行任务，不影响其他实例。 */
   remove(key: string) {
+    const task = this.pending.get(key);
     this.pending.delete(key);
+    if (task) this.reportDiscard(task.id, 'source-removed');
+  }
+  private reportDiscard(id: number, reason: 'source-removed' | 'aborted' | 'runtime-disposed') {
+    try {
+      this.discarded?.(id, reason);
+    } catch {
+      /* 观测失败不改变队列。 */
+    }
+  }
+  private clearPending(reason: 'aborted' | 'runtime-disposed') {
+    const pending = this.pending;
+    this.pending = new Map();
+    for (const task of pending.values()) this.reportDiscard(task.id, reason);
   }
   /** 投递发生在活动轮次时共享其保护；尚未开始时由 Registry 约束本次同步投递。 */
   consumeNotification(generation: number): boolean {
@@ -50,7 +71,7 @@ export class ReactionScheduler {
   abortNotifications(): void {
     if (this.context) {
       this.context.abort();
-      this.pending.clear();
+      this.clearPending('aborted');
     }
     this.diagnostics.error(
       this.context ? 'flush.aborted' : 'notification.aborted',
@@ -91,10 +112,10 @@ export class ReactionScheduler {
     try {
       for (;;) {
         while (this.pending.size && !this.disposed) {
-          const [key, execute] = this.pending.entries().next().value!;
+          const [key, task] = this.pending.entries().next().value!;
           if (!context.consumeReaction(key)) {
             // 熔断只丢弃本轮剩余任务；下一次交互仍可 enqueue / schedule。
-            this.pending.clear();
+            this.clearPending('aborted');
             this.diagnostics.error(
               'flush.aborted',
               Error(`Execution budget exhausted before ${key}`),
@@ -104,7 +125,7 @@ export class ReactionScheduler {
           }
           this.pending.delete(key);
           try {
-            execute();
+            task.execute(task.id);
           } catch (error) {
             this.diagnostics.error('reaction.error', error);
           }
@@ -113,7 +134,7 @@ export class ReactionScheduler {
         // 校验可能同步发布状态并再次入队 Reaction，所以必须回到外层循环检查。
         const validationPending = this.afterReactions();
         if (!context.completeValidation(validationPending)) {
-          this.pending.clear();
+          this.clearPending('aborted');
           this.diagnostics.error(
             'flush.aborted',
             Error('Synchronous validation feedback budget exhausted'),
@@ -126,7 +147,7 @@ export class ReactionScheduler {
     } catch (error) {
       this.diagnostics.error('flush.error', error);
       context.abort();
-      this.pending.clear();
+      this.clearPending('aborted');
     } finally {
       this.last = context.outcome(this.disposed);
       this.diagnostics.record('flush.end', this.last.status);
@@ -138,7 +159,7 @@ export class ReactionScheduler {
   /** 终止实例调度、清空待执行任务，并释放等待 flush 的调用者。 */
   dispose() {
     this.disposed = true;
-    this.pending.clear();
+    this.clearPending('runtime-disposed');
     this.diagnostics.discardTriggers();
     // 执行中销毁由 finally 输出本轮真实计数；尚未开始的轮次直接释放等待者。
     if (!this.context)

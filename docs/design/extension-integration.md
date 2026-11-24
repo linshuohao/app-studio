@@ -24,7 +24,7 @@ related:
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-10-28'
 navigation:
   group: 06 · 横向能力
   order: 71
@@ -42,7 +42,7 @@ relocated_sections:
 
 本篇说明核心四层如何与 UI 物料、纯函数及业务宿主协作。物料与 Host 是横向协作边界，不增加新的执行层。
 
-2026-10-27 首批正式物料、业务纯函数、单资产目录与版本工具方案已由用户整体确认并授权归档，完整方案见[首批资产与整体验收](#first-assets)。本次仅归档设计：正式物料包仍为空入口，业务函数、生成器和版本编排尚未实现；现有 React SDK / 独立 DevTools 的完成范围不扩张为真实业务验收。
+2026-10-27 首批正式物料、业务纯函数、单资产目录与版本工具方案已由用户整体确认并授权归档，完整方案见[首批资产与整体验收](#first-assets)。设计于 fd96b3c 提交后，2026-10-28 按用户继续指令交付工具第 0 批及首个函数 text.isNonBlank，见[本地实施证据](engineering.md#asset-tooling-implementation)。首批全部 14 个正式 UI 物料已有[本地证据](engineering.md#interaction-materials-implementation)，第 4 批全部 7 个业务函数与完整可控目标表单也有[本地证据](engineering.md#business-travel-implementation)，真实 Host 后续推进；现有 React SDK / 独立 DevTools 的完成范围不扩张为真实业务验收。
 
 ## Material：物料体系与 UI 扩展 {#materials}
 
@@ -205,7 +205,7 @@ L4 已落实 [React SDK](l4-renderer.md#react-implementation)：物料内部共�
 
 ## 首批正式资产与整体验收 {#first-assets}
 
-本节是 2026-10-27 用户确认的本期设计，源码基线 `d2b1598`，决策见 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，来源见 [SRC-ASSETDESIGN](source-map.md#src-asset-design)。职责、契约和交付顺序已确认；业务假设只限定验收样例，不作为真实保险产品规则。归档不授权本轮编码、安装或发布。
+本节是 2026-10-27 用户确认的本期设计，源码基线 `d2b1598`，决策见 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，来源见 [SRC-ASSETDESIGN](source-map.md#src-asset-design)。职责、契约和交付顺序已确认；业务假设只限定验收样例，不作为真实保险产品规则。当次授权仅为归档；用户随后明确要求提交并继续，工具第 0 批与首个函数的实施证据另见[工程记录](engineering.md#asset-tooling-implementation)，不构成外部发布授权。
 
 ### 目标表单、业务假设与范围 {#first-assets-scenario}
 
@@ -255,6 +255,8 @@ disabled / readOnly / clearable / collapsible / defaultExpanded / requiredMark �
 field 与子控件分别显式绑定同一位置，不隐式继承。私有 FieldFrame / React Context 只连接 DOM ID、标签和错误描述，不保存业务值或独立校验状态。日期范围分别关联标签并分组。基础控件可消费 validation 设置无障碍属性，不重复渲染错误列表。
 
 复合物料只调用自身 useMaterialAdapter。不能直接嵌入另一注册物料并让其在同一挂载上下文调用另一份契约的 Hook；共享无 Hook 的内部组件，或由 Renderer 构造 Slots。insured-summary 读取成员及子树 Issues，不计算保费、不修改成员或核验资格。insured-fields 是带 insured 类型参数的视图模板。
+
+remote-select 的 `query` 来自物料内部搜索框输入，不是选中值，无需配置同名 Props 或 Binding；`filterKey` 来自 Props，可由表达式读取外部筛选条件（如国家代码）。点击搜索或 Enter 时把两者组成请求对象。输入关键词与搜索成功均不写入 `bindings.value`。
 
 remote-select.search 输入为 `{query:string,filterKey:string|null}`，成功业务结果为 `{items:Option[]}`，不含桥接状态包装。首期无分页、自动选中或回填。选择后整体写 `{id,label}`：id 为业务标识，label 为选中时展示快照，不能视为服务端权威名称。
 
@@ -392,7 +394,7 @@ field 直接消费已发布 Issues，不新增 touched / dirty / submitted 系�
 | travel.personPremium(age:JSON, plan:JSON, days:JSON, ratePolicy) | MinorAmount/null | 尚不能试算为 null；合法输入按合成费率计算 |
 | travel.totalPremium(insureds:JSON, plan:JSON, days:JSON, ratePolicy) | MinorAmount/null | 人数及所有年龄可试算才汇总，否则 null，不返回部分金额 |
 
-接受 JSON 的参数真实声明 schema:true，不能先声明 number 再指望函数处理字符串。agePolicy 为 `{minAge,maxAge,adultAge}`；ratePolicy 含 agePolicy、最大天数、人数上限和 basic / plus 的成人 / 未成年人日费率。政策 / 费率是受约束配置；结构与自洽性要验证，错误配置抛求值错误。maxDays 为正整数，金额 / 计数检查安全整数。
+接受 JSON 的参数真实声明 schema:true，不能先声明 number 再指望函数处理字符串。目录说明须区分声明允许的输入与业务期望类型：例如 age 期望非负安全整数，字符串、null、小数及超出承保范围的年龄按各函数约定返回 false / null；日期、计划、天数、成员数组同样写明期望值与无效值处理，并提供有效 / 无效输入对照示例。签名中的 `Parameters["参数名"]` 只是下方完整参数结构的类型引用，不是额外参数。agePolicy 为 `{minAge,maxAge,adultAge}`；ratePolicy 含 agePolicy、最大天数、人数上限和 basic / plus 的成人 / 未成年人日费率。政策 / 费率是受约束配置；结构与自洽性要验证，错误配置抛求值错误。maxDays 为正整数，金额 / 计数检查安全整数。
 
 用户普通非法工作值按上述 false / null 退化；错误政策、非法费率、溢出抛求值错误。Missing 由 core.exists / core.if 显式处理。不读时钟、时区、网络、可变 Runtime 或隐含配置，不返回 Promise、NaN、Infinity 或 BigInt。
 
@@ -452,7 +454,13 @@ packages/pure-functions/
     travel-person-premium/person-premium.test.ts
 ```
 
-manifest.ts 是机器契约唯一源，JSON 按需导出，不手工维护同内容 TS / JSON。README 说明交互和边界，工具图标 / 分类按需另加，不塞进严格 Manifest 未知字段。materials-react/manifests 为无 React 静态入口，根入口组织 React 实现 / 开发契约 / 显式注册，styles.css 由 Host 加载。纯函数有签名入口与显式实现注册，createCoreFunctions 不自动混业务函数。
+manifest.ts 是机器契约唯一源，JSON 按需导出，不手工维护同内容 TS / JSON。人类可读说明维护在资产包的 `catalog-docs.json`，按资产 ID 组织，并由生成器关联 Manifest 的确定版本；它是目录展示元数据，不进入运行契约或执行制品摘要。
+
+目录数据结构包含 `title / summary / category / implementation / annotations`；可选 `requestExamples` 按本地请求名保存按顺序排列的 `{title, description, value}` 示例步骤，用于解释参数来源、返回结构与后续选中写入。示例为说明数据，不替代 Manifest，也不自动执行请求。物料 Props、绑定值、事件及纯函数统一使用同一接口参考组件，完整展开枚举、对象、数组及可空分支，字段表递归关联说明；未限制内部字段的对象如实展示为开放对象，不编造字段约束。纯函数签名保留有序参数，参数结构图不代表改成对象传参；可变参数和同步返回单独说明。`valueExamples` 保存物料求值后的属性与绑定值示例，`callExamples` 保存纯函数的 args / result / description；配置引用示例继续来自工程 Definition。生成器检查嵌套字段、插槽、事件及示例覆盖，另对普通函数示例执行求值比对，对物料值示例做 Schema 校验。
+
+Host 请求说明先展示完整函数签名，再将请求对象与返回对象的完整类型结构和字段表分别放在相邻区域；宽屏并排、窄屏上下排列，实际数据示例按需展开。表格用“对象，包含以下字段”说明根结构，不把 `$` 或“完整数据”伪装成业务字段。目录元数据中，`annotations` 为 `Record<JSONPointer, string>`，路径相对于该资产 Manifest，例如 `/parameters/0` 解释第一个参数，`/parameters/3/schema/properties/maxDays` 解释对象内字段，`/requests/search/payloadSchema/properties/query` 解释 Host 入参。每条说明应说明业务含义、单位或空值语义；类型、必填、枚举和边界从对应 Schema 读取，避免人工维护第二份校验契约。生成器检查路径存在、说明非空，并检查顶层属性、绑定、函数参数 / 返回值及 Host 请求字段说明覆盖；Studio 将说明与真实结构组合成表格。目录 API 仅在说明版本与查询的 Manifest 版本一致时附带说明。
+
+已发布 Manifest 与制品不可原地补字段或重写摘要；给既有资产补目录说明不会改变旧发布的锁或 Prepared。将来若要把说明直接纳入运行 Manifest，需要按能力版本演进规则另行交付新版本，不能用同版本修改替代。README 说明交互和边界，工具图标 / 分类按需另加，不塞进严格 Manifest 未知字段。materials-react/manifests 为无 React 静态入口，根入口组织 React 实现 / 开发契约 / 显式注册，styles.css 由 Host 加载。纯函数有签名入口与显式实现注册，createCoreFunctions 不自动混业务函数。
 
 Materials 只依赖 Protocol / Renderer 公共接入，不从 apps 反向导入，不增 host-sdk / shared / renderer-core。UI 日期解析与领域算法分别拥有内部实现，用相同向量对齐，不为少量复用突破依赖。样式与组件基础沿用[现有工程 UI 路线](engineering.md)，不另建公开 UI 包。
 
@@ -466,14 +474,14 @@ Materials 只依赖 Protocol / Renderer 公共接入，不从 apps 反向导入�
 
 | 批次 | 交付 | 验收 |
 | --- | --- | --- |
-| 0 工程能力 | 模板、单一变更声明、资产检查、版本计划 / 应用 | 用首个资产跑生成与版本演练，不自动发布 |
-| 1 输入呈现 | 文本 / 数字 / 勾选 / 固定选项、field / value-display / button | 真实输入、非法态、错误、Host 改值、不重复写 |
-| 2 组合成员 | section / grid / condition / dialog-editor / insured-summary、模板与数组操作 | 多成员、移动删除、条件、摘要编辑、Profile、标签焦点 |
-| 3 复合交互 | date-range / remote-select、类型贯通的可控 Host | 确认取消、部分失败、乱序、父条件及卸载 |
-| 4 业务纵切 | 七函数、规则联动、目标表单、可控外部校验 | 试算一致、清旧价、完整结果与快照交付 |
+| 0 工程能力 | 模板、单一变更声明、资产检查、版本计划 / 应用；本地已交付 | text.isNonBlank 试点及临时工作区版本演练已有[证据](engineering.md#asset-tooling-implementation)，未在真实仓库应用或发布 |
+| 1 输入呈现 | 文本 / 数字 / 勾选 / 固定选项、field / value-display / button；本地已交付 | 30 个物料测试、实际页面装配及三浏览器回归已有[证据](engineering.md#first-materials-implementation)：真实输入、非法态、错误、Host 改值、不重复写 |
+| 2 组合成员 | section / grid / condition / dialog-editor / insured-summary、模板与数组操作；本地已交付 | [实施证据](engineering.md#member-materials-implementation)：多成员、移动删除、整替换、条件、摘要编辑、同实例 Profile、标签 / 弹层焦点与窄屏布局 |
+| 3 复合交互 | date-range / remote-select、类型贯通的可控 Host；本地已交付 | [实施证据](engineering.md#interaction-materials-implementation)：确认取消、部分失败、乱序、父条件及卸载 |
+| 4 业务纵切 | 七函数、规则联动、目标表单、可控外部校验；本地已交付 | [实施证据](engineering.md#business-travel-implementation)：试算一致、清旧价、完整结果与快照交付 |
 | 后续 Host | 真实查询 / 核保 / 报价 / 草稿 / 提交 | 服务契约、权限、适用性、恢复和真实业务验收 |
 
-验收页放现有 Playground；/l4 保留 Renderer 夹具回归。测试材料含成人单人、成人 + 未成年人、五人上限、空白草稿、非法值、缺失字段、未知选项、错误导入总价、双 Profile、可控成功 / 拒绝 / 技术失败 / 乱序 / 取消 Host，以及固定日期费率 Golden 数据。故障物料只作隔离测试。
+验收页统一位于 Playground 的 `/demos/basic`、`/demos/members`、`/demos/interactions`、`/demos/travel`；旧 `/l4` 专用夹具已移除，Renderer 边界 / 生命周期继续由包内测试覆盖，正式场景承担浏览器回归。测试材料含成人单人、成人 + 未成年人、五人上限、空白草稿、非法值、缺失字段、未知选项、错误导入总价、双 Profile、可控成功 / 拒绝 / 技术失败 / 乱序 / 取消 Host，以及固定日期费率 Golden 数据。故障物料只作隔离测试。
 
 | 正反例 | 预期 |
 | --- | --- |

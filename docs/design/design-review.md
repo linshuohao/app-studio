@@ -187,14 +187,14 @@ relocated_sections:
 
 - **双方与来源：**[现行 Context 只读 / Data-only Watch](l3-reactive-engine.md#l3-runtime-host-boundary)；[完整证明关联 Context](l3-validation.md#validation-async)。
 - **类型 / 严重程度：**新鲜度接口缺口，中；两项原则可以共存，不构成扩展 Context Watch 的依据。
-- **具体表现：**完整校验使用渠道或策略上下文后，Host 换入新上下文，旧证明怎样被识别为不可复用尚无 SDK。局部请求有效性与整体输入证明也须分别处理。
-- **2026-10-22 已解决：**Host 显式替换只读 Context 快照并赋新身份，保守失效动态呈现、全部校验及旧外部任务资格；旧完整证明不代表新输入，重新校验走统一入口，不自动触发 Reaction。见 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。SDK / 通知及性能仍需整理验收，OD-09 / T02 / T05 不再重复讨论是否允许更新。
+- **原问题表现：**完整校验使用渠道或策略上下文后，Host 换入新上下文，当时缺少识别旧证明不可复用的 SDK。局部请求有效性与整体输入证明也须分别处理。
+- **2026-10-22 已解决：**Host 显式替换只读 Context 快照并赋新身份，保守失效动态呈现、全部校验及旧外部任务资格；旧完整证明不代表新输入，重新校验走统一入口，不自动触发 Reaction。见 [ADR-FE-019](decisions/ADR-FE-019-host-context-replacement.md)。后续 replaceContext、证明版本与失效通知已实现，见 Runtime lifecycle / renderer-contract 用例及[本地联验](engineering.md#renderer-implementation)；生产性能待验收，OD-09 / T02 / T05 不再重复讨论是否允许更新。
 
 ### REV-07：稳定旧值的数据防御契约已明确 {#rev-07}
 
 - **原问题：**Host 修改传入或读出的共享对象可能绕过 Command，破坏旧快照和变化检测。
 - **2026-10-20 用户确认：**外部输入的对象 / 数组值进入引擎时复制，解除 Host 原对象与内部数据的可变别名；内部以不可变 Root 和结构共享更新。read / snapshot 返回只读契约，不在生产环境为每次读取深拷贝或默认增加代理。开发环境递归冻结引擎持有的业务数据，捕获误写，不冻结 Host 原对象、Scope Index、Pending 或其他内部可变管理结构。Command 必须先构造修改路径上的新容器再写入，不能原地修改冻结的旧对象或数组；新数据发布前冻结，未变化且已保护的共享子树可复用。生产环境违反只读契约属于错误使用，不保证绕过 Command 修改后的状态正确。
-- **状态：**防御策略已确认，实际别名隔离 / 冻结实现与目标端成本由 T04 验证，不宣称实现完成。细节见 [数据与比较](l3-data-scope.md#l3-observed-equality)、ADR-FE-007。
+- **状态：**防御策略已确认，实际别名隔离 / 冻结已有 data / ownership 回归与[接管优化记录](engineering.md#renderer-implementation)；T04 继续验证目标端和整条编辑成本。细节见 [数据与比较](l3-data-scope.md#l3-observed-equality)、ADR-FE-007。
 
 ### REV-08：候选规范与样本之间有明确的未迁移边界 {#rev-08}
 

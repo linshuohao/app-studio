@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>校验编辑抽屉 · Studio 交互设计稿</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8f9fb;
+        --surface: #fff;
+        --subtle: #f2f4f7;
+        --text: #23272f;
+        --muted: #525966;
+        --border: #d9dee6;
+        --control: #768293;
+        --primary: #262c36;
+        --primary-hover: #171c24;
+        --selected: #e8eef8;
+        --focus: #315b9b;
+        --info: #244b82;
+        --info-bg: #eff5ff;
+        --info-border: #b4c8e6;
+        --warning: #794710;
+        --warning-bg: #fff8e7;
+        --warning-border: #dbc08a;
+        --success: #166534;
+        --success-bg: #effaf2;
+        --success-border: #a2cbb0;
+        --danger: #981b2d;
+        --danger-bg: #fff1f2;
+        --shadow: 0 12px 36px #16192324;
+        --font: system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        background: var(--bg);
+        font: 14px/22px var(--font);
+      }
+      button,
+      input,
+      select,
+      textarea {
+        color: inherit;
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid #315b9b66;
+        outline-offset: 2px;
+      }
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 60px minmax(300px, 1fr);
+      }
+      .rail {
+        background: #fff;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 8px;
+      }
+      .rail-mark {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        color: white;
+        background: var(--primary);
+        font-weight: 600;
+      }
+      .rail-item {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 40px;
+        border-radius: 9px;
+        color: #596271;
+        font-size: 11px;
+        line-height: 14px;
+        text-align: center;
+      }
+      .rail-item.active {
+        color: #244b82;
+        background: var(--selected);
+        font-weight: 600;
+      }
+      .rail-spacer {
+        flex: 1;
+      }
+      .workspace {
+        min-width: 0;
+        padding: 0 32px 32px;
+      }
+      .crumbs {
+        height: 54px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+      }
+      .crumbs strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .page-head {
+        padding: 28px 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+      }
+      .page-head h1 {
+        font-size: 24px;
+        line-height: 32px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .page-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+      }
+      .tabs {
+        display: flex;
+        gap: 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .tabs span {
+        padding: 12px 0;
+        color: var(--muted);
+      }
+      .tabs .selected {
+        color: var(--info);
+        border-bottom: 2px solid var(--info);
+        font-weight: 600;
+      }
+      .list-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 24px 0 8px;
+      }
+      .list-head h2 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 24px;
+      }
+      .count {
+        color: var(--muted);
+        margin-left: 10px;
+        font-weight: 400;
+      }
+      .rule-row {
+        max-width: 650px;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        gap: 7px;
+      }
+      .rule-row h3 {
+        font-size: 15px;
+        margin: 0;
+        line-height: 22px;
+      }
+      .summary-line {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 10px;
+      }
+      .summary-line dt {
+        color: var(--muted);
+      }
+      .summary-line dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        background: #16192375;
+      }
+      .drawer {
+        position: fixed;
+        inset: 0 0 0 auto;
+        width: min(720px, calc(100vw - 60px));
+        height: 100dvh;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+      }
+      .drawer-head {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .drawer-title {
+        margin: 0;
+        font-size: 16px;
+        line-height: 24px;
+        font-weight: 600;
+      }
+      .identity {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        min-width: 0;
+      }
+      .identity code {
+        font: 500 13px/20px var(--mono);
+        overflow-wrap: anywhere;
+      }
+      .kind-badge {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border: 1px solid var(--info-border);
+        border-radius: 4px;
+        color: var(--info);
+        background: var(--info-bg);
+        font-size: 12px;
+      }
+      .close {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--control);
+        border-radius: 8px;
+        background: white;
+        font-size: 18px;
+      }
+      .drawer-body {
+        flex: 1;
+        overflow: auto;
+        padding: 20px 24px 28px;
+      }
+      .editor-stack {
+        display: grid;
+        gap: 20px;
+        max-width: 640px;
+        margin: auto;
+      }
+      .editor-section {
+        min-width: 0;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .section-head h2 {
+        font-size: 16px;
+        line-height: 24px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .subtext {
+        margin: -4px 0 14px;
+        color: var(--muted);
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .control-panel {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        min-width: 0;
+      }
+      .control-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .control-title {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+        margin-bottom: 4px;
+      }
+      .control-value {
+        min-width: 0;
+        font-weight: 500;
+        overflow-wrap: anywhere;
+      }
+      .plain-btn {
+        border: 0;
+        background: transparent;
+        color: var(--info);
+        padding: 2px 0;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      .outline-btn,
+      .secondary,
+      .primary {
+        min-height: 36px;
+        padding: 6px 12px;
+        border: 1px solid var(--control);
+        border-radius: 8px;
+        background: white;
+        font-weight: 500;
+      }
+      .outline-btn:hover,
+      .secondary:hover {
+        background: var(--subtle);
+      }
+      .primary {
+        color: white;
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      .primary:hover {
+        background: var(--primary-hover);
+      }
+      .mode-tabs {
+        width: fit-content;
+        display: flex;
+        padding: 3px;
+        gap: 2px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--subtle);
+      }
+      .mode-tabs button {
+        min-height: 32px;
+        border: 0;
+        padding: 5px 10px;
+        border-radius: 6px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 13px;
+      }
+      .mode-tabs button[aria-pressed='true'] {
+        color: var(--text);
+        background: white;
+        box-shadow: 0 1px 2px #1619231a;
+        font-weight: 600;
+      }
+      .definition {
+        border-left: 3px solid #768293;
+        padding: 2px 0 2px 12px;
+        margin: 14px 0 0;
+      }
+      .definition p {
+        margin: 0;
+      }
+      .definition code {
+        font: 13px/20px var(--mono);
+      }
+      .definition .muted {
+        color: var(--muted);
+        margin-top: 6px;
+        font-size: 13px;
+      }
+      .open-definition {
+        margin-top: 10px;
+      }
+      .field-list {
+        display: grid;
+        gap: 0;
+        margin: 12px 0 0;
+        border-top: 1px solid var(--border);
+      }
+      .field-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .field-item code {
+        font: 12px/18px var(--mono);
+        overflow-wrap: anywhere;
+      }
+      .field-item button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 2px 6px;
+      }
+      .field-empty {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 6px;
+        background: var(--subtle);
+        color: var(--muted);
+      }
+      .message-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 180px;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .field-label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+      }
+      .input {
+        width: 100%;
+        height: 36px;
+        border: 1px solid var(--control);
+        border-radius: 6px;
+        padding: 6px 10px;
+        background: white;
+        color: var(--text);
+      }
+      .select {
+        appearance: auto;
+      }
+      .external-fields {
+        display: grid;
+        gap: 14px;
+      }
+      .callout {
+        border-left: 3px solid var(--info-border);
+        background: var(--info-bg);
+        padding: 10px 12px;
+        color: #334967;
+        border-radius: 0 6px 6px 0;
+        font-size: 13px;
+      }
+      .switch-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+      .switch-row p {
+        margin: 0;
+        font-weight: 500;
+      }
+      .switch-row small {
+        display: block;
+        color: var(--muted);
+        font-weight: 400;
+        margin-top: 2px;
+      }
+      .switch {
+        appearance: none;
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: #929aa7;
+        position: relative;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .switch::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 3px;
+        left: 3px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.16s ease;
+      }
+      .switch:checked {
+        background: var(--info);
+      }
+      .switch:checked::after {
+        transform: translateX(16px);
+      }
+      .drawer-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .action-status {
+        margin-right: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .notice {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translate(-50%, 20px);
+        padding: 10px 14px;
+        background: #20252f;
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.16s,
+          transform 0.16s;
+        z-index: 5;
+      }
+      .notice.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .dialog-scrim {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        background: #16192362;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .dialog-scrim.open {
+        display: flex;
+      }
+      .dialog {
+        width: min(560px, 100%);
+        max-height: min(720px, calc(100dvh - 48px));
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+      }
+      .dialog header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .dialog h2 {
+        font-size: 16px;
+        line-height: 24px;
+        margin: 0;
+      }
+      .dialog-content {
+        padding: 20px;
+        overflow: auto;
+        display: grid;
+        gap: 16px;
+      }
+      .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 12px 20px;
+        border-top: 1px solid var(--border);
+      }
+      .dialog textarea {
+        width: 100%;
+        min-height: 128px;
+        resize: vertical;
+        padding: 10px;
+        border: 1px solid var(--control);
+        border-radius: 6px;
+        font: 13px/20px var(--mono);
+      }
+      .radio-list {
+        display: grid;
+        gap: 8px;
+      }
+      .radio-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 11px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .radio-option:has(input:checked) {
+        border-color: #6b87b4;
+        background: #f7f9fd;
+      }
+      .radio-option input {
+        margin: 3px 0 0;
+      }
+      .radio-option small {
+        display: block;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .warning-callout {
+        border: 1px solid var(--warning-border);
+        background: var(--warning-bg);
+        color: #604716;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .notice-inline {
+        border: 1px solid var(--success-border);
+        background: var(--success-bg);
+        color: var(--success);
+        padding: 10px 12px;
+        border-radius: 8px;
+      }
+      @media (max-width: 860px) {
+        .workspace {
+          padding-inline: 20px;
+        }
+        .drawer {
+          width: min(680px, calc(100vw - 60px));
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <nav class="rail" aria-label="主导航">
+        <div class="rail-mark" aria-label="Form Studio">F</div>
+        <div class="rail-item">工作台</div>
+        <div class="rail-item">助手</div>
+        <div class="rail-item active" aria-current="page">表单</div>
+        <div class="rail-item">能力</div>
+        <div class="rail-spacer"></div>
+        <div class="rail-item">成员</div>
+      </nav>
+      <main class="workspace">
+        <div class="crumbs">
+          <span>默认空间</span><span>/</span><span>表单</span><span>/</span><strong>demo</strong>
+        </div>
+        <header class="page-head">
+          <div>
+            <h1>配置 · 2026-11-14 #1</h1>
+            <p>工作版本 · 最近保存于 10:42</p>
+          </div>
+          <button class="outline-btn">预览</button>
+        </header>
+        <nav class="tabs" aria-label="配置分类">
+          <span>字段</span><span>布局</span><span>联动</span><span class="selected">校验</span>
+        </nav>
+        <section class="list-head">
+          <h2>校验规则 <span class="count">9 条</span></h2>
+          <button class="outline-btn">＋ 新增校验</button>
+        </section>
+        <article class="rule-row">
+          <h3>APPLICANT_REQUIRED</h3>
+          <dl class="summary-line">
+            <dt>要求</dt>
+            <dd>text.isNonBlank（表单申请人姓名不能为空）</dd>
+            <dt>提示</dt>
+            <dd>表单根 · /applicant/name · 请填写投保人姓名</dd>
+          </dl>
+        </article>
+        <article class="rule-row">
+          <h3>PHONE_REQUIRED</h3>
+          <dl class="summary-line">
+            <dt>要求</dt>
+            <dd>text.isNonBlank（表单联系电话不能为空）</dd>
+            <dt>提示</dt>
+            <dd>表单根 · /applicant/phone · 请填写联系电话</dd>
+          </dl>
+        </article>
+        <article class="rule-row">
+          <h3>MEMBER_REQUIRED</h3>
+          <dl class="summary-line">
+            <dt>范围</dt>
+            <dd>逐项 · /insureds（person）</dd>
+            <dt>要求</dt>
+            <dd>text.isNonBlank（成员姓名不能为空）</dd>
+          </dl>
+        </article>
+        <article class="rule-row">
+          <h3>ID_REQUIRED</h3>
+          <dl class="summary-line">
+            <dt>范围</dt>
+            <dd>逐项 · /insureds（person）</dd>
+            <dt>要求</dt>
+            <dd>证件号码不能为空</dd>
+          </dl>
+        </article>
+      </main>
+    </div>
+    <div class="backdrop" id="backdrop"></div>
+    <section
+      class="drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="drawer-title"
+      aria-describedby="drawer-description"
+    >
+      <header class="drawer-head">
+        <div>
+          <h1 class="drawer-title" id="drawer-title">编辑校验</h1>
+          <div class="identity">
+            <code id="rule-id">APPLICANT_REQUIRED</code
+            ><span class="kind-badge" id="kind-badge">内部规则 · 同步</span>
+          </div>
+          <p id="drawer-description" hidden>编辑校验的适用条件、范围和结果。</p>
+        </div>
+        <button class="close" id="close-button" aria-label="关闭编辑校验">×</button>
+      </header>
+      <div class="drawer-body">
+        <div class="editor-stack">
+          <section class="editor-section">
+            <div class="section-head">
+              <div><h2>适用对象</h2></div>
+            </div>
+            <p class="subtext">决定这条规则检查哪些数据，以及何时生效。</p>
+            <div class="split">
+              <div class="control-panel">
+                <div class="control-top">
+                  <div>
+                    <div class="control-title">执行范围</div>
+                    <div class="control-value" id="scope-summary">整张表单</div>
+                  </div>
+                  <button class="plain-btn" data-dialog="scope">编辑</button>
+                </div>
+              </div>
+              <div class="control-panel">
+                <div class="control-top">
+                  <div>
+                    <div class="control-title">适用条件</div>
+                    <div class="control-value" id="when-summary">始终适用</div>
+                  </div>
+                  <button class="plain-btn" data-dialog="when">编辑</button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="editor-section" id="rule-editor">
+            <div class="section-head">
+              <h2>校验规则</h2>
+              <div class="mode-tabs" role="group" aria-label="校验方式">
+                <button id="internal-tab" aria-pressed="true">内部断言</button
+                ><button id="external-tab" aria-pressed="false">Host 外部校验</button>
+              </div>
+            </div>
+            <div id="internal-panel">
+              <div class="control-title">判断要求</div>
+              <div class="definition">
+                <p><code>/applicant/name</code>（缺失时取空值）是非空白文本</p>
+                <p class="muted">读取申请人姓名；空字符串、纯空格或缺失值均判定为不通过。</p>
+                <code id="assert-source" hidden></code>
+              </div>
+              <button class="plain-btn open-definition" data-dialog="assert">编辑判断</button>
+              <div class="message-grid">
+                <label class="field-label"
+                  >错误显示到<input class="input" id="target-input" value="/applicant/name"
+                /></label>
+                <label class="field-label"
+                  >错误码<input class="input" id="code-input" value="APPLICANT_REQUIRED"
+                /></label>
+              </div>
+              <p class="subtext" style="margin: 6px 0 0">
+                错误显示位置只决定问题归属，不代表规则唯一读取的字段。
+              </p>
+            </div>
+            <div class="external-fields" id="external-panel" hidden>
+              <label class="field-label"
+                >Host 校验器<select class="input select" id="validator-select">
+                  <option>travel.applicantEligibility</option>
+                  <option>identity.verifyApplicant</option>
+                  <option>travel.policyEligibility</option>
+                </select></label
+              >
+              <div>
+                <div class="control-top">
+                  <div>
+                    <div class="control-title">额外监听字段</div>
+                    <div class="control-value">声明影响外部校验结果的数据</div>
+                  </div>
+                  <button class="plain-btn" data-dialog="watch">添加字段</button>
+                </div>
+                <div class="field-list" id="watch-list">
+                  <div class="field-empty">
+                    尚未添加额外监听字段。外部校验器的输入需从本次数据快照中读取。
+                  </div>
+                </div>
+              </div>
+              <label class="field-label"
+                >错误显示到<input class="input" id="external-target" value="/applicant/name"
+              /></label>
+              <div class="switch-row">
+                <div>
+                  <p>完整校验时必须通过</p>
+                  <small>完整校验等待这项外部校验完成，并确认输入仍有效。</small>
+                </div>
+                <input
+                  class="switch"
+                  id="required-toggle"
+                  type="checkbox"
+                  checked
+                  aria-label="完整校验时必须通过"
+                />
+              </div>
+              <div class="callout">
+                外部校验声明能力和数据依赖；请求地址、重试策略及实际请求由 Host 管理。
+              </div>
+            </div>
+          </section>
+          <section class="editor-section">
+            <div class="section-head"><h2>错误提示</h2></div>
+            <label class="field-label"
+              >不通过时显示<input class="input" id="message-input" value="请填写投保人姓名"
+            /></label>
+          </section>
+        </div>
+      </div>
+      <footer class="drawer-actions">
+        <span class="action-status" id="action-status">未保存的更改会留在当前配置草稿</span
+        ><button class="secondary" id="cancel-button">取消</button
+        ><button class="primary" id="save-button">完成</button>
+      </footer>
+    </section>
+    <div class="dialog-scrim" id="dialog-scrim" role="presentation">
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+        <header>
+          <h2 id="dialog-title"></h2>
+          <button class="close" id="dialog-close" aria-label="关闭">×</button>
+        </header>
+        <div class="dialog-content" id="dialog-content"></div>
+        <footer class="dialog-footer">
+          <button class="secondary" id="dialog-cancel">取消</button
+          ><button class="primary" id="dialog-apply">应用</button>
+        </footer>
+      </section>
+    </div>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+    <script>
+      const $ = (selector) => document.querySelector(selector);
+      const drawer = $('.drawer');
+      const scrim = $('#dialog-scrim');
+      const notice = $('#notice');
+      const original = {
+        scope: '整张表单',
+        when: '始终适用',
+        message: $('#message-input').value,
+        target: $('#target-input').value,
+        code: $('#code-input').value,
+        kind: 'internal',
+      };
+      let activeDialog = '';
+      let dialogOriginal = '';
+      let dirty = false;
+      let watch = [];
+      let assertText = "text.isNonBlank({ ref: { source: 'data', path: '/applicant/name' } })";
+      let focusReturn = null;
+      function toast(text) {
+        notice.textContent = text;
+        notice.classList.add('show');
+        window.clearTimeout(toast.timer);
+        toast.timer = window.setTimeout(() => notice.classList.remove('show'), 2200);
+      }
+      function setDirty() {
+        dirty = true;
+        $('#action-status').textContent = '有未保存的更改';
+      }
+      function renderWatch() {
+        const list = $('#watch-list');
+        if (!watch.length) {
+          list.innerHTML =
+            '<div class="field-empty">尚未添加额外监听字段。外部校验器的输入需从本次数据快照中读取。</div>';
+          return;
+        }
+        list.innerHTML = watch
+          .map(
+            (path, i) =>
+              `<div class="field-item"><code>${path}</code><button type="button" aria-label="移除 ${path}" data-remove-watch="${i}">移除</button></div>`,
+          )
+          .join('');
+      }
+      function setKind(kind) {
+        $('#internal-tab').setAttribute('aria-pressed', String(kind === 'internal'));
+        $('#external-tab').setAttribute('aria-pressed', String(kind === 'external'));
+        $('#internal-panel').hidden = kind !== 'internal';
+        $('#external-panel').hidden = kind !== 'external';
+        $('#kind-badge').textContent = kind === 'internal' ? '内部规则 · 同步' : 'Host 校验 · 外部';
+        $('#kind-badge').style.color = kind === 'internal' ? 'var(--info)' : 'var(--warning)';
+        $('#kind-badge').style.background =
+          kind === 'internal' ? 'var(--info-bg)' : 'var(--warning-bg)';
+        $('#kind-badge').style.borderColor =
+          kind === 'internal' ? 'var(--info-border)' : 'var(--warning-border)';
+      }
+      const dialogs = {
+        scope: {
+          title: '编辑执行范围',
+          html: `<div class="radio-list"><label class="radio-option"><input type="radio" name="scope" value="form" checked><span><strong>整张表单</strong><small>规则对当前表单数据执行一次。</small></span></label><label class="radio-option"><input type="radio" name="scope" value="each"><span><strong>列表中的每一项</strong><small>为数组中的每个成员分别建立规则实例。</small></span></label></div><label class="field-label" id="scope-field" hidden>选择列表字段<select class="input select"><option>/insureds · 被保人</option><option>/dependents · 家属</option></select></label>`,
+        },
+        when: {
+          title: '编辑适用条件',
+          html: `<label class="field-label">规则何时适用<select class="input select" id="when-select"><option value="always">始终适用</option><option value="conditional">满足表达式时适用</option></select></label><label class="field-label" id="when-expression" hidden>条件表达式<textarea>/applicant/type 等于「个人」</textarea></label><p class="subtext" style="margin:0">条件不成立时，这条规则不产生错误。</p>`,
+        },
+        assert: {
+          title: '编辑判断要求',
+          html: `<div class="callout">内部断言必须返回 true 或 false。可以调用目录中的纯函数；这里不会配置网络请求或失败动作。</div><label class="field-label">判断表达式<textarea id="assert-text">text.isNonBlank({ ref: { source: 'data', path: '/applicant/name' } })</textarea></label><button class="outline-btn" type="button" id="function-button">从纯函数目录选择</button><div class="notice-inline" id="assert-preview">当前预览：姓名存在且至少包含一个非空白字符时，通过。</div>`,
+        },
+        watch: {
+          title: '选择监听字段',
+          html: `<div class="radio-list"><label class="radio-option"><input type="checkbox" value="/applicant/name"><span><strong>申请人姓名</strong><small><code>/applicant/name</code></small></span></label><label class="radio-option"><input type="checkbox" value="/applicant/idNumber"><span><strong>证件号码</strong><small><code>/applicant/idNumber</code></small></span></label><label class="radio-option"><input type="checkbox" value="/applicant/birthDate"><span><strong>出生日期</strong><small><code>/applicant/birthDate</code></small></span></label></div>`,
+        },
+        kind: {
+          title: '切换校验方式',
+          html: `<div class="warning-callout"><strong>切换后，当前判断和错误配置会被替换。</strong><div style="margin-top:6px">类型变化可能影响校验器、监听字段和错误目标。继续后可在草稿中重新配置。</div></div><p style="margin:0">请选择目标方式：</p><div class="radio-list"><label class="radio-option"><input type="radio" name="next-kind" value="internal" checked><span><strong>内部断言</strong><small>由表单运行时同步执行纯函数或表达式。</small></span></label><label class="radio-option"><input type="radio" name="next-kind" value="external"><span><strong>Host 外部校验</strong><small>由 Host 提供的校验器执行，结果可能异步返回。</small></span></label></div>`,
+        },
+        close: {
+          title: '放弃未保存的更改？',
+          html: `<p style="margin:0">关闭后，本次编辑内容不会应用到配置草稿。</p>`,
+        },
+      };
+      function openDialog(name, trigger) {
+        activeDialog = name;
+        focusReturn = trigger || document.activeElement;
+        const config = dialogs[name];
+        $('#dialog-title').textContent = config.title;
+        $('#dialog-content').innerHTML = config.html;
+        scrim.classList.add('open');
+        $('#dialog-apply').textContent = name === 'close' ? '放弃更改' : '应用';
+        if (name === 'scope') {
+          const radios = [...document.querySelectorAll('input[name="scope"]')];
+          radios.forEach(
+            (radio) =>
+              (radio.checked = (original.scope === '整张表单' ? 'form' : 'each') === radio.value),
+          );
+          $('#scope-field').hidden = original.scope === '整张表单';
+        }
+        if (name === 'when') {
+          $('#when-select').value = original.when === '始终适用' ? 'always' : 'conditional';
+          $('#when-expression').hidden = original.when === '始终适用';
+        }
+        if (name === 'watch')
+          document
+            .querySelectorAll('#dialog-content input[type=checkbox]')
+            .forEach((el) => (el.checked = watch.includes(el.value)));
+        if (name === 'kind')
+          document.querySelector(
+            `input[name="next-kind"][value="${$('#internal-panel').hidden ? 'external' : 'internal'}"]`,
+          ).checked = true;
+        if (name === 'assert') $('#assert-text').value = assertText;
+        dialogOriginal = $('#dialog-content').innerHTML;
+        $('#dialog-close').focus();
+      }
+      function closeDialog() {
+        scrim.classList.remove('open');
+        activeDialog = '';
+        if (focusReturn?.isConnected) focusReturn.focus();
+      }
+      function closeDrawer(force = false) {
+        if (dirty && !force) return openDialog('close', $('#close-button'));
+        drawer.hidden = true;
+        $('.backdrop').hidden = true;
+        toast('已关闭编辑抽屉');
+      }
+      function applyDialog() {
+        if (activeDialog === 'close') {
+          dirty = false;
+          closeDialog();
+          closeDrawer(true);
+          return;
+        }
+        if (activeDialog === 'scope') {
+          const choice = $('input[name="scope"]:checked')?.value || 'form';
+          original.scope = choice === 'form' ? '整张表单' : '逐项 · /insureds（被保人）';
+          $('#scope-summary').textContent = original.scope;
+        }
+        if (activeDialog === 'when') {
+          const conditional = $('#when-select').value === 'conditional';
+          original.when = conditional ? '按申请人类型' : '始终适用';
+          $('#when-summary').textContent = original.when;
+        }
+        if (activeDialog === 'watch') {
+          watch = [
+            ...document.querySelectorAll('#dialog-content input[type=checkbox]:checked'),
+          ].map((el) => el.value);
+          renderWatch();
+        }
+        if (activeDialog === 'kind') {
+          const kind = $('input[name="next-kind"]:checked').value;
+          setKind(kind);
+          setDirty();
+        }
+        if (activeDialog === 'assert') {
+          assertText = $('#assert-text').value;
+          $('#assert-source').textContent = assertText;
+          toast('判断表达式已应用到当前草稿');
+        }
+        setDirty();
+        closeDialog();
+      }
+      document
+        .querySelectorAll('[data-dialog]')
+        .forEach((button) =>
+          button.addEventListener('click', () => openDialog(button.dataset.dialog, button)),
+        );
+      $('#internal-tab').addEventListener('click', () => openDialog('kind', $('#internal-tab')));
+      $('#external-tab').addEventListener('click', () => openDialog('kind', $('#external-tab')));
+      $('#dialog-close').addEventListener('click', closeDialog);
+      $('#dialog-cancel').addEventListener('click', closeDialog);
+      $('#dialog-apply').addEventListener('click', applyDialog);
+      $('#dialog-content').addEventListener('change', (event) => {
+        if (event.target.name === 'scope') $('#scope-field').hidden = event.target.value !== 'each';
+        if (event.target.id === 'when-select')
+          $('#when-expression').hidden = event.target.value !== 'conditional';
+        if (event.target.dataset.removeWatch !== undefined) {
+          watch.splice(Number(event.target.dataset.removeWatch), 1);
+          renderWatch();
+          setDirty();
+        }
+      });
+      $('#watch-list').addEventListener('click', (event) => {
+        const index = event.target.dataset.removeWatch;
+        if (index !== undefined) {
+          watch.splice(Number(index), 1);
+          renderWatch();
+          setDirty();
+        }
+      });
+      $('#dialog-content').addEventListener('click', (event) => {
+        if (event.target.id === 'function-button') toast('纯函数目录可按名称、用途和参数查找');
+      });
+      $('#close-button').addEventListener('click', () => closeDrawer());
+      $('#cancel-button').addEventListener('click', () => closeDrawer());
+      $('#save-button').addEventListener('click', () => {
+        dirty = false;
+        $('#action-status').textContent = '已应用到当前配置草稿';
+        toast('校验规则已应用到配置草稿');
+      });
+      [
+        'target-input',
+        'external-target',
+        'code-input',
+        'message-input',
+        'validator-select',
+        'required-toggle',
+      ].forEach((id) => $('#' + id).addEventListener('input', setDirty));
+      $('#required-toggle').addEventListener('change', setDirty);
+      scrim.addEventListener('click', (event) => {
+        if (event.target === scrim) closeDialog();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          if (scrim.classList.contains('open')) closeDialog();
+          else closeDrawer();
+        }
+        if (!scrim.classList.contains('open') && !drawer.hidden && event.key === 'Tab') {
+          const focusable = [
+            ...drawer.querySelectorAll(
+              'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)',
+            ),
+          ].filter((el) => el.getClientRects().length);
+          const first = focusable[0],
+            last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+        if (scrim.classList.contains('open') && event.key === 'Tab') {
+          const focusable = [
+            ...scrim.querySelectorAll(
+              'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
+            ),
+          ];
+          const first = focusable[0],
+            last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      });
+      document.querySelectorAll('#dialog-content, #watch-list').forEach((node) =>
+        new MutationObserver(() => {
+          node.querySelectorAll('[data-remove-watch]').forEach((button) =>
+            button.addEventListener('click', () => {
+              watch.splice(Number(button.dataset.removeWatch), 1);
+              renderWatch();
+              setDirty();
+            }),
+          );
+        }).observe(node, { childList: true, subtree: true }),
+      );
+      $('#close-button').focus();
+    </script>
+  </body>
+</html>

@@ -24,8 +24,9 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: 'pnpm --filter @form-engine/api start:prod',
+      command: 'node services/api/tools/start-test-api.mjs',
       url: 'http://127.0.0.1:3101',
+      gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
       reuseExistingServer: false,
       timeout: 60_000,
       env: { API_PORT: '3101', HOST: '127.0.0.1' },

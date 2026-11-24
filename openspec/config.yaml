@@ -1,0 +1,10 @@
+schema: form-change
+context: |
+  docs/design/ is the only authoritative contract. Read docs/README.md and docs/design/workflows.md#workflow-openspec.
+  Use Chinese for project artifacts. Change-local specs are historical acceptance deltas, never a second canonical specification.
+  Never run sync or populate openspec/specs. Archive through tools/engineering/workflow.py with --skip-specs.
+  Keep a single tasks.md; use Superpowers methods without creating another plan or bypassing project approval/review rules.
+operations:
+  archive:
+    guidance:
+      - Complete knowledge maintenance and risk-appropriate review before invoking the project archive adapter.

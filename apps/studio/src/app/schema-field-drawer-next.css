@@ -1,0 +1,141 @@
+#studio-main dialog.schema-next-drawer[data-studio-modal-size] {
+  --drawer-inset: var(--studio-space-24);
+  padding: var(--drawer-inset);
+  container-type: inline-size;
+  --studio-control-height: var(--studio-control-height-dense);
+}
+
+/* Let the scrollbar and focus outlines use the drawer gutter. */
+.schema-next-drawer > .studio-modal-body {
+  flex: 1 1 0;
+  margin-inline: calc(-1 * var(--drawer-inset));
+  scrollbar-gutter: stable;
+}
+
+.schema-next-drawer > .studio-modal-body > .schema-next-stack {
+  margin-inline-start: var(--drawer-inset);
+  inline-size: min(100cqi, calc(100% - var(--drawer-inset) - var(--studio-space-4)));
+}
+
+.schema-next-drawer :is(.schema-next-stack, .schema-next-section) {
+  display: grid;
+  gap: var(--studio-space-12);
+  min-width: 0;
+}
+
+.schema-next-drawer .schema-next-section {
+  border-bottom: 1px solid var(--studio-border);
+  padding-block: var(--studio-space-12);
+}
+
+.schema-next-drawer .schema-next-section h3,
+.schema-next-drawer .schema-next-section h4 {
+  margin: 0;
+}
+
+.schema-next-drawer fieldset.schema-next-grid {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.schema-next-drawer :is(.schema-next-grid, .schema-next-bound) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--studio-space-12);
+  align-items: start;
+  min-width: 0;
+}
+
+.schema-next-drawer .schema-next-bound {
+  grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
+  gap: var(--studio-space-8);
+}
+
+.schema-next-drawer .schema-next-wide {
+  grid-column: 1 / -1;
+}
+
+.schema-next-drawer .schema-next-field {
+  display: grid;
+  align-content: start;
+  gap: var(--studio-space-8);
+  min-width: 0;
+}
+
+.schema-next-drawer :is(.schema-next-check, .schema-next-label) {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-8);
+}
+
+.schema-next-drawer .schema-next-label {
+  justify-content: space-between;
+}
+
+.schema-next-drawer .schema-next-label .studio-button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+}
+
+.schema-next-drawer :is(input:not([type='checkbox'], [type='radio']), select, textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--studio-control-height-dense);
+}
+
+/* This control lives inside .editor, whose raw textarea uses block borders only. */
+.schema-next-drawer textarea.schema-field-textarea {
+  border: 1px solid var(--studio-control-border);
+  border-radius: var(--studio-radius-8);
+  background: var(--studio-surface);
+  padding: var(--studio-space-8);
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.schema-next-drawer .schema-next-error {
+  color: var(--studio-danger-fg);
+}
+
+.schema-next-drawer :is(.schema-next-card, .schema-next-submodel) {
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+  padding: var(--studio-space-12);
+  min-width: 0;
+}
+
+.schema-next-drawer details[open] > summary {
+  margin-bottom: var(--studio-space-12);
+}
+
+.schema-next-drawer :is(.schema-next-tools, .schema-next-submodel) :is(code, small) {
+  overflow-wrap: anywhere;
+}
+
+.schema-next-drawer .schema-next-readonly :is(.schema-rule-card button, .schema-rule-card form) {
+  display: none;
+}
+
+@container (max-width: 420px) {
+  .schema-next-drawer :is(.schema-next-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .schema-next-drawer :is(.schema-next-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.schema-next-drawer > .schema-next-tools {
+  flex: none;
+  padding-block-end: var(--studio-space-8);
+  border-block-end: 1px solid var(--studio-border);
+}

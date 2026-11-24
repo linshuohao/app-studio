@@ -1,0 +1,49 @@
+{
+  "fingerprint": "66c242c43c2b5be362ac4fffbe14081e4db6b54bde0100d5052463bcff2cd7b5",
+  "checks": [
+    [
+      "node",
+      "tools/engineering/catalog-docs.mjs",
+      "--check"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "test:integration",
+      "platform-catalog-members.e2e-spec.ts",
+      "--testTimeout=15000"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/studio-workbench",
+      "STUDIO_TEST_PORT=3218",
+      "STUDIO_TEST_API_PORT=3318",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "--dir",
+      "apps/studio",
+      "exec",
+      "playwright",
+      "test",
+      "catalog-members.spec.ts"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

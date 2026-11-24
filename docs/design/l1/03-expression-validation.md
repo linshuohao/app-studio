@@ -192,7 +192,7 @@ External Constraint 的 `watch: DataReference[]` 显式声明 Host 内部不透�
 
 **有限前置与消息覆盖 · 设计方向**
 
-校验前置在本轮 Constraint 链中检查、必要重排序，前置执行不依赖结果反向 PubSub 或通用异步 DAG；显式 ValidationWatch 只消费已发布的对外状态，不替代 requires。来源的 `requires` 只是语法占位：字段有效性已确认按前置完成后该字段无错误判断；字段 / 规则两种引用能力已明确；2026-10-21 确认按具体 Scope ID 唯一实例绑定，本期不增加 or / any 等集合能力，仅允许等待同步前置，多步异步封装在同一个 Host Validator。后续完整草案确认字段前置是 Schema + 相关适用 Internal 的同步资格，明确不包括 External，不代表完整有效性；正式语法与 Prepared 字段按已确认原则实施整合，见 [首期前置范围](../l3-validation.md#prerequisite-scope-contract)。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
+校验前置在本轮 Constraint 链中检查、必要重排序，前置执行不依赖结果反向 PubSub 或通用异步 DAG；显式 ValidationWatch 只消费已发布的对外状态，不替代 requires。`requires` 已进入现行 TS 协议 / Prepared 并由 Compiler 与 Runtime 消费，尚未对外发布稳定版本：字段有效性已确认按前置完成后该字段无错误判断；字段 / 规则两种引用能力已明确；2026-10-21 确认按具体 Scope ID 唯一实例绑定，本期不增加 or / any 等集合能力，仅允许等待同步前置，多步异步封装在同一个 Host Validator。后续完整草案确认字段前置是 Schema + 相关适用 Internal 的同步资格，明确不包括 External，不代表完整有效性；正式语法与 Prepared 字段按已确认原则实施整合，见 [首期前置范围](../l3-validation.md#prerequisite-scope-contract)。2026-10-19 已确认：可推导的 Validation 依赖由 L2 自动补全，前置输入依赖传递纳入后置有效依赖；无法推导的业务依赖才需作者显式提供。后置入队时递归补齐前置 Constraint，按具体实例去重并使用本轮结果，不复用旧通过结论；这不改变 Reaction 的显式 Watch，也不等于立即发起外部请求。默认消息 + 局部覆盖为推荐，来源 `validationMessages` 也不是本次新增的正式顶层字段。完整规则与取舍见 [校验专题](../l3-validation.md#validation-round)。
 
 ## 校验状态与提交 Readiness 的协议边界 {#validation}
 

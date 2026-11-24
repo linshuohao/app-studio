@@ -7,5 +7,12 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqknIqVQsYPgM6y0cfLrCHruxo6saTlSaLir3fyYZ3uzu3S4+NcRabsXuV0enVAPl/i5UyEGnw1YcrDAazQ8bibuxf6mWBFmUTUzQTQVWUGwba+QGP8RaVt+zRN0MfgfPBm1amrPjGPf/yAFGDalmiBrpYn+A8cUJEBXKKTuXFrQNWWX2n38KidZgCcpBu2YfiHvOtpXuBPA9qcR7DO71LSNs0UBe5VqDVhLqyWZzzb6zwJ4ZT+DuSdWPFsS1xEdFKf8nSJ4IFuvnnQP8xBE2oTH2ZOnlcK9rzTGtckDO28lTrX6DMowgROhaL+mz8T5ZZWT+c7L3aV1UBWZ3rVm7mwIDAQAB"
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqknIqVQsYPgM6y0cfLrCHruxo6saTlSaLir3fyYZ3uzu3S4+NcRabsXuV0enVAPl/i5UyEGnw1YcrDAazQ8bibuxf6mWBFmUTUzQTQVWUGwba+QGP8RaVt+zRN0MfgfPBm1amrPjGPf/yAFGDalmiBrpYn+A8cUJEBXKKTuXFrQNWWX2n38KidZgCcpBu2YfiHvOtpXuBPA9qcR7DO71LSNs0UBe5VqDVhLqyWZzzb6zwJ4ZT+DuSdWPFsS1xEdFKf8nSJ4IFuvnnQP8xBE2oTH2ZOnlcK9rzTGtckDO28lTrX6DMowgROhaL+mz8T5ZZWT+c7L3aV1UBWZ3rVm7mwIDAQAB",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
 }

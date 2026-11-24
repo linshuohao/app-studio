@@ -1,0 +1,67 @@
+{
+  "fingerprint": "c16a53bfc8863d44310d0dcf8026af87c52517d36bcd20faf6a23659dc30a209",
+  "checks": [
+    [
+      "node",
+      "--test",
+      "apps/studio/tests/layout-structure.check.mjs"
+    ],
+    [
+      "pnpm",
+      "exec",
+      "eslint",
+      "apps/studio/src/app/layout-editor.tsx",
+      "apps/studio/src/app/layout-live-preview.tsx",
+      "apps/studio/src/app/layout-material.tsx",
+      "apps/studio/src/app/layout-material-value.tsx",
+      "apps/studio/src/app/layout-option-list.tsx",
+      "apps/studio/src/app/layout-token-edit.ts",
+      "apps/studio/src/app/preview-runtime.tsx",
+      "apps/studio/tests/layout-editor.spec.ts",
+      "apps/studio/tests/layout-material.spec.ts",
+      "--max-warnings",
+      "0"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/layout-inspector-verification",
+      "PLATFORM_API_URL=http://127.0.0.1:3387",
+      "STUDIO_TEST_PORT=3287",
+      "STUDIO_TEST_API_PORT=3387",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "exec",
+      "next",
+      "build",
+      "--webpack"
+    ],
+    [
+      "env",
+      "STUDIO_DIST_DIR=.next/layout-inspector-verification",
+      "PLATFORM_API_URL=http://127.0.0.1:3387",
+      "STUDIO_TEST_PORT=3287",
+      "STUDIO_TEST_API_PORT=3387",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "exec",
+      "playwright",
+      "test",
+      "--config",
+      "apps/studio/playwright.config.ts",
+      "layout-editor.spec.ts",
+      "layout-material.spec.ts",
+      "schema-navigation.spec.ts",
+      "--grep-invert",
+      "keeps module navigation visible and returns from JSON to the originating module",
+      "--output",
+      "apps/studio/.next/layout-inspector-results"
+    ]
+  ]
+}

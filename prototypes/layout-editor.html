@@ -1,0 +1,3460 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>布局编辑 · 旅行保险投保单</title>
+    <style>
+      [hidden] {
+        display: none !important;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f5f1;
+        color: #24332e;
+        font:
+          14px/1.55 system-ui,
+          'PingFang SC',
+          sans-serif;
+      }
+      button,
+      select,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      button,
+      select,
+      input {
+        background: #fff;
+        border: 1px solid #cdd6ce;
+        border-radius: 6px;
+        padding: 7px 12px;
+      }
+      button:hover,
+      select:hover {
+        border-color: #659582;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #88b6a3;
+        outline-offset: 1px;
+      }
+      .primary {
+        background: #245b49;
+        color: white;
+        border-color: #245b49;
+      }
+      .quiet {
+        background: transparent;
+      }
+      .subtle,
+      small,
+      .path {
+        color: #5b6c63;
+      }
+      .path,
+      code {
+        font:
+          12px/1.55 ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+      }
+      .top,
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 0 clamp(12px, 3vw, 46px);
+      }
+      .top {
+        padding-top: 24px;
+        padding-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 26px;
+        letter-spacing: -1px;
+      }
+      .line,
+      .tools {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+      .line {
+        justify-content: space-between;
+      }
+      .bar {
+        background: #fff;
+        border: 1px solid #ced8cf;
+        border-radius: 10px 10px 0 0;
+        padding: 13px 17px;
+      }
+      .bar label {
+        font-weight: 650;
+      }
+      .bar select {
+        margin-left: 7px;
+        max-width: 150px;
+      }
+      .frame {
+        display: grid;
+        grid-template-columns: minmax(160px, 0.85fr) minmax(340px, 2.9fr) minmax(185px, 0.95fr);
+        min-height: 610px;
+        border: 1px solid #ced8cf;
+        border-top: 0;
+        border-radius: 0 0 10px 10px;
+        overflow: hidden;
+      }
+      .side,
+      .inspector {
+        padding: 18px 12px;
+        background: #fbfcf9;
+        min-width: 0;
+      }
+      .side {
+        border-right: 1px solid #d5ddd5;
+      }
+      .inspector {
+        border-left: 1px solid #d5ddd5;
+      }
+      .eyebrow {
+        font-size: 13px;
+        font-weight: 650;
+        color: #55675b;
+        margin-bottom: 12px;
+      }
+      .tree {
+        width: 100%;
+        text-align: left;
+        padding: 7px 9px;
+        background: none;
+        border: 1px solid transparent;
+        overflow-wrap: anywhere;
+      }
+      .tree.child {
+        padding-left: 28px;
+        font-size: 13px;
+      }
+      .tree.current {
+        background: #e4eee5;
+        border-color: #c9daca;
+        color: #24553e;
+      }
+      .canvas {
+        padding: 18px clamp(12px, 2vw, 30px) 30px;
+        min-width: 0;
+        background-color: #edf0e9;
+        background-image: radial-gradient(#ced6ca 0.8px, transparent 0.8px);
+        background-size: 9px 9px;
+      }
+      .canvas > .line {
+        margin-bottom: 14px;
+      }
+      .sheet {
+        background: white;
+        box-shadow: 0 3px 14px #314c3420;
+        border: 1px solid #d2dad0;
+        border-radius: 7px;
+        overflow: hidden;
+      }
+      .paperhead {
+        padding: 20px 22px 14px;
+        border-top: 4px solid #486d59;
+        border-bottom: 1px solid #e0e6de;
+      }
+      .paperhead h2 {
+        font-size: 21px;
+        font-weight: 650;
+      }
+      .block {
+        margin: 10px;
+        padding: 12px;
+        border: 1px solid #d9e0d6;
+        border-radius: 6px;
+      }
+      .block.selected {
+        border-color: #579279;
+      }
+      .block h3 button {
+        background: none;
+        border: 0;
+        padding: 0;
+        font-weight: 650;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        margin: 9px 0;
+      }
+      .roomy .controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .roomy .block {
+        padding: 18px;
+        margin: 15px;
+      }
+      .control {
+        text-align: left;
+        min-width: 0;
+        padding: 7px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        background: transparent;
+      }
+      .control.selected {
+        background: #eff6ef;
+        border-color: #7ba58b;
+      }
+      .control strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+      .mock {
+        display: block;
+        padding: 5px 8px;
+        border: 1px solid #d4dcd4;
+        background: #fbfcfa;
+        border-radius: 4px;
+        color: #6b766e;
+        overflow-wrap: anywhere;
+      }
+      .add {
+        padding: 4px 9px;
+        border: 1px dashed #91a994;
+        color: #305d42;
+        background: #f9fbf7;
+      }
+      .inspector h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+      .field {
+        display: grid;
+        gap: 4px;
+        margin: 12px 0;
+      }
+      .field > input,
+      .field > select {
+        width: 100%;
+        min-width: 0;
+      }
+      .inspector hr {
+        border: 0;
+        border-top: 1px solid #dce2d9;
+        margin: 16px 0;
+      }
+      .danger {
+        color: #904336;
+      }
+      .status {
+        min-height: 30px;
+        padding: 6px 0;
+      }
+      .empty {
+        margin: 14px 0;
+        color: #617166;
+      }
+      .editorarea {
+        padding: 12px 0;
+      }
+      .picker {
+        background: #f5f9f3;
+        border: 1px solid #81a68b;
+        border-radius: 8px;
+        padding: 13px;
+        margin-top: 10px;
+      }
+      .picker h3 {
+        font-size: 16px;
+      }
+      .choices {
+        max-height: 180px;
+        overflow: auto;
+      }
+      .choice {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        padding: 7px;
+        border-bottom: 1px solid #dbe5db;
+        cursor: pointer;
+      }
+      .choice input {
+        width: auto;
+      }
+      .choice small {
+        margin-left: auto;
+      }
+      .picker .tools {
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+      dialog {
+        border: 1px solid #b5c8b9;
+        border-radius: 12px;
+        padding: 23px;
+        width: min(440px, 94vw);
+        color: inherit;
+      }
+      dialog::backdrop {
+        background: #19332662;
+      }
+      dialog footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 19px;
+      }
+      .err {
+        color: #944335;
+      }
+      .wide {
+        width: min(720px, 95vw);
+        max-height: 90vh;
+        overflow: auto;
+      }
+      #previewBody {
+        margin: 12px 0;
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.55;
+      }
+      .mobilehead {
+        display: none;
+      }
+      @media (max-width: 850px) {
+        .frame {
+          grid-template-columns: 155px minmax(0, 1fr);
+        }
+        .inspector {
+          grid-column: 1/-1;
+          border-left: 0;
+          border-top: 1px solid #d5ddd5;
+        }
+        .inspector .field {
+          max-width: 440px;
+        }
+      }
+      @media (max-width: 590px) {
+        .top {
+          align-items: flex-start;
+        }
+        .top .tools {
+          justify-content: flex-end;
+        }
+        .frame {
+          display: flex;
+          flex-direction: column;
+        }
+        .side {
+          max-height: 155px;
+          overflow: auto;
+          border-bottom: 1px solid #d4dcd4;
+        }
+        .bar {
+          gap: 10px;
+        }
+        .canvas {
+          padding: 12px 8px;
+        }
+        .controls {
+          grid-template-columns: 1fr;
+        }
+        .top h1 {
+          font-size: 21px;
+        }
+        .top {
+          padding-top: 15px;
+        }
+        .paperhead {
+          padding: 13px;
+        }
+        .roomy .block {
+          margin: 8px;
+          padding: 12px;
+        }
+      }
+      .material-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+        gap: 7px;
+        margin: 10px 0;
+      }
+      .mat-card {
+        text-align: left;
+        padding: 8px;
+        display: grid;
+        gap: 4px;
+        align-content: start;
+      }
+      .mat-card[aria-pressed='true'] {
+        border: 2px solid #326c52;
+        background: #ecf4ed;
+      }
+      .sample {
+        display: block;
+        border: 1px solid #cdd9ce;
+        background: white;
+        padding: 4px 6px;
+        color: #66786a;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+      .sample.button,
+      .mock.button {
+        background: #285740;
+        color: white;
+        text-align: center;
+      }
+      .mat-card small {
+        font-size: 11px;
+      }
+      .inspector textarea {
+        width: 100%;
+        min-height: 78px;
+        box-sizing: border-box;
+      }
+      .inspector h3 {
+        font-size: 14px;
+        overflow-wrap: anywhere;
+      }
+      .inspector label {
+        overflow-wrap: anywhere;
+      }
+      .exprbox {
+        font-size: 12px;
+        margin: -6px 0 12px;
+        color: #3c6652;
+      }
+      .exprbox summary {
+        cursor: pointer;
+      }
+      .exprbox[open] {
+        background: #edf5ee;
+        padding: 8px;
+        border-radius: 5px;
+      }
+      .exprbox button {
+        margin: 5px 3px 0 0;
+      }
+      #findField {
+        width: 100%;
+        margin: 9px 0;
+      }
+      #fieldList {
+        max-height: 55vh;
+        overflow: auto;
+      }
+      .fieldItem {
+        display: grid;
+        grid-template-columns: 9px minmax(0, 1fr) auto;
+        gap: 4px;
+        align-items: center;
+        min-height: 26px;
+        font-size: 13px;
+        line-height: 18px;
+        width: 100%;
+        text-align: left;
+        padding: 2px 4px;
+        border: 1px solid transparent;
+        background: none;
+        color: #5f6862;
+        cursor: grab;
+      }
+      .fieldItem:hover {
+        background: #eaf0e9;
+      }
+      .fieldItem:active {
+        cursor: grabbing;
+      }
+      .fieldItem .mark {
+        font-size: 11px;
+        color: #768078;
+      }
+      .fieldItem.used {
+        color: #234d3e;
+      }
+      .fieldItem.used .mark {
+        color: #24724f;
+      }
+      .field-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .fieldItem small {
+        white-space: nowrap;
+        display: block;
+        font-size: 11px;
+      }
+      .outline {
+        margin: 14px 0;
+        border-top: 1px solid #d0d9d1;
+        padding-top: 12px;
+      }
+      .outline summary {
+        cursor: pointer;
+        font-weight: 650;
+      }
+      .dropzone {
+        display: none;
+      }
+      .dragging .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .dragging .dropzone {
+        display: block;
+        border: 1px dashed #98b39e;
+        border-radius: 4px;
+        padding: 3px;
+        text-align: center;
+        font-size: 11px;
+        color: #3e634b;
+      }
+      .dragging .dropzone.over,
+      .blank-drop.over {
+        background: #daeede;
+        outline: 2px solid #568468;
+      }
+      .blank-drop {
+        padding: 24px;
+        text-align: center;
+      }
+      .blank-drop p {
+        margin-bottom: 12px;
+      }
+      #drawer {
+        position: fixed;
+        inset: 0 0 0 auto;
+        margin: 0;
+        width: min(470px, 96vw);
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        padding: 0;
+        border: 0;
+        border-left: 1px solid #cad4c9;
+        border-radius: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+      #drawer::backdrop {
+        background: #19271c30;
+      }
+      .drawerhead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: white;
+        border-bottom: 1px solid #d8dfd6;
+        padding: 16px;
+      }
+      .drawerhead h2 {
+        font-size: 20px;
+      }
+      #drawer .picker {
+        background: white;
+        border: 0;
+        margin: 0;
+        padding: 16px;
+      }
+      #drawer .picker > .path {
+        font-size: 13px;
+        margin-bottom: 13px;
+      }
+      #drawer .tools {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        border-top: 1px solid #d5ddd4;
+        padding: 10px 0;
+      }
+      .drawerTarget {
+        background: #f2f6ef;
+        padding: 9px;
+        border-radius: 5px;
+        overflow-wrap: anywhere;
+      }
+      .side {
+        max-height: none;
+      }
+      @media (max-width: 590px) {
+        #fieldList {
+          max-height: 160px;
+        }
+        .side {
+          max-height: 320px;
+        }
+        .outline {
+          margin: 5px 0;
+        }
+      }
+      body[data-drag-scope='root'] .block[data-scope='insured'] .dropzone,
+      body[data-drag-scope='insured'] .block[data-scope='root'] .dropzone {
+        display: none;
+      }
+      body[data-drag-scope='root'] .block[data-scope='insured'],
+      body[data-drag-scope='insured'] .block[data-scope='root'] {
+        opacity: 0.55;
+      }
+      .data-branch {
+        margin: 1px 0;
+        padding-left: 6px;
+        border-left: 1px solid #c7d7cd;
+      }
+      .data-branch summary {
+        cursor: pointer;
+        font-size: 13px;
+        color: #385344;
+        padding: 2px 0;
+      }
+      .shape,
+      .option-row {
+        padding: 6px 8px;
+        border-left: 2px solid #cfdfd3;
+        margin: 5px 0;
+      }
+      .binding-info {
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .option-rows {
+        margin: 12px 0;
+      }
+      .control-visual {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        font-size: 12px;
+        font-weight: 400;
+        font-style: normal;
+        color: #42574a;
+      }
+      .vis-input {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        background: white;
+        border: 1px solid #b7c9bb;
+        border-radius: 5px;
+        padding: 6px;
+        min-width: 0;
+        flex: 1;
+      }
+      .vis-input > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .vis-input b {
+        color: #537565;
+        white-space: nowrap;
+      }
+      .vis-button,
+      .vis-check {
+        background: #27634c;
+        color: white;
+        border-radius: 5px;
+        padding: 5px 11px;
+      }
+      .vis-check {
+        padding: 0 3px;
+      }
+      .control-visual i {
+        font-style: normal;
+      }
+      .mat-card .control-visual {
+        background: #f0f4ed;
+        min-height: 64px;
+        padding: 8px;
+        border-radius: 5px;
+      }
+      .material-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .placement-preview {
+        border: 1px dashed #97b39e;
+        border-radius: 7px;
+        padding: 12px;
+        display: grid;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      .root-add {
+        margin: 12px 12px 2px;
+        color: #234f3c;
+        border: 1px dashed #729782;
+      }
+      .controls > .block {
+        min-width: 0;
+        grid-column: 1/-1;
+      }
+      .block > .add {
+        margin: 4px 4px 0 0;
+      }
+      .movable-control {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+      }
+      .movable-control > .control {
+        flex: 1;
+        min-width: 0;
+      }
+      .move-handle,
+      .block h3 button.move-handle {
+        color: #4d705c;
+        border: 0;
+        background: transparent;
+        padding: 4px 6px;
+        cursor: grab;
+        font-size: 18px;
+        line-height: 1;
+      }
+      .move-handle:active {
+        cursor: grabbing;
+      }
+      .dragging .dropzone.move-only {
+        display: none;
+      }
+      .moving-node .dropzone.move-only {
+        display: block;
+      }
+      .moving-node .dropzone.blocked {
+        display: none;
+      }
+      /* Workspace chrome follows a single text scale; the form keeps its own hierarchy. */
+      :root {
+        --ink: #202b35;
+        --muted: #586977;
+        --line: #d9dfe4;
+        --accent: #205d60;
+        --selected: #e8f2f1;
+      }
+      body {
+        font:
+          14px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+        color: var(--ink);
+        background: #f4f6f8;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        letter-spacing: normal;
+      }
+      button,
+      select,
+      input:not([type='checkbox']),
+      textarea {
+        border-color: var(--line);
+        border-radius: 6px;
+      }
+      button {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+      }
+      .top,
+      main {
+        max-width: 1600px;
+        padding-inline: clamp(12px, 2vw, 32px);
+      }
+      .top {
+        padding-block: 20px;
+      }
+      .top h1 {
+        font-size: 22px;
+        line-height: 1.4;
+        letter-spacing: -0.03em;
+      }
+      .top small,
+      .context-line,
+      .subtle,
+      small,
+      .path {
+        color: var(--muted);
+      }
+      .top small,
+      .context-line,
+      .path,
+      .fieldItem small {
+        font-family: inherit;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .primary {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .bar {
+        border-color: var(--line);
+        border-radius: 10px 10px 0 0;
+        padding: 10px 16px;
+      }
+      .bar #create,
+      .quiet,
+      .back-link,
+      .next-action {
+        border-color: transparent;
+        background: transparent;
+      }
+      .frame {
+        border-color: var(--line);
+        grid-template-columns: minmax(166px, 0.82fr) minmax(300px, 2.4fr) minmax(250px, 1fr);
+        min-height: calc(100vh - 190px);
+      }
+      .side,
+      .inspector {
+        background: #fff;
+        padding: 20px 16px;
+        border-color: var(--line);
+      }
+      .rail-tabs {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 14px;
+      }
+      .rail-tabs button {
+        padding: 0 2px 9px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--muted);
+      }
+      .rail-tabs button[aria-pressed='true'] {
+        box-shadow: inset 0 -2px var(--accent);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .tree {
+        font-size: 14px;
+        line-height: 20px;
+        margin-bottom: 2px;
+      }
+      .tree.current {
+        background: var(--selected);
+        border-color: transparent;
+        color: var(--accent);
+      }
+      .canvas {
+        background: #edf0f3;
+        padding: 18px clamp(10px, 2vw, 28px) 32px;
+      }
+      .canvas > .line {
+        margin-bottom: 14px;
+      }
+      .canvas > .line strong {
+        font-size: 14px;
+      }
+      #arrange {
+        padding: 2px 8px;
+        background: transparent;
+        font-size: 13px;
+      }
+      #arrange[aria-pressed='true'] {
+        background: #fff;
+      }
+      .sheet {
+        border: 1px solid #dbe1e4;
+        border-radius: 8px;
+        box-shadow: 0 3px 12px #20304409;
+        padding-bottom: 14px;
+      }
+      .paperhead {
+        border-top: 0;
+        padding: 20px 24px 16px;
+        border-bottom-color: #e6eaed;
+      }
+      .paperhead h2 {
+        font-size: 22px;
+        letter-spacing: -0.025em;
+      }
+      .block,
+      .roomy .block {
+        margin: 9px 12px;
+        padding: 12px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+      }
+      .block.selected {
+        border-color: #72a29f;
+        background: #f8fcfb;
+      }
+      .block h3,
+      .inspector h3 {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 22px;
+      }
+      .block .block {
+        border-left: 2px solid #ccd8da;
+        border-radius: 0;
+        margin: 6px 0;
+        padding: 8px 12px;
+        background: #fafbfc;
+      }
+      .block .block.selected {
+        background: var(--selected);
+      }
+      .control strong {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .vis-input,
+      .mock {
+        background: #fff;
+        border-color: #ced6da;
+      }
+      .inspector h2 {
+        font-size: 18px;
+        margin: 3px 0 22px;
+      }
+      .inspector > h3,
+      .trial-box h3 {
+        margin: 16px 0 6px;
+      }
+      .scope-note {
+        font-size: 14px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+      .next-action,
+      .back-link {
+        display: block;
+        color: var(--accent);
+        padding-inline: 0;
+      }
+      .next-action {
+        margin-top: 8px;
+      }
+      .back-link {
+        margin-bottom: 16px;
+      }
+      .more-settings {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .more-settings summary {
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .rule-summary {
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .trial-box {
+        background: #eef5f5;
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin: 16px 0;
+      }
+      .trial-box h3 {
+        margin-top: 0;
+      }
+      .trial-box p {
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .trial-box output {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .positive {
+        color: var(--accent);
+      }
+      .seed-fields {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: 13px;
+        margin: 12px 0;
+      }
+      .move-error {
+        color: #933a2c;
+        margin: 12px 0;
+      }
+      .move-error:empty {
+        display: none;
+      }
+      body:not(.arranging) #sheet .root-add,
+      body:not(.arranging) #sheet .block > .add {
+        display: none;
+      }
+      body:not(.arranging) #sheet .move-handle {
+        opacity: 0;
+      }
+      body:not(.arranging) #sheet .move-handle:focus-visible,
+      body:not(.arranging) #sheet .block > h3:hover > .move-handle,
+      body:not(.arranging) #sheet .movable-control:hover > .move-handle {
+        opacity: 1;
+      }
+      .moving-node .dropzone.blocked {
+        display: block;
+        color: #8e5049;
+        background: #faf4f3;
+        border-color: #dbc6c3;
+      }
+      @media (max-width: 950px) {
+        .frame {
+          grid-template-columns: 165px minmax(0, 1fr);
+        }
+        .inspector {
+          grid-column: 1/-1;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+        .inspector > .field,
+        .trial-box {
+          max-width: 480px;
+        }
+      }
+      @media (max-width: 590px) {
+        .frame {
+          display: flex;
+        }
+        .side {
+          max-height: 210px;
+          overflow: auto;
+        }
+        .top {
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .top .tools {
+          gap: 4px;
+        }
+        .top .tools button {
+          padding: 5px 8px;
+        }
+        .canvas {
+          padding: 12px 8px;
+        }
+        .bar {
+          padding: 10px;
+        }
+        .block,
+        .roomy .block {
+          margin: 6px;
+          padding: 8px;
+        }
+      }
+      .fp-trigger {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        background: white;
+      }
+      .fp-trigger::after {
+        content: '⌄';
+        color: var(--muted);
+      }
+      dialog.fp-dialog {
+        width: min(540px, calc(100vw - 24px));
+        max-height: min(76dvh, 660px);
+        padding: 0;
+        border: 1px solid var(--line);
+        box-shadow: 0 18px 58px #15273730;
+      }
+      .fp-dialog[open] {
+        display: flex;
+        flex-direction: column;
+      }
+      .fp-dialog header,
+      .fp-dialog footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+      }
+      .fp-dialog header h2 {
+        font-size: 17px;
+      }
+      .fp-dialog header button {
+        border: 0;
+        background: transparent;
+      }
+      .fp-location {
+        margin: 0 18px 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .fp-dialog input[type='search'] {
+        margin: 0 18px 10px;
+      }
+      .fp-scroll {
+        overflow: auto;
+        min-height: 90px;
+        border-block: 1px solid var(--line);
+        padding: 8px 12px;
+        background: #fbfcfd;
+      }
+      .fp-dialog footer {
+        margin: 0;
+      }
+      .fp-dialog footer div {
+        min-width: 0;
+      }
+      .fp-dialog footer code {
+        display: block;
+        color: var(--muted);
+      }
+      .fp-dialog footer button {
+        flex: none;
+      }
+      .fp-tree,
+      .fp-tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .fp-tree ul {
+        margin-inline-start: 11px;
+        padding-inline-start: 12px;
+        border-inline-start: 1px solid var(--line);
+      }
+      .fp-row {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .fp-row .fp-toggle,
+      .fp-spacer {
+        width: 22px;
+        flex: none;
+      }
+      .fp-row .fp-toggle {
+        padding: 2px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+      }
+      .fp-item {
+        width: 100%;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        padding: 5px 6px;
+      }
+      .fp-item > span {
+        flex: 1;
+      }
+      .fp-item small {
+        font-size: 12px;
+        font-weight: 400;
+      }
+      .fp-item:disabled {
+        opacity: 1;
+        color: #66727d;
+      }
+      .fp-item:disabled small {
+        color: #687681;
+      }
+      .fp-item:not(:disabled):hover,
+      .fp-item[aria-pressed='true'] {
+        background: var(--selected);
+        color: var(--accent);
+      }
+      .fp-item[aria-pressed='true'] {
+        box-shadow: inset 2px 0 var(--accent);
+      }
+      .fp-reason {
+        padding-inline-start: 6px;
+        border-inline-start: 1px solid var(--line);
+      }
+      #fieldList .fp-item {
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+      #fieldList .fp-tree ul {
+        padding-inline-start: 4px;
+        margin-inline-start: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <small>Studio　/　布局编辑</small>
+        <h1>旅行保险投保单</h1>
+      </div>
+      <div class="tools">
+        <button id="undo" class="quiet" disabled>撤销</button
+        ><button id="preview">预览当前布局</button
+        ><button id="save" class="primary">保存草稿</button>
+      </div>
+    </header>
+    <main>
+      <div class="bar line">
+        <div class="tools">
+          <label>正在编辑<select id="layouts"></select></label
+          ><button id="create">＋ 新增布局</button>
+        </div>
+        <small id="state"></small>
+      </div>
+      <div class="frame">
+        <aside class="side">
+          <div class="rail-tabs" role="group" aria-label="资源导航">
+            <button id="outlineTab" aria-pressed="true">布局大纲</button
+            ><button id="fieldsTab" aria-pressed="false">数据字段</button>
+          </div>
+          <nav id="tree" aria-label="布局大纲"></nav>
+          <div id="fieldRail" hidden>
+            <small id="coverage"></small
+            ><input id="findField" aria-label="搜索字段" placeholder="搜索字段或路径" />
+            <div id="fieldList"></div>
+          </div>
+        </aside>
+        <section class="canvas">
+          <div class="line">
+            <strong>布局画布</strong>
+            <div class="tools">
+              <span class="path" id="canvasName"></span
+              ><button id="arrange" aria-pressed="false">编排工具</button>
+            </div>
+          </div>
+          <div id="sheet"></div>
+        </section>
+        <aside class="inspector" id="inspector"></aside>
+      </div>
+      <div id="status" class="status subtle" role="status"></div>
+    </main>
+    <dialog id="drawer" aria-labelledby="drawerTitle">
+      <div class="drawerhead line">
+        <h2 id="drawerTitle">控件库</h2>
+        <button id="closeDrawer" aria-label="关闭控件库">关闭</button>
+      </div>
+      <div id="drawerBody"></div>
+    </dialog>
+    <dialog id="newLayout">
+      <form id="createForm">
+        <h2>新增布局</h2>
+        <label class="field"
+          >布局名称<input
+            id="newName"
+            required
+            maxlength="60"
+            placeholder="例如：代理人版" /></label
+        ><label class="field"
+          >布局 key<input id="newKey" required placeholder="例如：agent-view" /></label
+        ><label class="field"
+          >起点<select id="start">
+            <option value="copy">复制现有布局</option>
+            <option value="empty">空白布局</option>
+          </select></label
+        ><label class="field" id="sourceLabel">复制来源<select id="source"></select></label>
+        <p id="error" class="err" role="alert"></p>
+        <footer>
+          <button type="button" id="cancel">取消</button><button class="primary">创建并编辑</button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog id="previewDialog" class="wide">
+      <div class="line">
+        <h2 id="previewTitle"></h2>
+        <button id="closePreview">关闭预览</button>
+      </div>
+      <div id="previewBody"></div>
+    </dialog>
+    <script type="application/json" id="catalogSnapshot">
+      {
+        "button": {
+          "id": "button",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "disabled": { "type": "boolean" },
+              "variant": { "type": "string", "enum": ["primary", "secondary", "danger"] }
+            },
+            "additionalProperties": false,
+            "required": ["label"]
+          },
+          "events": { "activate": {} },
+          "title": "操作按钮",
+          "summary": "触发表单操作，支持主要、次要和危险样式。",
+          "annotations": {
+            "/propsSchema/properties/label": "控件展示的文字标签。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/propsSchema/properties/variant": "按钮外观：主要、次要或危险操作。",
+            "/events/activate": "用户激活按钮时发出的通知；配置需要将其映射到表单命令或 Host 事件。"
+          }
+        },
+        "checkbox": {
+          "id": "checkbox",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": { "label": { "type": "string" }, "disabled": { "type": "boolean" } },
+            "additionalProperties": false,
+            "required": ["label"]
+          },
+          "bindings": { "value": { "schema": { "type": "boolean" } } },
+          "title": "勾选",
+          "summary": "用于确认条款或切换布尔选项。",
+          "annotations": {
+            "/propsSchema/properties/label": "控件展示的文字标签。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/bindings/value": "当前勾选状态：选中为 true，取消为 false。"
+          }
+        },
+        "date-range": {
+          "id": "date-range",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {
+              "label": { "type": "string" },
+              "startLabel": { "type": "string" },
+              "endLabel": { "type": "string" },
+              "disabled": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "bindings": {
+            "start": { "schema": { "type": ["string", "null"] } },
+            "end": { "schema": { "type": ["string", "null"] } }
+          },
+          "title": "日期范围",
+          "summary": "选择开始和结束日期，确认后写入表单。",
+          "annotations": {
+            "/propsSchema/properties/label": "控件展示的文字标签。",
+            "/propsSchema/properties/startLabel": "开始日期的字段标签。",
+            "/propsSchema/properties/endLabel": "结束日期的字段标签。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/bindings/start": "绑定开始日期，YYYY-MM-DD 或 null。",
+            "/bindings/end": "绑定结束日期，YYYY-MM-DD 或 null。"
+          }
+        },
+        "number-input": {
+          "id": "number-input",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "placeholder": { "type": "string" },
+              "disabled": { "type": "boolean" },
+              "readOnly": { "type": "boolean" },
+              "inputMode": { "type": "string", "enum": ["numeric", "decimal"] }
+            },
+            "additionalProperties": false
+          },
+          "bindings": { "value": { "schema": { "type": ["number", "null"] } } },
+          "title": "数字输入",
+          "summary": "输入人数、数量等数字，支持数字或小数键盘提示。",
+          "annotations": {
+            "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/propsSchema/properties/readOnly": "只读展示，用户不能修改当前值。",
+            "/propsSchema/properties/inputMode": "提示设备使用数字或小数输入键盘，不限制实际输入内容。",
+            "/bindings/value": "契约期望 number 或 null；有效数字输入写入数字，清空写 null，无法无损解析的文本原样写入，由业务校验处理。"
+          }
+        },
+        "remote-select": {
+          "id": "remote-select",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "placeholder": { "type": "string" },
+              "disabled": { "type": "boolean" },
+              "clearable": { "type": "boolean" },
+              "filterKey": { "type": ["string", "null"] }
+            },
+            "additionalProperties": false
+          },
+          "bindings": {
+            "value": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": ["id", "label"],
+                    "properties": { "id": { "type": "string" }, "label": { "type": "string" } },
+                    "additionalProperties": false
+                  },
+                  { "type": "null" }
+                ]
+              }
+            }
+          },
+          "requests": {
+            "search": {
+              "payloadSchema": {
+                "type": "object",
+                "required": ["query", "filterKey"],
+                "properties": {
+                  "query": { "type": "string" },
+                  "filterKey": { "type": ["string", "null"] }
+                },
+                "additionalProperties": false
+              },
+              "resultSchema": {
+                "type": "object",
+                "required": ["items"],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id", "label"],
+                      "properties": { "id": { "type": "string" }, "label": { "type": "string" } },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "concurrency": "latest"
+            }
+          },
+          "title": "远程搜索",
+          "summary": "搜索并选择候选项，结果由 Host 提供。",
+          "annotations": {
+            "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/propsSchema/properties/clearable": "是否显示清空选择入口。",
+            "/propsSchema/properties/filterKey": "外部传入的筛选条件，例如国家代码 CN；可通过表达式读取表单数据。它是 Props，不是选中值绑定，未提供时请求中传 null。",
+            "/bindings/value": "用户选中的完整候选对象 { id, label }，或未选择时的 null；输入关键词和搜索成功都不会修改它。",
+            "/requests/search": "点击搜索或按 Enter 调用。query 来自搜索框，filterKey 来自外部 Props；用户选中候选项后才将 { id, label } 写入 bindings.value，清空写 null。",
+            "/requests/search/payloadSchema/properties/query": "搜索框输入的关键词，如“杭州”。物料内部维护，无需配置绑定。",
+            "/requests/search/payloadSchema/properties/filterKey": "外部 props.filterKey，如国家代码 CN。未提供时传 null。",
+            "/requests/search/resultSchema/properties/items": "候选项列表，每项包含 id 和 label；无匹配时返回空数组。",
+            "/requests/search/resultSchema/properties/items/items/properties/id": "候选项的业务标识，如 hangzhou。",
+            "/requests/search/resultSchema/properties/items/items/properties/label": "展示给用户的文字，如“杭州市”。",
+            "/bindings/value/schema/anyOf/0/properties/id": "已选候选项的业务标识。",
+            "/bindings/value/schema/anyOf/0/properties/label": "选择时的展示文字快照，不代表服务端权威名称。"
+          }
+        },
+        "select": {
+          "id": "select",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label"],
+                  "properties": { "id": { "type": "string" }, "label": { "type": "string" } },
+                  "additionalProperties": false
+                }
+              },
+              "placeholder": { "type": "string" },
+              "disabled": { "type": "boolean" },
+              "clearable": { "type": "boolean" }
+            },
+            "additionalProperties": false,
+            "required": ["options"]
+          },
+          "bindings": { "value": { "schema": { "type": ["string", "null"] } } },
+          "title": "固定选项",
+          "summary": "从预设列表中选择一项。",
+          "annotations": {
+            "/propsSchema/properties/options": "可选择的候选项列表，每项包含稳定标识 id 和展示文字 label。",
+            "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/propsSchema/properties/clearable": "是否显示清空选择入口。",
+            "/bindings/value": "当前选项的 id 字符串；未选择或清空时为 null。选择不会写入整个选项对象。",
+            "/propsSchema/properties/options/items/properties/id": "选项的业务标识，选择后写入 bindings.value。",
+            "/propsSchema/properties/options/items/properties/label": "在下拉列表中展示给用户的文字。"
+          }
+        },
+        "text-input": {
+          "id": "text-input",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "placeholder": { "type": "string" },
+              "disabled": { "type": "boolean" },
+              "readOnly": { "type": "boolean" },
+              "maxLength": { "type": "integer", "minimum": 0 },
+              "inputMode": { "type": "string", "enum": ["text", "tel"] }
+            },
+            "additionalProperties": false
+          },
+          "bindings": { "value": { "schema": { "type": ["string", "null"] } } },
+          "title": "文本输入",
+          "summary": "填写姓名、电话等文本，支持只读与长度限制。",
+          "annotations": {
+            "/propsSchema/properties/placeholder": "没有输入或选择时显示的提示文字。",
+            "/propsSchema/properties/disabled": "禁用交互；不因此清空已有数据。",
+            "/propsSchema/properties/readOnly": "只读展示，用户不能修改当前值。",
+            "/propsSchema/properties/maxLength": "允许输入的最大字符数。",
+            "/propsSchema/properties/inputMode": "提示设备使用文本或电话输入键盘，不改变字段类型。",
+            "/bindings/value": "当前文本；用户输入后写入字符串，空输入保存为空字符串。"
+          }
+        },
+        "section": {
+          "id": "section",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "collapsible": { "type": "boolean" },
+              "defaultExpanded": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "slots": ["default", "actions"],
+          "title": "章节容器",
+          "summary": "用标题分组表单内容，支持折叠展开。",
+          "annotations": {
+            "/propsSchema/properties/title": "容器或弹层标题。",
+            "/propsSchema/properties/description": "标题下方的补充说明。",
+            "/propsSchema/properties/collapsible": "是否允许折叠和展开章节内容。",
+            "/propsSchema/properties/defaultExpanded": "组件首次挂载时是否展开。",
+            "/slots/0": "章节内的内容。",
+            "/slots/1": "章节标题旁的操作区域，如新增或提交按钮。"
+          }
+        },
+        "grid": {
+          "id": "grid",
+          "version": "0.1.0",
+          "propsSchema": {
+            "type": "object",
+            "properties": {
+              "columns": { "type": "integer", "enum": [1, 2, 3] },
+              "gap": { "type": "string", "enum": ["small", "medium", "large"] }
+            },
+            "additionalProperties": false
+          },
+          "slots": ["default"],
+          "title": "响应式网格",
+          "summary": "将字段排列为一至三列，随容器宽度调整。",
+          "annotations": {
+            "/propsSchema/properties/columns": "网格列数，可选 1、2、3；窄容器下按响应式规则调整。",
+            "/propsSchema/properties/gap": "子项间距，可选 small、medium、large。",
+            "/slots/0": "参与网格布局的内容。"
+          }
+        }
+      }
+    </script>
+    <script src="./field-picker.js"></script>
+    <script>
+      'use strict';
+      const $ = (id) => document.getElementById(id);
+      function el(tag, text, cls) {
+        const n = document.createElement(tag);
+        if (text !== undefined) n.textContent = text;
+        if (cls) n.className = cls;
+        return n;
+      }
+      function button(text, action, cls) {
+        const n = el('button', text, cls);
+        n.type = 'button';
+        n.onclick = action;
+        return n;
+      }
+      function option(select, value, text) {
+        const o = el('option', text);
+        o.value = value;
+        select.append(o);
+      }
+      function fieldLabel(name, input) {
+        input.setAttribute('aria-label', name);
+        const n = el('label', name, 'field');
+        n.append(input);
+        return n;
+      }
+      const catalog = JSON.parse($('catalogSnapshot').textContent);
+      // The draft's field keys remain stable; the model owns names, types and nesting.
+      const model = {
+        type: 'object',
+        title: '表单数据',
+        properties: {
+          trip: { type: 'string', title: '行程类型', example: '请选择行程类型' },
+          days: { type: 'number', title: '旅行天数', example: '7' },
+          destination: { type: 'string', title: '目的地', example: '输入目的地' },
+          departure: { type: 'string', title: '出发日期', example: '年 / 月 / 日' },
+          returnDate: { type: 'string', title: '返回日期', example: '年 / 月 / 日' },
+          passportNo: { type: 'string', title: '护照号码', example: '输入护照号码' },
+          contact: {
+            type: 'object',
+            title: '联系人',
+            properties: { phone: { type: 'string', title: '联系电话', example: '输入联系电话' } },
+          },
+          insured: {
+            type: 'array',
+            title: '被保险人',
+            items: {
+              type: 'object',
+              title: '每一位',
+              properties: {
+                name: { type: 'string', title: '姓名', example: '输入姓名' },
+                guardianName: { type: 'string', title: '监护人姓名', example: '输入监护人姓名' },
+                age: { type: 'number', title: '年龄', example: '输入年龄' },
+              },
+            },
+          },
+          consent: { type: 'boolean', title: '同意条款' },
+          city: {
+            type: 'object',
+            title: '目的城市',
+            properties: {
+              id: { type: 'string', title: '城市标识' },
+              label: { type: 'string', title: '城市名称' },
+            },
+          },
+        },
+      };
+      const fields = [],
+        typeNames = {
+          object: '对象',
+          array: '数组',
+          string: '文本',
+          number: '数值',
+          boolean: '布尔值',
+          null: '空值',
+          integer: '整数',
+        };
+      function indexModel(n, path = [], trail = [], scope) {
+        if (path.length) {
+          const key =
+            path.at(-1) === '*'
+              ? path.join('.')
+              : path[0] === 'city' && path.length > 1
+                ? 'city.' + path.at(-1)
+                : path.at(-1);
+          fields.push({
+            key,
+            path: '/' + path.join('/'),
+            label: n.title,
+            trail,
+            scope,
+            type: n.type,
+            schema: n,
+            example: n.example,
+          });
+        }
+        for (const [key, child] of Object.entries(n.properties || {}))
+          indexModel(child, [...path, key], [...trail, child.title], scope);
+        if (n.items) indexModel(n.items, [...path, '*'], [...trail, n.items.title], path.at(-1));
+      }
+      indexModel(model);
+      const fieldPicker = createFieldPicker({
+        schema: model,
+        fields,
+        types: typeNames,
+        scopeLabel: (s) => (s === 'insured' ? '当前被保险人' : '整张表单'),
+      });
+      function portInput(key, port, g, value) {
+        const expected =
+          [port.schema.type]
+            .flat()
+            .filter(Boolean)
+            .map((t) => typeNames[t] || t)
+            .join(' / ') || '匹配端口的字段';
+        return fieldPicker.input({
+          label: '绑定 · ' + key,
+          available: candidates(g, port),
+          scope: g.scope,
+          value,
+          expected,
+        });
+      }
+      const data = (k) => fields.find((f) => f.key === k),
+        id = () => crypto.randomUUID();
+      function makeControl(material, ports) {
+        const key = Object.values(ports)[0],
+          m = catalog[material],
+          label = data(key)?.label || m.title;
+        const props = {};
+        if (m.propsSchema.required?.includes('label')) props.label = label;
+        if (material === 'select')
+          props.options = ['境内', '境外'].map((v) => ({ id: v, label: v }));
+        return { id: id(), material, key, label, ports: { ...ports }, props, on: {}, requests: {} };
+      }
+      function control(key) {
+        return key === 'departure'
+          ? makeControl('date-range', { start: key, end: 'returnDate' })
+          : makeControl({ trip: 'select', age: 'number-input' }[key] || 'text-input', {
+              value: key,
+            });
+      }
+      function group(name, keys, scope = 'root') {
+        return {
+          id: id(),
+          name,
+          scope,
+          items: keys.map(control),
+          material: 'section',
+          props: { title: name },
+        };
+      }
+      const compact = {
+        name: '紧凑',
+        density: 'compact',
+        groups: [
+          group('行程信息', ['trip', 'destination', 'departure']),
+          group('证件信息', ['passportNo']),
+          group('被保险人', ['name'], 'insured'),
+        ],
+      };
+      const loose = {
+        name: '宽松',
+        density: 'roomy',
+        groups: [
+          group('行程信息', ['trip', 'departure']),
+          group('证件信息', []),
+          group('被保险人', ['name', 'age'], 'insured'),
+        ],
+      };
+      let all = [compact, loose],
+        active = '紧凑',
+        selection = new Map(),
+        pending = null,
+        dirty = false;
+      compact.key = 'compact';
+      loose.key = 'loose';
+      active = compact.key;
+      const storeKey = 'studio-layout-prototype-v2';
+      try {
+        const saved = JSON.parse(localStorage.getItem(storeKey));
+        if (saved?.version === 2 && saved.views) {
+          all = Object.entries(saved.views).map(([key, v]) => ({ ...v, key }));
+          active = all.some((l) => l.key === saved.active) ? saved.active : all[0].key;
+        } else {
+          const legacy = JSON.parse(localStorage.getItem('studio-layout-prototype-v1'));
+          if (legacy?.version === 1 && legacy.all?.length) {
+            all = legacy.all.map((l, i) => ({
+              ...l,
+              key:
+                l.name === '紧凑' ? 'compact' : l.name === '宽松' ? 'loose' : 'layout-' + (i + 1),
+              groups: l.groups.map((g) => ({
+                ...g,
+                items: g.items.map((old) => ({
+                  ...control(old.key),
+                  id: old.id,
+                  label: old.label,
+                })),
+              })),
+            }));
+            active = (all.find((l) => l.name === legacy.active) || all[0]).key;
+          }
+        }
+      } catch {}
+      function travelLayout() {
+        const applicant = group('投保人资料', ['phone']);
+        const insured = group('被保险人资料', []);
+        const guardian = group('监护人信息', []);
+        insured.items.push(guardian);
+        return {
+          name: '旅险标准版',
+          key: 'travel-scope',
+          density: 'compact',
+          travel: true,
+          groups: [applicant, insured],
+          insuredId: insured.id,
+          guardianId: guardian.id,
+        };
+      }
+      if (!all.some((l) => l.travel)) {
+        const initial = travelLayout();
+        all.unshift(initial);
+        active = initial.key;
+      }
+      const history = [];
+      let snapshot = JSON.stringify(all),
+        page = 'settings';
+      selection.set(active, all.find((l) => l.key === active)?.insuredId || 'root');
+      function showRail(fields) {
+        $('fieldRail').hidden = !fields;
+        $('tree').hidden = fields;
+        $('outlineTab').setAttribute('aria-pressed', String(!fields));
+        $('fieldsTab').setAttribute('aria-pressed', String(fields));
+      }
+      $('arrange').onclick = () => {
+        $('arrange').setAttribute(
+          'aria-pressed',
+          String(document.body.classList.toggle('arranging')),
+        );
+      };
+      $('outlineTab').onclick = () => showRail(false);
+      $('fieldsTab').onclick = () => showRail(true);
+      $('undo').onclick = () => {
+        if (!history.length) return;
+        const previous = history.pop();
+        all = JSON.parse(previous.text);
+        active = previous.active;
+        if (!all.some((l) => l.key === active)) active = all[0].key;
+        snapshot = previous.text;
+        dirty = true;
+        page = 'settings';
+        render();
+        notify('已撤销上一次布局修改。');
+      };
+      const layout = () => all.find((l) => l.key === active),
+        selected = () => selection.get(active) || 'root';
+      function touched() {
+        const next = JSON.stringify(all);
+        if (next !== snapshot) {
+          history.push({ text: snapshot, active });
+          if (history.length > 30) history.shift();
+          snapshot = next;
+        }
+        dirty = true;
+        state();
+      }
+      function state() {
+        $('undo').disabled = !history.length || !!pending;
+        $('state').textContent = dirty ? '草稿有未保存的修改' : '草稿无待保存修改';
+      }
+      function notify(t) {
+        $('status').textContent = t;
+      }
+      function selectNode(key) {
+        if (pending) {
+          notify('请先完成或取消控件添加。');
+          return;
+        }
+        page = 'settings';
+        selection.set(active, key);
+        render();
+        if (matchMedia('(max-width:950px)').matches)
+          $('inspector').scrollIntoView({ block: 'start' });
+      }
+      function* containers(nodes) {
+        for (const g of nodes) {
+          if (!Array.isArray(g.items)) continue;
+          yield g;
+          yield* containers(g.items);
+          if (g.actions) yield* containers([g.actions]);
+        }
+      }
+      const groups = () => [...containers(layout().groups)];
+      function current() {
+        for (const g of groups()) {
+          if (g.id === selected()) return { g };
+          const c = g.items.find((c) => !c.items && c.id === selected());
+          if (c) return { g, c };
+        }
+        return {};
+      }
+      function renderTree() {
+        const nav = $('tree');
+        nav.replaceChildren();
+        function item(key, text, depth) {
+          const b = button(
+            text,
+            () => selectNode(key),
+            'tree' + (key === selected() ? ' current' : ''),
+          );
+          b.style.paddingLeft = 8 + depth * 12 + 'px';
+          nav.append(b);
+        }
+        function walk(nodes, depth) {
+          for (const n of nodes) {
+            item(n.id, n.items ? '▾ ' + n.name : n.label, depth);
+            if (n.items) walk(n.items, depth + 1);
+            if (n.actions) walk([n.actions], depth + 1);
+          }
+        }
+        item('root', layout().name + '布局', 0);
+        walk(layout().groups, 1);
+      }
+      let dragged = null;
+      const closedBranches = new Set();
+      function fieldCoverage() {
+        const list = $('fieldList');
+        list.replaceChildren();
+        const uses = new Map(fields.map((f) => [f.key, []]));
+        for (const g of groups())
+          for (const c of g.items)
+            for (const key of new Set(Object.values(c.ports || {})))
+              uses.get(key)?.push(g.name + ' / ' + c.label);
+        const used = fields.filter((f) => uses.get(f.key).length).length;
+        $('coverage').textContent =
+          layout().name +
+          ' · 已直接绑定 ' +
+          used +
+          ' / ' +
+          fields.length +
+          ' · 未放置 ' +
+          (fields.length - used);
+        fieldPicker.tree(list, {
+          query: $('findField').value,
+          closed: closedBranches,
+          reason: () => '',
+          choose: fieldFirst,
+          decorate: (b, f) => {
+            const owners = uses.get(f.key);
+            b.dataset.field = f.key;
+            b.draggable = true;
+            b.title = [f.path, ...owners].join('　');
+            b.append(el('small', owners.length ? '已放置 ' + owners.length + ' 处' : '未放置'));
+            b.ondragstart = (e) => {
+              dragged = f;
+              e.dataTransfer.setData('text/plain', f.key);
+              e.dataTransfer.effectAllowed = 'copy';
+              document.body.classList.add('dragging');
+              document.body.dataset.dragScope = f.scope || 'root';
+            };
+            b.ondragend = endDrag;
+          },
+        });
+      }
+      let moving = null;
+      const targets = new WeakMap();
+      function sourceOf(node) {
+        if (layout().groups.includes(node)) return { list: layout().groups, scope: 'root' };
+        for (const g of groups())
+          if (g.items.includes(node)) return { list: g.items, scope: g.scope };
+      }
+      function allowedMove(node, dest) {
+        if (layout().travel) return !moveIssue(node, dest);
+        const src = sourceOf(node);
+        if (!src || node.slot) return false;
+        if (!dest.g) return !!node.items && src.scope === 'root' && !dest.action;
+        if (node.items && [...containers([node])].includes(dest.g)) return false;
+        return src.scope === dest.g.scope;
+      }
+      function moveNode(node, dest, index) {
+        if (!allowedMove(node, dest)) {
+          notify(moveIssue(node, dest) || '目标位置不可用。');
+          return;
+        }
+        const src = sourceOf(node).list,
+          old = src.indexOf(node),
+          targetGroup = dest.action ? slotForActions(dest.g) : dest.g,
+          list = targetGroup ? targetGroup.items : layout().groups;
+        const pos = index - (src === list && old < index ? 1 : 0);
+        if (src !== list || pos !== old) {
+          src.splice(old, 1);
+          list.splice(pos, 0, node);
+          if (layout().travel) refreshScope();
+          touched();
+        }
+        selection.set(active, node.id);
+        render();
+        notify(
+          '「' +
+            (node.name || node.label) +
+            '」位于 ' +
+            layout().name +
+            ' / ' +
+            (targetGroup?.name || '布局根层') +
+            '，第 ' +
+            (pos + 1) +
+            ' 项。',
+        );
+      }
+      function moveHandle(node) {
+        const h = button('⠿', () => moveByChoice(node), 'move-handle');
+        h.draggable = true;
+        h.title = '拖动或点击移动「' + (node.name || node.label) + '」';
+        h.setAttribute('aria-label', '移动' + (node.name || node.label));
+        h.ondragstart = (e) => {
+          e.stopPropagation();
+          moving = node;
+          e.dataTransfer.setData('text/plain', node.id);
+          e.dataTransfer.effectAllowed = 'move';
+          document.body.classList.add('dragging', 'moving-node');
+          for (const z of $('sheet').querySelectorAll('.dropzone'))
+            z.classList.toggle('blocked', !allowedMove(node, targets.get(z)));
+        };
+        h.ondragend = endDrag;
+        return h;
+      }
+      function moveByChoice(node) {
+        const possible = [{ g: null, label: '布局根层' }];
+        function walk(nodes, trail) {
+          for (const g of nodes)
+            if (g.items) {
+              const name = trail + g.name;
+              possible.push({ g, label: name });
+              walk(g.items, name + ' / ');
+              if (g.actions) walk([g.actions], trail);
+              else if (!g.slot && catalog[g.material || 'section']?.slots?.includes('actions'))
+                possible.push({ g, action: true, label: name + ' / 操作区' });
+            }
+        }
+        walk(layout().groups, '');
+        const choices = layout().travel ? possible : possible.filter((d) => allowedMove(node, d)),
+          box = el('div', undefined, 'picker'),
+          where = el('select'),
+          pos = el('select');
+        choices.forEach((d, i) => option(where, i, d.label));
+        const old = sourceOf(node).list,
+          start = choices.findIndex(
+            (d) => !d.action && (d.g ? d.g.items : layout().groups) === old,
+          );
+        where.value = String(Math.max(0, start));
+        const reason = el('p', undefined, 'move-error');
+        reason.setAttribute('role', 'status');
+        const confirmMove = button(
+          '确认移动',
+          () => {
+            const d = choices[Number(where.value)];
+            if (!allowedMove(node, d)) return;
+            $('drawer').close();
+            moveNode(node, d, Number(pos.value));
+          },
+          'primary',
+        );
+        function positions() {
+          const d = choices[Number(where.value)],
+            list = d.action ? [] : d.g ? d.g.items : layout().groups;
+          const issue = layout().travel ? moveIssue(node, d) : '';
+          reason.textContent = issue;
+          confirmMove.disabled = !!issue;
+          pos.disabled = !!issue;
+          pos.replaceChildren();
+          for (let i = 0; i <= list.length; i++)
+            if (list[i] !== node)
+              option(
+                pos,
+                i,
+                i === list.length ? '末尾' : '在「' + (list[i].name || list[i].label) + '」之前',
+              );
+          pos.value = String(list.length);
+        }
+        where.onchange = positions;
+        positions();
+        box.append(
+          el('h3', '移动「' + (node.name || node.label) + '」'),
+          fieldLabel('目标容器', where),
+          fieldLabel('插入位置', pos),
+          reason,
+          confirmMove,
+        );
+        $('drawerTitle').textContent = '移动节点';
+        $('drawerBody').replaceChildren(box);
+        $('drawer').showModal();
+      }
+      function endDrag() {
+        moving = null;
+        document.body.classList.remove('moving-node');
+        document
+          .querySelectorAll('.dropzone.blocked')
+          .forEach((z) => z.classList.remove('blocked'));
+        dragged = null;
+        document.body.classList.remove('dragging');
+        delete document.body.dataset.dragScope;
+        document.querySelectorAll('.over').forEach((n) => n.classList.remove('over'));
+      }
+      function dropTarget(node, g, i, moveOnly = false, action = false) {
+        const dest = { g, action };
+        targets.set(node, dest);
+        const allowed = () =>
+          moving
+            ? allowedMove(moving, dest)
+            : !moveOnly && dragged && (!g || (dragged.scope || 'root') === g.scope);
+        node.ondragover = (e) => {
+          if (moving && layout().travel && !allowed()) {
+            e.preventDefault();
+            notify(moveIssue(moving, dest));
+            return;
+          }
+          if (allowed()) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = moving ? 'move' : 'copy';
+            node.classList.add('over');
+          }
+        };
+        node.ondragleave = () => node.classList.remove('over');
+        node.ondrop = (e) => {
+          if (!allowed()) {
+            if (moving) notify(moveIssue(moving, dest));
+            return;
+          }
+          e.preventDefault();
+          if (moving) {
+            const node = moving;
+            endDrag();
+            moveNode(node, dest, i);
+            return;
+          }
+          const f = dragged;
+          endDrag();
+          if (g) startPick(g, i, f);
+          else fieldFirst(f);
+        };
+      }
+      function fieldFirst(f) {
+        const scope = f.scope || 'root';
+        const g =
+          [current().g, ...groups()].find((g) => g?.scope === scope) ||
+          group(scope === 'insured' ? '被保险人' : '表单内容', [], scope);
+        startPick(g, g.items.length, f);
+      }
+      function startPick(g, index, field = null) {
+        if (pending) return;
+        if (groups().includes(g)) selection.set(active, g.id);
+        pending = { g, index, field, material: null, ports: {} };
+        render();
+        $('drawerBody').replaceChildren(picker(g));
+        $('drawerTitle').textContent = '控件库';
+        $('drawer').showModal();
+        $('fieldSearch').focus();
+      }
+      function closePick() {
+        pending = null;
+        $('drawerTitle').textContent = '控件库';
+        $('drawer').close();
+        render();
+      }
+      $('drawer').oncancel = (e) => {
+        e.preventDefault();
+        closePick();
+      };
+      $('closeDrawer').onclick = closePick;
+      $('findField').oninput = fieldCoverage;
+      function compatible(f, port) {
+        const schema = port.schema;
+        function accepts(actual, wanted) {
+          if (wanted.anyOf) return wanted.anyOf.some((branch) => accepts(actual, branch));
+          if (wanted.type && ![wanted.type].flat().includes(actual.type)) return false;
+          if (actual.type === 'object') {
+            if ((wanted.required || []).some((k) => !Object.hasOwn(actual.properties || {}, k)))
+              return false;
+            for (const [k, sub] of Object.entries(actual.properties || {})) {
+              if (wanted.properties?.[k]) {
+                if (!accepts(sub, wanted.properties[k])) return false;
+              } else if (wanted.additionalProperties === false) return false;
+            }
+          }
+          if (actual.type === 'array' && wanted.items && actual.items)
+            return accepts(actual.items, wanted.items);
+          return true;
+        }
+        return accepts(f.schema, schema);
+      }
+      function candidates(g, port) {
+        return fields.filter((f) => (!f.scope || f.scope === g.scope) && compatible(f, port));
+      }
+      function controlVisual(c) {
+        const props = Object.fromEntries(
+          Object.entries(c.props || {}).map(([k, v]) => [k, dynamicValue(v) ? 'ƒx 动态值' : v]),
+        );
+        const visual = el('span', undefined, 'control-visual');
+        visual.dataset.material = c.material;
+        const f = data(c.key),
+          caption = props.label || f?.label;
+        function inputBox(value, icon) {
+          const n = el('span', undefined, 'vis-input');
+          n.append(el('span', value));
+          if (icon) n.append(el('b', icon));
+          return n;
+        }
+        switch (c.material) {
+          case 'text-input':
+            visual.append(inputBox(props.placeholder || f?.example || '请输入文本'));
+            break;
+          case 'select':
+            visual.append(inputBox(props.placeholder || '请选择', '▾'));
+            break;
+          case 'remote-select':
+            visual.append(inputBox(props.placeholder || '搜索选项', '⌕'));
+            break;
+          case 'number-input':
+            visual.append(inputBox(props.placeholder || '输入数值', '▴ ▾'));
+            break;
+          case 'date-range':
+            visual.append(
+              inputBox(props.startLabel || '开始日期'),
+              el('i', '→'),
+              inputBox(props.endLabel || '结束日期'),
+            );
+            break;
+          case 'checkbox':
+            visual.append(el('span', '✓', 'vis-check'), el('span', caption || '勾选选项'));
+            break;
+          case 'button':
+            visual.append(el('span', caption || '操作按钮', 'vis-button'));
+            break;
+        }
+        return visual;
+      }
+      function picker(g) {
+        const box = el('section', undefined, 'picker');
+        box.append(
+          el(
+            'div',
+            (pending.field ? '字段 · ' + pending.field.label + '　' : '') +
+              '布局 · ' +
+              layout().name,
+            'drawerTarget',
+          ),
+        );
+        const destinations = groups().filter(
+          (x) => !pending.field || x.scope === (pending.field.scope || 'root'),
+        );
+        if (!destinations.includes(g)) destinations.push(g);
+        const dest = el('select');
+        for (const place of destinations)
+          option(dest, place.id, place.name + (groups().includes(place) ? '' : '（新增分组）'));
+        dest.value = g.id;
+        dest.onchange = () => {
+          pending.g = destinations.find((x) => x.id === dest.value);
+          pending.index = pending.g.items.length;
+          pending.material = null;
+          pending.ports = {};
+          $('drawerBody').replaceChildren(picker(pending.g));
+        };
+        box.append(fieldLabel('目标分组', dest));
+        const cards = el('div', undefined, 'material-cards'),
+          config = el('div');
+        box.append(cards, config);
+        const search = el('input');
+        search.id = 'fieldSearch';
+        search.placeholder = '名称或物料 ID';
+        box.insertBefore(fieldLabel('查找控件', search), cards);
+        function drawCards() {
+          cards.replaceChildren();
+          for (const m of Object.values(catalog)) {
+            if (m.slots) continue;
+            if (!(m.title + m.id).toLowerCase().includes(search.value.trim().toLowerCase()))
+              continue;
+            const ports = Object.entries(m.bindings || {}),
+              compatiblePorts = ports.filter(
+                ([, port]) => pending.field && compatible(pending.field, port),
+              );
+            if (pending.field && !compatiblePorts.length) continue;
+            const possible = Object.values(m.bindings || {}).every(
+              (port) => candidates(g, port).length,
+            );
+            const card = button(
+              '',
+              () => {
+                pending.material = m.id;
+                pending.ports = pending.field ? { [compatiblePorts[0][0]]: pending.field.key } : {};
+                drawCards();
+                details();
+              },
+              'mat-card',
+            );
+            card.disabled = !possible;
+            card.setAttribute('aria-label', m.title);
+            card.setAttribute('aria-pressed', String(pending.material === m.id));
+            card.append(
+              controlVisual({ material: m.id, key: pending.field?.key }),
+              el('strong', m.title),
+              el('small', possible ? m.summary : '此位置没有匹配的字段'),
+            );
+            cards.append(card);
+          }
+          if (!cards.children.length) cards.append(el('small', '没有匹配的控件'));
+        }
+        function details() {
+          config.replaceChildren();
+          const m = catalog[pending.material];
+          const foot = el('div', undefined, 'tools');
+          foot.append(button('取消添加', closePick));
+          if (m) {
+            config.append(el('h3', '放置「' + m.title + '」'));
+            const sample = el('div', undefined, 'placement-preview');
+            config.append(sample);
+            const pos = el('select');
+            for (let i = 0; i <= g.items.length; i++)
+              option(
+                pos,
+                i,
+                i === g.items.length
+                  ? '末尾'
+                  : '在「' + (g.items[i].label || g.items[i].name) + '」之前',
+              );
+            pos.value = pending.index;
+            pos.onchange = () => (pending.index = Number(pos.value));
+            config.append(fieldLabel('插入位置', pos));
+            const go = button(
+              '添加到' + g.name,
+              () => {
+                const c = makeControl(m.id, pending.ports);
+                if (!groups().includes(g)) layout().groups.push(g);
+                g.items.splice(pending.index, 0, c);
+                selection.set(active, c.id);
+                pending = null;
+                $('drawer').close();
+                touched();
+                render();
+                notify('已添加「' + m.title + '」，可在右侧配置物料。');
+              },
+              'primary',
+            );
+            function sync() {
+              const key = pending.field?.key || Object.values(pending.ports).find(Boolean);
+              sample.replaceChildren(
+                el('small', '放置预览 · ' + g.name),
+                el('strong', data(key)?.label || m.title),
+                controlVisual({ material: m.id, key }),
+              );
+              go.disabled =
+                Object.keys(m.bindings || {}).some((n) => !pending.ports[n]) ||
+                !!(pending.field && !Object.values(pending.ports).includes(pending.field.key));
+            }
+            for (const [key, port] of Object.entries(m.bindings || {})) {
+              const s = portInput(key, port, g, pending.ports[key] || '');
+              s.onchange = () => {
+                pending.ports[key] = s.value;
+                sync();
+              };
+              config.append(fieldLabel('绑定 · ' + key, s));
+            }
+            sync();
+            foot.append(go);
+          }
+          config.append(foot);
+        }
+        search.oninput = drawCards;
+        drawCards();
+        details();
+        return box;
+      }
+      const propNames = {
+        title: '分区标题',
+        description: '分区说明',
+        collapsible: '允许折叠',
+        defaultExpanded: '默认展开',
+        columns: '网格列数',
+        gap: '列间距',
+        label: '显示文案',
+        placeholder: '提示文字',
+        disabled: '禁用',
+        readOnly: '只读',
+        variant: '按钮样式',
+        inputMode: '输入模式',
+        clearable: '可清空',
+        maxLength: '最长字符数',
+        options: '选项列表',
+        startLabel: '开始端标题',
+        endLabel: '结束端标题',
+        filterKey: '筛选标识',
+      };
+      function dynamicValue(v) {
+        return (
+          v &&
+          typeof v === 'object' &&
+          (Object.hasOwn(v, '$expr') ||
+            (!Object.hasOwn(v, '$literal') && Object.values(v).some(dynamicValue)))
+        );
+      }
+      function checkValueSpec(v, def) {
+        function ast(x) {
+          if (x === null || ['string', 'boolean', 'number'].includes(typeof x)) return true;
+          if (!x || Array.isArray(x) || typeof x !== 'object') return false;
+          const keys = Object.keys(x);
+          if (keys.length === 1) {
+            if (Object.hasOwn(x, 'literal')) return true;
+            if (typeof x.use === 'string') return !!x.use;
+            if (x.ref) {
+              const r = x.ref;
+              if (['data', 'context'].includes(r.source)) return typeof r.path === 'string';
+              if (r.source === 'validation')
+                return (
+                  r.field?.source === 'data' && ['issues', 'status', 'state'].includes(r.observe)
+                );
+            }
+          }
+          return (
+            keys.length === 2 &&
+            typeof x.op === 'string' &&
+            Array.isArray(x.args) &&
+            x.args.every(ast)
+          );
+        }
+        if (v && typeof v === 'object' && Object.hasOwn(v, '$expr')) {
+          if (Object.keys(v).length !== 1 || !ast(v.$expr)) throw Error('请检查 $expr 表达式结构');
+          return;
+        }
+        const literal = v && typeof v === 'object' && Object.hasOwn(v, '$literal');
+        if (literal) {
+          if (Object.keys(v).length !== 1) throw Error('$literal 必须单独出现');
+          v = v.$literal;
+        }
+        const t = v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v,
+          allowed = [def.type].flat();
+        if (
+          def.type &&
+          !allowed.includes(t) &&
+          !(allowed.includes('integer') && Number.isInteger(v))
+        )
+          throw Error('此属性期望 ' + allowed.join(' / '));
+        if (def.enum && !def.enum.includes(v)) throw Error('取值超出枚举范围');
+        if (v && typeof v === 'object' && !literal) {
+          for (const k of def.required || []) if (!Object.hasOwn(v, k)) throw Error('缺少 ' + k);
+          for (const [k, x] of Object.entries(v)) {
+            if (def.additionalProperties === false && !Object.hasOwn(def.properties || {}, k))
+              throw Error('未声明属性 ' + k);
+            checkValueSpec(x, Array.isArray(v) ? def.items || {} : def.properties?.[k] || {});
+          }
+        }
+      }
+      function dataRef(f) {
+        return f.scope
+          ? { source: 'data', scope: f.scope, path: f.path.slice(f.path.indexOf('/*') + 2) }
+          : { source: 'data', path: f.path };
+      }
+      function valueEditor(panel, c, g, key, def) {
+        const group = el('details');
+        group.className = 'exprbox';
+        const title = propNames[key] || key,
+          existing = c.props[key];
+        group.append(
+          el('summary', dynamicValue(existing) ? title + ' · 已配置表达式' : 'ƒx 配置' + title),
+        );
+        panel.append(group);
+        const mode = el('select'),
+          form = el('div'),
+          note = el('small');
+        option(mode, 'ref', '读取字段');
+        if ([def.type].flat().includes('boolean')) option(mode, 'eq', '字段等于指定值');
+        option(mode, 'spec', '表达式 / ValueSpec JSON');
+        if (existing !== undefined && typeof existing === 'object') mode.value = 'spec';
+        group.append(fieldLabel(title + '取值方式', mode), form, note);
+        function draw() {
+          form.replaceChildren();
+          note.textContent = '';
+          let build;
+          if (mode.value === 'spec') {
+            const n = el('textarea');
+            n.value = JSON.stringify(
+              existing === undefined
+                ? { $expr: { ref: { source: 'data', path: '/trip' } } }
+                : existing,
+              null,
+              2,
+            );
+            form.append(fieldLabel('ValueSpec JSON', n));
+            build = () => JSON.parse(n.value);
+          } else {
+            const eq = mode.value === 'eq';
+            const allowed = fields.filter(
+              (f) =>
+                (!f.scope || g.scope === f.scope) &&
+                (eq
+                  ? ['string', 'boolean', 'number'].includes(f.type)
+                  : [def.type].flat().includes(f.type)),
+            );
+            const select = fieldPicker.input({
+              label: '表达式读取字段',
+              available: allowed,
+              scope: g.scope,
+              expected: eq ? '可比较的字段' : typeNames[def.type] || '相容类型',
+            });
+            form.append(fieldLabel('表达式读取字段', select));
+            const compare = el('input');
+            if (eq) form.append(fieldLabel('比较值', compare));
+            build = () => {
+              const f = data(select.value);
+              if (!f) throw Error('请选择字段，复杂计算可使用 ValueSpec JSON');
+              const ref = { ref: dataRef(f) };
+              if (!eq) return { $expr: ref };
+              const value = f.type === 'string' ? compare.value : JSON.parse(compare.value);
+              if (typeof value !== f.type) throw Error('比较值须为 ' + f.type);
+              return { $expr: { op: 'core.eq', args: [ref, value] } };
+            };
+          }
+          const apply = button('应用' + title + '取值', () => {
+            try {
+              const value = build();
+              checkValueSpec(value, def);
+              c.props[key] = value;
+              touched();
+              render();
+              notify('已更新 ' + title + '，可保存布局草稿。');
+            } catch (e) {
+              note.textContent = e.message;
+            }
+          });
+          form.append(apply);
+          if (dynamicValue(existing))
+            form.append(
+              button('移除动态取值', () => {
+                delete c.props[key];
+                touched();
+                render();
+              }),
+            );
+        }
+        mode.onchange = draw;
+        draw();
+      }
+      function schemaShape(box, name, schema, required = false) {
+        const type = (Array.isArray(schema.type) ? schema.type : [schema.type])
+          .map((t) => typeNames[t] || t)
+          .filter(Boolean)
+          .join(' / ');
+        const line = el(
+          'div',
+          name + ' · ' + (type || '组合') + (required ? ' · 必填' : ''),
+          'shape',
+        );
+        box.append(line);
+        for (const [k, v] of Object.entries(schema.properties || {}))
+          schemaShape(line, k, v, schema.required?.includes(k));
+        if (schema.items) schemaShape(line, '每一项', schema.items);
+      }
+      function optionRows(panel, c, key, def, update) {
+        const block = el('section', undefined, 'option-rows');
+        block.append(el('h3', '选项列表'));
+        const items = c.props[key] || [];
+        for (const [i, item] of items.entries()) {
+          const r = el('div', undefined, 'option-row');
+          r.append(el('small', '选项 ' + (i + 1)));
+          for (const name of Object.keys(def.items.properties)) {
+            const n = el('input');
+            n.value = item[name] ?? '';
+            n.oninput = () => {
+              item[name] = n.value;
+              update();
+            };
+            r.append(fieldLabel(name === 'id' ? '选项值' : '显示文字', n));
+          }
+          r.append(
+            button('移除选项', () => {
+              items.splice(i, 1);
+              touched();
+              render();
+            }),
+          );
+          block.append(r);
+        }
+        block.append(
+          button('＋ 新增选项', () => {
+            let n = items.length + 1;
+            while (items.some((i) => i.id === 'option-' + n)) n++;
+            items.push({ id: 'option-' + n, label: '新选项' });
+            c.props[key] = items;
+            touched();
+            render();
+          }),
+        );
+        panel.append(block);
+      }
+      function materialSettings(panel, c, g) {
+        const m = catalog[c.material];
+        panel.append(el('strong', m.title), el('p', m.id + ' · ' + m.version, 'path'));
+        const update = () => {
+          touched();
+          $('sheet').replaceChildren(paper(layout()));
+        };
+        for (const [key, port] of Object.entries(m.bindings || {})) {
+          const s = portInput(key, port, g, c.ports[key]);
+          const info = el('small', undefined, 'binding-info');
+          function describeBinding() {
+            const f = data(c.ports[key]);
+            info.textContent = f
+              ? (f.scope ? '当前成员 · ' + f.scope : '表单根') + '　' + f.path
+              : '';
+          }
+          describeBinding();
+          s.value = c.ports[key];
+          s.onchange = () => {
+            c.ports[key] = s.value;
+            describeBinding();
+            fieldCoverage();
+            c.key = Object.values(c.ports)[0];
+            update();
+          };
+          panel.append(fieldLabel('绑定 · ' + key, s), info);
+        }
+        panel.append(el('hr'), el('h3', '物料属性'));
+        for (const [key, def] of Object.entries(m.propsSchema.properties || {})) {
+          let n;
+          const required = m.propsSchema.required?.includes(key),
+            v = c.props[key];
+          if (dynamicValue(v)) {
+            panel.append(
+              el('small', (propNames[key] || key) + ' · 期望 ' + [def.type].flat().join(' / ')),
+            );
+            valueEditor(panel, c, g, key, def);
+            continue;
+          }
+          if (
+            key === 'options' &&
+            def.items?.properties?.id &&
+            Array.isArray(v ?? []) &&
+            !dynamicValue(v)
+          ) {
+            optionRows(panel, c, key, def, update);
+            valueEditor(panel, c, g, key, def);
+            continue;
+          }
+          const choices = def.enum || (def.type === 'boolean' ? ['true', 'false'] : null);
+          if (choices) {
+            n = el('select');
+            option(n, '', '未设置');
+            for (const x of choices) option(n, x, x === 'true' ? '是' : x === 'false' ? '否' : x);
+            n.value = v === undefined ? '' : String(v);
+          } else {
+            n = el(def.type === 'array' ? 'textarea' : 'input');
+            n.value = v === undefined ? '' : def.type === 'array' ? JSON.stringify(v, null, 2) : v;
+            if (def.type === 'integer') {
+              n.type = 'number';
+              n.step = '1';
+              n.min = def.minimum;
+            }
+          }
+          n.required = !!required;
+          n.title = m.annotations['/propsSchema/properties/' + key] || '';
+          n.oninput = () => n.setCustomValidity('');
+          n.onchange = () => {
+            try {
+              const x = n.value;
+              if (!x && required) throw Error('此属性必填');
+              if (!n.checkValidity()) throw Error('请检查取值范围');
+              if (!x) delete c.props[key];
+              else if (def.type === 'array') {
+                const arr = JSON.parse(x);
+                if (
+                  !Array.isArray(arr) ||
+                  arr.some(
+                    (o) =>
+                      !o ||
+                      typeof o.id !== 'string' ||
+                      typeof o.label !== 'string' ||
+                      Object.keys(o).some((k) => !['id', 'label'].includes(k)),
+                  )
+                )
+                  throw Error('每个选项需要字符串 id 和 label');
+                c.props[key] = arr;
+              } else
+                c.props[key] =
+                  def.type === 'boolean' ? x === 'true' : def.type === 'integer' ? Number(x) : x;
+              update();
+            } catch (e) {
+              n.setCustomValidity(e.message);
+              n.reportValidity();
+            }
+          };
+          panel.append(fieldLabel((propNames[key] || key) + (required ? ' *' : ''), n));
+          valueEditor(panel, c, g, key, def);
+        }
+        for (const key of Object.keys(m.events || {})) {
+          panel.append(el('hr'), el('h3', '触发事件 · ' + key));
+          const kind = el('select');
+          for (const [v, t] of [
+            ['', '不配置'],
+            ['host.emit', '通知 Host'],
+            ['form.command', '执行表单命令'],
+          ])
+            option(kind, v, t);
+          kind.value = c.on[key]?.type || '';
+          const detail = el('div');
+          panel.append(fieldLabel('响应方式', kind), detail);
+          function eventForm() {
+            detail.replaceChildren();
+            const effect = c.on[key];
+            if (!effect) return;
+            const command = effect.type === 'form.command',
+              n = el(command ? 'textarea' : 'input');
+            n.value = command ? JSON.stringify(effect.command, null, 2) : effect.event;
+            n.onchange = () => {
+              try {
+                if (command) {
+                  const v = JSON.parse(n.value);
+                  if (!v || typeof v !== 'object' || Array.isArray(v))
+                    throw Error('请填写命令对象');
+                  effect.command = v;
+                } else effect.event = n.value.trim();
+                n.setCustomValidity('');
+                update();
+              } catch (e) {
+                n.setCustomValidity(e.message);
+                n.reportValidity();
+              }
+            };
+            n.oninput = () => n.setCustomValidity('');
+            detail.append(fieldLabel(command ? '命令 JSON' : 'Host 事件名', n));
+          }
+          kind.onchange = () => {
+            if (!kind.value) delete c.on[key];
+            else
+              c.on[key] =
+                kind.value === 'host.emit'
+                  ? { type: 'host.emit', event: '' }
+                  : { type: 'form.command', command: {} };
+            eventForm();
+            update();
+          };
+          eventForm();
+        }
+        for (const [key, req] of Object.entries(m.requests || {})) {
+          panel.append(el('hr'), el('h3', 'Host 请求 · ' + key));
+          const n = el('input');
+          n.value = c.requests[key]?.request || '';
+          n.placeholder = '填写 Host 请求名';
+          n.onchange = () => {
+            if (n.value.trim()) c.requests[key] = { type: 'host.request', request: n.value.trim() };
+            else delete c.requests[key];
+            update();
+          };
+          panel.append(fieldLabel('请求映射', n));
+          const shape = el('details');
+          shape.append(el('summary', '请求数据结构'));
+          schemaShape(shape, '请求参数', req.payloadSchema);
+          schemaShape(shape, '返回结果', req.resultSchema);
+          panel.append(shape);
+        }
+      }
+      function layoutPalette(parent = null) {
+        const list = parent ? parent.items : layout().groups,
+          box = el('section', undefined, 'picker');
+        box.append(
+          el('h3', '选择布局控件'),
+          el('p', layout().name + ' / ' + (parent?.name || '布局根层'), 'drawerTarget'),
+        );
+        const cards = el('div', undefined, 'material-cards'),
+          form = el('div');
+        box.append(cards, form);
+        for (const m of [catalog.section, catalog.grid]) {
+          const card = button(
+            '',
+            () => {
+              for (const b of cards.children) b.setAttribute('aria-pressed', String(b === card));
+              form.replaceChildren();
+              const name = el('input');
+              name.value = m.id === 'section' ? '新分区' : '新网格';
+              const pos = el('select');
+              for (let i = 0; i <= list.length; i++)
+                option(
+                  pos,
+                  i,
+                  i === list.length ? '末尾' : '在「' + (list[i].name || list[i].label) + '」之前',
+                );
+              pos.value = list.length;
+              form.append(
+                fieldLabel('容器名称', name),
+                fieldLabel('插入位置', pos),
+                button(
+                  '添加到' + (parent?.name || '布局根层'),
+                  () => {
+                    if (!name.value.trim()) {
+                      name.focus();
+                      return;
+                    }
+                    const n = group(name.value.trim(), [], parent?.scope || 'root');
+                    n.material = m.id;
+                    n.props = m.id === 'grid' ? { columns: 2, gap: 'medium' } : { title: n.name };
+                    list.splice(Number(pos.value), 0, n);
+                    selection.set(active, n.id);
+                    pending = null;
+                    $('drawer').close();
+                    touched();
+                    render();
+                    notify('已添加' + n.name);
+                  },
+                  'primary',
+                ),
+              );
+            },
+            'mat-card',
+          );
+          card.setAttribute('aria-label', m.title);
+          card.append(
+            el('span', m.id === 'grid' ? '▥　▥　▥' : '▔▔▔　分区', 'sample'),
+            el('strong', m.title),
+            el('small', m.summary),
+          );
+          cards.append(card);
+        }
+        $('drawerBody').replaceChildren(box);
+        pending = { layoutOnly: true, g: parent };
+        $('drawerTitle').textContent = '控件库';
+        $('drawer').showModal();
+      }
+      function slotForActions(g) {
+        return (g.actions ??= {
+          id: id(),
+          scope: g.scope,
+          name: g.name + ' / 操作区',
+          slot: 'actions',
+          items: [],
+        });
+      }
+      function paper(l, preview = false) {
+        const sheet = el('div', undefined, 'sheet ' + l.density + (l.travel ? ' travel' : ''));
+        const head = el('div', undefined, 'paperhead');
+        head.append(el('small', '旅行保险'), el('h2', '旅行保险投保单'));
+        sheet.append(head);
+        if (!preview) sheet.append(button('＋ 添加外层布局', () => layoutPalette(), 'root-add'));
+        function draw(g, sample) {
+          if (preview && g.rule && trial(g.rule, sample).visible !== true)
+            return document.createDocumentFragment();
+          const section = el(
+            'section',
+            undefined,
+            'block' + (!preview && selected() === g.id ? ' selected' : ''),
+          );
+          section.dataset.scope = g.scope;
+          const h = el('h3');
+          const heading = typeof g.props?.title === 'string' ? g.props.title : g.name;
+          h.append(preview ? el('span', heading) : button(heading, () => selectNode(g.id)));
+          if (g.material === 'grid') h.append(el('small', '　网格'));
+          if (sample && g.repeat) h.append(el('small', sample.name + ' · ' + sample.age + ' 岁'));
+          if (g.scope === 'insured' && (!l.travel || g.repeat) && !sample)
+            h.append(el('small', '　每位被保险人'));
+          if (!preview && !g.slot) h.prepend(moveHandle(g));
+          section.append(h);
+          if (g.rule && !preview) section.append(el('p', summary(g.rule), 'rule-summary'));
+          if (!preview && l.travel && g.id === l.insuredId && !g.repeat)
+            section.append(el('p', '每一位被保险人都需要独立填写本区资料。', 'subtle'));
+          if (typeof g.props?.description === 'string')
+            section.append(el('p', g.props.description, 'subtle'));
+          const grid = el('div', undefined, 'controls');
+          if (g.material === 'grid') {
+            grid.style.gridTemplateColumns =
+              'repeat(' + (Number(g.props?.columns) || 2) + ',minmax(0,1fr))';
+            grid.style.gap =
+              { small: '4px', medium: '10px', large: '18px' }[g.props?.gap] || '10px';
+          }
+          function gap(i) {
+            if (preview) return;
+            const z = el(
+              'div',
+              i === g.items.length
+                ? '放在末尾'
+                : '放在「' + (g.items[i].label || g.items[i].name) + '」之前',
+              'dropzone',
+            );
+            z.dataset.index = i;
+            dropTarget(z, g, i);
+            grid.append(z);
+          }
+          for (const [i, c] of g.items.entries()) {
+            gap(i);
+            if (c.items) {
+              if (preview && c.repeat) samples.forEach((person) => grid.append(draw(c, person)));
+              else grid.append(draw(c, sample));
+              continue;
+            }
+            const node = preview ? el('div') : button('', () => selectNode(c.id));
+            node.className = 'control' + (!preview && selected() === c.id ? ' selected' : '');
+            const f = data(c.ports?.value);
+            node.append(
+              el('strong', c.label),
+              preview && sample && f?.scope && sample[f.key] !== undefined
+                ? el('span', String(sample[f.key]), 'mock')
+                : controlVisual(c),
+            );
+            if (preview) grid.append(node);
+            else {
+              const wrap = el('div', undefined, 'movable-control');
+              wrap.append(moveHandle(c), node);
+              grid.append(wrap);
+            }
+          }
+          gap(g.items.length);
+          section.append(grid);
+          if (!preview) {
+            section.append(button('＋ 选择控件', () => startPick(g, g.items.length), 'add'));
+          }
+          if (!preview) section.append(button('＋ 嵌套布局', () => layoutPalette(g), 'add'));
+          if (!g.slot && catalog[g.material || 'section']?.slots?.includes('actions')) {
+            if (!preview && !g.actions?.items.length) {
+              const z = el('div', '移入操作区', 'dropzone move-only');
+              dropTarget(z, g, 0, true, true);
+              section.append(z);
+            }
+            if (g.actions?.items.length) section.append(draw(g.actions));
+            else if (!preview)
+              section.append(
+                button(
+                  '配置操作区',
+                  () => {
+                    const slot = slotForActions(g);
+                    startPick(slot, 0);
+                  },
+                  'add',
+                ),
+              );
+          }
+          return section;
+        }
+        function rootGap(i) {
+          if (preview) return;
+          const z = el(
+            'div',
+            i === l.groups.length
+              ? '放在布局根层末尾'
+              : '放在「' + l.groups[i].name + '」之前（根层）',
+            'dropzone move-only',
+          );
+          z.dataset.rootIndex = i;
+          dropTarget(z, null, i, true);
+          sheet.append(z);
+        }
+        for (const [i, g] of l.groups.entries()) {
+          rootGap(i);
+          if (preview && g.repeat) samples.forEach((person) => sheet.append(draw(g, person)));
+          else sheet.append(draw(g));
+        }
+        rootGap(l.groups.length);
+        if (!preview && !l.groups.length) {
+          const blank = el('section', undefined, 'block blank-drop');
+          blank.append(
+            el('h3', '放入第一个控件'),
+            el('p', '从左侧点击或拖入字段，也可以先选择控件。'),
+            button('选择第一个控件', () => startPick(group('表单内容', []), 0), 'primary'),
+          );
+          dropTarget(blank, null, 0);
+          sheet.append(blank);
+        }
+        return sheet;
+      }
+      const samples = [
+        { name: '林小禾', age: 16, guardianName: '林女士' },
+        { name: '陈安', age: 28, guardianName: '' },
+      ];
+      const ops = {
+        'core.lt': { label: '小于', test: (a, b) => a < b },
+        'core.lte': { label: '小于或等于', test: (a, b) => a <= b },
+        'core.gte': { label: '大于或等于', test: (a, b) => a >= b },
+      };
+      const parentOf = (node) => groups().find((g) => g.items.includes(node) || g.actions === node);
+      function repeatAt(node) {
+        for (let g = node; g; g = parentOf(g)) if (g.repeat) return g;
+      }
+      function refreshScope() {
+        for (const g of groups()) g.scope = repeatAt(g) ? 'insured' : 'root';
+      }
+      function summary(rule) {
+        const [left, right] = rule.$expr.args;
+        return (
+          (left.ref.scope ? '当前被保险人 › 年龄' : '整张表单 › 旅行天数') +
+          ' ' +
+          ops[rule.$expr.op].label +
+          ' ' +
+          right +
+          (left.ref.scope ? ' 岁' : ' 天')
+        );
+      }
+      function trial(rule, sample, days = 7) {
+        const [left, limit] = rule.$expr.args;
+        const number = left.ref.scope ? sample?.age : days;
+        return Number.isFinite(number)
+          ? { visible: ops[rule.$expr.op].test(number, limit) }
+          : { visible: null };
+      }
+      function moveIssue(node, dest) {
+        if (!sourceOf(node) || node.slot) return '这个节点不能独立移动。';
+        if (!dest.g && !node.items) return '布局根层只接受容器。';
+        if (node.items && [...containers([node])].includes(dest.g))
+          return '不能将容器移入自身或后代。';
+        const owner = repeatAt(parentOf(node)),
+          target = repeatAt(dest.g);
+        if (owner === target) return '';
+        function dependency(n) {
+          if (n.repeat) return target ? '目标位置已有被保险人重复区，嵌套会遮蔽当前成员。' : '';
+          if (n.rule?.$expr.args[0].ref.scope) return '显示条件读取「当前被保险人 › 年龄」。';
+          for (const k of Object.values(n.ports || {}))
+            if (data(k)?.scope) return '控件绑定了「当前被保险人 › ' + data(k).label + '」。';
+          function scoped(v) {
+            return (
+              v &&
+              typeof v === 'object' &&
+              !Object.hasOwn(v, '$literal') &&
+              !Object.hasOwn(v, 'literal') &&
+              ((v.source === 'data' && v.scope) || v.$scope || Object.values(v).some(scoped))
+            );
+          }
+          if ([n.props, n.on, n.requests].some(scoped)) return '属性或交互引用了当前成员。';
+          for (const c of [...(n.items || []), ...(n.actions ? [n.actions] : [])]) {
+            const issue = dependency(c);
+            if (issue) return issue;
+          }
+          return '';
+        }
+        const issue = dependency(node);
+        return issue ? issue + '「' + (dest.g?.name || '布局根层') + '」无法保留此作用范围。' : '';
+      }
+      function foldedSettings(panel, c, g) {
+        const more = el('details', undefined, 'more-settings');
+        more.append(el('summary', '物料属性与绑定'));
+        materialSettings(more, c, g);
+        panel.append(more);
+      }
+      function travelInspector(panel, g) {
+        const repeat = repeatAt(g),
+          insured = g.id === layout().insuredId;
+        const guardian = groups().find((n) => n.id === layout().guardianId);
+        const go = (mode) => {
+          page = mode;
+          inspector();
+        };
+        function heading(title) {
+          panel.replaceChildren(
+            button('‹ 返回分区', () => go('settings'), 'back-link'),
+            el('small', g.name, 'context-line'),
+            el('h2', title),
+          );
+        }
+        if (page === 'scope') {
+          heading('设置数据范围');
+          const mode = el('select');
+          option(mode, 'each', '按成员重复');
+          option(mode, 'single', '整张表单 · 单次显示');
+          mode.value = 'each';
+          const source = fieldPicker.input({
+            label: '数据来源',
+            available: fields.filter((f) => !f.scope && f.type === 'array'),
+            value: 'insured',
+            expected: '数组',
+          });
+          const info = el('p', undefined, 'scope-note');
+          const seed = el('input');
+          seed.type = 'checkbox';
+          seed.checked = true;
+          const add = el('label', undefined, 'seed-fields');
+          add.append(seed, '同时加入示例字段（姓名、年龄、监护人姓名）');
+          function update() {
+            source.disabled = mode.value !== 'each';
+            add.hidden = source.disabled || !!g.repeat;
+            info.textContent = source.disabled
+              ? '此分区使用整张表单的数据。'
+              : '每条成员记录显示一份资料。分区内可读取当前被保险人，也可读取整张表单。';
+          }
+          mode.onchange = update;
+          update();
+          const err = el('p', undefined, 'move-error');
+          err.setAttribute('role', 'alert');
+          panel.append(
+            fieldLabel('显示方式', mode),
+            fieldLabel('数据来源', source),
+            info,
+            add,
+            err,
+            button(
+              '应用范围',
+              () => {
+                if (mode.value === 'single' && g.repeat) {
+                  const dependent = g.items.find(
+                    (n) =>
+                      moveIssue(n, { g: null }) &&
+                      (n.items || Object.values(n.ports || {}).some((k) => data(k)?.scope)),
+                  );
+                  if (dependent) {
+                    err.textContent =
+                      '「' +
+                      (dependent.name || dependent.label) +
+                      '」仍读取当前成员。请先调整绑定或条件。';
+                    return;
+                  }
+                }
+                if (mode.value === 'each' && repeatAt(parentOf(g))) {
+                  err.textContent = '此分区已处于被保险人重复区。';
+                  return;
+                }
+                const first = !g.repeat;
+                if (mode.value === 'each')
+                  g.repeat = {
+                    from: dataRef(data(source.value)),
+                    as: 'insured',
+                    mode: 'each',
+                  };
+                else delete g.repeat;
+                refreshScope();
+                if (first && g.repeat && seed.checked) {
+                  g.items.unshift(control('name'), control('age'));
+                  if (guardian && repeatAt(guardian) === g)
+                    guardian.items.push(control('guardianName'));
+                }
+                touched();
+                go('settings');
+                render();
+                notify('已更新「' + g.name + '」的数据范围。');
+              },
+              'primary',
+            ),
+          );
+          return;
+        }
+        if (page === 'condition') {
+          heading('编辑显示条件');
+          const field = fieldPicker.input({
+            label: '读取字段',
+            available: fields.filter((f) => f.type === 'number' && (!f.scope || repeat)),
+            scope: repeat ? 'insured' : 'root',
+            value: g.rule
+              ? g.rule.$expr.args[0].ref.scope
+                ? 'age'
+                : 'days'
+              : repeat
+                ? 'age'
+                : 'days',
+            expected: '数值',
+          });
+          const op = el('select');
+          for (const [k, v] of Object.entries(ops)) option(op, k, v.label);
+          const limit = el('input');
+          limit.type = 'number';
+          limit.step = 'any';
+          limit.value = '18';
+          if (g.rule) {
+            const expr = g.rule.$expr;
+            field.value = expr.args[0].ref.scope ? 'age' : 'days';
+            op.value = expr.op;
+            limit.value = expr.args[1];
+          }
+          const sample = el('input');
+          sample.type = 'number';
+          sample.step = 'any';
+          const sampleLabel = fieldLabel('示例值', sample),
+            result = el('output'),
+            explanation = el('p', undefined, 'subtle');
+          result.setAttribute('aria-live', 'polite');
+          const evaluate = () => ({
+            $expr: {
+              op: op.value,
+              args: [{ ref: dataRef(data(field.value)) }, limit.valueAsNumber],
+            },
+          });
+          const apply = button(
+            '应用条件',
+            () => {
+              g.rule = evaluate();
+              touched();
+              go('settings');
+              render();
+              notify('已应用「' + g.name + '」的显示条件。');
+            },
+            'primary',
+          );
+          function run() {
+            const valid = Number.isFinite(limit.valueAsNumber);
+            apply.disabled = !valid;
+            const value = sample.valueAsNumber,
+              outcome = valid ? trial(evaluate(), { age: value }, value).visible : null;
+            result.textContent = !valid
+              ? '请填写比较值'
+              : outcome === null
+                ? '缺少示例值'
+                : outcome
+                  ? '显示'
+                  : '隐藏';
+            result.className = outcome === true ? 'positive' : '';
+            explanation.textContent =
+              outcome === null
+                ? '填写两个数值后即可试算。'
+                : value +
+                  ' ' +
+                  ops[op.value].label +
+                  ' ' +
+                  limit.value +
+                  '，条件' +
+                  (outcome ? '成立。' : '不成立。');
+          }
+          function resetSample() {
+            const label = field.value === 'age' ? '示例年龄（岁）' : '示例旅行天数';
+            sampleLabel.firstChild.textContent = label;
+            sample.setAttribute('aria-label', label);
+            sample.value = field.value === 'age' ? 16 : 7;
+            run();
+          }
+          field.onchange = resetSample;
+          op.onchange = run;
+          limit.oninput = run;
+          sample.oninput = run;
+          resetSample();
+          const box = el('section', undefined, 'trial-box');
+          box.append(el('h3', '试算'), sampleLabel, result, explanation);
+          panel.append(
+            fieldLabel('读取字段', field),
+            fieldLabel('比较方式', op),
+            fieldLabel('比较值', limit),
+            box,
+            apply,
+          );
+          return;
+        }
+        panel.replaceChildren(
+          el('small', repeat ? '每位被保险人 · 分区设置' : '整张表单 · 分区设置', 'context-line'),
+          el('h2', g.name),
+        );
+        if (insured) {
+          panel.append(
+            el('h3', '数据范围'),
+            el('p', g.repeat ? '被保险人列表 › 每位成员' : '当前仅显示一次。', 'scope-note'),
+            button(
+              g.repeat ? '编辑数据范围' : '设置重复区',
+              () => go('scope'),
+              g.repeat ? 'quiet' : 'primary',
+            ),
+          );
+          if (g.repeat && guardian)
+            panel.append(
+              button(
+                '编辑监护人显示条件',
+                () => {
+                  selectNode(guardian.id);
+                  go('condition');
+                },
+                'next-action',
+              ),
+            );
+        } else {
+          panel.append(
+            el('h3', '显示条件'),
+            el('p', g.rule ? summary(g.rule) : '始终显示', 'scope-note'),
+            button('编辑显示条件', () => go('condition'), 'primary'),
+            button('移动分区', () => moveByChoice(g), 'next-action'),
+          );
+        }
+        foldedSettings(panel, g, g);
+        const actions = el('details', undefined, 'more-settings');
+        actions.append(
+          el('summary', '编排分区'),
+          button('添加控件', () => startPick(g, g.items.length)),
+          button('嵌套布局', () => layoutPalette(g)),
+        );
+        panel.append(actions);
+      }
+      function inspector() {
+        const panel = $('inspector');
+        panel.replaceChildren(
+          el('div', layout().name + ' / ' + (current().g?.name || '根容器'), 'path'),
+        );
+        const { g, c } = current();
+        if (layout().travel && !c && g && !pending && !g.slot) {
+          travelInspector(panel, g);
+          return;
+        }
+        panel.append(el('h2', c ? '控件设置' : g ? '容器设置' : '布局设置'));
+        if (pending?.layoutOnly) return;
+        if (pending) {
+          panel.append(el('p', '正在为「' + pending.g.name + '」选择控件。', 'subtle'));
+          return;
+        }
+        if (c) {
+          const title = el('input');
+          title.value = c.label;
+          title.onchange = () => {
+            const v = title.value.trim();
+            if (!v) {
+              title.value = c.label;
+              return;
+            }
+            c.label = v;
+            touched();
+            renderTree();
+            $('sheet').replaceChildren(paper(layout()));
+          };
+          panel.append(fieldLabel('控件标题', title));
+          foldedSettings(panel, c, g);
+          panel.append(
+            el('hr'),
+            button(
+              '从此布局移除',
+              () => {
+                g.items.splice(g.items.indexOf(c), 1);
+                selection.set(active, g.id);
+                touched();
+                render();
+                notify('已从「' + layout().name + '」移除控件，数据字段仍可添加。');
+              },
+              'danger',
+            ),
+          );
+          return;
+        }
+        if (g) {
+          panel.append(
+            el('h3', g.name),
+            el(
+              'p',
+              g.slot
+                ? '分区的操作插槽'
+                : g.scope === 'insured'
+                  ? '重复区域 · 每位被保险人'
+                  : '布局容器',
+              'subtle',
+            ),
+          );
+          if (!g.slot) {
+            g.material ??= 'section';
+            g.props ??= { title: g.name };
+            foldedSettings(panel, g, g);
+          }
+          panel.append(
+            el('hr'),
+            button('在此选择控件', () => startPick(g, g.items.length)),
+            button('＋ 嵌套布局', () => layoutPalette(g)),
+          );
+          return;
+        }
+        const d = el('select');
+        option(d, 'compact', '紧凑双列');
+        option(d, 'roomy', '宽松单列');
+        d.value = layout().density;
+        d.onchange = () => {
+          layout().density = d.value;
+          touched();
+          render();
+        };
+        const name = el('input');
+        name.value = layout().name;
+        name.onchange = () => {
+          if (
+            !name.value.trim() ||
+            all.some((l) => l.key !== active && l.name === name.value.trim())
+          ) {
+            name.value = layout().name;
+            notify('请填写唯一名称');
+            return;
+          }
+          layout().name = name.value.trim();
+          touched();
+          render();
+        };
+        panel.append(
+          fieldLabel('布局名称', name),
+          el('code', '存储 key · ' + active),
+          fieldLabel('画布排布', d),
+        );
+        panel.append(button('选择外层布局控件', () => layoutPalette(), 'primary'));
+      }
+      function render() {
+        const s = $('layouts');
+        s.replaceChildren();
+        for (const l of all) option(s, l.key, l.name);
+        s.value = active;
+        $('canvasName').textContent = layout().name;
+        $('sheet').replaceChildren(paper(layout()));
+        renderTree();
+        fieldCoverage();
+        inspector();
+        state();
+        $('save').disabled = !!pending;
+        $('create').disabled = !!pending;
+        $('preview').disabled = !!pending;
+      }
+      $('layouts').onchange = (e) => {
+        if (pending) {
+          e.target.value = active;
+          notify('请先完成或取消控件添加，再切换布局。');
+          return;
+        }
+        page = 'settings';
+        active = e.target.value;
+        notify('');
+        render();
+      };
+      $('create').onclick = () => {
+        $('newName').value = '';
+        $('newKey').value = '';
+        $('error').textContent = '';
+        $('start').value = 'copy';
+        $('sourceLabel').hidden = false;
+        $('source').replaceChildren();
+        for (const l of all) option($('source'), l.key, l.name);
+        $('source').value = active;
+        $('newLayout').showModal();
+        $('newName').focus();
+      };
+      $('start').onchange = () => ($('sourceLabel').hidden = $('start').value !== 'copy');
+      $('cancel').onclick = () => $('newLayout').close();
+      $('createForm').onsubmit = (e) => {
+        e.preventDefault();
+        const name = $('newName').value.trim();
+        if (!name || all.some((l) => l.name === name)) {
+          $('error').textContent = '请填写唯一的布局名称。';
+          return;
+        }
+        const l =
+          $('start').value === 'copy'
+            ? structuredClone(all.find((l) => l.key === $('source').value))
+            : { groups: [], density: 'roomy' };
+        const key = $('newKey').value.trim();
+        if (!key || all.some((l) => l.key === key)) {
+          $('error').textContent = '请填写唯一的布局 key。';
+          return;
+        }
+        l.key = key;
+        l.name = name;
+        for (const g of containers(l.groups)) {
+          const previousId = g.id;
+          g.id = id();
+          if (l.insuredId === previousId) l.insuredId = g.id;
+          if (l.guardianId === previousId) l.guardianId = g.id;
+          for (const c of g.items) if (!c.items) c.id = id();
+        }
+        all.push(l);
+        active = key;
+        pending = null;
+        touched();
+        $('newLayout').close();
+        render();
+        notify('已创建并进入「' + name + '」。');
+      };
+      $('save').onclick = () => {
+        const invalid = $('inspector').querySelector(':invalid');
+        if (invalid) {
+          invalid.reportValidity();
+          notify('请先修正当前输入，再保存草稿。');
+          return;
+        }
+        try {
+          localStorage.setItem(
+            storeKey,
+            JSON.stringify({
+              version: 2,
+              views: Object.fromEntries(all.map(({ key, ...body }) => [key, body])),
+              active,
+            }),
+          );
+          dirty = false;
+          state();
+          notify('全部布局已保存到当前浏览器。');
+        } catch {
+          notify('当前浏览器未能保存，修改仍在本页。');
+        }
+      };
+      $('preview').onclick = () => {
+        $('previewTitle').textContent = '布局预览 · ' + layout().name;
+        $('previewBody').replaceChildren(paper(layout(), true));
+        $('previewDialog').showModal();
+      };
+      $('closePreview').onclick = () => $('previewDialog').close();
+      render();
+    </script>
+  </body>
+</html>

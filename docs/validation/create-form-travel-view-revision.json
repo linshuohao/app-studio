@@ -1,0 +1,97 @@
+{
+  "scenario": "同一已编译候选，退出并刷新，从草稿箱恢复，只把城市搜索框的提示文字改为「搜索目的地城市」",
+  "source": "replayed historical candidate; live Platform, Agent, Compiler and browser trial. Baseline sent the same request without previous_review.",
+  "browser": {
+    "session": "dde1bb41-f6f2-477b-b4fd-4cc15cc50a28",
+    "initial": "sha256:e57b09ce53f38ff763aad21e0412c3a59b39c4ea3326c55189dfdd7d7939148c",
+    "revision": "sha256:cba70d7938291cc4f8052596dfeb521ee02e54aa7feff04f81ddd5f4782c64c1",
+    "secondMs": 557.5561670000002,
+    "previewAndFillMs": 783.5174999999999
+  },
+  "diff": [
+    "/views/default/children/1/children/0/children/0/props/placeholder"
+  ],
+  "browser_assertions": [
+    "search Shanghai and display its label",
+    "switch to Japan and clear previous selection",
+    "search Tokyo and display its label",
+    "verify new placeholder and confirm trial"
+  ],
+  "runs": {
+    "fast": {
+      "request_ms": 63.20954100000017,
+      "result": "proposal",
+      "nodes_and_tools": [
+        "on_chain_end name=understand duration_ms=1",
+        "on_chain_end name=compose duration_ms=42",
+        "on_chain_end name=deliver duration_ms=0"
+      ],
+      "model_calls": [],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cached_input": 0
+      }
+    },
+    "baseline": {
+      "request_ms": 151224.96387500002,
+      "result": "proposal",
+      "nodes_and_tools": [
+        "on_chain_end name=understand duration_ms=41023",
+        "on_tool_end name=read_protocol duration_ms=49",
+        "on_tool_end name=query_capabilities duration_ms=17",
+        "on_tool_end name=record_configuration_mapping duration_ms=1",
+        "on_tool_end name=check_candidate duration_ms=46",
+        "on_chain_end name=compose duration_ms=110193",
+        "on_chain_end name=deliver duration_ms=1"
+      ],
+      "model_calls": [
+        {
+          "input": 18657,
+          "output": 1697,
+          "cached_input": 0
+        },
+        {
+          "input": 23124,
+          "output": 59,
+          "cached_input": 21632
+        },
+        {
+          "input": 14662,
+          "output": 221,
+          "cached_input": 12928
+        },
+        {
+          "input": 33865,
+          "output": 69,
+          "cached_input": 21632
+        },
+        {
+          "input": 25297,
+          "output": 153,
+          "cached_input": 12928
+        },
+        {
+          "input": 34157,
+          "output": 690,
+          "cached_input": 10880
+        },
+        {
+          "input": 40445,
+          "output": 765,
+          "cached_input": 0
+        },
+        {
+          "input": 35426,
+          "output": 134,
+          "cached_input": 21632
+        }
+      ],
+      "tokens": {
+        "input": 225633,
+        "output": 3788,
+        "cached_input": 101632
+      }
+    }
+  }
+}

@@ -1,0 +1,816 @@
+{
+  "core.eq": {
+    "displayTemplate": "{arg0} 等于 {arg1}",
+    "title": "相等比较",
+    "description": "使用 Object.is 比较基本类型值，0 与 -0 不相等。",
+    "example": {
+      "op": "core.eq",
+      "args": [1, 1]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "使用 Object.is 比较基本类型值，0 与 -0 不相等。"
+    },
+    "callExamples": [
+      {
+        "args": [1, 1],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.ne": {
+    "displayTemplate": "{arg0} 不等于 {arg1}",
+    "title": "不等比较",
+    "description": "判断基本类型值是否不同。",
+    "example": {
+      "op": "core.ne",
+      "args": [1, 2]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "判断基本类型值是否不同。"
+    },
+    "callExamples": [
+      {
+        "args": [1, 2],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.gt": {
+    "displayTemplate": "{arg0} 大于 {arg1}",
+    "title": "大于",
+    "description": "比较两个有限数值。",
+    "example": {
+      "op": "core.gt",
+      "args": [2, 1]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "左侧值大于右侧值时返回 true，否则 false。"
+    },
+    "callExamples": [
+      {
+        "args": [2, 1],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.gte": {
+    "displayTemplate": "{arg0} 大于或等于 {arg1}",
+    "title": "大于或等于",
+    "description": "比较两个有限数值。",
+    "example": {
+      "op": "core.gte",
+      "args": [2, 2]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "左侧值大于或等于右侧值时返回 true，否则 false。"
+    },
+    "callExamples": [
+      {
+        "args": [2, 2],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.lt": {
+    "displayTemplate": "{arg0} 小于 {arg1}",
+    "title": "小于",
+    "description": "比较两个有限数值。",
+    "example": {
+      "op": "core.lt",
+      "args": [1, 2]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "左侧值小于右侧值时返回 true，否则 false。"
+    },
+    "callExamples": [
+      {
+        "args": [1, 2],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.lte": {
+    "displayTemplate": "{arg0} 小于或等于 {arg1}",
+    "title": "小于或等于",
+    "description": "比较两个有限数值。",
+    "example": {
+      "op": "core.lte",
+      "args": [2, 2]
+    },
+    "annotations": {
+      "/parameters/0": "左侧待比较的值。",
+      "/parameters/1": "右侧用于比较的值。",
+      "/returns": "左侧值小于或等于右侧值时返回 true，否则 false。"
+    },
+    "callExamples": [
+      {
+        "args": [2, 2],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "左侧值",
+      "arg1": "右侧值"
+    }
+  },
+  "core.add": {
+    "displayTemplate": "{arg0} 加 {arg1}",
+    "title": "加法",
+    "description": "计算两个有限数值之和，非有限结果会报错。",
+    "example": {
+      "op": "core.add",
+      "args": [1, 2]
+    },
+    "annotations": {
+      "/parameters/0": "第一个参与运算的有限数值。",
+      "/parameters/1": "第二个参与运算的有限数值。",
+      "/returns": "计算两个有限数值之和，非有限结果会报错。"
+    },
+    "callExamples": [
+      {
+        "args": [1, 2],
+        "result": 3,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "第一个加数",
+      "arg1": "第二个加数"
+    }
+  },
+  "core.sub": {
+    "displayTemplate": "{arg0} 减 {arg1}",
+    "title": "减法",
+    "description": "计算两个有限数值之差。",
+    "example": {
+      "op": "core.sub",
+      "args": [3, 1]
+    },
+    "annotations": {
+      "/parameters/0": "被减数。",
+      "/parameters/1": "减数。",
+      "/returns": "计算两个有限数值之差。"
+    },
+    "callExamples": [
+      {
+        "args": [3, 1],
+        "result": 2,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "被减数",
+      "arg1": "减数"
+    }
+  },
+  "core.mul": {
+    "displayTemplate": "{arg0} 乘以 {arg1}",
+    "title": "乘法",
+    "description": "计算两个有限数值之积。",
+    "example": {
+      "op": "core.mul",
+      "args": [2, 3]
+    },
+    "annotations": {
+      "/parameters/0": "第一个参与运算的有限数值。",
+      "/parameters/1": "第二个参与运算的有限数值。",
+      "/returns": "计算两个有限数值之积。"
+    },
+    "callExamples": [
+      {
+        "args": [2, 3],
+        "result": 6,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "第一个因数",
+      "arg1": "第二个因数"
+    }
+  },
+  "core.div": {
+    "displayTemplate": "{arg0} 除以 {arg1}",
+    "title": "除法",
+    "description": "计算两个有限数值之商，除数为零会报错。",
+    "example": {
+      "op": "core.div",
+      "args": [6, 2]
+    },
+    "annotations": {
+      "/parameters/0": "被除数。",
+      "/parameters/1": "除数，不能为零。",
+      "/returns": "计算两个有限数值之商，除数为零会报错。"
+    },
+    "callExamples": [
+      {
+        "args": [6, 2],
+        "result": 3,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "被除数",
+      "arg1": "除数"
+    }
+  },
+  "core.not": {
+    "displayTemplate": "不满足「{arg0}」",
+    "title": "逻辑非",
+    "description": "对布尔值取反。",
+    "example": {
+      "op": "core.not",
+      "args": [true]
+    },
+    "annotations": {
+      "/parameters/0": "需要取反的布尔条件。",
+      "/returns": "对布尔值取反。"
+    },
+    "callExamples": [
+      {
+        "args": [true],
+        "result": false,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "待取反的条件"
+    }
+  },
+  "core.and": {
+    "title": "逻辑与",
+    "description": "按顺序求值，遇到 false 停止。由 Runtime 表达式求值器执行。",
+    "example": {
+      "op": "core.and",
+      "args": [true, false]
+    },
+    "annotations": {
+      "/parameters/0": "第一个布尔条件，优先求值。",
+      "/parameters/1": "第二个布尔条件；仅在尚未短路时求值。",
+      "/returns": "按顺序求值，遇到 false 停止。由 Runtime 表达式求值器执行。",
+      "/restParameter": "后续布尔条件，按顺序求值并遵循相同短路规则。"
+    },
+    "callExamples": [
+      {
+        "args": [true, false],
+        "result": false,
+        "description": "控制形式由 Runtime 表达式求值器执行，按短路规则选择需要求值的参数。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "第一个条件",
+      "arg1": "第二个条件",
+      "rest": "后续条件"
+    }
+  },
+  "core.or": {
+    "title": "逻辑或",
+    "description": "按顺序求值，遇到 true 停止。由 Runtime 表达式求值器执行。",
+    "example": {
+      "op": "core.or",
+      "args": [false, true]
+    },
+    "annotations": {
+      "/parameters/0": "第一个布尔条件，优先求值。",
+      "/parameters/1": "第二个布尔条件；仅在尚未短路时求值。",
+      "/returns": "按顺序求值，遇到 true 停止。由 Runtime 表达式求值器执行。",
+      "/restParameter": "后续布尔条件，按顺序求值并遵循相同短路规则。"
+    },
+    "callExamples": [
+      {
+        "args": [false, true],
+        "result": true,
+        "description": "控制形式由 Runtime 表达式求值器执行，按短路规则选择需要求值的参数。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "第一个条件",
+      "arg1": "第二个条件",
+      "rest": "后续条件"
+    }
+  },
+  "core.if": {
+    "displayTemplate": "若{arg0}，则取{arg1}，否则取{arg2}",
+    "title": "条件选择",
+    "description": "根据第一个布尔参数，仅求值第二或第三个参数。",
+    "example": {
+      "op": "core.if",
+      "args": [true, 1, 2]
+    },
+    "annotations": {
+      "/parameters/0": "条件表达式的结果。",
+      "/parameters/1": "条件为真时使用的值。",
+      "/parameters/2": "条件为假时使用的值。",
+      "/returns": "根据第一个布尔参数，仅求值第二或第三个参数。"
+    },
+    "callExamples": [
+      {
+        "args": [true, 1, 2],
+        "result": 1,
+        "description": "控制形式由 Runtime 表达式求值器执行，按短路规则选择需要求值的参数。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "判断条件",
+      "arg1": "成立时取值",
+      "arg2": "不成立时取值"
+    },
+    "displayLines": ["if {arg0}", "then {arg1}", "else {arg2}"]
+  },
+  "core.exists": {
+    "displayTemplate": "{arg0} 有值",
+    "title": "存在判断",
+    "description": "判断引用是否存在，由 Runtime 表达式求值器执行。",
+    "example": {
+      "op": "core.exists",
+      "args": [
+        {
+          "ref": {
+            "source": "data",
+            "path": "/name"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "/parameters/0": "待检查的引用表达式；检查路径是否存在，null 值仍属于存在。",
+      "/returns": "判断引用是否存在，由 Runtime 表达式求值器执行。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/name"
+            }
+          }
+        ],
+        "result": true,
+        "description": "假设表单 data 为 { \"name\": \"林小满\" }；args 中传引用表达式，由 Runtime 判断该路径存在。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "待检查的值"
+    },
+    "displayLines": ["{arg0} exists"]
+  },
+  "core.length": {
+    "displayTemplate": "{arg0} 的长度",
+    "title": "长度",
+    "description": "返回字符串 Unicode 码点数或数组项数。",
+    "example": {
+      "op": "core.length",
+      "args": ["hello"]
+    },
+    "annotations": {
+      "/parameters/0": "待测量的字符串或数组。",
+      "/returns": "返回字符串 Unicode 码点数或数组项数。"
+    },
+    "callExamples": [
+      {
+        "args": ["hello"],
+        "result": 5,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      }
+    ],
+    "parameterLabels": {
+      "arg0": "文本或列表"
+    }
+  },
+  "date.ageInYears": {
+    "displayTemplate": "出生日期为{birthDate}时，截至{asOfDate}的周岁数",
+    "title": "计算实足周岁",
+    "category": "日期",
+    "summary": "基于指定日期计算周岁，非闰年按 2 月 28 日处理闰日生日。",
+    "annotations": {
+      "/parameters/0": "出生日，格式为 YYYY-MM-DD。",
+      "/parameters/1": "计算周岁所用的日期，例如起保日，格式为 YYYY-MM-DD。",
+      "/returns": "非负整数周岁。日期缺失、无效或早于出生日期时返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": ["1956-02-29", "2026-02-28"],
+        "result": 70,
+        "description": "非闰年 2 月 28 日达到 70 周岁。"
+      }
+    ],
+    "examples": [
+      {
+        "source": "packages/pure-functions/catalog-docs.json",
+        "value": {
+          "op": "date.ageInYears",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/birthDate"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "path": "/startDate"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "parameterLabels": {
+      "birthDate": "出生日期",
+      "asOfDate": "截至日期"
+    }
+  },
+  "date.inclusiveDays": {
+    "displayTemplate": "{start}到{end}的天数（含首尾）",
+    "title": "计算含首尾的天数",
+    "category": "日期",
+    "summary": "计算含首尾的日期天数；无效日期或倒序返回空值。",
+    "annotations": {
+      "/parameters/0": "业务上期望 开始日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 null。",
+      "/parameters/1": "业务上期望 结束日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 null。",
+      "/returns": "含首尾的整数天数；非法、空值或倒序返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": ["2028-02-28", "2028-02-29"],
+        "result": 2,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      },
+      {
+        "args": [null, "2028-02-29"],
+        "result": null,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "start": "出发日期",
+      "end": "返程日期"
+    }
+  },
+  "text.isNonBlank": {
+    "displayTemplate": "{value}是非空白文本",
+    "title": "判断文本是否非空白",
+    "category": "文本",
+    "summary": "判断文本是否包含空白之外的内容，不转换输入类型。",
+    "annotations": {
+      "/parameters/0": "业务上期望字符串。声明为 JsonValue 以检查任意工作值；空白字符串、null、数字、对象等返回 false，不转换类型、不修改原文本。",
+      "/returns": "仅非空白字符串返回 true，其他输入返回 false。"
+    },
+    "callExamples": [
+      {
+        "args": ["  林小满  "],
+        "result": true,
+        "description": "参数按签名顺序传入；右侧为对应返回值。"
+      },
+      {
+        "args": [null],
+        "result": false,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "value": "待检查的文本"
+    }
+  },
+  "travel.isEligibleAge": {
+    "displayTemplate": "{age}符合{agePolicy}的投保年龄要求",
+    "title": "判断是否符合投保年龄要求",
+    "category": "业务规则",
+    "summary": "判断整数年龄是否处于配置的承保范围。",
+    "annotations": {
+      "/parameters/0": "业务上期望出行开始日的周岁年龄：非负安全整数且在 agePolicy 承保范围内。声明为 JsonValue 是为接收编辑中的无效值；字符串、null、负数、小数或超范围年龄返回 false，不隐式转换。",
+      "/parameters/1": "承保年龄范围与成年阈值规则；非法规则配置抛求值错误。",
+      "/returns": "年龄满足配置的承保范围时返回 true。",
+      "/parameters/1/schema/properties/minAge": "承保最小年龄，含此年龄。",
+      "/parameters/1/schema/properties/maxAge": "承保最大年龄，含此年龄；不得小于 minAge。",
+      "/parameters/1/schema/properties/adultAge": "成年年龄阈值，达到此年龄按成年人处理。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          30,
+          {
+            "minAge": 0,
+            "maxAge": 80,
+            "adultAge": 18
+          }
+        ],
+        "result": true,
+        "description": "使用包内合成验收政策演示业务判断。"
+      },
+      {
+        "args": [
+          "12",
+          {
+            "minAge": 0,
+            "maxAge": 80,
+            "adultAge": 18
+          }
+        ],
+        "result": false,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "age": "出行时年龄",
+      "agePolicy": "承保年龄规则"
+    }
+  },
+  "travel.isTripRangeAllowed": {
+    "displayTemplate": "{start}到{end}的行程符合最多{maxDays}天的限制",
+    "title": "判断行程是否在允许的天数内",
+    "category": "业务规则",
+    "summary": "校验出行日期有效且天数不超过指定上限。",
+    "annotations": {
+      "/parameters/0": "业务上期望 开始日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 false。",
+      "/parameters/1": "业务上期望 结束日期字符串，严格 YYYY-MM-DD 且为真实日期。声明为 JsonValue 以接收无效工作值；空值、其他类型、非法日期或起止倒序使函数返回 false。",
+      "/parameters/2": "允许的最大出行天数；必须为正安全整数，非法上限抛求值错误。",
+      "/returns": "日期有效且含首尾天数在 1 至 maxDays 内时为 true，否则 false；非法 maxDays 抛错。"
+    },
+    "callExamples": [
+      {
+        "args": ["2028-02-28", "2028-02-29", 30],
+        "result": true,
+        "description": "使用包内合成验收政策演示业务判断。"
+      },
+      {
+        "args": [null, "2028-02-29", 30],
+        "result": false,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "start": "出发日期",
+      "end": "返程日期",
+      "maxDays": "最长出行天数"
+    }
+  },
+  "travel.personPremium": {
+    "displayTemplate": "按{ratePolicy}计算{age}、{plan}、{days}天的个人保费",
+    "title": "计算单人保费",
+    "category": "业务规则",
+    "summary": "根据年龄、计划、天数和费率计算单人金额。",
+    "annotations": {
+      "/parameters/0": "业务上期望出行开始日的周岁年龄：非负安全整数且在 agePolicy 承保范围内。声明为 JsonValue 是为接收编辑中的无效值；字符串、null、负数、小数或超范围年龄返回 null，不隐式转换。",
+      "/parameters/1": "业务上期望计划字符串 basic 或 plus。JsonValue 允许接收编辑中的无效值；其他值返回 null，不转换类型。",
+      "/parameters/2": "业务上期望含首尾的出行天数：1 至 ratePolicy.maxDays 的安全整数。JsonValue 允许接收无效值；空值、字符串、小数或超范围值返回 null。",
+      "/parameters/3": "承保年龄、天数、人数及各计划日费率的规则对象；非法规则抛求值错误。",
+      "/returns": "单人试算金额，单位为整数分；普通非法输入返回 null。 非法规则配置或金额溢出抛求值错误。",
+      "/parameters/3/schema/properties/agePolicy": "承保年龄范围及成年阈值。",
+      "/parameters/3/schema/properties/agePolicy/properties/minAge": "承保最小年龄，含此年龄。",
+      "/parameters/3/schema/properties/agePolicy/properties/maxAge": "承保最大年龄，含此年龄；不得小于 minAge。",
+      "/parameters/3/schema/properties/agePolicy/properties/adultAge": "成年年龄阈值，达到此年龄按成年人处理。",
+      "/parameters/3/schema/properties/maxDays": "允许的最大出行天数，含首尾。",
+      "/parameters/3/schema/properties/maxInsureds": "允许汇总的最多被保险人数。",
+      "/parameters/3/schema/properties/rates": "按投保计划划分的每日费率。",
+      "/parameters/3/schema/properties/rates/properties/basic": "基础计划的成人与儿童日费率。",
+      "/parameters/3/schema/properties/rates/properties/basic/properties/adultDailyMinor": "每名成人每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/basic/properties/childDailyMinor": "每名儿童每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/plus": "升级计划的成人与儿童日费率。",
+      "/parameters/3/schema/properties/rates/properties/plus/properties/adultDailyMinor": "每名成人每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/plus/properties/childDailyMinor": "每名儿童每日费用，单位为人民币分，允许为零。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          30,
+          "basic",
+          2,
+          {
+            "agePolicy": {
+              "minAge": 0,
+              "maxAge": 80,
+              "adultAge": 18
+            },
+            "maxDays": 30,
+            "maxInsureds": 5,
+            "rates": {
+              "basic": {
+                "adultDailyMinor": 100,
+                "childDailyMinor": 150
+              },
+              "plus": {
+                "adultDailyMinor": 180,
+                "childDailyMinor": 250
+              }
+            }
+          }
+        ],
+        "result": 200,
+        "description": "使用包内合成验收政策，不代表真实保险产品；金额单位为人民币分。"
+      },
+      {
+        "args": [
+          "12",
+          "basic",
+          2,
+          {
+            "agePolicy": {
+              "minAge": 0,
+              "maxAge": 80,
+              "adultAge": 18
+            },
+            "maxDays": 30,
+            "maxInsureds": 5,
+            "rates": {
+              "basic": {
+                "adultDailyMinor": 100,
+                "childDailyMinor": 150
+              },
+              "plus": {
+                "adultDailyMinor": 180,
+                "childDailyMinor": 250
+              }
+            }
+          }
+        ],
+        "result": null,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "age": "出行时年龄",
+      "plan": "投保方案",
+      "days": "出行天数",
+      "ratePolicy": "费率规则"
+    }
+  },
+  "travel.requiresGuardian": {
+    "displayTemplate": "按{agePolicy}判断{age}是否需要监护人",
+    "title": "判断是否需要监护人",
+    "category": "业务规则",
+    "summary": "判断有效年龄是否低于配置的成年阈值。",
+    "annotations": {
+      "/parameters/0": "业务上期望出行开始日的周岁年龄：非负安全整数且在 agePolicy 承保范围内。声明为 JsonValue 是为接收编辑中的无效值；字符串、null、负数、小数或超范围年龄返回 false，不隐式转换。",
+      "/parameters/1": "承保年龄范围与成年阈值规则；非法规则配置抛求值错误。",
+      "/returns": "年龄处于承保范围且低于成年阈值时为 true；非法年龄或不在承保范围内为 false。",
+      "/parameters/1/schema/properties/minAge": "承保最小年龄，含此年龄。",
+      "/parameters/1/schema/properties/maxAge": "承保最大年龄，含此年龄；不得小于 minAge。",
+      "/parameters/1/schema/properties/adultAge": "成年年龄阈值，达到此年龄按成年人处理。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          12,
+          {
+            "minAge": 0,
+            "maxAge": 80,
+            "adultAge": 18
+          }
+        ],
+        "result": true,
+        "description": "使用包内合成验收政策演示业务判断。"
+      },
+      {
+        "args": [
+          "12",
+          {
+            "minAge": 0,
+            "maxAge": 80,
+            "adultAge": 18
+          }
+        ],
+        "result": false,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "age": "出行时年龄",
+      "agePolicy": "承保年龄规则"
+    }
+  },
+  "travel.totalPremium": {
+    "displayTemplate": "按{ratePolicy}计算{insureds}选择{plan}、投保{days}天的总保费",
+    "title": "计算总保费",
+    "category": "业务规则",
+    "summary": "全部成员均可试算时汇总保费，不返回部分金额。",
+    "annotations": {
+      "/parameters/0": "业务上期望非空被保险人对象数组，每项读取 age（非负安全整数且在承保范围内）；人数不得超过 ratePolicy.maxInsureds。声明为 JsonValue 以接收无效工作值；非数组、空数组、超人数或任一成员年龄无效均返回 null，不返回部分金额。",
+      "/parameters/1": "业务上期望计划字符串 basic 或 plus。JsonValue 允许接收编辑中的无效值；其他值返回 null，不转换类型。",
+      "/parameters/2": "业务上期望含首尾的出行天数：1 至 ratePolicy.maxDays 的安全整数。JsonValue 允许接收无效值；空值、字符串、小数或超范围值返回 null。",
+      "/parameters/3": "承保年龄、天数、人数及各计划日费率的规则对象；非法规则抛求值错误。",
+      "/returns": "全部成员的试算总金额，单位为整数分；不能完整试算时返回 null。 非法规则配置或金额溢出抛求值错误。",
+      "/parameters/3/schema/properties/agePolicy": "承保年龄范围及成年阈值。",
+      "/parameters/3/schema/properties/agePolicy/properties/minAge": "承保最小年龄，含此年龄。",
+      "/parameters/3/schema/properties/agePolicy/properties/maxAge": "承保最大年龄，含此年龄；不得小于 minAge。",
+      "/parameters/3/schema/properties/agePolicy/properties/adultAge": "成年年龄阈值，达到此年龄按成年人处理。",
+      "/parameters/3/schema/properties/maxDays": "允许的最大出行天数，含首尾。",
+      "/parameters/3/schema/properties/maxInsureds": "允许汇总的最多被保险人数。",
+      "/parameters/3/schema/properties/rates": "按投保计划划分的每日费率。",
+      "/parameters/3/schema/properties/rates/properties/basic": "基础计划的成人与儿童日费率。",
+      "/parameters/3/schema/properties/rates/properties/basic/properties/adultDailyMinor": "每名成人每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/basic/properties/childDailyMinor": "每名儿童每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/plus": "升级计划的成人与儿童日费率。",
+      "/parameters/3/schema/properties/rates/properties/plus/properties/adultDailyMinor": "每名成人每日费用，单位为人民币分，允许为零。",
+      "/parameters/3/schema/properties/rates/properties/plus/properties/childDailyMinor": "每名儿童每日费用，单位为人民币分，允许为零。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "age": 30
+            },
+            {
+              "age": 12
+            }
+          ],
+          "basic",
+          2,
+          {
+            "agePolicy": {
+              "minAge": 0,
+              "maxAge": 80,
+              "adultAge": 18
+            },
+            "maxDays": 30,
+            "maxInsureds": 5,
+            "rates": {
+              "basic": {
+                "adultDailyMinor": 100,
+                "childDailyMinor": 150
+              },
+              "plus": {
+                "adultDailyMinor": 180,
+                "childDailyMinor": 250
+              }
+            }
+          }
+        ],
+        "result": 500,
+        "description": "使用包内合成验收政策，不代表真实保险产品；金额单位为人民币分。"
+      },
+      {
+        "args": [
+          null,
+          "basic",
+          2,
+          {
+            "agePolicy": {
+              "minAge": 0,
+              "maxAge": 80,
+              "adultAge": 18
+            },
+            "maxDays": 30,
+            "maxInsureds": 5,
+            "rates": {
+              "basic": {
+                "adultDailyMinor": 100,
+                "childDailyMinor": 150
+              },
+              "plus": {
+                "adultDailyMinor": 180,
+                "childDailyMinor": 250
+              }
+            }
+          }
+        ],
+        "result": null,
+        "description": "无效工作值示例：按真实宽输入契约调用，函数返回 false 或 null；不会自动转换为业务类型。"
+      }
+    ],
+    "parameterLabels": {
+      "insureds": "被保险人列表",
+      "plan": "投保方案",
+      "days": "出行天数",
+      "ratePolicy": "费率规则"
+    }
+  }
+}

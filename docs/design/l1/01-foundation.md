@@ -104,7 +104,7 @@ Constraint：isMinor 为 true 时，guardianName 必须非空
 
 L1 面向复杂表单的声明式 Definition Protocol，不建设通用应用 DSL。Data、Reference、Scope、Expression、Constraint、Command、Reaction、View、Material 与 Host 的责任边界已有共识。
 
-当前仍在设计讨论与规范细化阶段，尚无正式协议发布包或生产引擎实现。已有共识是后续设计前提；需要改变时应提出具体冲突、记录决定并同步相关契约，不能因局部讨论更晚就自动覆盖。
+当前并行开展设计与实现：TS 协议 / Schema、Compiler、Runtime、React Renderer 与首批资产已有本地实现证据；尚无正式对外发布和完整生产验收。已有共识是后续设计前提；需要改变时应提出具体冲突、记录决定并同步相关契约，不能因局部讨论更晚就自动覆盖。
 
 **已确认**表示有明确讨论依据；**待固化**表示方向明确但类型、语法或接口尚未闭环；**推荐**与**候选**表示仍需评估。示例和类型概念稿不代表机器契约已验收。未决问题统一见[设计进展](../governance.md#layer-progress)，取舍过程见[讨论演进](../design-history.md)。
 

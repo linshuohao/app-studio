@@ -7,6 +7,11 @@ layer: 追溯
 modules: []
 tags: []
 sources:
+- SRC-PLATFORMDIAGNOSTICS
+- SRC-PLATFORMMODULES
+- SRC-PLATFORMRBAC
+- SRC-OBSERVABILITY
+- SRC-PLATFORMBLUEPRINT
 - SRC-ASSETDESIGN
 - SRC-DEVTOOLS
 - SRC-WORKFLOWS
@@ -30,13 +35,14 @@ sources:
 - SRC-V07
 related:
   decisions:
+  - ADR-FE-025
   - ADR-FE-024
   - ADR-FE-023
   - ADR-FE-021
   - ADR-FE-020
   - ADR-FE-018
   - ADR-FE-019
-last_reviewed: '2026-10-27'
+last_reviewed: '2026-11-08'
 navigation:
   group: 09 · 决策与追溯
   order: 100
@@ -1148,6 +1154,17 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 本次六个 skill 的结构、UI 元数据及流程锚点核对通过，文档生成 / 同步与搜索回归通过；本地 HTTP 阅读检查确认新章节、搜索跳转及 Mermaid / 放大显示。维护者在临时夹具实际观察到“最终状态正确但通知看到未稳定值”的反例，仅支持该示例行为。隔离基线演练已尝试，子代理因使用限额未能启动，没有得到行为评估结果；结构校验和维护者自查不能充当独立审查、前后效果对照或生产任务试用。新流程真实收益仍待后续状态 / 调度任务验证。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。
 
 
+
+### 2026-11-02：OpenSpec 变更管理与执行适配
+
+用户将灵活规划、中途变更恢复与自定义 hooks 作为选型重点，确认 OpenSpec + Superpowers + 项目 skill / 脚本组合，替代此前暂不引入 SDD 工具的选择。保留唯一现行正文与五类入口，允许复杂变更增量材料、高风险独立审查及限定范围本地提交。隔离验证后接入 form-change schema 与验证 / 归档适配；不运行默认规格同步，不修改第三方全局配置。实际证据与局限见[工作流](workflows.md#workflow-openspec)。属于协作流程变更，不新增业务架构 ADR。
+
+### 2026-11-10：统一项目工作流入口
+
+用户明确确认只保留 `form-workflow` 一个入口，移除原六个入口并同步更新项目指引，原有能力和约束全部保留。已有能力参考继续承担设计、知识维护、交付、修复、深度审查及流程改进；W1–W5 保留为任务类型标签，统一入口根据当前目标、授权与缺口选择下一项工作，不重新启动独立流程或重复索取既有授权。六个兼容 skill 目录及旧迁移指针移除，历史任务中的旧名称按统一入口恢复。
+
+同步 AGENTS、根 README、文档入口、工作流正文及图、工程门禁、治理、来源和 OpenSpec schema 的实际调用指引。保留完整专题确认边界、A / B / C 权限、只读审查与修复授权边界、预检、契约证据、独立审查规则、最终基线复验及本地提交 / 外部操作限制。无业务协议或架构决策变化，不新增 ADR，不提升引擎模块完成度。宿主发现刷新与实际隐式调用、真实任务长期收益仍需各自证据，结构与文档检查不代替这些验证。依据见 [SRC-WORKFLOWS](source-map.md#src-workflows)。
+
 ## 2026-10-20：工程初始化与兼容联验 {#engineering-initialized}
 
 用户要求按工程文档初始化整个项目。已使用 pnpm init、create-next-app、Nest CLI、create-tsdown、ESLint / Playwright / Husky / Changesets 官方入口生成并整合工程；六包根入口不定义生产协议，独立 engineering 子入口只验证安装、构建与消费。保留既有分层、唯一业务状态与 Host 职责。
@@ -1312,3 +1329,160 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 用户再要求模板生成和 CLI / npm scripts 进行版本工程化。方案复用已初始化 Changesets，用一份待发布声明关联资产及包，提供生成、检查、计划和集中应用入口；先完成工具，再用首个真实资产跑通演练。不是再建一套版本工具替代 Changesets，也不让版本应用隐式发布。
 
 用户明确“可以，就按照这个草案去生成正式的文档吧”，授权统一归档。现行完整方案进入 [扩展主题](extension-integration.md#first-assets)和[工程主题](engineering.md#asset-tooling)，新增 [ADR-FE-024](decisions/ADR-FE-024-first-assets-tooling.md)，来源 SRC-ASSETDESIGN。验收业务假设随本期方案确认，不扩展为真实保险产品规则。正式资产和工具为设计确认待实现；没有编码、包版本变更或外部发布，不将文档构建当业务验收。
+
+
+## 2026-10-28：资产工具第 0 批与首个函数 {#first-assets-tooling-implementation}
+
+用户要求已确认设计提交后继续，设计提交 fd96b3c。按 W3 从工具第 0 批开始，复用既有 Changesets，以 text.isNonBlank 贯通平铺目录 / 静态元信息 / 标准声明 / 能力与包计划 / 临时应用反例 / Compiler → Runtime 校验。未先铺开 14 个 UI 物料，也未在真实仓库应用版本或启用发布。
+
+实际安全边界、实现定位、测试和自审限制见[工程实施记录](engineering.md#asset-tooling-implementation)。这次是 ADR-FE-024 契约内交付，无新增 ADR；函数计算仍同步，外部请求由 Host 承接，DevTools 独立。工具批次完成不代表目标业务表单或真实费率服务已验收。
+
+
+### 同日：基础输入与字段呈现交付
+
+用户继续既定路线，同时要求只读判断核心函数是否适合模块化。按已确认契约完成第 1 批 7 个物料及 Playground /materials，本地 Host、真实 Compiler / Runtime、DOM 与三浏览器均有消费证据，见[工程记录](engineering.md#first-materials-implementation)。本次没有修改 core 实现，也没有将对话中的模块化建议写为共识；不提前修改其版本或身份语义，无新增 ADR。
+
+
+### 同日：组合成员与同实例 Profile 交付
+
+用户再次继续后，按既定第 2 批交付 5 个容器 / 摘要 / 弹层物料，复用 Typed Template、ScopeHandle 数组操作和同一 Runtime 的两份 Profile。首轮浏览器焦点边界失败转为弹层 Tab 循环修复；混合动态 Props 的枚举类型证据也有实际装配回归，详见[工程记录](engineering.md#member-materials-implementation)。已写值不因关闭 / 隐藏回滚或删除，规则仍由 Definition 决定。核心未重构，无新增 ADR 或公共状态语义。
+
+
+### 同日：日期确认与远程选择交付
+
+用户继续后，按第 3 批完成 date-range / remote-select，首批 UI 物料累计 14 个。日期在本地保留草稿、确认后紧邻双写并显式呈现部分失败；搜索通过既有类型化 Request 交付 Host，查询条件与挂载资格约束候选结果，国家清空城市仍由 Definition Reaction 明示。共享无 Material Hook 弹层与校验展示，只作实现内整理；没有新增状态、原子事务或请求语义。验证与自审边界见[工程记录](engineering.md#interaction-materials-implementation)。剩余业务函数与完整目标表单进入第 4 批，核心模块化意见仍仅为未确认建议。
+
+
+### 同日：同步业务函数与完整表单纵切
+
+用户继续既定第 4 批后，首批全部 7 个业务函数及完整家庭短期出行投保录入单已有本地证据；与前批合计 14 个物料。函数用显式政策和安全整数处理年龄、严格公历天数及合成金额；业务 Reaction 清旧价，一致性 Constraint 拦截存量错误总价，外部核验与草稿 / 提交留在可控 Host。通过完整校验捕获快照交付，等待期间编辑、技术未完成、业务拒绝和重复提交均有反例。日期 UI / 领域解析共享测试向量而无生产依赖，沿用 Missing 与短路契约，未更改 Compiler / Runtime / Adapter 或 core 身份。详细验证与自审边界见[工程记录](engineering.md#business-travel-implementation)，真实服务契约、生产性能及跨端仍未验收；无新增 ADR。
+
+### 2026-11-04：整体变更讲解与 review 证据修复
+
+用户在 OpenSpec 接入讲解试用后确认先理解整体变更，再讨论问题和验证；统一调整工作流与辅助审查 / 交付入口，要求完整场景、前后行为、设计取舍、源码入口和修复后的最终模型。执行配置自动入指纹，证据范围软链接明确拒绝，修复两项 P2 并补反例。属于协作方法及工具修复，不新增业务架构 ADR。
+
+本次实际执行 `python3 tools/engineering/test_workflow_digest.py`（3 项测试通过）与 `python3 tools/engineering/test_workflow.py`（实际 CLI 场景退出 0）；独立 reviewer 在相同源码基线复验通过并关闭两项 P2。文档统一构建 / 同步及差异检查通过；未执行业务全量测试或浏览器渲染，不把工具回归外推为生产验收。
+
+## 2026-11-08：动态表单平台蓝图组织确认，具体设计继续展开 {#platform-blueprint-confirmed}
+
+用户先要求完整最终形态，再澄清产品为通用动态表单低代码平台；助手提出的完整业务应用平台、业务数据 / 审批 MVP 不采纳。后续审查指出底层 Schema 等技术支撑不应直接成为平台产品模块，独立数据结构设计器退出范围。
+
+用户认可按典型场景归并共用环节，再关联前端页面与后端业务模型的组织方式。HTML 草案从逐条用户故事改为场景摘要、环节、页面、模型、关系与操作表、候选 MVP。用户最终明确授权[整合现行主题](platform-studio.md#platform-blueprint)，补入用户权限等基础管理，并要求具体页面与模型待设计，先展开表单管理和表单工作台；AI 下一阶段讨论。
+
+本轮固化产品定位、组织方式及基础管理范围；五类业务页面、基础管理入口、八类业务对象及权限支撑对象均为待设计候选，MVP 未转为实施计划。旧 P1 目标由新定位承接，P2 草稿、P3 审批、P4 获取入口保留候选，不以蓝图确认推定用户已选择。保留旧取舍与 Agent 全量候选；不改变 L1–L4 / Host 既有契约，不新增 ADR，不升级 M18 / M19 为设计完成。来源见 [SRC-PLATFORMBLUEPRINT](source-map.md#src-platform-blueprint)。
+
+## 通用观测模型与四视图确认 {#general-observation-confirmed}
+
+2026-11-08，独立 DevTools 的后续讨论从字段和事件列表转向解释完整流动：Reaction 连锁、条件分支、异步校验、状态和诊断之间可连续定位；嵌套对象与数组通过稳定成员实例展示，跨对象路径在折叠后仍可追踪。大量成员促使方案明确聚合边、影响数量与状态统计，而非继续铺开全图。
+
+用户进一步要求核对 Schema、已有上报和 DevTools 数据能否支撑，方案因而收敛为六组通用观测数据、类型化关系与实际因果、快照 / 游标完整性以及按需采集接缝。用户确认完整方案及“可能影响与实际发生分开、按需读取 / 显式录制、有界且不干扰业务”三个原则，随后授权本次统一归档及实施准备，明确不改实现。
+
+[ADR-FE-025](decisions/ADR-FE-025-observation-contract.md)扩展 ADR-FE-023，不替代独立只读边界；[现行契约](l3-observability.md#observation-contract)集中维护完整说明，[阶段与验收](l3-observability.md#observation-delivery)区分目标和实现。仅展示层 demo 的效果不能证明真实上报链路完成，M16 仍部分完成。来源见 [SRC-OBSERVABILITY](source-map.md#src-observability)。
+
+## 2026-11-08：单团队 RBAC 完整方案确认 {#platform-rbac-confirmed}
+
+用户选择单团队共享管理空间、RBAC 与少量内建角色，要求保留多团队隔离扩展；随后明确确认完整权限方案。采用四角色五权限、角色并集与资源范围检查，编辑 / 发布分离；明确成员管理、最后管理员保护、前后端授权、撤权与排队发布检查，以及 P1 / P2 操作映射。对应[正文](platform-studio.md#platform-rbac)与 [ADR-FE-026](decisions/ADR-FE-026-platform-rbac.md)。
+
+这是权限契约确认，不关闭表单工作台、草稿持久化、身份来源或平台整体设计。用户随后提出 DDD、模块与部署服务如何拆分；该新专题仍为讨论，不将助手架构建议归档为已确认。来源见 [SRC-PLATFORMRBAC](source-map.md#src-platform-rbac)。
+
+## 观测详细技术契约与破坏性升级确认 {#observation-technical-confirmed}
+
+2026-11-08，用户要求基于通用观测方案继续形成详细技术设计。技术草案核对现有目录 / 桥接、Scope、Reaction、ValidationWork / Call 和诊断代码，补齐生产者适配、身份、类型化事件、快照 / 游标、工具 Store、图投影及验收落点。用户确认技术方案与三个新增语义并授权只归档、不改实现。
+
+三个新增语义原为保留 V1 的渐进接入、会话录制租约、固定版本分页失败处理；随后用户明确“不用渐进式，直接用 break change，不需要兼容”。因此当前采用各端同批破坏性升级和版本不匹配明确拒绝，原双入口 / 降级方案不再有效。会话录制的开始 / 停止边界与快照一致性决定保持有效。
+
+现行[详细技术契约](l3-observability.md#observation-technical)及[阶段清单](l3-observability.md#observation-technical-delivery)统一维护；[ADR-FE-025](decisions/ADR-FE-025-observation-contract.md#adr-025-technical)记录局部修订，未整体废弃独立工具原则。归档不证明新版 SDK 或任何业务测试已交付，M16 保持部分完成。来源仍为 [SRC-OBSERVABILITY](source-map.md#src-observability)。
+
+## 2026-11-08：DDD 思路的模块化单体方向确认 {#platform-modules-confirmed}
+
+在 RBAC 确认后，用户要求讨论大的领域与服务拆分，再逐个设计模块。方案区分领域、代码模块和部署边界，以成员访问、表单创作、能力资产、构建发布、问题治理为细化起点，单一前端与模块化 API 先交付，独立 Worker / 分发 / 观测按实际需要评估。用户明确确认 DDD 思路的模块化单体，首期不拆微服务，并授权归档。
+
+本轮更新[整体架构](architecture.md#platform-modular-monolith)与 [ADR-FE-027](decisions/ADR-FE-027-platform-modular-monolith.md)，保留核心包 / Host 分责和 RBAC。下一步从表单创作管理的模型、状态、列表 / 工作台操作设计开始；具体聚合、事务、存储和接口未冻结。未编码，未将各业务模块提升为设计或实现完成。来源见 [SRC-PLATFORMMODULES](source-map.md#src-platform-modules)。
+
+2026-11-09 DevTools 后续修订：用户发现下拉框受刷新干扰，确认取消轮询和手动录制，改为连接后端到端订阅、自动推送，事件接收与视图刷新独立调度；选中对象仅控制元数据 / 值读取。样式延续此前 HTML demo。该决定替代前述显式录制租约语义，保留固定分页、有限缓存、业务隔离与直接破坏性升级，未改变业务调度或数据所有权。现行依据见 [ADR-FE-025](decisions/ADR-FE-025-observation-contract.md)。
+
+
+## 2026-11-10：最小 MVP 与分支版本更新统一确认 {#platform-mvp-confirmed}
+
+用户从历史发布修改的保护问题出发，选择 Git 式分支思路，并允许 Fork 为独立表单或从指定版本开分支；确认宿主按 releaseId 消费。助手先后提出单共享草稿、替换前恢复点、保存与正式修订分离、Fork 仅限确定版本等候选，未形成最终确认。用户进一步要求最简、不做实时协作，冲突由用户选择新分支或更新当前分支。
+
+关键澄清是“不是完全替换，而是做版本更新”：每次成功保存追加不可变编辑修订，分支指向新修订；覆盖确认和恢复都追加历史，不删除中间修订，也不承诺自动合并。用户明确“就按这个方案”并授权统一整合最小 MVP、分支更新及旧不一致内容。
+
+[现行正文](platform-studio.md#platform-authoring-mvp)与 [ADR-FE-028](decisions/ADR-FE-028-platform-authoring-mvp.md)记录确认范围；L2 编辑分析说明同步区分创作保存与执行制品准入。错误编辑修订可留存，但 Error 仍不得生成可执行 Prepared 或发布；不更改 L1–L4 执行协议。保留旧方案的历史理由并明确替代关系，未采纳的动态发布入口、审批及实时协作不进入首期。来源见 [SRC-PLATFORMMVP](source-map.md#src-platform-mvp)。
+
+此次仅完成知识归档；M18 / M19 业务范围与保存流程部分收敛，接口、身份接入、存储与 Host 装载仍待实施准备，不声明实现或端到端验收通过。
+
+
+## 2026-11-11 配置版本与首期交付闭环 {#platform-config-versions-confirmed}
+
+三个领域会话并行设计后，用户确认创作改为表单直接组织不可变配置版本，避免分支指向与覆盖确认。保存原文，首次保存才生成版本，归档历史可以复制。身份使用内置账号及 GitHub 登录，Host 精确在线装载。总协调会话统一版本身份、发布输入和提交资格，确定四个验收切片。[ADR-FE-029](decisions/ADR-FE-029-platform-config-versions.md)承接并替代旧 ADR，保留历史依据与既有引擎准入规则。当前为设计归档，交付证据由各提案实施后补充。见[来源](source-map.md#src-platform-simplified)。
+
+2026-11-11 发布切片实施后，用户确认 Host 按 releaseId 公开读取，Studio 的成功回执继续按查看权限重放。该决定补齐首期在线交付和重试边界，接入 SQLite 原子提交、Studio 发布及示例 Web Host。见[发布与 Host 现行契约](platform-studio.md#authoring-publish)。
+
+2026-11-14 用户在总协调会话确认 GitHub 登录完整规则。平台与 GitHub 身份一对一，绑定及解绑分别验证内置密码，解绑按具体绑定即时撤销会话并阻断迟到回调。GitHub 侧撤销与平台会话独立。见[现行设计](platform-studio.md#platform-github-login)。
+
+
+## 2026-11-14：MVP 增加最小能力目录与成员角色管理 {#platform-mvp-management-confirmed}
+
+用户实际体验后指出工作台不符合预期的 Admin 管理形态，要求独立会话先设计稿、再修复实现。只读盘点发现，已有工程物料 / 函数及 RBAC 校验并不等于平台目录和成员管理已交付。用户确认将最小物料目录、纯函数目录、成员与角色管理纳入本次 MVP，每块覆盖 API、页面与验收；统一任务后同步工作台设计会话。
+
+本次扩展替代“物料后台全部后置”和“仅单人首用”的交付范围限制，保留工程供给、单团队内建角色、不可变配置版本及 releaseId 消费。在线代码编辑、制品上传、市场、自定义角色、多团队仍不纳入。沿用 ADR-FE-029 补记范围演进，不新建重复架构决策。范围、任务和未决细化见[现行正文](platform-studio.md#platform-mvp-completion)，确认来源见 [SRC-PLATFORMSIMPLIFIED](source-map.md#src-platform-simplified)。新增部分待设计和实施，旧验收证据仅覆盖原切片。
+
+
+2026-11-14 后续交付：用户在相同内容的 Linear / Geist 两版中选择 Linear 轻量风，授权统一 Studio；进一步确认管理员核实身份后创建内置账号和初始密码、线下交付，成员可自行改密。真实安装目录、来源说明与配置片段、成员角色及启停、本人与其他会话的改密处理已实现。独立审查修复目录异常参数、审计前后差异、旧权限界面及密码轮换与 GitHub 绑定竞态；本地 API 6 组与真实 Chrome 11 条流程通过。实现切片见 `studio-linear-catalog`、`studio-members`，人工验收和真实 OAuth 不由自动测试替代。
+
+2026-11-22，用户确认将 Linear 轻量风细化为 [Studio UI 契约](platform-studio.md#studio-ui-contract)。复用已有 Select 与 Modal，将各页面分散的样式和反馈逐步收敛为组件、字阶和主题角色。界面首期采用系统字体与浅色主题，以版本工作流样板验证后再迁移存量。
+
+
+## 2026-11-15：GitHub 自助注册与团队准入确认 {#platform-account-admission-confirmed}
+
+用户选择 GitHub 自助注册后申请加入团队，并在通读覆盖模型、页面、状态、API、绑定和验收的完整草案后明确确认。平台账号会话与团队成员资格分离；管理员批准并指定角色才授予团队权限。拒绝或撤回后可重新申请，GitHub 原生账号可重新验证身份后首次设密，普通成员入口改为申请审批。替代此前未绑定身份不能注册及管理员分发初始密码的默认入口；不改变既有角色、停用恢复、最后管理员保护和公开 Host 语义。完整契约及三个实施切片见[账号准入](platform-studio.md#platform-account-admission)。确认时为设计阶段；随后用户授权按三个切片实施，每片验收与独立review通过后继续下一片。现三个切片API/Studio已交付，本地自动验收和独立review通过，真实OAuth与用户最终人工验收单独保留。审查修复注册回调成功误报、列表重试残留错误及旧申请401跨会话清状态问题，证据见本次platform-account-admission变更。沿用ADR-FE-029记录首期范围演进。
+
+
+## Agent 从候选覆盖到已确认蓝图 {#agent-blueprint-confirmed}
+
+2026-11-15 用户将此前“先做表单、Agent 后续候选”推进为独立 Python 服务的正式设计方向。先确认 Studio 诊断修复，再确认完整六类职责、共享 Harness 与三层 Loop。原先一次候选实验建议演进为可复用任务工作流，首期仍有界，后续创作、填写、运维和长任务按阶段建设。知识与记忆分别管理，候选通过 Platform 检查后由用户审阅应用。用户最后要求统一归档且暂不开发。旧完整八层候选清单保留，已确认范围以[现行主题](platform-studio.md#agent-confirmed-blueprint)和[ADR-FE-030](decisions/ADR-FE-030-agent-harness.md)为准。
+
+
+## Agent 存储演进与 PostgreSQL 确认 {#agent-storage-evolution}
+
+2026-11-15 原知识方案采用 SQLite / FTS5；后续运行状态建议沿用现有 Platform SQLite 及同机共享路径。用户认可凭证与状态设计，并要求主流持久化选型，最终确认 PostgreSQL 双数据域，知识同样入库。共享数据库支持跨主机状态可见，Compiler 继续排空发布。原存储建议由 [ADR-FE-031](decisions/ADR-FE-031-postgresql-agent-runtime.md)局部替代，ADR-FE-030 其他行为继续有效。迁移按预检、适配、演练、受控切换、多实例联验推进，仅授权归档。
+
+2026-11-17 用户认可 Platform PostgreSQL 只读预检的建议取舍并授权实施。采用 pg + node-pg-migrate、显式异步事务及停写导入，首版以数据库事务 advisory lock 保持旧串行写语义，后续资源锁优化保留竞态验收。全量表导入在只读来源副本上准备，字节/关系/序列校验后提交；实际业务库切换与 Agent 编码仍未执行。现行范围见[迁移方案](platform-studio.md#platform-postgresql-migration)。
+
+2026-11-18 用户要求继续处理剩余门禁，并明确“全切了，我们没发生产”。据此完成本机开发库从schema4 SQLite向独立持久PostgreSQL迁移，原库及一致备份保留，pg_dump恢复对比、独立账号、真实Studio读写和旧发布交付已验收。Next与受影响传递依赖安全修复，格式门禁保留现行源文件检查、排除历史/机器收据/本地数据。Agent范围不变，无生产发布。
+
+## Studio助手入口统一 {#agent-assistant-entry-evolution}
+
+2026-11-18 用户指出新建向导同样需要入口，要求统一聊天助手/对话面板以避免重复开发，并确认先归档再细化第一批。入口从编辑页专用修复扩展为统一Studio助手，编辑页和诊断快捷入口复用该面板；首批诊断修复，第二批需求澄清与AI新建，后续持续对话与能力扩展。此前统一聊天后置的安排由[ADR-FE-032](decisions/ADR-FE-032-studio-assistant-entry.md)局部替代，首期同步、有界修复、权限和人工审阅不变。首批细节尚在讨论，未授权编码。
+
+## 2026-11-19：首期仅创建与持久会话接口确认 {#agent-create-evolution}
+
+用户指出诊断入口缺少明确触发场景，转向配置辅助；讨论已有版本 / 发布身份后明确先不做编辑，仅创建。随后确认中间任务持久化继续，最终生成且保存后归档。认可仅创建版完整接口后，授权统一归档并同步三个会话，只做详细设计，不开始开发。
+
+[ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)替代 ADR-FE-032 批次安排，保留统一面板；局部更新 ADR-FE-030 / 031 的同步修复、内存状态与会话归属。Platform 管业务会话 / 消息 / 候选 / 完成版本，Agent 管执行恢复；异步受理和查询，保存与完成原子关联。已有版本编辑、任意草稿同步、诊断入口及发布后置。完整接口与三方边界在[现行主题](platform-studio.md#agent-create-contract)，不复制第二套规格。当前只有确认归档，细节与验收尚未完成。
+
+同日扩展方向确认：用户询问将能力提供给外部 Agent 的 MCP / 插件形式，随后明确首期仍完成 Studio 创建闭环，后续再做 MCP 与插件。采用业务能力复用方向，入口协议适配与 Platform 应用服务分离，Agent 不依赖 Studio 展示；插件只是连接和使用指引。优先开放完整创建能力，外部审阅保存先回 Studio；底层工具开放、外部直接保存和授权细节继续待设计。沿用 ADR-FE-033 增量记录，不新增平行主规格，不开发。
+
+2026-11-22 用户审阅三段交互原型及完整蓝图后确认[智能表单工作台](platform-studio.md#agent-form-workspace)，并要求同步整体架构中遗留的首期诊断修复表述。产品方向形成 Studio 创作、Studio 内场景测试、业务 Host 辅助填写三条路径。为让首期创建具备真实行为证据，采用 Agent 生成的旅险候选执行 Runtime 场景后在 Studio 审阅保存；定向编辑、测试工具与修复循环仍按后续专题推进。沿用 ADR-FE-033 增量记录，仅归档检查。
+
+2026-11-22 用户要求取消独立 Run 应用层，降低应用侧状态重量，确认首期改为 [Platform 直接调用 CreateForm](platform-studio.md#agent-create-contract)。本轮 Graph 状态归 Agent，Platform 保留可恢复的业务会话和审阅保存记录。旧异步详细方案转入历史，已有创建范围和真实 Runtime 旅险验收保留。Graph 与工具进入下一轮设计。
+
+同日用户确认三方收口稿并授权统一归档。为避免旧候选因后续需求尚未处理而被误保存，区分最近候选与当前可保存资格。为允许 Agent 按时完成后 Platform 恢复对账，分别管理执行截止与有界对账窗口。首期切片和旅险验收统一进入[创建契约](platform-studio.md#agent-create-contract)。模型供应方、具体限额、保留期限留实施预检，未授权写代码。
+
+2026-11-22 归档 [CreateForm 需求理解与配置交接](platform-studio.md#agent-create-requirements)。以任意格式旅险 Markdown 走查完整阅读、来源保留、标准化、能力映射及集中澄清。沿用固定版本整份协议，先观察单次上下文和漏项，再比较分批检查及按需读取；此次只读走查与本地分词不构成模型或运行验收。
+
+2026-11-23 用户确认[候选编译修复循环](platform-studio.md#agent-create-compiler-repair)。现有 compose 内由模型决定是否继续修改，提示文字快捷路径在编译失败时直接受阻。为使两条路径都能依据诊断继续修复，改由 Graph 统一路由，并在 3 轮修复后熔断；已归档设计，待实现和验收。
+
+2026-11-23 创建专用入口演进为每轮路由。直接调用、真实编译和用户保存边界保留。见[统一助手 Graph](platform-studio.md#agent-turn-graph)。
+
+2026-11-23 用户确认[数据归属与全量清洗](platform-studio.md#agent-conversation-draft-ownership)。删除对话保留平台草稿；Agent 和 API 分别维护所拥有的数据，实施直接切换。
+
+2026-11-24 旅险会话在重新进入后只显示空状态。用户确认将恢复范围从完成轮次扩展到已接收消息和轮内步骤，允许流式分批保存，并授权实施。详见[轮内恢复决策](decisions/ADR-FE-037-agent-turn-recovery.md)。
+
+
+## 2026-11-22：首期错误事件采集与现场归属 {#platform-diagnostics-evolution}
+
+初次讨论提出以 PostgreSQL 查错误事件，并将允许集中上传的复现现场放入私有对象存储。用户收敛首期范围，完整现场留 Host，Platform 只接收脱敏事件。审阅采集链路、表结构、查询和保留方案后，用户确认受信 Host 转发、管理员查看、平台事件 30 天、Host 现场默认 7 天、上报最多重试 24 小时。见 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)和[现行专题](platform-studio.md#platform-diagnostic-events)。此次授权限于归档。
+
+同日审阅 Runtime / Renderer 上报映射后，用户确认按[白名单](platform-studio.md#platform-diagnostic-mapping)执行。原先示例 Host 的后缀筛选未覆盖 `flush.aborted`，首期方案采用精确事件匹配并合并双诊断出口重复条目。Schema 异常、Validator 缺注册和 Reaction 叶命令异常留 Host，Renderer 现场以现有回调字段为限。作为 ADR-FE-034 的增量归档。

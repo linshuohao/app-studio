@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts",
+    ".next/studio-preview/types/**/*.ts",
+    ".next/studio-preview/dev/types/**/*.ts",
+    ".next/studio-workbench/types/**/*.ts",
+    ".next/studio-workbench/dev/types/**/*.ts",
+    ".next/admission-test/types/**/*.ts",
+    ".next/admission-test/dev/types/**/*.ts",
+    ".next/local-login-webpack/types/**/*.ts",
+    ".next/local-login-webpack/dev/types/**/*.ts",
+    ".next/login-design/types/**/*.ts",
+    ".next/login-design/dev/types/**/*.ts",
+    ".next/studio-canvas/types/**/*.ts",
+    ".next/studio-canvas/dev/types/**/*.ts",
+    ".next/reaction-selection-verification/types/**/*.ts",
+    ".next/reaction-selection-verification/dev/types/**/*.ts",
+    ".next/reaction-selection-dev/types/**/*.ts",
+    ".next/reaction-selection-dev/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

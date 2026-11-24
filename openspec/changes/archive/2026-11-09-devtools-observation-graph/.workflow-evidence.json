@@ -1,0 +1,30 @@
+{
+  "fingerprint": "41be2e96fb42c6095e016ffd864338010439742258a03f17ebd53140f20849bb",
+  "checks": [
+    [
+      "pnpm",
+      "check"
+    ],
+    [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run"
+    ],
+    [
+      "pnpm",
+      "test:e2e:devtools"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "node",
+      "tools/engineering/measure-observation.mjs",
+      "36",
+      "10"
+    ]
+  ]
+}

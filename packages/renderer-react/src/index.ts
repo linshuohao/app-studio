@@ -11,3 +11,4 @@ export type * from './material/types.js';
 export type * from './adapter/types.js';
 export type * from './requests/types.js';
 export type * from './diagnostics/types.js';
+export { useArrayBinding } from './adapter/use-array-binding.js';

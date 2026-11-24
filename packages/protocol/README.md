@@ -47,7 +47,7 @@ Prepared 夹具是手写契约样本，不是编译器产物或执行通过证�
 Schema 引用闭包、名称 / 类型连接由 Compiler 检查；生成 Schema 只验证结构。
 公共 Adapter 的请求桥接、并发、取消及失效结果处理尚未在本包实现。
 
-开发接入目标：物料公开请求输入输出类型，Host 可关联契约获得参数 / 返回值检查；静态可知注册集合约束必需请求。实际页面物料声明的请求必须全部映射，漏项由 Compiler 报错；缺实际 Host 注册须在装配时使对应物料明确报错。结构 Schema 不检查外部 Catalog 完整性，这些语义检查及 SDK 仍待实现。
+开发接入目标：物料公开请求输入输出类型，Host 可关联契约获得参数 / 返回值检查；静态可知注册集合约束必需请求。实际页面物料声明的请求必须全部映射，漏项由 Compiler 报错；缺实际 Host 注册须在装配时使对应物料明确报错。结构 Schema 不检查外部 Catalog 完整性，Compiler 已实现必需请求映射检查，React Renderer 已提供请求类型辅助、注册预检和物料错误隔离；见 [Renderer 接入说明](../renderer-react/README.md)与[本地联验证据](../../docs/design/engineering.md#renderer-implementation)。真实服务与其他端待接入 / 验收。
 
 ## 已确认输入输出结构迁移
 

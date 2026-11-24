@@ -1,0 +1,117 @@
+.studio-field-row-content {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: baseline;
+  gap: var(--studio-space-16);
+  white-space: nowrap;
+}
+
+.studio-field-row-identity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--studio-space-4);
+}
+
+.studio-field-row-label {
+  font: var(--studio-type-tree-label);
+}
+
+.studio-field-row-path {
+  padding: 0;
+  background: transparent;
+  color: var(--studio-text-muted);
+  font: var(--studio-type-tree-path);
+}
+
+.studio-field-row-content > .studio-field-row-meta {
+  margin-inline-start: auto;
+  color: var(--studio-text-muted);
+  font: var(--studio-type-tree-meta);
+  text-align: end;
+}
+
+.studio-field-tree {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  container: studio-field-tree / inline-size;
+}
+
+@container studio-field-tree (width < 420px) {
+  .studio-field-row-content {
+    flex-direction: column;
+    align-items: start;
+    gap: var(--studio-space-4);
+  }
+
+  .studio-field-row-content:has(> .studio-field-row-meta) {
+    padding-block: var(--studio-space-4);
+  }
+
+  .studio-field-row-content > .studio-field-row-meta {
+    margin-inline-start: 0;
+    text-align: start;
+  }
+}
+
+.studio-field-row {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: var(--studio-space-8);
+  min-block-size: var(--studio-tree-row-height);
+  padding: 0 var(--studio-space-4);
+  color: inherit;
+  text-align: start;
+}
+
+button.studio-field-row {
+  border: 0;
+  background: transparent;
+}
+
+.studio-field-choice {
+  cursor: pointer;
+}
+
+.studio-field-choice input {
+  flex: none;
+  width: auto;
+  min-height: 0;
+  margin: 0;
+}
+
+.studio-field-disabled {
+  display: flex;
+  flex: 1 0 auto;
+  color: var(--studio-disabled-fg);
+  cursor: not-allowed;
+}
+
+.studio-field-disabled .studio-field-choice {
+  pointer-events: none;
+}
+
+.studio-field-reason {
+  max-width: min(30ch, 90vw);
+  overflow-wrap: anywhere;
+  padding: var(--studio-space-4) var(--studio-space-8);
+  border-radius: var(--studio-radius-4);
+  background: var(--studio-primary);
+  color: var(--studio-on-primary);
+  font: var(--studio-type-caption);
+}
+
+.studio-field-reason-positioner {
+  pointer-events: none;
+}
+
+.studio-field-unavailable {
+  color: var(--studio-text-muted);
+  font: var(--studio-type-tree-meta);
+}
+
+.studio-field-action-boundary {
+  display: contents;
+}

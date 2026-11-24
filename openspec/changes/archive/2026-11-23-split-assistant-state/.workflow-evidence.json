@@ -1,0 +1,45 @@
+{
+  "fingerprint": "7f9f5137347da3bff088e6a8e8b784990cd62fd44f1e1ddbbeeb6c5fe0693a86",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "node",
+      "tools/engineering/migrations/test-split-agent-conversations.mjs"
+    ],
+    [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--dir",
+      "services/api",
+      "exec",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.config.e2e.ts"
+    ]
+  ]
+}

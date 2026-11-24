@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 // Check committed generation before build can refresh it and hide stale artifacts.
 for (const task of [
   'protocol:schema:check',
+  'assets:check',
   'format:check',
   'lint',
   'boundaries',

@@ -1,0 +1,48 @@
+.expression-reading-call {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--studio-space-4) var(--studio-space-8);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.expression-reading-call-name {
+  font-weight: 600;
+}
+.expression-reading-call:has(> .expression-reading-argument[open]),
+.expression-reading-call:not([data-call]) {
+  display: grid;
+  justify-items: start;
+}
+.expression-reading-argument {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.expression-reading-argument summary,
+.expression-reading-source summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.expression-reading-argument-body,
+.expression-reading-slot {
+  margin-block: var(--studio-space-4);
+  padding-inline-start: var(--studio-space-12);
+  border-inline-start: 1px solid var(--studio-border);
+  overflow-wrap: anywhere;
+}
+.expression-reading-argument-body > p {
+  margin: 0 0 var(--studio-space-4);
+  color: var(--studio-text-muted);
+}
+.expression-reading-argument-body pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.expression-reading-lines {
+  display: grid;
+  gap: var(--studio-space-4);
+}
+.expression-reading-line code,
+.expression-reading-source code {
+  overflow-wrap: anywhere;
+}

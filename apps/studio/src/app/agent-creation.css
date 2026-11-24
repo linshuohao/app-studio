@@ -1,0 +1,13 @@
+.agent-workspace .agent-workbench {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+.agent-workspace .agent-canvas {
+  min-width: 0;
+}
+@media (min-width: 851px) {
+  .agent-workspace:not([data-presentation='draft']) .layout-paper:has(.layout-arrangement) {
+    min-height: 55dvh;
+  }
+}

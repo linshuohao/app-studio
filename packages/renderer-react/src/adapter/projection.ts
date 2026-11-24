@@ -1,4 +1,11 @@
-import { registerDevtoolsSource, type DevtoolsSource } from '@form-engine/runtime/devtools';
+import {
+  DEVTOOLS_ENABLED,
+  emitObservedEvent,
+  registerObservedProducer,
+  createMetadataReader,
+  observedProducerRef,
+  type MetadataValue,
+} from '@form-engine/runtime/devtools';
 import type { ReactNode } from 'react';
 import type { JsonValue } from '@form-engine/protocol';
 import type { Command } from '@form-engine/protocol/definition';
@@ -26,7 +33,8 @@ interface Snapshot {
  */
 export class Projection {
   /** 工具只读最近快照，不额外触发纯函数求值或业务订阅。 */
-  #devtools?: DevtoolsSource;
+  #stopping = false;
+  #stopMetadata?: () => void;
   /** 正在消费此投影的 React 监听者；可有多个 Hook，但共同复用一组底层观察。 */
   readonly #listeners = new Set<() => void>();
   /** 本轮激活建立的观察解除函数；stop 取走并清空，允许重复清理。 */
@@ -55,7 +63,30 @@ export class Projection {
       scope,
       occurrence,
       () => this.alive,
-      (event) => this.#devtools?.publish('request', event),
+      () => {
+        const producer = observedProducerRef(this);
+        const runtime = observedProducerRef(environment.runtime) ?? null;
+        const view = observedProducerRef(environment.inspectionOwner) ?? null;
+        return (event) => {
+          const current = observedProducerRef(this);
+          if (
+            !producer ||
+            current?.producerId !== producer.producerId ||
+            current.epoch !== producer.epoch
+          )
+            return;
+          emitObservedEvent(this, 'renderer.request', () => ({
+            origin: 'not-provided',
+            requestId: event.id,
+            name: event.name,
+            status: event.status,
+            runtime,
+            view,
+            nodeId: node.id,
+            occurrence,
+          }));
+        };
+      },
     );
   }
   /** 当前操作是否仍属于有效组件实例；模板参数可见性与所属成员资格分别检查。 */
@@ -68,28 +99,62 @@ export class Projection {
   }
   /** 幂等激活：存活、Binding、Validation 与表达式观察建立后，通知消费者复读。 */
   start = () => {
-    if (this.#active) return;
+    if (this.#active || this.#stopping) return;
     this.#active = true;
-    this.#devtools = registerDevtoolsSource(
-      this,
-      {
-        kind: 'material',
-        formId: this.environment.compiledForm.definition.id,
-        profile: this.environment.compiledForm.build.profile,
-        label: this.node.material,
-        nodeId: this.node.id,
-        occurrence: this.occurrence,
-      },
-      () => ({
-        alive: this.alive,
-        scope: this.scope,
-        owners: this.owners,
-        snapshot: this.#snapshot,
-        bindings: this.node.bindings,
-        requests: this.#requests.inspect(),
-      }),
-      this.environment.inspectionOwner,
-    );
+    if (DEVTOOLS_ENABLED && 'window' in globalThis)
+      this.#stopMetadata = registerObservedProducer(
+        this,
+        (ref, budget) =>
+          createMetadataReader(ref, budget.maxBytes, () => {
+            const fields: Array<[string, NonNullable<PreparedMaterialNode['bindings']>[string]]> =
+              [];
+            for (const name in this.node.bindings)
+              if (Object.hasOwn(this.node.bindings, name)) {
+                if (fields.length >= budget.maxRows) throw Error('budget');
+                fields.push([name, this.node.bindings[name]!]);
+              }
+            if (fields.length > budget.maxRows || this.owners.length > budget.maxRows)
+              throw Error('budget');
+            return {
+              rows: [
+                {
+                  record: 'renderer-material',
+                  ...(observedProducerRef(this.environment.runtime)
+                    ? { runtime: { ...observedProducerRef(this.environment.runtime)! } }
+                    : {}),
+                  ...(observedProducerRef(this.environment.inspectionOwner)
+                    ? { view: { ...observedProducerRef(this.environment.inspectionOwner)! } }
+                    : {}),
+                  nodeId: this.node.id,
+                  occurrence: this.occurrence,
+                  material: this.node.material,
+                  lifecycle: this.alive ? 'active' : 'inactive',
+                  scope: this.scope as unknown as MetadataValue,
+                  owners: this.owners as unknown as MetadataValue,
+                  bindings: fields.map(([name, reference]) => ({
+                    name,
+                    reference: reference as unknown as MetadataValue,
+                    valueState: this.#snapshot?.values[name]?.kind ?? 'not-read',
+                    validationStatus: this.#snapshot?.validation[name]?.status ?? 'not-read',
+                  })),
+                  requests: this.#requests.inspect(budget.maxRows),
+                  projection: this.#snapshot
+                    ? this.#snapshot.error
+                      ? 'error'
+                      : 'ready'
+                    : 'not-read',
+                  coverage: { values: 'not-collected', execution: 'not-collected' },
+                },
+              ],
+            };
+          }),
+        this.environment.inspectionOwner,
+        {
+          kind: 'material',
+          label: this.node.material,
+          capabilities: ['metadata', 'events'],
+        },
+      );
     const qualifications = new Map(
       [this.scope, ...this.owners].map((owner) => [canonical(owner), owner]),
     );
@@ -111,17 +176,22 @@ export class Projection {
   };
   /** 先禁止旧操作和结果交付，再清理观察；不删除业务数据，也不 dispose Runtime。 */
   stop = () => {
+    if (this.#stopping) return;
+    this.#stopping = true;
     this.#active = false;
+    const stopMetadata = this.#stopMetadata;
+    this.#stopMetadata = undefined;
+    const disposers = this.#disposers.splice(0);
     this.#requests.cancelAll();
-    this.#devtools?.dispose();
-    this.#devtools = undefined;
-    for (const dispose of this.#disposers.splice(0)) {
+    stopMetadata?.();
+    for (const dispose of disposers) {
       try {
         dispose();
       } catch {
         /* 单项清理失败不阻断其余。 */
       }
     }
+    this.#stopping = false;
   };
   /** 只管理当前 Hook 监听者；内部子组件可独立切换，整个关联由 MaterialMount 释放。 */
   subscribe = (listener: () => void) => {
@@ -180,16 +250,20 @@ export class Projection {
         canonical(snapshot.validation) === canonical(this.#snapshot.validation)
       )
         return this.#snapshot;
-      return (this.#snapshot = Object.freeze(snapshot));
+      this.#snapshot = Object.freeze(snapshot);
+      emitObservedEvent(this, 'metadata.changed', () => ({ reason: 'projection-updated' }));
+      return this.#snapshot;
     } catch (error) {
       if (this.#snapshot?.error && String(this.#snapshot.error) === String(error))
         return this.#snapshot;
-      return (this.#snapshot = {
+      this.#snapshot = {
         props: {},
         values: {},
         validation: {},
         error: error instanceof Error ? error : Error(String(error)),
-      });
+      };
+      emitObservedEvent(this, 'metadata.changed', () => ({ reason: 'projection-error' }));
+      return this.#snapshot;
     }
   };
   /** 指令交付保留 Runtime 的成功 / changed / errors；失效关联直接返回 inactive。 */

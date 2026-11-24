@@ -1,0 +1,59 @@
+:where(.field-picker-dialog, .reaction-workspace) {
+  --selection-accent: #5642ad;
+  --selection-accent-hover: #46318f;
+  --selection-active: #f1edfb;
+  --selection-hover: #f5f2fb;
+  --selection-muted: #625b74;
+  --selection-divider: #e6e3ee;
+  --selection-text: #25283b;
+  --selection-control-size: 30px;
+  --selection-control-text-size: 13px;
+}
+
+:is(.field-picker-dialog, .reaction-workspace .reaction-edit-dialog) {
+  padding: 0;
+  border: 1px solid #ded8ea;
+  border-radius: 0.9rem;
+  color: var(--selection-text);
+  box-shadow: 0 16px 44px #29203f2e;
+}
+
+:is(.field-picker-dialog, .reaction-workspace .reaction-edit-dialog) > .toolbar {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--selection-divider);
+}
+
+:is(.field-picker-dialog, .reaction-workspace .reaction-edit-dialog)
+  :is(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--selection-accent);
+  outline-offset: 2px;
+}
+
+:is(.field-picker-dialog, .reaction-workspace .reaction-edit-dialog) > .toolbar button,
+.field-picker-footer button {
+  min-height: var(--selection-control-size);
+  font-size: var(--selection-control-text-size);
+}
+
+.field-picker-dialog button {
+  font-size: var(--selection-control-text-size);
+}
+
+.reaction-scope-dialog :is(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--studio-focus-ring);
+  outline-offset: 2px;
+}
+
+:is(.field-picker-dialog .field-picker-apply, .reaction-workspace .reaction-edit-apply) {
+  border-color: var(--selection-accent);
+  background: var(--selection-accent);
+  color: white;
+}
+
+:is(.field-picker-dialog .field-picker-apply, .reaction-workspace .reaction-edit-apply):not(
+    :disabled
+  ):hover {
+  border-color: var(--selection-accent-hover);
+  background: var(--selection-accent-hover);
+}

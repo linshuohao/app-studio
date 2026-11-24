@@ -57,3 +57,16 @@ function visitJson(
     ancestors.delete(input);
   }
 }
+
+/** 对已校验的 JSON 按对象键排序序列化，用于契约摘要和资源身份比较；不校验外部输入。 */
+export function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object')
+    return `{${Object.keys(value)
+      .sort()
+      .map(
+        (key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`,
+      )
+      .join(',')}}`;
+  return JSON.stringify(value)!;
+}

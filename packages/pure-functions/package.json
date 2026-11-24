@@ -10,7 +10,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./manifests": {
+      "development": "./src/manifests.ts",
+      "types": "./dist/manifests.d.ts",
+      "import": "./dist/manifests.js"
+    }
   },
   "files": [
     "dist"
@@ -33,7 +38,11 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       },
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./manifests": {
+        "types": "./dist/manifests.d.ts",
+        "import": "./dist/manifests.js"
+      }
     }
   },
   "dependencies": {

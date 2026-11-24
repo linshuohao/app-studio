@@ -52,9 +52,9 @@ relocated_sections:
 | 4 接缝与交付 | `runtime.ts`、`tests/integration`；createRuntime / replaceContext / dispose | 初始化→编辑→结果反馈→Host 成功 / 失败，真实跨包输入输出与清理 |
 | 5 单轮记录生命周期 | `reactions/context.ts`、`diagnostics/journal.ts`、`diagnostics/reporter.ts`；onDiagnostic / diagnostics | 每轮新建和释放、前置来源、迟到任务引用、截断、销毁及出口异常隔离 |
 
-各批次先写有明确预期的失败用例，再实现并跑通；公共接口是本次代码 Review 的草案。既有干净特性分支上保留增量供用户审查，不自动提交或发布。检查覆盖类型、行为、边界与打包；React 物料实际交互、Flutter 等价和目标设备性能单独验收，不以无界面 Runtime 用例替代。
+各批次先写有明确预期的失败用例，再实现并跑通；公共接口是本次代码 Review 的草案。既有干净特性分支上保留增量供用户审查，不自动提交或发布。检查覆盖类型、行为、边界与打包；React 物料实际交互已由后续 L4 / 资产批次本地验收；Flutter 等价和目标设备性能仍单独验收，不以无界面 Runtime 用例替代。
 
-上述核心模块已有无界面实现与场景用例，不再只有工程占位入口。正文中原有“待固化 / 待实现”仍描述完整设计及其验收，不能简单理解为本批毫无实现，也不能因本批通过就整体关闭：Scope 局部位置维护、依赖与字段聚合性能、生产预算、输入默认值策略、完整 Adapter / 物料交互及跨端一致性继续保留。format 目前按注解处理，未提供格式断言。SDK 字段状态与方法结构供用户 review，未新增架构 ADR 或冻结发布契约。
+当前已实现无界面核心、Scope 相对索引 / 旧视图与 React Adapter / 首批物料交互，见 [Scope 实现](l3-data-scope.md#l3-scope-index)及[完整表单证据](engineering.md#business-travel-implementation)。待实现或继续设计的是首次输入默认值策略等剩余能力；待验收的是依赖 / 字段聚合及整体编辑成本、生产预算、真实 Host 和跨端一致性。已实现范围不再列为从零实现待办，稳定公开 SDK 尚未冻结。format 目前按注解处理，未提供格式断言。SDK 字段状态与方法结构供用户 review，未新增架构 ADR 或冻结发布契约。
 
 初批本地证据曾覆盖 Runtime 41 个用例、纯函数 1 个用例、根级集成 5 个用例；后续增加类方法兼容回归及清理初始化标记链，根级集成保留 4 个真实用例。2026-10-24 按用户授权修正 Journal 生命周期后，Runtime 52 个用例及类型检查通过；10 个新增用例覆盖独立轮次、前置来源、异步回报、销毁、截断与同步 / 异步诊断出口异常。既有六包构建与打包消费证据不替代本批重新验证，也不包含真实表单 UI、Flutter 或设备性能验收。
 
@@ -247,7 +247,7 @@ L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Comman
 
 Data / Scope 与活跃观察者跨轮存在，稳定快照可由消费者持有；Host 可自行保存业务 Baseline 和 Dirty；计数与完整 Trace 仅属于本轮 Flush Context；Validation 自管 Issues / 新鲜度；异常在清理前提取报告交 Host。不建立局部 Health、父子规则控制与链级恢复；安全预算保护整个 Flush。状态所有权继续分别管理，详见 [状态所有权](l3-reactive-engine.md#l3-ownership)。
 
-Typed Read 失败不能静默回退旧值；Missing、null、空字符串、0 与 false 分开。初始化缺失时由业务 when / Pure Function 明确跳过或返回 null，用户清空时如需清空派生值必须显式写回；跳过不会自动清旧值。不建立通用 Reaction Ready 状态机；首次激活已确认显式可配置，默认不执行已确认，正式字段与初始化 API 仍待固化。读取结果和诊断的准确 SDK 形状仍需固化。
+Typed Read 失败不能静默回退旧值；Missing、null、空字符串、0 与 false 分开。初始化缺失时由业务 when / Pure Function 明确跳过或返回 null，用户清空时如需清空派生值必须显式写回；跳过不会自动清旧值。不建立通用 Reaction Ready 状态机；首次激活已确认显式可配置，默认不执行，现行字段 runOnActivate 与 createRuntime 初始化入口已实现。读取结果和诊断的当前 SDK 形状见 ReadResult / Diagnostic，发布兼容承诺尚未冻结。
 
 ### Scope & Identity：动态数组不是普通 splice
 
@@ -301,7 +301,7 @@ Form Instance
 
 纯表达式本身不写数据，因此不能沿用最初稿“多个纯派生规则写同目标一律报错”的假设。对 Command / Reaction 的潜在写入可以做诊断，但合理的有序覆盖不能自动当作非法协议。
 
-L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。正式状态引用、Prepared Expression 求值和快照协议仍待固化，L1 已加入只读 ValidationReference 与显式 ValidationWatch，见[状态观察](l1/04-command-reaction.md#reaction-state-host)；具体 Runtime SDK 仍待固化。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。
+L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope，或 Host / 调试器给出的明确引用；释放函数随调用方生命周期管理。状态引用、Prepared 求值与只读快照已由当前 Runtime SDK 实现，L1 已加入只读 ValidationReference 与显式 ValidationWatch，见[状态观察](l1/04-command-reaction.md#reaction-state-host)；当前 SDK 使用 observe / evaluateValue / snapshot 等入口，见 Runtime README。只改变 Issue 不使 Data-only Reaction 重跑；新 Reaction Command 继续经同一数据入口传播。有效 Change 与 Flush 的职责已明确，底层路径 / 事件编码、ID 与正式接口仍需固化。
 
 ### Command & Flush：即时修改与独立收敛边界
 
@@ -315,7 +315,7 @@ L3 概念入口为 read / dispatch / subscribe，支持 Prepared 计划 + Scope�
     [{"title":"延迟启动同步 Flush","body":"逐 Command 检测与 pending 去重；执行时读最新 Data / Scope，内部写回留在本轮"},{"title":"收敛或保护停止","body":"同值短路、次数预算；可隔离错误继续独立行为；超限整体停止，保留已写数据"},{"title":"追踪 / 通知 / 释放","body":"临时有序事实与 Change 来源；异常提取报告；同步回调写回归本轮","major":true}]
   ],
   "arrows":["↓"],
-  "note":"取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列实现与轮次结果 SDK 仍待固化。"
+  "note":"取代早期候选树 / 整组原子提交议题图，保留原图 ID。Flush 不提交或回滚整轮数据；默认 batch 非原子。单命令可隔离错误继续、整体熔断已确认；同轮回调已确认；队列与 FlushOutcome 已实现；生产预算仍待标定。"
 }
 ```
 
@@ -327,7 +327,7 @@ Command 保留修改意图、顺序与次数。两次添加被保人不能因为
 
 应验证即时读取与旧快照稳定、单次结构操作的身份一致、pending 合并、同轮级联、显式动作次数、预算停止及异常恢复。默认 batch 与 then[] 有序实时写入，不默认整体回滚，允许存在尚未联动完成的工作态；业务不合法由 Validation 报告，不能当作结构性执行失败。可隔离错误不自动阻断后续独立子命令和规则，后续触发只看真实 Change / 自身 Watch，不检查上游成功状态；精确错误类型和接口继续固化。
 
-外部 I/O 由 Host 管理。`array.insert` / `array.move` 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；正式字段与错误 SDK 仍待固化。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；当前轮中止清队列、后续新触发正常执行已确认，保留填写和独立校验，轮次结果 SDK 仍待固化，详见 [错误与整体熔断](l3-reactive-engine.md#l3-errors)。
+外部 I/O 由 Host 管理。`array.insert` / `array.move` 已确认数字 / 锚点双定位、移动按最终下标和位置失效明确失败；ArrayPosition、命令执行与结果 / 诊断类型已实现。超限统一中止整个 Flush，不能自动把遗留任务搬到下一轮无限重试，也不能把中止记成正常收敛。不做局部熔断、下游禁用或 Health 影响链；当前轮中止清队列、后续新触发正常执行已确认，保留填写和独立校验，轮次结果 FlushOutcome 已实现，生产阈值待标定，详见 [错误与整体熔断](l3-reactive-engine.md#l3-errors)。
 
 ### Validation：合法性不能只依赖 UI {#validation}
 
@@ -381,7 +381,7 @@ Host 管异步加载和防止迟到输入覆盖编辑；Runtime 只装载明确�
 | 推荐 | Object.is 观察值比较、Trie / 模板组合、局部旧 ScopeReadView、位置型匹配；稳定队列顺序、静态 SCC 算法、Trace 头尾截断和编译 Source Map |
 | 已确认 · 现行职责边界 | 每条 Command 前后 Root / Scope 检测；常规 Reaction 只响应有效 Watch 变化；runOnActivate 仅新实例首次激活；字段无业务所有权；稳定 snapshot；整数组替换重建成员身份；Dirty / 业务 Baseline / Reset 策略归 Host，不绕过 Watch 重跑已有实例 |
 | 待讨论 / 固化 | 首次激活字段形状、实例建立 / 替换与稳定快照 SDK；队列实现、当前轮清队列 / 新触发验收、完整校验结果接口、错误分类及 ABI；业务 Dirty / Reset 策略不再作为 Runtime 未决项 |
-| 待实现标定 | 局部旧 Scope 视图、共享对象防御、Trie / 模板 / Scope 解析性能；执行次数、耗时、记录容量和上报限频阈值 |
+| 已实现 / 待验收 | Scope 相对索引、局部旧视图及共享对象防御已有实现 / 回归；整体编辑性能、执行次数、耗时、记录容量和生产上报限频阈值待标定 |
 | 延期 | 时间切片 / 优先级、全量或局部 Hash、高级因果图分析、历史 Snapshot 恢复与确定性 Replay |
 
 可隔离错误继续与超限整体熔断已有共识。首次激活默认不执行已确认；字段形状、稳定快照与 Pending 接口继续细化；预算与参数在实现验证中标定。
@@ -465,7 +465,7 @@ Runtime 实例只根据兼容 PreparedForm 建立，按 Prepared Observation 匹
     [{"title":"释放本轮 Context","body":"正常不留生产完整历史；异常先向 Host 提取报告；Devtools 自行保存"}]
   ],
   "arrows":["↓","↓","↕","↓"],
-  "note":"Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；当前轮清队列和后续新触发已确认，队列实现与结果 SDK 待固化。"
+  "note":"Flush 是联动调度边界，数据在每条 Command 时已经生效。可隔离错误继续，超限整体中止；同轮回调已确认；当前轮清队列和后续新触发已确认，队列与 FlushOutcome 已实现；生产预算待标定。"
 }
 ```
 
@@ -513,7 +513,7 @@ takeNext():
 
 ## 初始化、缺失与清空由业务规则表达 {#l3-missing-values}
 
-确认不新增通用 Reaction Ready 状态机。必须区分读取缺失 / 未初始化、null、空字符串、0 与 false，不能用统一 falsy 判断表示“未就绪”。Missing 的具体读取表示与准确 SDK 类型仍待固化；示意中的 undefined 不作为 JSON 数据值写入协议。
+确认不新增通用 Reaction Ready 状态机。必须区分读取缺失 / 未初始化、null、空字符串、0 与 false，不能用统一 falsy 判断表示“未就绪”。Missing 已由当前 ReadResult 的 missing 分支表达；示意中的 undefined 不作为 JSON 数据值写入协议。
 
 | 场景 | 业务规则需要表达什么 | 结果 |
 | --- | --- | --- |
@@ -528,7 +528,7 @@ takeNext():
 Reaction 的 set 把返回值写入 premium，仍经过正常变化匹配。
 ```
 
-首次激活策略可配置，由 L1 表达、L2 编译，仅在新 Reaction 实例建立时应用；默认不执行已确认，正式字段与 SDK 仍待固化。Reset 由 Host 生成普通 Command，没有 Watch 有效变化就不重跑已有实例；这取代旧的主动重算目标。空值处理仍由配置表达，L3 不补 watch 或修复派生值；详见 [初始化与 Host 业务基准](l3-data-scope.md#l3-initialization-baseline)。
+首次激活策略可配置，由 L1 表达、L2 编译，仅在新 Reaction 实例建立时应用；默认不执行，正式字段 runOnActivate 与 Runtime 激活路径已实现。Reset 由 Host 生成普通 Command，没有 Watch 有效变化就不重跑已有实例；这取代旧的主动重算目标。空值处理仍由配置表达，L3 不补 watch 或修复派生值；详见 [初始化与 Host 业务基准](l3-data-scope.md#l3-initialization-baseline)。
 
 ## 四种执行轨迹 {#l3-traces}
 
@@ -573,7 +573,7 @@ Host 主动对当前数据发起完整校验，不为提交额外触发一轮 Re
 | 合法多轮收敛 | 正常结束，不持久上报完整轨迹 | 不将次数多直接判错 |
 | 疑似往复写入 / 持续覆盖 | 如实记录实际是否收敛，可报告异常模式 | 分类、阈值与上报限频 |
 | Function / Command 可隔离错误 | 记录并报告，不回滚其他成功修改；后续独立 Command 继续尝试，其他 Reaction 按实际 Change 响应 | 错误类型、诊断、门控求值失败等具体继续条件与 API |
-| 单实例 / 本轮执行数超限 | 中止整个当前 Flush，清空剩余 Reaction，不做局部链路熔断 | 下一次新操作产生有效失效时正常建新轮；旧任务不自动续跑，阈值 / Outcome SDK 待固化 |
+| 单实例 / 本轮执行数超限 | 中止整个当前 Flush，清空剩余 Reaction，不做局部链路熔断 | 下一次新操作产生有效失效时正常建新轮；旧任务不自动续跑，Outcome SDK 已实现，生产阈值待标定 |
 | 耗时异常 | 执行边界判断并报告，无法抢占正在执行的同步函数 | 阈值和边界处理 |
 | Scope 已删除 | 正常取消过期实例任务，回收关联 | 不作为业务错误上报 |
 
@@ -598,9 +598,9 @@ Reaction 执行错误的报告必须保留完整触发 / 调用输入、具体 R
 | Renderer | 获知最新状态变化 | 读取 Data / Props 与字段 Issue 聚合，不要求消费同步校验的每个中间状态 |
 | Submit | 显式完整校验覆盖全部适用约束与输出，不要求 Reaction 成功 | 无 Issue 不等于完备；熔断后仍可校验，完整通过后由 Host 提交 |
 
-已明确正常路径：共享依赖匹配登记校验 Pending，Reaction 收敛后执行完整根 Schema 与本轮 Constraint 链，结果按 Source 保存、字段聚合。没有 Reaction 时校验也有独立入口；初始化 / 主动完整校验不能等待第一次修改。L2 补全可推导依赖，L3 递归补齐本轮前置并按实例去重；requires 语法与完整返回仍待固化，不引入前置结果 PubSub。
+已明确正常路径：共享依赖匹配登记校验 Pending，Reaction 收敛后执行完整根 Schema 与本轮 Constraint 链，结果按 Source 保存、字段聚合。没有 Reaction 时校验也有独立入口；初始化 / 主动完整校验不能等待第一次修改。L2 补全可推导依赖，L3 递归补齐本轮前置并按实例去重；requires 类型、实例处理与 FullValidationResult 已实现，不引入前置结果 PubSub。
 
-完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断停止当前轮并清队列，后续新触发正常执行；保留填写与独立完整校验，通过后 Host 可提交对应快照。Outcome 与完整结果 SDK 仍需固化。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 [L3 校验专题](l3-validation.md)。
+完整校验需区分当前通过、业务失败、不完备与过期，核对必要外部义务、当前输入与输出。Reaction 可隔离错误不自动阻止提交；整体熔断停止当前轮并清队列，后续新触发正常执行；保留填写与独立完整校验，通过后 Host 可提交对应快照。FlushOutcome 与 FullValidationResult 已实现，正式发布兼容承诺待验收。按局部受损范围 / Health 传播决定提交方案已退出，不引入失败下游禁用；实际提交、权限和风控归 Host。完整职责、推荐存储、异步与 V01–V16 设计验收见 [L3 校验专题](l3-validation.md)。
 
 微任务启动 Flush 可能仍发生在浏览器绘制前，耗时同步纯函数会阻塞主线程，这是当前接受的简化取舍。未来可以替换 Scheduler，但需保持数据写入、收敛、身份及异常契约。
 
@@ -627,7 +627,7 @@ Reaction 执行错误的报告必须保留完整触发 / 调用输入、具体 R
 | C17 | 整体熔断后再触发 | 当前轮中止后又出现外部修改 | 不回滚已写 Data；清空剩余 Reaction，旧任务不自重试；新有效失效建立新 Flush / 预算，无变化不入队；独立完整校验通过可提交 |
 | C18 | Devtools 关闭 | 开关 Devtools 运行同表单 | Reaction 输出和调度语义一致 |
 
-这些是未来 Runtime 的设计验收，当前候选协议检查与有界探针不实现真实 Flush / Trace / 整体熔断，不能将其通过计数当成本表已经通过。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的当前轮清队列及后续新触发已确认，实际实现待验收。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 [12 个跨层场景](dependency-reactivity.md#dependency-v05-acceptance)。
+这些是 Runtime 的设计验收目标；当前真实实现与 reaction / diagnostics / lifecycle 用例已有本地记录，见本篇实现入口。候选协议探针不实现真实 Flush / Trace / 整体熔断，不能将其计数当成本表逐项通过；完整目标覆盖与生产验收仍须分别核对。C17 采用整体保护边界，旧行在归档保留；C16 的同轮语义已确认，C17 的当前轮清队列及后续新触发已实现并有本地回归，生产阈值待验收。新增的 Command 隔离、初始化空值和 Prepared 拒绝回退见 [12 个跨层场景](dependency-reactivity.md#dependency-v05-acceptance)。
 
 下一步以 [逐 Command 数据 / Scope 检测的 16 个场景](l3-data-scope.md#l3-v06-acceptance) 与 [现行边界验收](#l3-runtime-host-boundary) 验证稳定快照、新实例激活、已有实例同值不重跑、普通恢复 Command、替换 / Dispose、通知重入与精确排序。当前轮清队列 / 后续新触发及 Context 交接继续做实现验收，完整校验 SDK 继续补齐；正常路径已纳入 [校验专题](l3-validation.md#validation-completeness)。随后固化 Trace / 参数 / 错误接口，以动态数组与高频输入标定预算。可隔离错误继续与整轮熔断不再重开为局部传播设计。正式类型、Schema、Prepared ABI、Runtime 与适配器按落地任务建立，不将本篇概念结构当成生产发布包。
 

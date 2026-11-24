@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>字段编辑抽屉 · 设计草案</title>
+    <link rel="stylesheet" href="../apps/studio/src/app/studio-ui.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 13px;
+      }
+      body {
+        margin: 0;
+        color: var(--studio-text);
+        background: var(--studio-bg);
+        font: var(--studio-type-body);
+      }
+      h1 {
+        font: var(--studio-type-title);
+      }
+      h2,
+      summary {
+        font: var(--studio-type-section);
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+      header,
+      main {
+        padding: 16px 24px;
+      }
+      header {
+        background: white;
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .bar,
+      footer,
+      .fieldline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .right {
+        margin-left: auto;
+      }
+      .shell {
+        background: white;
+        border: 1px solid var(--studio-border);
+        padding: 16px;
+        border-radius: 8px;
+        max-width: 1000px;
+        margin-top: 24px;
+      }
+      .tree {
+        display: grid;
+        margin-top: 12px;
+      }
+      .tree button {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-align: left;
+        border: 0;
+        border-top: 1px solid var(--studio-border);
+        background: white;
+        padding: 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .tree button[aria-current='true'] {
+        background: var(--studio-selected);
+      }
+      small,
+      code,
+      .muted {
+        color: var(--studio-text-muted);
+      }
+      code {
+        font: var(--studio-type-code);
+        overflow-wrap: anywhere;
+      }
+      dialog {
+        color: inherit;
+        border: 1px solid var(--studio-border);
+        padding: 24px;
+        border-radius: 8px;
+        max-width: min(100vw, 560px);
+      }
+      dialog::backdrop {
+        background: #23272f33;
+      }
+      #drawer {
+        position: fixed;
+        inset: 0 0 0 auto;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-left: 1px solid var(--studio-border);
+        border-radius: 0;
+        width: min(640px, 100vw);
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+      }
+      #drawer[open] {
+        display: flex;
+        flex-direction: column;
+      }
+      #drawer header {
+        padding: 16px 24px;
+      }
+      .body {
+        padding: 0 24px 16px;
+        overflow: auto;
+        flex: 1;
+      }
+      .section {
+        padding: 20px 0;
+        border-bottom: 1px solid var(--studio-border);
+      }
+      .section h2 {
+        margin-bottom: 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .field {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        min-width: 0;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      input:not([type='checkbox']),
+      select,
+      textarea {
+        min-width: 0;
+        width: 100%;
+        min-height: 36px;
+        border: 1px solid var(--studio-control-border);
+        border-radius: 4px;
+        padding: 6px 10px;
+        background: white;
+        color: inherit;
+        font: inherit;
+      }
+      input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .fieldline select {
+        width: auto;
+      }
+      .fieldline input {
+        flex: 1;
+      }
+      summary,
+      button {
+        cursor: pointer;
+      }
+      details.section[open] > summary {
+        margin-bottom: 16px;
+      }
+      .rule {
+        background: var(--studio-bg);
+        padding: 12px 16px;
+        border-radius: 8px;
+      }
+      .rule p {
+        margin: 4px 0;
+      }
+      .foot {
+        padding: 12px 24px;
+        border-top: 1px solid var(--studio-border);
+      }
+      .link {
+        color: var(--studio-info-fg);
+      }
+      pre {
+        max-height: 60vh;
+        overflow: auto;
+        background: var(--studio-bg);
+        padding: 16px;
+      }
+      button:focus-visible,
+      summary:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--studio-focus-ring);
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 520px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .body,
+        #drawer header,
+        .foot {
+          padding-inline: 16px;
+        }
+        .bar {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="bar">
+      <b>Studio</b> / 旅险投保 / 字段配置
+      <a class="right link" href="field-property-groups.html">逐属性控件评审</a>
+    </header>
+    <main>
+      <h1>旅险投保申请</h1>
+      <section class="shell">
+        <div class="bar">
+          <h2>表单结构</h2>
+          <label class="right check"><input type="checkbox" id="ro" />只读查看</label>
+        </div>
+        <div class="tree" id="tree"></div>
+      </section>
+    </main>
+    <dialog id="drawer" aria-labelledby="heading">
+      <header>
+        <div class="bar">
+          <h1 id="heading"></h1>
+          <button id="close" class="studio-button right" data-variant="text">关闭</button>
+        </div>
+        <div class="bar">
+          <code id="pointer"></code
+          ><button class="studio-button right" data-variant="text" id="source">
+            查看节点 JSON
+          </button>
+        </div>
+      </header>
+      <div class="body">
+        <form id="form">
+          <section class="section">
+            <h2>字段属性</h2>
+            <div id="base" class="grid"></div>
+          </section>
+          <section class="section">
+            <h2 id="specific"></h2>
+            <div id="limits" class="grid"></div>
+          </section>
+          <details class="section" id="advanced">
+            <summary>高级属性</summary>
+            <div id="extra" class="grid"></div>
+          </details>
+          <section class="section" id="ruleBox">
+            <h2>条件与依赖</h2>
+            <div class="rule" id="rule"></div>
+          </section>
+        </form>
+      </div>
+      <footer class="foot">
+        <small id="state" role="status"></small
+        ><button class="studio-button right" id="cancel" data-variant="secondary">取消</button
+        ><button class="studio-button" id="apply" form="form">应用修改</button>
+      </footer>
+    </dialog>
+    <dialog id="leave" aria-labelledby="leaveTitle">
+      <h2 id="leaveTitle">放弃本次字段修改？</h2>
+      <p>已输入的内容尚未应用到工作台草稿。</p>
+      <footer style="margin-top: 16px">
+        <button class="studio-button" id="stay">继续编辑</button
+        ><button class="studio-button" data-variant="secondary" id="drop">放弃修改</button>
+      </footer>
+    </dialog>
+    <dialog id="json" aria-labelledby="jsonTitle">
+      <h2 id="jsonTitle">节点 JSON · 当前输入</h2>
+      <pre></pre>
+      <button class="studio-button" id="done">关闭原文</button>
+    </dialog>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let schema = {
+        type: 'object',
+        title: '投保资料',
+        properties: {
+          trip: { title: '行程类型', type: 'string', enum: ['境内', '境外'] },
+          passportNo: {
+            title: '护照号码',
+            type: 'string',
+            minLength: 6,
+            maxLength: 12,
+            pattern: '^[A-Z0-9]+$',
+          },
+          age: { title: '投保年龄', type: 'integer', minimum: 0, maximum: 110 },
+        },
+        required: ['trip'],
+        if: { required: ['trip'], properties: { trip: { const: '境外' } } },
+        then: { required: ['passportNo'] },
+      };
+      let key, draft, required, trigger;
+      const obj = () => (key ? schema.properties[key] : schema);
+      function el(t, text) {
+        const n = document.createElement(t);
+        if (text !== undefined) n.textContent = text;
+        return n;
+      }
+      function button(t, fn) {
+        const n = el('button', t);
+        n.type = 'button';
+        n.className = 'studio-button';
+        n.dataset.variant = 'text';
+        n.onclick = fn;
+        return n;
+      }
+      function tree() {
+        const box = $('tree');
+        box.replaceChildren();
+        for (const k of ['', 'trip', 'passportNo', 'age']) {
+          const n = k ? schema.properties[k] : schema,
+            b = button(n.title, () => open(k, b));
+          b.dataset.key = k;
+          b.setAttribute('aria-current', String(k === key));
+          if (k) b.style.paddingLeft = '32px';
+          b.append(
+            el('code', k || '表单根'),
+            el('small', { string: '文本', integer: '整数', object: '对象' }[n.type]),
+          );
+          box.append(b);
+        }
+      }
+      function changed() {
+        return (
+          JSON.stringify(draft) !== JSON.stringify(obj()) ||
+          (key && required !== schema.required.includes(key))
+        );
+      }
+      function state() {
+        const ro = $('ro').checked;
+        $('state').textContent = ro
+          ? '只读查看'
+          : changed()
+            ? '有待应用的修改'
+            : '已与工作台草稿同步';
+        $('apply').disabled = !changed();
+        $('apply').hidden = $('cancel').hidden = ro;
+      }
+      function field(host, label, control) {
+        const l = el('label');
+        l.className = 'field';
+        l.append(label, control);
+        host.append(l);
+      }
+      function input(host, label, k, number = false) {
+        const n = el('input');
+        n.type = number ? 'number' : 'text';
+        if (number) n.step = '1';
+        if (['minLength', 'maxLength'].includes(k)) n.min = '0';
+        n.value = draft[k] ?? '';
+        n.readOnly = $('ro').checked;
+        n.oninput = () => {
+          if (n.value === '') delete draft[k];
+          else draft[k] = number ? Number(n.value) : n.value;
+          state();
+        };
+        field(host, label, n);
+        return n;
+      }
+      function sel(host, label, opts, value, fn) {
+        const s = el('select');
+        s.setAttribute('aria-label', label);
+        for (const o of opts) s.append(el('option', o));
+        s.value = value;
+        s.disabled = $('ro').checked;
+        s.onchange = () => {
+          fn(s.value);
+          state();
+        };
+        field(host, label, s);
+        return s;
+      }
+      function open(k, b) {
+        key = k;
+        trigger = b;
+        draft = structuredClone(obj());
+        required = schema.required.includes(k);
+        $('advanced').open = false;
+        $('heading').textContent = draft.title;
+        $('pointer').textContent = '/data/schema' + (key ? '/properties/' + key : '');
+        for (const id of ['base', 'limits', 'extra', 'rule']) $(id).replaceChildren();
+        input($('base'), '显示名称', 'title').required = true;
+        const id = el('input');
+        id.value = k || '根对象';
+        id.readOnly = true;
+        field($('base'), '字段标识', id);
+        if (k) {
+          const l = el('label');
+          l.className = 'check';
+          const c = el('input');
+          c.type = 'checkbox';
+          c.checked = required;
+          c.disabled = $('ro').checked;
+          c.onchange = () => {
+            required = c.checked;
+            state();
+          };
+          l.append(c, '始终必填');
+          $('base').append(l);
+        }
+        const t = draft.type;
+        $('specific').textContent = { object: '对象结构', string: '文本限制', integer: '整数范围' }[
+          t
+        ];
+        if (t === 'object') {
+          $('limits').append(el('p', '子字段：行程类型、护照号码、投保年龄。'));
+        } else if (t === 'string') {
+          input($('limits'), '最短长度', 'minLength', true);
+          input($('limits'), '最长长度', 'maxLength', true);
+          input($('extra'), '格式名称', 'format');
+          input($('extra'), '正则表达式', 'pattern');
+        } else {
+          for (const [lo, hi, label, ops] of [
+            ['minimum', 'exclusiveMinimum', '下限', ['≥', '>']],
+            ['maximum', 'exclusiveMaximum', '上限', ['≤', '<']],
+          ]) {
+            let active = hi in draft ? hi : lo;
+            const box = el('div');
+            box.className = 'fieldline';
+            const op = el('select');
+            op.setAttribute('aria-label', label + '边界');
+            ops.forEach((o) => op.append(el('option', o)));
+            op.selectedIndex = active === hi ? 1 : 0;
+            op.disabled = $('ro').checked;
+            const v = el('input');
+            v.type = 'number';
+            v.step = 'any';
+            v.readOnly = $('ro').checked;
+            v.setAttribute('aria-label', label + '数值');
+            v.value = draft[active] ?? '';
+            function sync() {
+              delete draft[lo];
+              delete draft[hi];
+              active = op.selectedIndex ? hi : lo;
+              if (v.value !== '') draft[active] = Number(v.value);
+              state();
+            }
+            op.onchange = v.oninput = sync;
+            box.append(op, v);
+            field($('limits'), label, box);
+          }
+          input($('extra'), '倍数', 'multipleOf', true).step = 'any';
+        }
+        if (draft.enum) {
+          const p = el('p', '允许值：' + draft.enum.join('、'));
+          $('limits').append(p);
+        }
+        input($('extra'), '字段说明', 'description');
+        $('advanced').querySelector('summary').textContent =
+          '高级属性' + (draft.pattern ? ' · 已设置正则匹配' : '');
+        $('ruleBox').hidden = !!k && !['trip', 'passportNo', 'age'].includes(k);
+        const dependsOn = schema.then.required;
+        if (!k) {
+          sel(
+            $('rule'),
+            '当行程类型等于',
+            ['境内', '境外'],
+            draft.if.properties.trip.const,
+            (v) => (draft.if.properties.trip.const = v),
+          );
+          sel(
+            $('rule'),
+            '则要求字段',
+            ['passportNo', 'age'],
+            draft.then.required[0],
+            (v) => (draft.then.required = [v]),
+          );
+        } else if (k === 'trip' || dependsOn.includes(k)) {
+          $('rule').append(
+            el('small', '来自父对象 · 投保资料'),
+            el(
+              'p',
+              '当行程类型为「' +
+                schema.if.properties.trip.const +
+                '」时，必填「' +
+                schema.properties[dependsOn[0]].title +
+                '」。',
+            ),
+            button('查看所属对象', () =>
+              guard(() => {
+                closeDrawer();
+                open('', document.querySelector('[data-key=""]'));
+              }),
+            ),
+          );
+        } else $('ruleBox').hidden = true;
+        state();
+        document.querySelector('.body').scrollTop = 0;
+        if (!$('drawer').open) $('drawer').showModal();
+      }
+      function closeDrawer() {
+        $('drawer').close();
+        tree();
+        document.querySelector('[data-key="' + key + '"]')?.focus();
+      }
+      let pending;
+      function guard(fn) {
+        if (!changed()) return fn();
+        pending = fn;
+        $('leave').showModal();
+      }
+      $('close').onclick = $('cancel').onclick = () => guard(closeDrawer);
+      $('drawer').oncancel = (e) => {
+        e.preventDefault();
+        guard(closeDrawer);
+      };
+      $('stay').onclick = () => $('leave').close();
+      $('drop').onclick = () => {
+        $('leave').close();
+        pending();
+      };
+      $('form').onsubmit = (e) => {
+        e.preventDefault();
+        if ($('ro').checked) return;
+        if (draft.multipleOf !== undefined && draft.multipleOf <= 0) {
+          $('state').textContent = '倍数须大于零。';
+          return;
+        }
+        const a = draft.minLength ?? draft.minimum ?? draft.exclusiveMinimum,
+          b = draft.maxLength ?? draft.maximum ?? draft.exclusiveMaximum;
+        if (a !== undefined && b !== undefined && a > b) {
+          $('state').textContent = '下限不能高于上限。';
+          return;
+        }
+        if (key) {
+          schema.properties[key] = draft;
+          const keys = new Set(schema.required);
+          required ? keys.add(key) : keys.delete(key);
+          schema.required = [...keys];
+        } else schema = draft;
+        closeDrawer();
+      };
+      $('source').onclick = () => {
+        document.querySelector('pre').textContent = JSON.stringify(draft, null, 2);
+        $('json').showModal();
+      };
+      $('done').onclick = () => $('json').close();
+      tree();
+      open('passportNo', document.querySelector('[data-key="passportNo"]'));
+    </script>
+  </body>
+</html>

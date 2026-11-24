@@ -1,17 +1,7 @@
 import type { ArtifactIdentity, JsonValue, JsonSchema } from '@form-engine/protocol';
-import type { PureFunctionManifest } from '@form-engine/protocol/capability';
+import type { FunctionBinding, FunctionRegistry } from './types.js';
+export type { FunctionBinding, FunctionRegistry } from './types.js';
 
-/** 一个纯函数的静态契约、制品身份和同步实现；Compiler 与 Runtime 使用同一份身份。 */
-export interface FunctionBinding {
-  /** 参数 / 返回值签名，供 Compiler 检查及 Runtime 装载与调用门禁使用。 */
-  readonly manifest: PureFunctionManifest;
-  /** Host 提供的构建制品标识，必须匹配 Prepared 能力锁。 */
-  readonly artifact: ArtifactIdentity;
-  /** 普通函数的同步调用入口；惰性控制形式由表达式求值器单独解释。 */
-  readonly invoke: (args: readonly JsonValue[]) => JsonValue;
-}
-/** 函数 ID → 实现绑定；装载后按 Prepared 所需项固定，不动态替换。 */
-export type FunctionRegistry = Readonly<Record<string, FunctionBinding>>;
 /** 标记本模块真实创建的 core 绑定，防止 Host 仅通过同名注册覆盖保留语义。 */
 const coreBindings = new WeakSet<FunctionBinding>();
 /** 以对象身份检查内置绑定，不依赖可伪造的 manifest.id 字符串。 */
@@ -98,3 +88,16 @@ export function createCoreFunctions(artifact: ArtifactIdentity): FunctionRegistr
   });
   return Object.freeze(entries);
 }
+
+// <generated-assets>
+export { createDateAgeInYears } from './date-age-in-years/implementation.js';
+export { createDateInclusiveDays } from './date-inclusive-days/implementation.js';
+export { createTextIsNonBlank } from './text-is-non-blank/implementation.js';
+export { createTravelIsEligibleAge } from './travel-is-eligible-age/implementation.js';
+export { createTravelIsTripRangeAllowed } from './travel-is-trip-range-allowed/implementation.js';
+export { createTravelPersonPremium } from './travel-person-premium/implementation.js';
+export { createTravelRequiresGuardian } from './travel-requires-guardian/implementation.js';
+export { createTravelTotalPremium } from './travel-total-premium/implementation.js';
+// </generated-assets>
+
+export type { AgePolicy, DailyRates, RatePolicy } from './_internal/policy.js';

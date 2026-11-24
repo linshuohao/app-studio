@@ -1,0 +1,297 @@
+.agent-thread {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  gap: 8px;
+  padding: 16px;
+}
+.agent-history {
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.agent-history p {
+  white-space: pre-wrap;
+}
+.agent-thread textarea {
+  width: 100%;
+  min-height: 0;
+  height: 3.25rem;
+  margin: 0;
+  resize: none;
+  overflow-y: auto;
+  font: inherit;
+}
+/* Keep the editor grid independent of the conversation panel. */
+.agent-thread {
+  max-height: calc(100dvh - 160px);
+  overflow: auto;
+}
+.agent-thread-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.agent-thread-heading h2 {
+  margin: 0;
+}
+:is(.agent-launcher, .agent-thread[data-floating]) {
+  position: fixed;
+  z-index: 10;
+  inset-inline-end: 16px;
+  bottom: 16px;
+  box-shadow: var(--studio-overlay-shadow);
+}
+.agent-thread[data-floating] {
+  width: min(360px, calc(100% - 32px));
+  max-height: min(64dvh, 520px);
+  box-sizing: border-box;
+  background: var(--studio-surface, white);
+}
+.agent-dock-button {
+  position: fixed;
+  z-index: 11;
+  inset-inline-end: 20px;
+  bottom: 20px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--studio-on-primary, white);
+  background: var(--studio-primary, #262c36);
+  box-shadow: var(--studio-overlay-shadow);
+  touch-action: none;
+  user-select: none;
+}
+.agent-dock-button:hover {
+  background: var(--studio-primary-hover, #171c24);
+}
+.agent-dock-button > .studio-icon {
+  width: 22px;
+  height: 22px;
+}
+.agent-presentation-dock {
+  display: contents;
+}
+.agent-presentation-dock .agent-workbench {
+  display: contents;
+}
+
+.agent-thread-heading .agent-drag-handle {
+  flex: none;
+  text-align: start;
+  align-self: stretch;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  font-weight: 650;
+}
+.agent-thread-heading .agent-drag-handle:active {
+  cursor: grabbing;
+}
+.agent-thread[data-floating][data-resized] {
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+}
+.agent-thread .agent-resize-handle {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--studio-text-muted);
+  border: 0;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.agent-markdown {
+  min-width: 0;
+  overflow-x: auto;
+}
+.agent-markdown p {
+  white-space: normal;
+}
+.agent-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+}
+.agent-markdown table {
+  border-collapse: collapse;
+}
+.agent-markdown :is(th, td) {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid currentColor;
+}
+.agent-candidate-card {
+  border: 1px solid var(--border, #ccc);
+  border-radius: 6px;
+  padding: 0.65rem;
+  margin-block: 0.5rem;
+}
+.agent-markdown [data-streamdown='strong'] {
+  font-weight: 650;
+}
+
+.agent-history [data-speaker] {
+  width: fit-content;
+  max-width: 90%;
+  padding: 8px 12px;
+  margin-block: 8px;
+  border-radius: 10px;
+}
+.agent-history [data-speaker='user'] {
+  margin-inline-start: auto;
+  background: color-mix(in srgb, var(--studio-accent, #536dde) 14%, transparent);
+}
+.agent-history [data-speaker='assistant'] {
+  border-inline-start: 3px solid var(--studio-border, #c9cbd2);
+}
+
+.agent-history-frame {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  position: relative;
+}
+.agent-thread .agent-jump-latest {
+  position: absolute;
+  inset: auto auto var(--studio-space-8) 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  padding: 0;
+  box-shadow: var(--studio-overlay-shadow);
+}
+.agent-jump-latest .studio-icon + .studio-icon {
+  margin-block-start: -8px;
+}
+.agent-interaction-card {
+  display: grid;
+  gap: var(--studio-space-8);
+  margin-block: var(--studio-space-8);
+  padding: var(--studio-space-12);
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+}
+.agent-interaction-card[data-tone='info'] {
+  background: var(--studio-info-bg);
+  border-color: var(--studio-info-border);
+}
+.agent-interaction-card[data-tone='warning'] {
+  background: var(--studio-warning-bg);
+  border-color: var(--studio-warning-border);
+}
+.agent-interaction-card h3 {
+  margin: 0;
+  font: var(--studio-type-section);
+}
+.agent-resource-link {
+  display: grid;
+  gap: var(--studio-space-4);
+  padding: var(--studio-space-8) var(--studio-space-12);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+  background: var(--studio-surface);
+  color: var(--studio-info-fg);
+  text-decoration: none;
+}
+.agent-resource-link:hover {
+  background: var(--studio-hover);
+}
+
+.agent-thread[data-floating] {
+  width: min(372px, calc(100vw - 32px));
+  height: min(458px, calc(100dvh - 64px));
+  max-height: calc(100dvh - 16px);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-8);
+  gap: var(--studio-space-8);
+  padding: var(--studio-space-12);
+}
+.agent-thread[data-floating] .agent-thread-heading {
+  min-height: 40px;
+  padding-inline-start: var(--studio-space-8);
+  border-bottom: 1px solid var(--studio-border);
+}
+.agent-thread-heading .agent-drag-handle {
+  min-width: 0;
+  display: flex;
+  gap: var(--studio-space-8);
+  align-items: center;
+}
+.agent-thread-heading .agent-conversation-title {
+  flex: 1;
+  min-width: 0;
+  padding-inline: 0;
+  text-align: start;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--studio-space-8);
+  padding-block-start: var(--studio-space-8);
+  border-block-start: 1px solid var(--studio-border);
+}
+.agent-compose textarea {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--studio-space-8);
+  border-radius: var(--studio-radius-8);
+}
+
+.agent-thread[data-floating] {
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+}
+.agent-thread[data-floating] :is(.agent-thread-heading, .agent-history-frame, .agent-history) {
+  min-inline-size: 0;
+}
+.agent-history-frame {
+  grid-template-columns: minmax(0, 1fr);
+}
+.agent-thread[data-floating] .agent-history {
+  overflow: hidden auto;
+}
+.agent-title-edit {
+  flex: 1;
+  min-width: 0;
+}
+.agent-title-edit .studio-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.agent-thread[data-floating] .agent-markdown {
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+.agent-thread[data-floating] .agent-history :is(pre, code) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-thread[data-floating] .agent-history table {
+  width: 100%;
+  table-layout: fixed;
+}
+.agent-thread[data-floating] .agent-history :is(img, video, svg) {
+  max-width: 100%;
+}

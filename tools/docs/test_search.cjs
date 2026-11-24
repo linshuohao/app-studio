@@ -31,8 +31,23 @@ const validation = filterKnowledgeRecords(catalog.records, {kind: 'conflict', mo
 assert.deepEqual(validation.map(record => record.id), []);
 const pendingReview = {...catalog.records.find(record => record.id === 'REV-02'), blocking: true, state: 'open'};
 assert.deepEqual(filterKnowledgeRecords([pendingReview], {kind: 'conflict', module: 'M11', blocking: 'yes'}).map(record => record.id), ['REV-02']);
-assert.equal(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '存在阻塞'}).length, 0);
-assert.equal(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '已完成'}).length, 2);
-assert.deepEqual(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '待设计'}).map(record => record.id), ['M18', 'M19']);
-assert(filterKnowledgeRecords(catalog.records, {kind: 'module', state: '部分完成'}).some(record => record.id === 'M14'));
+
+// Module maturity changes independently of the reader's filter behavior.
+const moduleStatusFixtures = [
+  {id: 'pending-design', kind: 'module', state: '待设计'},
+  {id: 'in-progress', kind: 'module', state: '部分完成'},
+  {id: 'complete', kind: 'module', state: '已完成'},
+  {id: 'blocked', kind: 'module', state: '存在阻塞'},
+  {id: 'unknown', kind: 'module', state: '状态未知'},
+];
+const statusRecords = [
+  ...moduleStatusFixtures,
+  {id: 'other-kind', kind: 'task', state: '部分完成'},
+];
+for (const moduleRecord of moduleStatusFixtures) {
+  assert.deepEqual(
+    filterKnowledgeRecords(statusRecords, {kind: 'module', state: moduleRecord.state}),
+    [moduleRecord],
+  );
+}
 console.log('Search / filtering checks passed: cross-document body matches, metadata filters, module scope and blocking semantics.');

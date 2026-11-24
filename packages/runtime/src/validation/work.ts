@@ -9,6 +9,8 @@ import type { ExecutionTrace } from '../diagnostics/reporter.js';
 
 /** 一个来源当前的一份执行工作；排队、同步检查和网络等待共用同一身份。 */
 export class ValidationWork {
+  /** 同一共享工作只报告一次启动；重查前置不冒充新任务。 */
+  started = false;
   /** settling 表示结果正在同步发布，新完整调用可以请求重试，避免复用已完成的外部结果。 */
   phase: 'queued' | 'running' | 'pending' | 'settling' | 'done' | 'cancelled' = 'queued';
   /** 当前等待此工作的完整调用号；调用结束就解除，不持有已结束收集器。 */
@@ -19,6 +21,8 @@ export class ValidationWork {
   constructor(
     readonly id: number,
     readonly source: string,
+    /** 工作创建时的来源代次，发布重入不会改写此事实身份。 */
+    readonly generation = 0,
   ) {}
   /** 只合并尚未完成的工作，已发布结果保留重新执行能力。 */
   reusable(): boolean {

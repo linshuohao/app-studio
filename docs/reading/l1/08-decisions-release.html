@@ -8,7 +8,7 @@
   <title>类型概念稿与规范固化 · 动态表单引擎</title>
   <link rel="stylesheet" href="../assets/documentation.css?v=3e89ece3611b">
 
-  <script src="../assets/knowledge-index.js?v=7385fbcb9321" defer></script>
+  <script src="../assets/knowledge-index.js?v=a021b081cf45" defer></script>
 
   <script src="../assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -39,7 +39,7 @@
 <details class="nav-group"><summary>05 · L4 呈现</summary><div><a href="../l4-renderer.html">L4 呈现与交互适配</a></div></details>
 <details class="nav-group"><summary>06 · 横向能力</summary><div><a href="../dependency-reactivity.html">跨层依赖与订阅</a>
 <a href="../extension-integration.html">物料扩展与 Host 集成</a></div></details>
-<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：范围及待设计工作</a></div></details>
+<details class="nav-group"><summary>07 · 平台与工具</summary><div><a href="../platform-studio.html">Platform 与 Studio：产品蓝图与待设计工作</a></div></details>
 <details class="nav-group"><summary>08 · 继续设计</summary><div><a href="../governance.html">设计进展与待讨论事项</a></div></details>
 <details class="nav-group"><summary>09 · 决策与追溯</summary><div><a href="../design-history.html">设计决策与讨论演进</a>
 <a href="../design-review.html">架构约束与一致性审查</a>
@@ -68,6 +68,19 @@
 <a href="../decisions/ADR-FE-022-react-renderer-sdk.html">ADR-FE-022：React Renderer 与共用物料 Hook</a>
 <a href="../decisions/ADR-FE-023-independent-devtools.html">ADR-FE-023：独立 DevTools 与开发态观测接缝</a>
 <a href="../decisions/ADR-FE-024-first-assets-tooling.html">ADR-FE-024：首批正式资产与版本工程</a>
+<a href="../decisions/ADR-FE-025-observation-contract.html">ADR-FE-025：通用观测契约与四视图</a>
+<a href="../decisions/ADR-FE-026-platform-rbac.html">ADR-FE-026：单团队空间与内建角色授权</a>
+<a href="../decisions/ADR-FE-027-platform-modular-monolith.html">ADR-FE-027：平台采用 DDD 思路的模块化单体</a>
+<a href="../decisions/ADR-FE-028-platform-authoring-mvp.html">ADR-FE-028：最小创作 MVP 与不可变编辑修订</a>
+<a href="../decisions/ADR-FE-029-platform-config-versions.html">ADR-FE-029：配置版本与首期交付闭环</a>
+<a href="../decisions/ADR-FE-030-agent-harness.html">ADR-FE-030：独立 Agent 服务与共享 Harness</a>
+<a href="../decisions/ADR-FE-031-postgresql-agent-runtime.html">ADR-FE-031：PostgreSQL 数据域与 Agent 运行授权</a>
+<a href="../decisions/ADR-FE-032-studio-assistant-entry.html">ADR-FE-032：统一 Studio 助手入口与首批诊断修复</a>
+<a href="../decisions/ADR-FE-033-agent-create-conversation.html">ADR-FE-033：首期创建配置、持久会话与异步接口</a>
+<a href="../decisions/ADR-FE-034-platform-diagnostic-events.html">ADR-FE-034：首期错误事件采集与现场归属</a>
+<a href="../decisions/ADR-FE-035-agent-turn-graph.html">ADR-FE-035：统一助手轮次与按状态续办</a>
+<a href="../decisions/ADR-FE-036-conversation-draft-ownership.html">ADR-FE-036：Agent 会话与平台草稿分别持久化</a>
+<a href="../decisions/ADR-FE-037-agent-turn-recovery.html">ADR-FE-037：保存 Agent 轮内消息和步骤结果</a>
 <a href="../architecture.html#glossary">术语与语义边界</a>
 <a href="../../history/index.html">历史归档与收敛记录</a></div></details>
 <details class="nav-group"><summary>10 · 使用与例证</summary><div><a href="../usage-guide.html">使用与开发指南</a>
@@ -275,7 +288,7 @@
 
 <p>后续 <a href="../decisions/ADR-FE-017-compiler-io.html" rel="noopener noreferrer">ADR-FE-017</a>已确认调整编译输入输出：Definition 结构保留、模板共享、完整表达式级 watch 和可省略语法 / 单视图目标参数。用户授权先提交设计 bdec628 再调整协议类型；当前 Prepared 类型 / Schema 已迁移，并补齐 TS 与 Schema 的严格表达式包装边界。见<a href="../engineering.html#compiler-io-types" rel="noopener noreferrer">实施记录</a>；结构通过仍不等于 Compiler / Runtime 已执行。</p>
 <p>2026-10-21 已在 packages/protocol/src/definition、capability、prepared 实现三领域命名类型与公共入口，并提供 schemas 下 10 个自动生成的 2020-12 根 Schema。生成约束来源是 TS / JSDoc，正式结构以实际类型、派生物和契约测试共同验收；下方旧汇编仍为概念稿，不再作为复制发布的类型源。用法与命令见<a href="../engineering.html#protocol-implementation" rel="noopener noreferrer">工程实施</a>。</p>
-<p>已验证结构正反例和包消费，未发布稳定协议版本；Compiler 语义、Runtime / Dart 及全链路尚未实现。旧 docs/validation 样本保留候选来源身份，不视为符合新 Canonical 的生产样本；正式包测试夹具独立核对当前契约，后续迁移旧样本须改生成源并另跑验证。</p>
+<p>已验证结构正反例和包消费，未发布稳定协议版本；后续 Compiler、TS Runtime 与 React 全链路已有本地证据，Dart 待实现，真实 Host 与生产验收待完成。旧 docs/validation 样本保留候选来源身份，不视为符合新 Canonical 的生产样本；正式包测试夹具独立核对当前契约，后续迁移旧样本须改生成源并另跑验证。</p>
 </section>
 <section class="section" id="types"><div class="section-head"><div class="kicker">06 · FORM ENGINE</div><div class="section-title"><h2>附录：完整的核心类型关系（概念稿）</h2></div></div>
 
@@ -396,14 +409,14 @@
 <p>状态：已收敛</p>
 </blockquote>
 <ul>
-<li><label><input type="checkbox"> 生成完整 <code>form-definition.types.ts</code>，消除占位和不严谨 Union</label></li>
-<li><label><input type="checkbox"> 生成完整 <code>form-definition.schema.json</code>，与 TypeScript 一致</label></li>
-<li><label><input type="checkbox"> 校验简单表单 / 动态数组 / 多端保险表单三类样例</label></li>
-<li><label><input type="checkbox"> 反例验收：非法引用、Scope 越界、模板参数类型不匹配、端口不兼容</label></li>
+<li>[x] 已以 packages/protocol/src 的分领域 TS 类型实现协议结构，替代早期单文件命名设想</li>
+<li>[x] 已由 TS / JSDoc 派生 10 个根 Schema，并接入同步与结构检查</li>
+<li><label><input type="checkbox"> 简单表单、动态数组与完整旅行表单已有 TS / React 本地证据；多端等价待实现 / 验收</label></li>
+<li>[x] Compiler 已有非法引用、Scope 越界、模板参数类型不匹配、端口不兼容的本地反例；不代表任意 Schema 组合均受支持</li>
 <li><label><input type="checkbox"> 冻结 Material Manifest 版本解析约定及 Pure Function 合约</label></li>
 <li><label><input type="checkbox"> 发布规范语义说明、版本兼容说明与变更记录</label></li>
 </ul>
-<p>上述勾选仅供阅读时自查，不自动代表项目真实完成状态。后续阶段 L2、L3、L4 只能在遵守这份 L1 语义的前提下选择自己的实现策略。</p>
+<p>上述状态按当前源码与<a href="../engineering.html#protocol-implementation" rel="noopener noreferrer">协议</a>、<a href="../engineering.html#compiler-static-analysis" rel="noopener noreferrer">Compiler</a>及<a href="../engineering.html#business-travel-implementation" rel="noopener noreferrer">资产表单</a>既有记录同步；勾选仅限定本地交付范围，不代表公开发布或生产验收。后续阶段 L2、L3、L4 只能在遵守这份 L1 语义的前提下选择自己的实现策略。</p>
 <blockquote>
 <p>最终决策：<strong>停止 L1 的开放式抽象扩张，进入 Canonical Type / JSON Schema / 反例验收</strong>。需要修订时提出能复现的协议冲突，而不是重新设计已确定的领域层次。</p>
 </blockquote>
@@ -413,7 +426,7 @@
 <p>协议结构采用严格检查：未知字段、混用多个 Union 分支及不符合当前分支的字段在配置 / 编译阶段拒绝，不静默忽略或仅警告后继续产出可执行制品。严格范围是协议节点；Working Data、metadata、Schema 和物料 Props 等各按所属数据 / Manifest 契约检查，不能把业务字典的任意键一律当未知协议字段。</p>
 <p>ValueSpec 位置的 $expr / $literal 为保留标记键。出现标记键必须按对应包装校验，包装结构不合法直接诊断，不退回普通对象；需要原样保留含这些键的数据时用 $literal 显式转义，其内部不再递归解释。只在类型规定的 AST / ValueSpec 位置解析，不扫描 Working Data、业务 Schema 或 Literal 原文。Expression 的 literal 与 ValueSpec 的 $literal 属于各自语法位置，不混用。</p>
 <p>跨 Template 参数、Binding Port、函数参数等类型连接，仅接受明确可判定且能证明兼容的结构；已知不兼容与无法证明兼容均拒绝编译，但诊断码 / 原因应区分。不用运行时兜底、作者强制断言或静默降级绕过连接检查。受限的是静态连接兼容检查能力，不将业务数据根 Schema 改成局部 Schema，也不声称任意 JSON Schema 包含关系均可判定。可判定子集、Union 完整形状、签名与正反例仍需正式固化。</p>
-<p>本轮只确认检查策略；候选类型汇编 / Schema 尚未迁移，不能将本节或附录视为正式发布包。</p>
+<p>该轮原先只确认检查策略；后续已实现 packages/protocol 正式 TS 结构与派生 Schema。上方候选汇编仍保留其来源身份，不作为实际类型入口或正式发布包。</p>
 <h3 id="物料-request-协议增量">物料 Request 协议增量</h3>
 <p>2026-10-21 确认独立 requests 通道、输入输出 Schema、公共桥接及结果由物料消费；移除物料 / Host / Prepared 的 services 声明。正式定义及兼容影响见 <a href="05-view-material-host.html#material-requests" rel="noopener noreferrer">物料请求</a>，决策见 <a href="../decisions/ADR-FE-016-material-requests.html" rel="noopener noreferrer">ADR-FE-016</a>。它扩展交互能力，不修改通知、Binding、Command 或 Validator 语义。</p></section>
 

@@ -4,7 +4,7 @@ import json
 
 from run import load_cases, run_case, score_case, summarize
 
-from form_agent.raw_trace import RawTraceArchive
+from form_agent.observability.raw_trace import RawTraceArchive
 
 
 def test_reference_and_business_counterexample_use_the_same_compiler(tmp_path):

@@ -4796,8 +4796,8 @@
       "path": "docs/design/platform-studio.md",
       "role": "current-markdown",
       "coverage": "indexed",
-      "bytes": 286245,
-      "sha256": "aef1f1da1547e5bca5e2f5c21f49d7ad4a314210f7f7c753f1132bb41c868e20",
+      "bytes": 287538,
+      "sha256": "185b3ebf1bd80c5e131b8d0b33acf82b4c6dc2adc065a57024f77772c0c6a517",
       "mapping": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
       "sections": [
         {
@@ -5159,6 +5159,11 @@
           "level": 4,
           "title": "统一助手 Graph 与节点状态",
           "anchor": "agent-turn-graph"
+        },
+        {
+          "level": 4,
+          "title": "Agent Server 目录与执行边界",
+          "anchor": "agent-server-layout"
         },
         {
           "level": 4,

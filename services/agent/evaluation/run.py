@@ -15,12 +15,15 @@ from uuid import uuid4
 from langchain_core.callbacks import BaseCallbackHandler
 from starlette.config import Config
 
-from form_agent.agent_turn import TURN_RECURSION_LIMIT, build_turn_graph
-from form_agent.contracts import CheckReceipt, CreateFormTools
-from form_agent.conversations.model import Context, Message, TaskFacts, public_result
+from form_agent.agent.budgets import TURN_RECURSION_LIMIT
+from form_agent.agent.graph import build_turn_graph
+from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.business.conversations.model import Context, Message, public_result
+from form_agent.business.form_authoring.contracts import CheckReceipt
+from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
 from form_agent.integrations.compiler import candidate_digest
-from form_agent.model_adapters import configured_model
-from form_agent.raw_trace import RawTraceArchive
+from form_agent.integrations.models import configured_model
+from form_agent.observability.raw_trace import RawTraceArchive
 
 HERE = Path(__file__).resolve().parent
 AGENT = HERE.parent
@@ -106,11 +109,11 @@ async def run_case(case, mode, callbacks=(), archive=None):
 
     try:
         if mode == "agent":
-            facts = TaskFacts()
+            facts = FormAuthoringTaskFacts()
             conversation = str(uuid4())
             graph = build_turn_graph(
                 configured_model(),
-                CreateFormTools(protocol, catalog, compile_candidate),
+                AgentToolDependencies(protocol, catalog, compile_candidate),
             )
             clarification = case.get("clarification")
             messages = ["请按这份 PRD 创建表单。"]

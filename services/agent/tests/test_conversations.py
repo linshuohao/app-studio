@@ -7,8 +7,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update
 from test_agent_turn import TurnModel, decision, tool_call
 
-from form_agent.conversations.model import stable_id
-from form_agent.conversations.store import (
+from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.api.app import create_app
+from form_agent.business.conversations.model import stable_id
+from form_agent.business.conversations.store import (
     ConversationStore,
     conversations,
     metadata,
@@ -16,8 +18,6 @@ from form_agent.conversations.store import (
 )
 from form_agent.import_conversations import migrate_row
 from form_agent.integrations.compiler import candidate_digest
-from form_agent.integrations.dependencies import CreateFormTools
-from form_agent.main import create_app
 
 AUTH = {
     "X-Agent-Service-Token": "service",
@@ -46,7 +46,7 @@ def app(engine, steps):
 
     return create_app(
         model=TurnModel(steps),
-        tools=CreateFormTools(unused, unused, unused),
+        tools=AgentToolDependencies(unused, unused, unused),
         store=LocalTestStore(engine),
         service_token="service",
     )
@@ -257,8 +257,8 @@ def test_postgres_excludes_concurrent_execution_and_maintenance():
 
     from sqlalchemy import text
 
-    from form_agent.conversations.model import Owner
-    from form_agent.conversations.store import (
+    from form_agent.business.conversations.model import Owner
+    from form_agent.business.conversations.store import (
         CUTOVER_LOCK,
         ConversationConflict,
         StoreUnavailable,
@@ -312,8 +312,8 @@ def test_postgres_normalizes_only_imported_replay_keys():
 
     from sqlalchemy import delete
 
-    from form_agent.conversations.model import fingerprint
-    from form_agent.conversations.store import postgres_engine
+    from form_agent.business.conversations.model import fingerprint
+    from form_agent.business.conversations.store import postgres_engine
 
     dsn = os.environ.get("AGENT_TEST_DATABASE_URL")
     if not dsn:
@@ -438,7 +438,7 @@ def test_resume_after_restart_reuses_route_and_restores_progress(tmp_path):
 
 def test_partial_reply_checkpoint_reset_and_final_suffix(tmp_path, monkeypatch):
     from form_agent.api import conversations as api
-    from form_agent.contracts import Answer
+    from form_agent.business.form_authoring.contracts import Answer
 
     engine = database(tmp_path)
     url = "/internal/v1/conversations/" + str(uuid4())
@@ -459,7 +459,7 @@ def test_partial_reply_checkpoint_reset_and_final_suffix(tmp_path, monkeypatch):
             "result": Answer(kind="answer", message="新答复"),
         }
 
-    monkeypatch.setattr(api, "graph_events", interrupted_then_recovered)
+    monkeypatch.setattr(api, "stream_graph_events", interrupted_then_recovered)
     with TestClient(app(engine, [])) as client:
         assert client.post(url + "/turns", headers=AUTH, json=body).status_code == 504
         before = client.get(url, headers=AUTH).json()["attempts"][0]["events"]

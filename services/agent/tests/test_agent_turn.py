@@ -6,8 +6,9 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import JsonValue
 from test_create_form import DOCUMENT, ScriptedModel, standard_requirements, tool_call
 
-from form_agent.contracts import CheckReceipt, CreateFormTools
-from form_agent.create_form import candidate_digest
+from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.business.form_authoring.contracts import CheckReceipt
+from form_agent.integrations.compiler import candidate_digest
 
 
 class TurnModel(ScriptedModel):
@@ -64,7 +65,7 @@ def invoke(steps: list[AIMessage], request: dict, *, stream=False):
     response = graph_response(
         {"context": {"target": "web"}, **request},
         model,
-        CreateFormTools(protocol, query, check),
+        AgentToolDependencies(protocol, query, check),
         stream,
     )
     assert response.status_code == 200, response.text

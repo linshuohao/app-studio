@@ -3,9 +3,36 @@
 import json
 
 import pytest
+from pydantic import JsonValue
 from test_agent_turn import decision, invoke, tool_call
 
-from form_agent.execution import execution_scope
+from form_agent.agent.state import ActionObservation
+from form_agent.business.form_authoring.contracts import Answer
+from form_agent.execution.codec import pack, unpack
+from form_agent.execution.journal import execution_scope
+
+
+def test_journal_retains_pre_layout_type_tags():
+    old_value = [
+        "form_agent.turn_state.Observation",
+        {
+            "action": "chat",
+            "updates": {
+                "reply": [
+                    "form_agent.contracts.Answer",
+                    Answer(kind="answer", message="已保存的回答").model_dump(
+                        mode="json"
+                    ),
+                ],
+            },
+        },
+    ]
+
+    observation = unpack(old_value)
+
+    assert isinstance(observation, ActionObservation)
+    assert observation.updates["reply"].message == "已保存的回答"
+    assert pack(observation) == old_value
 
 
 class RestartJournal:
@@ -174,12 +201,12 @@ def test_resume_endpoint_grants_ten_more_repairs_after_an_interrupted_check(
     from test_agent_turn import numbered_repair_steps
     from test_conversations import AUTH, LocalTestStore, TurnModel, database, message
 
-    from form_agent.contracts import CheckReceipt
-    from form_agent.conversations.model import TaskFacts
-    from form_agent.conversations.store import TurnJournal
+    from form_agent.agent.tools.dependencies import AgentToolDependencies
+    from form_agent.api.app import create_app
+    from form_agent.business.conversations.store import TurnJournal
+    from form_agent.business.form_authoring.contracts import CheckReceipt
+    from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
     from form_agent.integrations.compiler import candidate_digest
-    from form_agent.integrations.dependencies import CreateFormTools
-    from form_agent.main import create_app
 
     checked = []
     interrupted = False
@@ -194,19 +221,19 @@ def test_resume_endpoint_grants_ten_more_repairs_after_an_interrupted_check(
 
     monkeypatch.setattr(TurnJournal, "finish", interrupted_finish)
 
-    graph_input = TaskFacts.graph_input
+    graph_input = FormAuthoringTaskFacts.graph_input
 
     def scripted_graph_input(self, conversation, request, turns):
         return graph_input(self, conversation, request, turns).model_copy(
             update={"requirements_document": None}
         )
 
-    monkeypatch.setattr(TaskFacts, "graph_input", scripted_graph_input)
+    monkeypatch.setattr(FormAuthoringTaskFacts, "graph_input", scripted_graph_input)
 
     async def protocol(context, query):
         return "协议手册"
 
-    async def catalog(context, kind, term):
+    async def catalog(context, kind, term) -> JsonValue:
         return ["text-input"]
 
     async def compile_candidate(context, text):
@@ -223,7 +250,7 @@ def test_resume_endpoint_grants_ten_more_repairs_after_an_interrupted_check(
     url = "/internal/v1/conversations/" + str(uuid4())
     app = create_app(
         model=TurnModel(numbered_repair_steps(11)),
-        tools=CreateFormTools(protocol, catalog, compile_candidate),
+        tools=AgentToolDependencies(protocol, catalog, compile_candidate),
         store=LocalTestStore(database(tmp_path)),
         service_token="service",
     )

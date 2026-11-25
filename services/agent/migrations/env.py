@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
-from form_agent.protocol_store import DRIVER, connection_args, metadata
+from form_agent.integrations.protocol_store import DRIVER, connection_args, metadata
 
 
 def migrate() -> None:

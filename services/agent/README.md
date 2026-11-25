@@ -20,11 +20,12 @@ Agent 在 `agent_conversations` 保存所有者、空间、会话版本、编辑
 
 | 位置 | 职责 |
 | --- | --- |
-| `api/conversations.py` | 会话列表、读取、删除、轮次、交付重放及公开的进度事件 |
-| `conversations/model.py`、`conversations/store.py` | 权威会话事实、工作稿与证据恢复、所有权校验、幂等提交 |
-| `agent_turn.py`、`turn_routing.py`、`turn_state.py` | 本轮执行图、动作选择、只读缓存和候选验证 |
-| `create_form/nodes/`、`create_form/tools/` | 需求理解、配置创作、定点修复及工具适配 |
-| `integrations/` | 读取已发布协议手册、目标目录及真实 Compiler 回执 |
+| `agent/graph.py`、`agent/routing.py`、`agent/state.py` | 统一轮次 Graph、动作选择与本轮状态 |
+| `agent/nodes/`、`agent/tools/`、`agent/middleware/` | 节点实现、工具绑定、节点及模型工具调用包装 |
+| `business/conversations/`、`business/form_authoring/` | 会话所有权与幂等提交、需求、候选证据和创作续办事实 |
+| `api/` | Agent FastAPI 路由、HTTP 响应及公开事件投影 |
+| `execution/`、`observability/` | 步骤与调用回放、追踪与原始事件归档 |
+| `integrations/`、`server.py` | 模型、协议手册、目录及 Compiler 适配与服务装配 |
 
 ### 整份 Markdown 与配置映射
 
@@ -34,15 +35,15 @@ Agent 在 `agent_conversations` 保存所有者、空间、会话版本、编辑
 
 ## 后续 Agent 职责
 
-`roles/` 内每个文件声明最小输入、输出和异步调用协议，供后续讨论接线。目前入口接入问答和配置创作；独立需求分析、诊断修复、验证评估、填写辅助和运行诊断均处于接口草案阶段。首期需求澄清留在 CreateForm 内。
+`business/roles/` 内每个文件声明最小输入、输出和异步调用协议，供后续讨论接线。目前入口接入问答和配置创作；独立需求分析、诊断修复、验证评估、填写辅助和运行诊断均处于接口草案阶段。首期需求澄清留在创作流程内。
 
 | 接口文件 | 输入 → 输出 | 预留调用边界 |
 | --- | --- | --- |
-| `roles/requirements.py` | 用户消息、历史及来源 → 需求、假设和问题 | CreateForm 内先做需求澄清，独立角色后续接入 |
-| `roles/repair.py` | 确定配置基线与诊断 → 修订候选及依据 | 复用目录和 Compiler；运行诊断可交接已定位的配置问题 |
-| `roles/verification.py` | 确切候选和场景引用 → 执行证据及覆盖缺口 | 接受执行器真实结果；可作为修复后的验证步骤 |
-| `roles/fill_assistance.py` | Host 授权的实例快照与输入 → 带来源的字段建议或问题 | Host 确认及写入 |
-| `roles/runtime_diagnostics.py` | 发布引用、现象、授权证据 → 原因说明与证据缺口 | 可向修复接口交接配置问题，其余问题由对应责任方处理 |
+| `business/roles/requirements.py` | 用户消息、历史及来源 → 需求、假设和问题 | 创作流程内先做需求澄清，独立角色后续接入 |
+| `business/roles/repair.py` | 确定配置基线与诊断 → 修订候选及依据 | 复用目录和 Compiler；运行诊断可交接已定位的配置问题 |
+| `business/roles/verification.py` | 确切候选和场景引用 → 执行证据及覆盖缺口 | 接受执行器真实结果；可作为修复后的验证步骤 |
+| `business/roles/fill_assistance.py` | Host 授权的实例快照与输入 → 带来源的字段建议或问题 | Host 确认及写入 |
+| `business/roles/runtime_diagnostics.py` | 发布引用、现象、授权证据 → 原因说明与证据缺口 | 可向修复接口交接配置问题，其余问题由对应责任方处理 |
 
 ## 发布与装配协议手册
 

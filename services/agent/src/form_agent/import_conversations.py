@@ -10,14 +10,18 @@ from datetime import UTC, datetime
 
 from sqlalchemy import insert, select, text
 
-from form_agent.conversations.model import (
-    TaskFacts,
+from form_agent.business.conversations.model import (
     fingerprint,
     make_delivery,
     public_result,
     stable_id,
 )
-from form_agent.conversations.store import conversations, postgres_engine, turns
+from form_agent.business.conversations.store import (
+    conversations,
+    postgres_engine,
+    turns,
+)
+from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
 
 
 def imported_values(row):
@@ -25,7 +29,9 @@ def imported_values(row):
     revision = int(row["revision"])
     if revision != len(row["turns"]):
         raise ValueError(f"Source revision and turn count differ for {cid}")
-    facts = TaskFacts(pending_message=row["document"] if revision == 0 else None)
+    facts = FormAuthoringTaskFacts(
+        pending_message=row["document"] if revision == 0 else None
+    )
     imported = []
     for seq, old in enumerate(row["turns"], 1):
         message, result = old["message"], old["result"]
@@ -165,7 +171,7 @@ def migrate_row(conn, source, verify):
 
 
 def hold_cutover(engine):
-    from form_agent.conversations.store import CUTOVER_LOCK
+    from form_agent.business.conversations.store import CUTOVER_LOCK
 
     deadline = time.monotonic() + 30
     with engine.connect() as conn:

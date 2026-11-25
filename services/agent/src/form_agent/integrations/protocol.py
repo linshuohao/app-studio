@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
 
-from form_agent.protocol_store import DRIVER, connection_args, manuals
+from form_agent.integrations.protocol_store import DRIVER, connection_args, manuals
 
 ReadProtocol = Callable[[dict[str, JsonValue], str], Awaitable[JsonValue]]
 """Read the complete published protocol pinned by the trusted request context."""

@@ -1116,6 +1116,14 @@ flowchart TD
 
 验收路径包括空会话问答、讨论转创建、澄清间插问、恢复失败候选后先解释再修、用户改工作稿后重新检查，以及相同回执不重复扣减预算。Agent 按会话身份恢复自己的任务事实；在途请求的崩溃接管仍留后续。
 
+#### Agent Server 目录与执行边界 {#agent-server-layout}
+
+Python Agent Server 在 `services/agent/src/form_agent/agent/` 按统一 Graph 职责组织。`graph.py` 注册节点和边，`routing.py` 决定动作，`state.py` 和 `authoring_state.py` 声明轮内状态，`nodes/` 放节点及其内部步骤，`tools/`、`prompts/` 和 `middleware/` 分别放工具绑定、提示、节点与模型工具调用包装。候选生成由 `compose` 节点编排，候选整表检查由 `check` 节点执行。
+
+同级 `business/conversations/` 管理会话、轮次、持久化和结果提交，`business/form_authoring/` 管理需求、续办任务事实、候选证据和交付规则。Agent 本身的 FastAPI 路由、HTTP 错误和公开事件投影归 `api/`。`execution/` 管理执行日志与回放，`observability/` 管理追踪和归档，`integrations/` 承接模型、手册、目录和 Compiler 适配。`server.py` 装配生产依赖。
+
+目录重整沿用现行 Graph、轮内状态键、公开事件、工具命名和调用顺序。执行日志继续使用已有步骤键及类型标识，类型由明确的旧标识映射到新模块，使重构前中断的轮次可以继续执行。接口数据、存储结构及模型生成所用的结构化 Schema 沿用既有契约。
+
 #### Agent 对话页与行为组件 {#agent-conversation-ui}
 
 聊天浮窗标题单行省略，点击后直接修改当前会话名称，沿用会话列表的重命名契约。移动浮窗使用标题旁的助手图标；消息按浮窗宽度换行，内容区纵向滚动。

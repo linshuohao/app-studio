@@ -6,8 +6,11 @@ from uuid import uuid4
 import pytest
 from psycopg import connect
 
+from form_agent.integrations.protocol import (
+    PostgresProtocolReader,
+    ProtocolVersionUnavailable,
+)
 from form_agent.publish_protocol import publish_protocol
-from form_agent.integrations.protocol import PostgresProtocolReader, ProtocolVersionUnavailable
 
 
 def test_protocol_reader_returns_the_pinned_published_bytes():

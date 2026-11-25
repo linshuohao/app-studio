@@ -9,14 +9,15 @@ from test_agent_turn import TurnModel, decision, tool_call
 from test_create_form import DOCUMENT, standard_requirements
 from test_execution_replay import RestartJournal
 
-from form_agent.agent_turn import build_turn_graph
-from form_agent.api.conversations import graph_events
-from form_agent.contracts import CheckReceipt, CreateFormInput, CreateFormTools
-from form_agent.create_form import candidate_digest
-from form_agent.execution import execution_scope
-from form_agent.model_adapters import codex_usage
-from form_agent.observability import evaluation_callback_factory
-from form_agent.raw_trace import RawTraceArchive
+from form_agent.agent.graph import build_turn_graph
+from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.api.events import stream_graph_events
+from form_agent.business.form_authoring.contracts import CheckReceipt, TurnInput
+from form_agent.execution.journal import execution_scope
+from form_agent.integrations.compiler import candidate_digest
+from form_agent.integrations.models import codex_usage
+from form_agent.observability.callbacks import evaluation_callback_factory
+from form_agent.observability.raw_trace import RawTraceArchive
 
 
 def test_evaluation_tracing_requires_explicit_opt_in(monkeypatch):
@@ -78,9 +79,9 @@ def test_langfuse_exports_graph_nodes_models_and_platform_calls(tmp_path):
                     ),
                 ]
             ),
-            CreateFormTools(protocol, catalog, compiler),
+            AgentToolDependencies(protocol, catalog, compiler),
         )
-        request = CreateFormInput.model_validate(
+        request = TurnInput.model_validate(
             {
                 "message": "按之前的需求生成",
                 "context": {"target": "web"},
@@ -90,7 +91,7 @@ def test_langfuse_exports_graph_nodes_models_and_platform_calls(tmp_path):
         )
         return [
             frame
-            async for frame in graph_events(
+            async for frame in stream_graph_events(
                 graph,
                 request,
                 uuid4(),

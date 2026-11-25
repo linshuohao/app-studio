@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from form_agent.create_form.nodes.understand import document
+from form_agent.agent.nodes.understand import document
 
 
 def test_only_complete_business_records_are_exposed(monkeypatch):

@@ -8,7 +8,7 @@
   <title>Platform 与 Studio：产品蓝图与待设计工作 · 动态表单引擎</title>
   <link rel="stylesheet" href="assets/documentation.css?v=3e89ece3611b">
 
-  <script src="assets/knowledge-index.js?v=72a21ee25c2e" defer></script>
+  <script src="assets/knowledge-index.js?v=4381cc8083d1" defer></script>
 <script src="assets/vendor/mermaid-11.12.1.min.js" defer></script>
   <script src="assets/documentation.js?v=7d33b009ff12" defer></script>
 </head>
@@ -2265,6 +2265,10 @@
 </tbody>
 </table></div>
 <p>验收路径包括空会话问答、讨论转创建、澄清间插问、恢复失败候选后先解释再修、用户改工作稿后重新检查，以及相同回执不重复扣减预算。Agent 按会话身份恢复自己的任务事实；在途请求的崩溃接管仍留后续。</p>
+<h4 id="agent-server-layout">Agent Server 目录与执行边界</h4>
+<p>Python Agent Server 在 <code>services/agent/src/form_agent/agent/</code> 按统一 Graph 职责组织。<code>graph.py</code> 注册节点和边，<code>routing.py</code> 决定动作，<code>state.py</code> 和 <code>authoring_state.py</code> 声明轮内状态，<code>nodes/</code> 放节点及其内部步骤，<code>tools/</code>、<code>prompts/</code> 和 <code>middleware/</code> 分别放工具绑定、提示、节点与模型工具调用包装。候选生成由 <code>compose</code> 节点编排，候选整表检查由 <code>check</code> 节点执行。</p>
+<p>同级 <code>business/conversations/</code> 管理会话、轮次、持久化和结果提交，<code>business/form_authoring/</code> 管理需求、续办任务事实、候选证据和交付规则。Agent 本身的 FastAPI 路由、HTTP 错误和公开事件投影归 <code>api/</code>。<code>execution/</code> 管理执行日志与回放，<code>observability/</code> 管理追踪和归档，<code>integrations/</code> 承接模型、手册、目录和 Compiler 适配。<code>server.py</code> 装配生产依赖。</p>
+<p>目录重整沿用现行 Graph、轮内状态键、公开事件、工具命名和调用顺序。执行日志继续使用已有步骤键及类型标识，类型由明确的旧标识映射到新模块，使重构前中断的轮次可以继续执行。接口数据、存储结构及模型生成所用的结构化 Schema 沿用既有契约。</p>
 <h4 id="agent-conversation-ui">Agent 对话页与行为组件</h4>
 <p>聊天浮窗标题单行省略，点击后直接修改当前会话名称，沿用会话列表的重命名契约。移动浮窗使用标题旁的助手图标；消息按浮窗宽度换行，内容区纵向滚动。</p>
 <p>新版 Agent 区沿用 Studio 工作区外壳。会话列表的单行菜单通过省略号触发，可编辑标题或确认删除。标题更新只更改会话标题，沿用会话归属校验，不变更轮次修订号。会话流支持向上浏览历史，离开最新位置时在消息区显示双箭头按钮，点击回到末尾。</p>

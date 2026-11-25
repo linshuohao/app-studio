@@ -10,8 +10,9 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from pydantic import JsonValue, PrivateAttr
 
-from form_agent.contracts import CheckReceipt, CreateFormTools
-from form_agent.create_form import candidate_digest
+from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.business.form_authoring.contracts import CheckReceipt
+from form_agent.integrations.compiler import candidate_digest
 
 
 class ScriptedModel(BaseChatModel):
@@ -155,7 +156,7 @@ def request(
     )
     response=graph_response({"message":message,"history":history or [],"context":{"target":"web"},
                             "requirements_document":document,"previous_standard":previous_standard},
-                           model,CreateFormTools(read_protocol,query_capabilities,check_candidate),stream)
+                           model,AgentToolDependencies(read_protocol,query_capabilities,check_candidate),stream)
     if captured is not None:
         captured.extend(model._inputs)
     return response
@@ -573,9 +574,9 @@ def test_city_answer_reaches_compose_with_reaction_and_outstanding_lookup():
 
 
 def test_compose_context_restores_full_manual_for_authoring_and_repair():
-    from form_agent.create_form.nodes.compose.node import project_tool_results
-    from form_agent.create_form.state import CheckEvidence
-    from form_agent.requirements import ConfigurationMapping
+    from form_agent.agent.authoring_state import CheckEvidence
+    from form_agent.agent.middleware.authoring import project_tool_results
+    from form_agent.business.form_authoring.requirements import ConfigurationMapping
 
     checks = CheckEvidence()
     messages = [
@@ -599,10 +600,10 @@ def test_compose_context_restores_full_manual_for_authoring_and_repair():
 def test_binding_repair_only_changes_diagnosed_field():
     import asyncio
 
-    from form_agent.create_form.state import CheckEvidence
-    from form_agent.create_form.tools.check_candidate import (
+    from form_agent.agent.authoring_state import CheckEvidence
+    from form_agent.agent.tools.candidate_checks import (
         bind_repair_field,
-        check_draft,
+        compile_candidate,
     )
 
     original = {"data": {"schema": {"properties": {"city": {"type":"string"}, "country":{"type":"string"}}}},
@@ -616,14 +617,14 @@ def test_binding_repair_only_changes_diagnosed_field():
                             diagnostics=[] if success else [{"code":"BINDING_INCOMPATIBLE","sourcePointer":"/views/default/bind"}])
     async def exercise():
         checks = CheckEvidence()
-        first = await check_draft(json.dumps(original), {}, compiler, checks, 2)
+        first = await compile_candidate(json.dumps(original), {}, compiler, checks, 2)
         repair = bind_repair_field(checks)
         digest = first["candidate_digest"]
         assert isinstance(digest, str)
         assert (await repair(digest, "/data/schema/properties/country", '{"type":"object"}'))["status"] == "field_not_identified_by_binding_diagnostic"
         final = await repair(digest, "/data/schema/properties/city", '{"type":"object"}')
         assert checks.pending_candidate is not None
-        final = await check_draft(checks.pending_candidate,{},compiler,checks,2)
+        final = await compile_candidate(checks.pending_candidate,{},compiler,checks,2)
         assert final["success"] and len(texts) == 2
         passed_digest = final["candidate_digest"]
         assert isinstance(passed_digest, str)
@@ -634,9 +635,7 @@ def test_binding_repair_only_changes_diagnosed_field():
 
 
 def test_capability_preparation_distinguishes_exact_host_signatures():
-    from form_agent.create_form.nodes.compose.prepare_binding import (
-        exact_request_matches,
-    )
+    from form_agent.agent.nodes.compose.prepare_binding import exact_request_matches
 
     port = {"payloadSchema":{"type":"object"}, "resultSchema":{"type":"array"}}
     material = {"id":"remote-select", "requests":{"search":port}}
@@ -648,11 +647,13 @@ def test_capability_preparation_distinguishes_exact_host_signatures():
 def test_resumed_view_copy_preserves_verified_evidence_across_two_revisions():
     import asyncio
 
-    from form_agent.contracts import BindingEvidence, CreateFormInput, PreviousReview
-    from form_agent.create_form.nodes.understand.revision import (
-        identify_placeholder_edit,
+    from form_agent.agent.nodes.understand.revision import identify_placeholder_edit
+    from form_agent.business.form_authoring.contracts import (
+        BindingEvidence,
+        PreviousReview,
+        TurnInput,
     )
-    from form_agent.requirements import (
+    from form_agent.business.form_authoring.requirements import (
         RequirementsDocument,
         RequirementsTrace,
         StandardRequirements,
@@ -670,7 +671,7 @@ def test_resumed_view_copy_preserves_verified_evidence_across_two_revisions():
     evidence=BindingEvidence(target="web",knowledge_version="v1",capabilities={"material":[{"id":"remote-select"}],"host":{"requests":{"search":{}}}})
     def receipt(value):
         return CheckReceipt(check_id="test",candidate_digest=candidate_digest(value),success=True)
-    request=CreateFormInput(message='只把城市搜索框的提示文字改为「目的地」',requirements_document=RequirementsDocument.model_validate(DOCUMENT),referenced_candidate=text,
+    request=TurnInput(message='只把城市搜索框的提示文字改为「目的地」',requirements_document=RequirementsDocument.model_validate(DOCUMENT),referenced_candidate=text,
         previous_review=PreviousReview(trace=trace,check=receipt(text),binding_evidence=evidence),context={"target":"web","knowledge_version":"v1"})
     checked=[]
     async def compile_form(context,value):
@@ -678,7 +679,7 @@ def test_resumed_view_copy_preserves_verified_evidence_across_two_revisions():
         return receipt(value)
     async def unexpected(*args):
         raise AssertionError("revision queried the manual or catalog")
-    tools=CreateFormTools(unexpected,unexpected,compile_form)
+    tools=AgentToolDependencies(unexpected,unexpected,compile_form)
     for word in ["目的地","请搜索城市"]:
         request.message=f"只把城市搜索框的提示文字改为「{word}」"
         result=asyncio.run(run_graph(request,model=ScriptedModel([]),tools=tools))
@@ -699,7 +700,7 @@ def test_resumed_view_copy_preserves_verified_evidence_across_two_revisions():
         "kind":"edit", "before":"remote-select", "after":"text-input", "summary":"更换物料"
     })])
     result = asyncio.run(run_graph(request, model=repair_model,
-                                     tools=CreateFormTools(manual, unexpected, reject_form)))
+                                     tools=AgentToolDependencies(manual, unexpected, reject_form)))
     assert result.kind == "clarification"
     assert "扩大修改范围" in result.questions[0]
     assert repair_model._inputs[-1]["edit_scope"]["requested_value"] == "请搜索城市"
@@ -790,9 +791,9 @@ def test_repair_stops_for_gap_or_business_decision(decision):
 def test_failed_receipt_without_diagnostic_stops_before_repair():
     import asyncio
 
-    from form_agent.create_form.errors import InvalidCreateFormResult
-    from form_agent.create_form.state import CheckEvidence
-    from form_agent.create_form.tools.check_candidate import check_draft
+    from form_agent.agent.authoring_state import CheckEvidence
+    from form_agent.agent.tools.candidate_checks import compile_candidate
+    from form_agent.business.form_authoring.errors import InvalidCreateFormResult
 
     async def empty_receipt(context, text):
         return CheckReceipt(
@@ -801,7 +802,7 @@ def test_failed_receipt_without_diagnostic_stops_before_repair():
 
     checks = CheckEvidence()
     with pytest.raises(InvalidCreateFormResult, match="no actionable diagnostics"):
-        asyncio.run(check_draft("{}", {}, empty_receipt, checks, 1))
+        asyncio.run(compile_candidate("{}", {}, empty_receipt, checks, 1))
     assert not checks.failed_text and checks.tool_failure is not None
 
 
@@ -811,17 +812,21 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
 ):
     import asyncio
 
-    from form_agent.contracts import CheckedDraft, Clarification, CreateFormInput
-    from form_agent.create_form.nodes.repair import repair
-    from form_agent.create_form.state import (
+    from form_agent.agent.authoring_state import (
         ChatReady,
         CheckEvidence,
         Composition,
-        CreateFormState,
+        FormAuthoringState,
         Understanding,
     )
-    from form_agent.create_form.tools.check_candidate import check_draft
-    from form_agent.requirements import ConfigurationMapping
+    from form_agent.agent.nodes.repair import repair
+    from form_agent.agent.tools.candidate_checks import compile_candidate
+    from form_agent.business.form_authoring.contracts import (
+        CheckedDraft,
+        Clarification,
+        TurnInput,
+    )
+    from form_agent.business.form_authoring.requirements import ConfigurationMapping
 
     async def exercise():
         checks = CheckEvidence(
@@ -883,16 +888,16 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
                 "data": {"schema": {"properties": {"city": {"type": "string"}}}},
             }
         )
-        await check_draft(original, {}, compiler, checks, 1)
+        await compile_candidate(original, {}, compiler, checks, 1)
         requirement = "工作字段必须为字符串" if requires_string else "提交时提取城市 ID"
-        state: CreateFormState = {
+        state: FormAuthoringState = {
             "composition": Composition(
                 None, checks, failed_digest=candidate_digest(original)
             ),
             "understanding": Understanding(
                 decision=ChatReady(kind="ready", requirements=[requirement])
             ),
-            "request": CreateFormInput(message=requirement, context={"target": "web"}),
+            "request": TurnInput(message=requirement, context={"target": "web"}),
         }
         action = (
             {
@@ -912,23 +917,25 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
         update = await repair(
             state,
             model=model,
-            tools=CreateFormTools(manual, catalog, compiler),
+            tools=AgentToolDependencies(manual, catalog, compiler),
             max_checks=4,
         )
         assert (
             model._inputs[-1]["current_diagnostic_manifests"][0]["id"]
             == "remote-select"
         )
-        draft = update["composition"].draft
+        repaired_composition = update["composition"]
+        assert isinstance(repaired_composition, Composition)
+        draft = repaired_composition.draft
         if requires_string:
             assert isinstance(draft, Clarification) and len(texts) == 1
         else:
             from typing import cast
 
-            from form_agent.agent_turn import check
-            from form_agent.turn_state import AgentState
-            checked_state = cast(AgentState,{**state,"composition":update["composition"],"repairs":update["repairs"]})
-            verified=await check(checked_state,tools=CreateFormTools(manual,catalog,compiler),max_checks=4)
+            from form_agent.agent.nodes.check import check
+            from form_agent.agent.state import TurnGraphState
+            checked_state = cast(TurnGraphState,{**state,"composition":update["composition"],"repairs":update["repairs"]})
+            verified=await check(checked_state,tools=AgentToolDependencies(manual,catalog,compiler),max_checks=4)
             assert isinstance(verified["composition"],Composition)
             draft=verified["composition"].draft
             assert isinstance(draft, CheckedDraft) and len(texts) == 2

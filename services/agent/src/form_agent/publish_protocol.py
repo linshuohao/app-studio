@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.pool import NullPool
 
-from form_agent.protocol_store import DRIVER, connection_args, manuals
+from form_agent.integrations.protocol_store import DRIVER, connection_args, manuals
 
 
 def publish_protocol(dsn: str, version: str, markdown: bytes) -> str:

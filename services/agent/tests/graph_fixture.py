@@ -6,9 +6,10 @@ from uuid import uuid4
 
 from httpx import Response
 
-from form_agent.agent_turn import TURN_RECURSION_LIMIT, build_turn_graph
-from form_agent.api.conversations import graph_events
-from form_agent.contracts import CreateFormInput
+from form_agent.agent.budgets import TURN_RECURSION_LIMIT
+from form_agent.agent.graph import build_turn_graph
+from form_agent.api.events import stream_graph_events
+from form_agent.business.form_authoring.contracts import TurnInput
 
 
 async def run_graph(request, model, tools):
@@ -25,8 +26,8 @@ def graph_response(request, model, tools, stream=False):
     async def collect():
         graph = build_turn_graph(model, tools)
         events = []
-        async for frame in graph_events(
-            graph, CreateFormInput.model_validate(request), trace
+        async for frame in stream_graph_events(
+            graph, TurnInput.model_validate(request), trace
         ):
             if frame["type"] == "private_result":
                 result = frame["result"].model_dump(mode="json", exclude_none=True)

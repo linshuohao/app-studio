@@ -1,0 +1,45 @@
+{
+  "fingerprint": "4737be78e5c64cf0940932b02d8818cc62cbc9a56ebe80b8f8e5a6b932c179c9",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "services/agent/.venv/bin/ruff",
+      "check",
+      "--no-cache",
+      "services/agent/src",
+      "services/agent/tests",
+      "services/agent/evaluation",
+      "services/agent/migrations/env.py"
+    ],
+    [
+      "services/agent/.venv/bin/ruff",
+      "format",
+      "--no-cache",
+      "--check",
+      "services/agent/src"
+    ],
+    [
+      "services/agent/.venv/bin/pyright",
+      "-p",
+      "services/agent"
+    ],
+    [
+      "env",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "PYTHONPATH=services/agent/src",
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-rs",
+      "services/agent/tests",
+      "services/agent/evaluation/test_run.py",
+      "-p",
+      "no:cacheprovider"
+    ]
+  ]
+}

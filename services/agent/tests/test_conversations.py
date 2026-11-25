@@ -534,3 +534,18 @@ def test_partial_reply_checkpoint_reset_and_final_suffix(tmp_path, monkeypatch):
             {"type": "text_delta", "delta": "新"},
             {"type": "text_delta", "delta": "答复"},
         ]
+
+
+def test_read_only_turn_goes_to_chat_without_authoring(tmp_path):
+    engine = database(tmp_path)
+    url = "/internal/v1/conversations/" + str(uuid4())
+    steps = [tool_call("ChatReply", "reply", message="可以查看配置。")]
+    with TestClient(app(engine, steps)) as client:
+        response = client.post(
+            url + "/turns",
+            headers=AUTH,
+            json={**message(text="帮我修改表单"), "readOnly": True},
+        )
+        assert response.status_code == 200, response.text
+        assert "delivery" not in response.json()
+        assert response.json()["conversation"]["turns"][0]["result"]["kind"] == "answer"

@@ -31,10 +31,30 @@ test('draft title edits in place and only the tab content scrolls', async ({ pag
       },
     }),
   );
+  let holding = false;
+  await page.route('**/form-drafts/' + id + '/editing?*', (route) =>
+    route.fulfill({ json: { holder: holding ? 'human' : null, own: holding } }),
+  );
+  await page.route('**/form-drafts/' + id + '/editing', (route) => {
+    holding = true;
+    return route.fulfill({
+      json: {
+        token: route.request().postDataJSON().grantId,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      },
+    });
+  });
+  await page.route('**/form-drafts/' + id + '/editing/release', (route) => {
+    holding = false;
+    return route.fulfill({ status: 204 });
+  });
   await page.goto('/?page=draft&draft=' + id);
   const title = page.getByRole('button', { name: '编辑表单名称' });
   const input = page.getByRole('textbox', { name: '表单名称', exact: true });
   await expect(input).toHaveCount(0);
+  await expect(title).toBeDisabled();
+  await page.getByRole('button', { name: '开始编辑', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: '你正在编辑这份草稿' })).toBeVisible();
   await title.focus();
   await page.keyboard.press('Enter');
   await input.fill('取消的名称');
@@ -66,6 +86,11 @@ test('draft title edits in place and only the tab content scrolls', async ({ pag
   const back = page.getByRole('button', { name: '返回表单列表' });
   await expect(back).toHaveText('');
   await expect(back.locator('svg')).toBeVisible();
+  await page.getByRole('button', { name: '放弃编辑', exact: true }).click();
+  await page.getByRole('button', { name: '确认放弃', exact: true }).click();
+  await expect(title).toHaveText(name);
+  await expect(title).toBeDisabled();
+  expect(holding).toBe(false);
 });
 
 test('floating chat wraps long messages and edits its conversation title independently of drag', async ({
@@ -162,4 +187,182 @@ test('floating chat wraps long messages and edits its conversation title indepen
   await expect.poll(async () => (await panel.boundingBox())?.x).toBe(moved.x);
   await page.reload();
   await expect(title).toHaveText('网点预约');
+});
+
+test('opens the affected editor when an incomplete rule has no JSON node', async ({
+  page,
+  baseURL,
+}) => {
+  const login = await page.request.post('/api/platform/login', {
+    headers: { Origin: baseURL! },
+    data: { username: 'studio-test', password: 'local-browser-test-password' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const id = crypto.randomUUID();
+  const text = JSON.stringify({
+    data: { schema: { type: 'object' } },
+    views: { default: { material: 'section' } },
+  });
+  await page.route('**/form-drafts/' + id, (route) =>
+    route.fulfill({
+      json: {
+        id,
+        text,
+        name: '部分草稿',
+        versionName: '初稿',
+        candidateText: text,
+        appliedDigest: 'initial',
+        candidateDigest: 'initial',
+        revision: 1,
+        draftIssues: [
+          { message: 'R26 联动待补齐', sourcePointer: '/reactions', requirementIds: ['R26'] },
+        ],
+      },
+    }),
+  );
+  await page.goto('/?page=draft&draft=' + id);
+  const issue = page.getByRole('button', { name: /R26 联动待补齐/ });
+  await expect(issue).toBeVisible();
+  await issue.focus();
+  await issue.press('Enter');
+  const tabs = page.getByRole('navigation', { name: '配置编辑视图' });
+  await expect(tabs.getByRole('button', { name: '联动', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: '检查配置', exact: true })).toBeEnabled();
+});
+
+test('allows a new message when an interrupted Agent turn is pinned to an older draft', async ({
+  page,
+  baseURL,
+}) => {
+  const login = await page.request.post('/api/platform/login', {
+    headers: { Origin: baseURL! },
+    data: { username: 'studio-test', password: 'local-browser-test-password' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const draftId = crypto.randomUUID();
+  const conversation = crypto.randomUUID();
+  const text = '{"data":{"schema":{"type":"object"}},"views":{"default":{"material":"section"}}}';
+  await page.route('**/form-drafts/' + draftId, (route) =>
+    route.fulfill({
+      json: {
+        id: draftId,
+        text,
+        candidateText: text,
+        name: '最新草稿',
+        versionName: '初稿',
+        candidateDigest: 'candidate',
+        appliedDigest: 'candidate',
+        revision: 2,
+      },
+    }),
+  );
+  await page.route('**/agent-conversations/' + conversation, (route) =>
+    route.fulfill({
+      json: {
+        id: conversation,
+        title: '继续草稿',
+        revision: 0,
+        turns: [],
+        attempts: [
+          {
+            turnId: 'old',
+            draftId,
+            draftRevision: 1,
+            status: 'interrupted',
+            resumable: true,
+            message: '继续修复',
+            events: [],
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto('/?page=draft&draft=' + draftId + '&conversation=' + conversation);
+  const composer = page.getByRole('textbox', { name: '发送消息' });
+  const openChat = page.getByRole('button', { name: '展开 Agent 聊天', exact: true });
+  await expect(composer.or(openChat)).toBeVisible();
+  if (await openChat.isVisible()) await openChat.click();
+  await composer.fill('检查当前草稿');
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '继续处理' })).toHaveCount(0);
+});
+
+test('finishing draft editing saves the local change before releasing the grant', async ({
+  page,
+  baseURL,
+}) => {
+  const login = await page.request.post('/api/platform/login', {
+    headers: { Origin: baseURL! },
+    data: { username: 'studio-test', password: 'local-browser-test-password' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const id = crypto.randomUUID();
+  const text = '{"data":{"schema":{"type":"object"}},"views":{"default":{"material":"section"}}}';
+  const draft = {
+    id,
+    text,
+    name: '原草稿',
+    versionName: '初稿',
+    candidateText: text,
+    candidateDigest: 'original',
+    appliedDigest: 'original',
+    revision: 1,
+  };
+  let grant = '';
+  let attempts = 0;
+  const writes: string[] = [];
+  await page.route('**/form-drafts/' + id, (route) => {
+    if (route.request().method() === 'PATCH') {
+      const body = route.request().postDataJSON();
+      expect(writes).toEqual([]);
+      expect(body.editingToken).toBe(grant);
+      writes.push('save');
+      draft.name = body.name;
+      draft.revision += 1;
+    }
+    return route.fulfill({ json: draft });
+  });
+  await page.route('**/form-drafts/' + id + '/editing?*', (route) =>
+    route.fulfill({
+      json: { holder: grant ? 'human' : null, own: !!grant },
+    }),
+  );
+  await page.route('**/form-drafts/' + id + '/editing', (route) => {
+    const grantId = route.request().postDataJSON().grantId;
+    attempts += 1;
+    if (attempts === 1) {
+      grant = grantId;
+      return route.abort('connectionreset');
+    }
+    expect(grantId).toBe(grant);
+    return route.fulfill({
+      json: { token: grant, expiresAt: new Date(Date.now() + 30 * 60_000).toISOString() },
+    });
+  });
+  await page.route('**/form-drafts/' + id + '/editing/release', (route) => {
+    expect(route.request().postDataJSON()).toEqual({ token: grant });
+    writes.push('release');
+    grant = '';
+    return route.fulfill({ status: 204 });
+  });
+  await page.goto('/?page=draft&draft=' + id);
+  const start = page.getByRole('button', { name: '开始编辑', exact: true });
+  await start.click();
+  await expect(
+    page.getByRole('alert').filter({ hasText: '无法连接到服务，请重试。' }),
+  ).toBeVisible();
+  await start.click();
+  const title = page.getByRole('button', { name: '编辑表单名称' });
+  await title.click();
+  const name = page.getByRole('textbox', { name: '表单名称', exact: true });
+  await name.fill('修改后的草稿');
+  await name.press('Enter');
+  await page.getByRole('button', { name: '完成编辑', exact: true }).click();
+  await expect(page.getByRole('button', { name: '开始编辑', exact: true })).toBeEnabled();
+  await expect(title).toBeDisabled();
+  await expect(title).toHaveText('修改后的草稿');
+  expect(writes).toEqual(['save', 'release']);
 });

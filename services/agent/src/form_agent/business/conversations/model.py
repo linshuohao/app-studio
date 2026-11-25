@@ -31,6 +31,7 @@ class Message(BaseModel, extra="forbid"):
     document: str | None = None
     requestFingerprint: str | None = None
     workingText: str | None = None
+    readOnly: bool = False
     draftId: UUID | None = None
     draftRevision: int | None = Field(default=None, ge=0)
 
@@ -70,6 +71,8 @@ def public_result(result: dict) -> dict:
             }
             for i in result["issues"]
         ]
+    if partial := result.get("partial_draft"):
+        public["draftIssues"] = partial["issues"]
     if "verification" in result:
         public["verification"] = {
             k: result["verification"][k]
@@ -89,8 +92,11 @@ def make_delivery(
     base_revision: int | None,
     form: str | None,
     work: str | None,
+    environment: str | None = None,
 ):
-    check = result["check"]
+    partial = result.get("partial_draft")
+    check = result.get("check") or {}
+    text = partial["candidate_text"] if partial else result["candidate_text"]
     return {
         k: v
         for k, v in {
@@ -101,10 +107,15 @@ def make_delivery(
             "draftId": draft_id,
             "turnId": turn_id,
             "sourceRevision": revision,
-            "candidateText": result["candidate_text"],
-            "digest": check["candidate_digest"],
-            "checkId": check["check_id"],
-            "checkEnvironment": check.get("check_environment"),
+            "candidateText": text,
+            "digest": "sha256:" + sha256(text.encode("utf-8")).hexdigest()
+            if partial
+            else check["candidate_digest"],
+            "draftIssues": partial["issues"] if partial else None,
+            "checkId": check.get("check_id"),
+            "checkEnvironment": environment
+            if partial
+            else check.get("check_environment"),
             "baseRevision": base_revision,
             "candidateBaseText": base,
         }.items()

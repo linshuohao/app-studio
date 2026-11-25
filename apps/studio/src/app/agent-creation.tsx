@@ -13,7 +13,7 @@ import {
 } from '@form-engine/studio-design-components/controls';
 import { Modal } from './modal';
 import { semanticModel } from './semantic-model';
-import { JsonSource } from './json-source';
+import { JsonSource, type SourceFocus } from './json-source';
 import {
   renameConversation,
   assistantText,
@@ -41,6 +41,13 @@ import {
 import { installedWebCapabilities } from './web-capabilities';
 import { PreviewRuntime } from './preview-runtime';
 import './agent-creation.css';
+
+type EditingStatus = {
+  holder: 'human' | 'agent' | null;
+  own: boolean;
+  blocked?: 'human' | 'agent';
+  blockedAt?: string;
+};
 
 type WorkingCopy = Pick<FormDraft, 'text' | 'appliedDigest' | 'name' | 'versionName'>;
 const empty: WorkingCopy = { text: '', appliedDigest: '', name: '', versionName: '' };
@@ -98,6 +105,19 @@ export function AgentCreation({
 }) {
   const panelPosition = useRef<PanelPosition | undefined>(initialPanelPosition);
   const [localId] = useState(() => crypto.randomUUID());
+  const [editorId] = useState(() => crypto.randomUUID());
+  const [readOnlyChat, setReadOnlyChat] = useState(false);
+  const [editing, setEditing] = useState<{ draftId: string; token: string; expiresAt: string }>();
+  const [editingStatusSnapshot, setEditingStatus] = useState<{
+    path: string;
+    status: EditingStatus;
+  }>();
+  const [expiredToken, setExpiredToken] = useState<string>();
+  const pendingGrant = useRef<{ path: string; revision: number; token: string } | undefined>(
+    undefined,
+  );
+  const [discardEditing, setDiscardEditing] = useState(false);
+  const activeGrant = useRef<string | undefined>(undefined);
   const id = resumeId ?? localId;
   const path = '/agent-conversations/' + id;
   const [resource, setResource] = useState<FormDraft>();
@@ -107,6 +127,10 @@ export function AgentCreation({
   const originalName = useRef('');
   const titleButton = useRef<HTMLButtonElement>(null);
   const [draft, setDraft] = useState<WorkingCopy>(empty);
+  const currentDraft = useRef(draft);
+  useEffect(() => {
+    currentDraft.current = draft;
+  }, [draft]);
   const [recovery, setRecovery] = useState<WorkingCopy>();
   const [session, setSession] = useState<AssistantConversation>();
   const [message, setMessage] = useState(''),
@@ -114,6 +138,60 @@ export function AgentCreation({
     [error, setError] = useState('');
   const draftStoragePrefix = 'studio-form-draft:' + owner + ':' + space + ':';
   const draftPath = '/form-drafts/' + resource?.id;
+  const editingPath = resource && !resource.formId ? draftPath + '/editing' : undefined;
+  const editingStatus =
+    editingStatusSnapshot?.path === editingPath ? editingStatusSnapshot?.status : undefined;
+  const editingActive =
+    !!editing && editing.draftId === resource?.id && editing.token !== expiredToken;
+  useEffect(() => {
+    if (!editing) return;
+    const expires = setTimeout(
+      () => setExpiredToken(editing.token),
+      Math.max(0, Date.parse(editing.expiresAt) - Date.now()),
+    );
+    return () => clearTimeout(expires);
+  }, [editing]);
+  useEffect(() => {
+    if (!editingPath) return;
+    const path = editingPath;
+    const query = new URLSearchParams({ editorId, conversationId: id });
+    let active = true;
+    let scheduled: ReturnType<typeof setTimeout>;
+    async function refresh() {
+      const status = await platform<EditingStatus>(path + '?' + query).catch(() => undefined);
+      if (!active) return;
+      if (status) setEditingStatus({ path, status });
+      scheduled = setTimeout(refresh, 2000);
+    }
+    void refresh();
+    return () => {
+      active = false;
+      clearTimeout(scheduled);
+    };
+  }, [editingPath, editorId, id]);
+  useEffect(() => {
+    if (!editing) return;
+    const release = () => {
+      if (activeGrant.current !== editing.token) return;
+      activeGrant.current = undefined;
+      void fetch('/api/platform/form-drafts/' + editing.draftId + '/editing/release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: editing.token }),
+        keepalive: true,
+      }).catch(() => undefined);
+    };
+    const resetRestoredPage = (event: PageTransitionEvent) => {
+      if (event.persisted && activeGrant.current !== editing.token) setEditing(undefined);
+    };
+    window.addEventListener('pagehide', release);
+    window.addEventListener('pageshow', resetRestoredPage);
+    return () => {
+      window.removeEventListener('pagehide', release);
+      window.removeEventListener('pageshow', resetRestoredPage);
+      release();
+    };
+  }, [editing]);
   const isDock = presentation === 'dock';
   const isDraftPage = presentation === 'draft';
   const [pending, setPending] = useState(false),
@@ -122,6 +200,7 @@ export function AgentCreation({
   const [preview, setPreview] = useState<{
       text: string;
       candidateDigest: string;
+      revision: number;
       digest: string;
       prepared: ReadonlyPreparedForm;
     }>(),
@@ -290,7 +369,32 @@ export function AgentCreation({
   }, [draft, resource, draftStoragePrefix, recovery]);
   const unfinished = session?.attempts?.filter((a) => a.status !== 'done') ?? [];
   const loadingHistory = !!resumeId && session?.id !== resumeId;
-  const activeAttempt = unfinished.some((a) => a.status === 'running' || a.resumable);
+  const outdatedAttempt = (attempt: { draftId?: string; draftRevision?: number }) =>
+    resource !== undefined &&
+    attempt.draftId === resource.id &&
+    attempt.draftRevision !== undefined &&
+    attempt.draftRevision !== resource.revision;
+  const activeAttempt = unfinished.some(
+    (attempt) => attempt.status === 'running' || (attempt.resumable && !outdatedAttempt(attempt)),
+  );
+  async function refreshDraftAfterConflict(error: unknown) {
+    if (!(error instanceof PlatformError) || error.status !== 409 || !resource) return;
+    const latest = await platform<FormDraft>(draftPath).catch(() => undefined);
+    if (!latest || latest.revision === resource.revision) return;
+    const local = currentDraft.current;
+    if (
+      Object.entries(workingCopy(resource)).some(
+        ([key, value]) => local[key as keyof WorkingCopy] !== value,
+      )
+    ) {
+      setRecovery(local);
+    } else {
+      setDraft(workingCopy(latest));
+    }
+    setResource(latest);
+    setPreview(undefined);
+    setConfirmed(false);
+  }
   useRunningConversation(session, '', setSession, !sent && !busy);
   function resumeTurn(turnId: string) {
     void perform('正在继续处理', async () => {
@@ -321,9 +425,22 @@ export function AgentCreation({
     });
   }
   const revision = session?.revision ?? 0;
+  const draftIssues = Array.from(
+    new Map(
+      [...(resource?.appliedDraftIssues ?? []), ...(resource?.draftIssues ?? [])].map((issue) => [
+        JSON.stringify([issue.sourcePointer, issue.requirementIds, issue.message]),
+        issue,
+      ]),
+    ).values(),
+  );
+  const hasDraftIssues = draftIssues.length > 0;
   const candidate = resource?.candidateText;
   const digest = resource?.candidateDigest;
-  const isCurrent = !!preview && preview.text === draft.text && preview.candidateDigest === digest;
+  const isCurrent =
+    !!preview &&
+    preview.text === draft.text &&
+    preview.candidateDigest === digest &&
+    preview.revision === resource?.revision;
   const archived = resource?.formId;
   async function checkpoint() {
     if (!resource) throw Error('找不到表单草稿。');
@@ -333,9 +450,10 @@ export function AgentCreation({
       )
     )
       return resource;
+    if (!editingActive) throw Error('请先开始编辑并保存本机修改。');
     const savedDraft = await platform<FormDraft>(draftPath, {
       method: 'PATCH',
-      body: { revision: resource.revision, ...draft },
+      body: { revision: resource.revision, editingToken: editing?.token, ...draft },
     });
     setResource(savedDraft);
     return savedDraft;
@@ -346,12 +464,60 @@ export function AgentCreation({
     try {
       await fn();
     } catch (e) {
+      await refreshDraftAfterConflict(e);
       setError(e instanceof PlatformError && e.detail ? e.detail : failureMessage(e));
     } finally {
       setOperation('');
     }
   }
+  function startEditing() {
+    if (!resource || !editingPath) return;
+    void perform('正在开始编辑', async () => {
+      const prior = pendingGrant.current;
+      const grantId =
+        prior?.path === editingPath && prior.revision === resource.revision
+          ? prior.token
+          : crypto.randomUUID();
+      pendingGrant.current = { path: editingPath, revision: resource.revision, token: grantId };
+      try {
+        const grant = await platform<{ token: string; expiresAt: string }>(editingPath, {
+          body: { revision: resource.revision, editorId, grantId },
+        });
+        pendingGrant.current = undefined;
+        activeGrant.current = grant.token;
+        setEditing({ draftId: resource.id, token: grant.token, expiresAt: grant.expiresAt });
+        setEditingStatus({ path: editingPath, status: { holder: 'human', own: true } });
+      } catch (error) {
+        if (error instanceof PlatformError && error.status < 500) pendingGrant.current = undefined;
+        throw error;
+      }
+    });
+  }
+  async function releaseEditing() {
+    if (!editing || activeGrant.current !== editing.token) return;
+    await platform<void>('/form-drafts/' + editing.draftId + '/editing/release', {
+      body: { token: editing.token },
+    });
+    activeGrant.current = undefined;
+    setEditing(undefined);
+    setEditingStatus(undefined);
+    setEditingNameOf(undefined);
+  }
+  function finishEditing(discard = false) {
+    if (!resource) return;
+    void perform(discard ? '正在放弃编辑' : '正在保存草稿', async () => {
+      if (!discard) await checkpoint();
+      await releaseEditing();
+      if (discard) {
+        setDraft(workingCopy(resource));
+        setPreview(undefined);
+        setConfirmed(false);
+        setDiscardEditing(false);
+      }
+    });
+  }
   function edit(text: string) {
+    if (!editingActive) return;
     setInspection(undefined);
     setDraft((d) => ({ ...d, text }));
     setConfirmed(false);
@@ -400,7 +566,16 @@ export function AgentCreation({
     let accepted = false;
     await perform('正在处理消息', async () => {
       try {
-        const attached = resource ? await checkpoint() : undefined;
+        const attached = resource;
+        if (
+          !readOnlyChat &&
+          attached &&
+          !editingActive &&
+          Object.entries(workingCopy(attached)).some(
+            ([key, value]) => draft[key as keyof WorkingCopy] !== value,
+          )
+        )
+          throw Error('草稿有未保存的修改，请开始编辑并完成保存后再让 Agent 修改。');
         const payload = {
           revision,
           message: input,
@@ -410,7 +585,7 @@ export function AgentCreation({
           ...(attached && {
             draftId: attached.id,
             draftRevision: attached.revision,
-            workingText: draft.text,
+            ...(readOnlyChat && { readOnly: true }),
           }),
         };
         const fingerprint = JSON.stringify(payload);
@@ -457,6 +632,7 @@ export function AgentCreation({
           persisted?.turns.some((t) => t.turnId === retry.current?.id);
         if (persistedTurn) clearSubmittedReferences();
         else if (fromComposer) setMessage(input);
+        await refreshDraftAfterConflict(e);
         const retryable = !(e instanceof PlatformError) || e.status >= 500;
         setSendFailure({
           input,
@@ -485,16 +661,35 @@ export function AgentCreation({
       return undefined;
     }
   }, [draft.text, profile]);
-  const [diagnosticFocus, setDiagnosticFocus] = useState<{ path: string; revision: number }>();
-  function locateDiagnostic(pointer: string) {
-    let path = pointer || '';
+  const [diagnosticFocus, setDiagnosticFocus] = useState<SourceFocus>();
+  function locateDiagnostic(pointer: string, exact = true) {
+    let path = exact ? pointer : '';
     try {
       const { byPath } = semanticModel(draft.text);
       while (path && !byPath.has(path)) path = path.slice(0, Math.max(0, path.lastIndexOf('/')));
     } catch {
       path = '';
     }
-    setDiagnosticFocus((previous) => ({ path, revision: (previous?.revision ?? 0) + 1 }));
+    const section =
+      !path &&
+      (
+        {
+          data: 'schema',
+          views: 'layout',
+          viewTemplates: 'layout',
+          reactions: 'reaction',
+          constraints: 'validation',
+          validationMessages: 'validation',
+        } as const
+      )[
+        pointer.split('/')[1] as
+          'data' | 'views' | 'viewTemplates' | 'reactions' | 'constraints' | 'validationMessages'
+      ];
+    setDiagnosticFocus((previous) => ({
+      path,
+      section: section || undefined,
+      revision: (previous?.revision ?? 0) + 1,
+    }));
   }
   function inspect() {
     void perform('正在检查配置', async () => {
@@ -516,7 +711,12 @@ export function AgentCreation({
       );
       setReady(false);
       setConfirmed(false);
-      setPreview({ ...next, text: draft.text, candidateDigest: digest! });
+      setPreview({
+        ...next,
+        text: draft.text,
+        candidateDigest: digest!,
+        revision: stored.revision,
+      });
       setShowPreview(true);
     });
   }
@@ -530,8 +730,8 @@ export function AgentCreation({
   function leave() {
     if (!resource || resource.formId) return close();
     void perform('正在保存草稿', async () => {
-      await checkpoint();
-      sessionStorage.removeItem(draftStoragePrefix + resource.id);
+      if (editingActive) await checkpoint();
+      await releaseEditing();
       close();
     });
   }
@@ -541,13 +741,17 @@ export function AgentCreation({
       const result = await platform<{ formId: string; workId: string }>(draftPath + '/save', {
         body: {
           revision: resource.revision,
+          ...(editingActive && { editingToken: editing?.token }),
           digest,
           workingText: draft.text,
           previewDigest: preview?.digest,
+          confirmedDraftIssues: confirmed && hasDraftIssues,
           name: draft.name,
           versionName: draft.versionName,
         },
       });
+      activeGrant.current = undefined;
+      setEditing(undefined);
       sessionStorage.removeItem(draftStoragePrefix + resource.id);
       enterEditor(result.formId, result.workId);
     });
@@ -572,7 +776,14 @@ export function AgentCreation({
         ? studioUrl({ page: 'draft', draft: resource.id, conversation: session?.id })
         : undefined;
   const backLabel = !isDraftPage ? '返回对话' : '返回表单列表';
-  const nameLocked = busy === '正在保存' || busy === '正在保存草稿';
+  const nameLocked = !editingActive || !!busy;
+  const occupiedByOther = !!editingStatus?.holder && !editingActive;
+  const editingNotice =
+    editingStatus?.blocked === 'human'
+      ? '有一次人工编辑请求因草稿正在被占用而未开始。'
+      : editingStatus?.blocked === 'agent'
+        ? '有一次 Agent 修改请求因草稿正在被占用而未开始。'
+        : undefined;
   const canPreview = !!resource && draft.appliedDigest === digest && !pending && !busy && !archived;
   return (
     <section
@@ -646,7 +857,13 @@ export function AgentCreation({
               )}
             </h1>
             <small>
-              {archived ? '已保存' : showDraftEditor ? '已生成草稿 · 待试填保存' : '对话'}
+              {archived
+                ? '已保存'
+                : showDraftEditor
+                  ? hasDraftIssues
+                    ? '部分草稿 · 待处理'
+                    : '已生成草稿 · 待试填保存'
+                  : '对话'}
             </small>
           </div>
           <div className="action-row">
@@ -659,13 +876,36 @@ export function AgentCreation({
                       <Input
                         value={draft.versionName}
                         maxLength={80}
-                        disabled={busy === '正在保存' || busy === '正在保存草稿'}
+                        disabled={nameLocked}
                         onChange={(e) => setDraft((d) => ({ ...d, versionName: e.target.value }))}
                       />
                     </label>
                   </>
                 )}
 
+                {!archived &&
+                  (editingActive ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        disabled={!!busy || pending}
+                        onClick={() => finishEditing()}
+                      >
+                        完成编辑
+                      </Button>
+                      <Button
+                        variant="text"
+                        disabled={!!busy || pending}
+                        onClick={() => setDiscardEditing(true)}
+                      >
+                        放弃编辑
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="secondary" disabled={!!busy} onClick={startEditing}>
+                      开始编辑
+                    </Button>
+                  ))}
                 <Button
                   variant="secondary"
                   disabled={!!busy || pending || !!archived}
@@ -677,7 +917,9 @@ export function AgentCreation({
                   预览试填
                 </Button>
                 <Button
-                  disabled={!canPreview || !confirmed || !isCurrent || !!message.trim()}
+                  disabled={
+                    !canPreview || occupiedByOther || !confirmed || !isCurrent || !!message.trim()
+                  }
                   onClick={save}
                 >
                   保存配置
@@ -686,6 +928,57 @@ export function AgentCreation({
             )}
           </div>
         </header>
+      )}
+      {editing && !editingActive && pending && (
+        <Modal
+          title="编辑权已过期"
+          closeLabel="离开草稿"
+          onClose={leave}
+          closeDisabled={!!busy}
+          actions={
+            <Button disabled={!!busy} onClick={startEditing}>
+              重新开始编辑
+            </Button>
+          }
+        >
+          <p>编辑器保留了当前输入。重新开始编辑后可以继续，离开只会保留已应用到工作稿的修改。</p>
+          {error && <Feedback kind="error">{error}</Feedback>}
+        </Modal>
+      )}
+      {discardEditing && (
+        <Modal
+          title="放弃本轮编辑"
+          onClose={() => setDiscardEditing(false)}
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setDiscardEditing(false)}>
+                继续编辑
+              </Button>
+              <Button disabled={!!busy} onClick={() => finishEditing(true)}>
+                确认放弃
+              </Button>
+            </>
+          }
+        >
+          <p>尚未保存的修改会丢弃，草稿会恢复到最近一次保存的内容。</p>
+        </Modal>
+      )}
+      {editingStatus?.holder && (
+        <p role="status">
+          {editingActive
+            ? '你正在编辑这份草稿。'
+            : editingStatus.holder === 'agent'
+              ? 'Agent 正在修改此草稿。'
+              : '这份草稿正在另一个窗口编辑。'}
+        </p>
+      )}
+      {editingNotice && (
+        <p key={editingStatus?.blockedAt} role="status">
+          {editingNotice}
+        </p>
+      )}
+      {editing && !editingActive && !editingStatus?.holder && (
+        <p role="status">编辑权已过期。本机修改仍保留，继续前请重新开始编辑。</p>
       )}
       {recovery && resource && (
         <Modal
@@ -737,7 +1030,32 @@ export function AgentCreation({
       ) : (
         <div inert={busy === '正在保存' || busy === '正在保存草稿'} className="agent-workbench">
           {showDraftEditor && resource && (
-            <div className="agent-canvas surface">
+            <div className="agent-canvas surface" inert={!!editing && !editingActive && pending}>
+              {hasDraftIssues && (
+                <section aria-label="生成时待处理项" className="surface">
+                  <strong>生成时待处理项</strong>
+                  <ul>
+                    {draftIssues.map((issue, index) => (
+                      <li key={index}>
+                        <Button
+                          variant="text"
+                          onClick={() =>
+                            locateDiagnostic(
+                              issue.sourcePointer,
+                              draft.text === resource.candidateText,
+                            )
+                          }
+                        >
+                          {[
+                            ...issue.requirementIds.filter((id) => !issue.message.includes(id)),
+                            issue.message,
+                          ].join(' · ')}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
               {inspection && (
                 <section aria-label="配置检查结果" className="surface">
                   <div className="toolbar">
@@ -762,7 +1080,7 @@ export function AgentCreation({
                 onChange={edit}
                 focusPath={diagnosticFocus}
                 initialSection="layout"
-                readOnly={false}
+                readOnly={!editingActive && !(editing && pending)}
                 profile={selectedProfile ?? ''}
                 onProfile={(value) => {
                   setProfile(value);
@@ -812,6 +1130,20 @@ export function AgentCreation({
             onSend={() => void send()}
             disabled={!!busy}
             sendDisabled={!!busy || pending || activeAttempt || loadingHistory}
+            composeActions={
+              resource &&
+              !archived && (
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={readOnlyChat}
+                    disabled={!!busy}
+                    onChange={(event) => setReadOnlyChat(event.target.checked)}
+                  />
+                  只读提问
+                </label>
+              )
+            }
           >
             {!session && !sent && (
               <p>
@@ -857,15 +1189,41 @@ export function AgentCreation({
                 ) : t.result.kind === 'requirements_unmet' || t.result.kind === 'blocked' ? (
                   <AgentMessage text={assistantText(t.result)}>
                     <AgentInteractionCard
-                      title={t.result.kind === 'blocked' ? '任务阻塞' : '补充材料'}
+                      title={
+                        t.result.draftIssues?.length
+                          ? '已保留部分草稿'
+                          : t.result.kind === 'blocked'
+                            ? '任务阻塞'
+                            : '补充材料'
+                      }
                       tone="warning"
                       links={
                         t === outstanding && draftLink
-                          ? [{ href: draftLink, label: '打开关联工作稿', newTab: true }]
+                          ? [
+                              {
+                                href: draftLink,
+                                label: t.result.draftIssues?.length
+                                  ? '打开部分草稿'
+                                  : '打开关联工作稿',
+                                newTab: true,
+                              },
+                            ]
                           : undefined
                       }
                     >
                       <AgentReply text={assistantText(t.result)} />
+                      {!!t.result.draftIssues?.length && (
+                        <ul aria-label="草稿待处理项">
+                          {t.result.draftIssues.map((issue, index) => (
+                            <li key={index}>
+                              {[
+                                ...issue.requirementIds.filter((id) => !issue.message.includes(id)),
+                                issue.message,
+                              ].join(' · ')}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {t.result.issues && t.result.verification && (
                         <AgentIssues
                           issues={t.result.issues}
@@ -875,19 +1233,17 @@ export function AgentCreation({
                     </AgentInteractionCard>
                   </AgentMessage>
                 ) : (
-                  <>
-                    <AgentMessage text={assistantText(t.result)}>
-                      <div data-speaker="assistant">
-                        <b>表单助手</b>
-                        <AgentReply text={assistantText(t.result)} />
-                      </div>
-                    </AgentMessage>
+                  <AgentMessage text={assistantText(t.result)}>
+                    <div data-speaker="assistant">
+                      <b>表单助手</b>
+                      <AgentReply text={assistantText(t.result)} />
+                    </div>
                     {t.result.issues && t.result.verification && (
                       <AgentIssues issues={t.result.issues} verification={t.result.verification} />
                     )}
                     {t.draftId && draftLink && t.draftId === resource?.id && (
                       <AgentInteractionCard
-                        title="关联页面"
+                        title="生成的表单配置"
                         links={[
                           {
                             href: draftLink,
@@ -898,24 +1254,35 @@ export function AgentCreation({
                         ]}
                       />
                     )}
-                  </>
+                  </AgentMessage>
                 )}
               </section>
             ))}
             {!sent &&
-              unfinished.map((attempt) => (
-                <AttemptHistory
-                  key={attempt.turnId}
-                  attempt={attempt}
-                  disabled={!!busy || pending}
-                  livePhases={resumingTurn === attempt.turnId ? phases : undefined}
-                  resume={() => resumeTurn(attempt.turnId)}
-                />
-              ))}
+              unfinished.map((attempt) => {
+                const outdated = attempt.status === 'interrupted' && outdatedAttempt(attempt);
+                return (
+                  <AttemptHistory
+                    key={attempt.turnId}
+                    attempt={
+                      outdated
+                        ? {
+                            ...attempt,
+                            resumable: false,
+                            interruptionReason: '草稿已更新，本轮基于旧修订。',
+                          }
+                        : attempt
+                    }
+                    disabled={!!busy || pending}
+                    livePhases={resumingTurn === attempt.turnId ? phases : undefined}
+                    resume={() => resumeTurn(attempt.turnId)}
+                  />
+                );
+              })}
             {showDraftEditor && resource && draft.appliedDigest !== resource.candidateDigest && (
               <Button
                 variant="secondary"
-                disabled={!!busy || pending}
+                disabled={!!busy || pending || !editingActive}
                 onClick={() => setReview(true)}
               >
                 对比并应用
@@ -960,6 +1327,7 @@ export function AgentCreation({
           candidate={candidate}
           onClose={() => setReview(false)}
           onApply={(text) => {
+            if (!editingActive) return;
             edit(text);
             setDraft((d) => ({ ...d, appliedDigest: digest! }));
             setReview(false);
@@ -983,7 +1351,7 @@ export function AgentCreation({
               setShowPreview(false);
             }}
           >
-            确认此版试填结果
+            {hasDraftIssues ? '确认已核对待处理项及试填结果' : '确认此版试填结果'}
           </Button>
         </Modal>
       )}

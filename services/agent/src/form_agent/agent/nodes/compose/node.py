@@ -20,7 +20,11 @@ from form_agent.agent.middleware.authoring import (
 )
 from form_agent.agent.nodes.compose.prepare_binding import prepare_binding
 from form_agent.agent.nodes.compose.reads import AuthoringReads
-from form_agent.agent.nodes.compose.staged import compose_staged, verify_staged
+from form_agent.agent.nodes.compose.staged import (
+    compose_inputs,
+    compose_staged,
+    verify_staged,
+)
 from form_agent.agent.prompts.compose import DOCUMENT_INSTRUCTIONS, INSTRUCTIONS
 from form_agent.agent.tools.candidate_checks import (
     bind_candidate_submission_tool,
@@ -65,7 +69,13 @@ async def compose_candidate(
     if (
         standard is not None
         and tools.check_schema is not None
-        and request.referenced_candidate is None
+        and (
+            request.referenced_candidate is None
+            or (
+                request.previous_compose is not None
+                and request.previous_compose.inputs == compose_inputs(request, standard)
+            )
+        )
         and verify_candidate is None
     ):
         return await compose_staged(request, model, tools, standard)

@@ -98,6 +98,12 @@ export function referenceLabel(reference: MessageReference) {
     .join(' · ');
 }
 
+export type DraftIssue = {
+  message: string;
+  sourcePointer: string;
+  requirementIds: string[];
+};
+
 export type AssistantTurn = {
   turnId: string;
   message: string;
@@ -109,6 +115,7 @@ export type AssistantTurn = {
     reason?: string;
     questions?: string[];
     issues?: IssueReport['issues'];
+    draftIssues?: DraftIssue[];
     verification?: IssueReport['verification'];
   };
   draftId?: string;
@@ -120,6 +127,8 @@ export type TurnAttempt = {
   references?: MessageReference[];
   status: 'running' | 'interrupted' | 'done';
   resumable: boolean;
+  draftId?: string;
+  draftRevision?: number;
   interruptionReason?: string;
   events: (
     | { type: 'progress'; message: string }
@@ -152,6 +161,8 @@ export type FormDraft = {
   candidateDigest: string;
   revision: number;
   previewDigest: string | null;
+  draftIssues?: DraftIssue[];
+  appliedDraftIssues?: DraftIssue[];
   formId: string | null;
   versionId: string | null;
   updatedAt: string;

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium, expect } from '@playwright/test';
-import { clickTurn } from './assistant-browser.mjs';
+import { clickTurn, openDeliveredDraft } from './assistant-browser.mjs';
 const origin = new URL(process.env.CREATE_FORM_STUDIO_URL ?? 'http://127.0.0.1:3200');
 assert(['localhost', '127.0.0.1'].includes(origin.hostname));
 const browser = await chromium.launch({
@@ -13,7 +13,10 @@ try {
   page.setDefaultTimeout(30000);
   await page.goto('/');
   await page.getByRole('button', { name: '以本地开发账号登录' }).click();
-  await page.getByRole('button', { name: '表单助手', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: '主导航' })
+    .getByRole('button', { name: 'Agent', exact: true })
+    .click();
   async function send(message) {
     await page.getByLabel('发送消息', { exact: true }).fill(message);
     const reply = await clickTurn(page);
@@ -52,6 +55,7 @@ try {
     draft.candidateDigest,
     'sha256:' + createHash('sha256').update(draft.candidateText).digest('hex'),
   );
+  await openDeliveredDraft(page, draft.name);
   async function rawInput() {
     await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
     await page.getByRole('button', { name: '文本查看 / 修复' }).click();
@@ -74,6 +78,7 @@ try {
     await expect(panel.getByRole('log')).toContainText('解释当前报名表');
     console.log('通过浏览器验证：创建任务保存后同一个会话在编辑器继续，刷新后从 Agent 加载历史。');
   } else {
+    await page.getByRole('button', { name: '开始编辑', exact: true }).click();
     const raw = await rawInput();
     const firstEdit = JSON.parse(await raw.inputValue());
     firstEdit.data.schema.description = '会话删除前保存的手工编辑';
@@ -107,16 +112,10 @@ try {
     }
     await released;
     await page.unroute(checkpointPath);
-    await page.getByRole('button', { name: '助手会话', exact: true }).click();
-    const conversation = page
-      .getByRole('dialog', { name: '助手会话' })
-      .getByRole('listitem')
-      .filter({ hasText: chat.conversation.title })
-      .first();
-    page.once('dialog', (d) => d.accept());
-    await conversation.getByRole('button', { name: '删除', exact: true }).click();
-    await expect(conversation).toHaveCount(0);
-    await page.getByRole('button', { name: '关闭', exact: true }).click();
+    const deleted = await page.request.delete('/api/platform/agent-conversations/' + id, {
+      headers: { Origin: origin.origin },
+    });
+    assert.equal(deleted.status(), 204);
     assert.equal((await page.request.get('/api/platform/agent-conversations/' + id)).status(), 404);
     const draftUrl = '/api/platform/form-drafts/' + draft.id;
     const afterDelete = await (await page.request.get(draftUrl)).json();
@@ -127,10 +126,12 @@ try {
     await page.reload();
     await page.getByRole('button', { name: '表单草稿', exact: true }).click();
     await page
-      .getByRole('listitem')
+      .getByRole('dialog', { name: '表单草稿', exact: true })
+      .getByRole('row')
       .filter({ hasText: '独立工作稿验收' })
       .getByRole('button', { name: '打开草稿' })
       .click();
+    await page.getByRole('button', { name: '开始编辑', exact: true }).click();
     const reopened = await rawInput(),
       secondEdit = JSON.parse(await reopened.inputValue());
     assert.equal(secondEdit.data.schema.description, firstEdit.data.schema.description);
@@ -146,19 +147,12 @@ try {
         appliedDigest: afterDelete.appliedDigest,
       },
     });
-    assert(changed.ok(), await changed.text());
-    await page.reload();
-    await page.getByRole('button', { name: '表单草稿', exact: true }).click();
-    await page
-      .getByRole('listitem')
-      .filter({ hasText: afterDelete.name })
-      .getByRole('button', { name: '打开草稿' })
-      .click();
-    const recovery = page.getByRole('dialog', { name: '恢复本机编辑' });
-    await expect(recovery).toBeVisible();
-    await recovery.getByRole('button', { name: '恢复本机内容' }).click();
+    assert.equal(changed.status(), 409);
+    await page.getByRole('button', { name: '完成编辑', exact: true }).click();
+    await expect(page.getByRole('button', { name: '开始编辑', exact: true })).toBeEnabled();
+    const persisted = await (await page.request.get(draftUrl)).json();
     assert.equal(
-      JSON.parse(await (await rawInput()).inputValue()).data.schema.description,
+      JSON.parse(persisted.text).data.schema.description,
       secondEdit.data.schema.description,
     );
     await page.getByRole('button', { name: '预览试填', exact: true }).click();
@@ -177,7 +171,7 @@ try {
       secondEdit.data.schema.description,
     );
     console.log(
-      '通过浏览器验证：纯问答、创建/澄清/插问、交付独立草稿、删除会话、恢复手工编辑、再次编辑、预览并保存。',
+      '通过浏览器验证：纯问答、创建/澄清/插问、交付独立草稿、删除会话、保护在编草稿、完成编辑、预览并保存。',
     );
   }
 } finally {

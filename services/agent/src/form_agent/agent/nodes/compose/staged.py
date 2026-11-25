@@ -18,6 +18,8 @@ from form_agent.business.form_authoring.contracts import (
     BindingEvidence,
     Blocked,
     ComposeCheckpoint,
+    DraftIssue,
+    PartialDraft,
 )
 from form_agent.business.form_authoring.errors import InvalidCreateFormResult
 from form_agent.business.form_authoring.evidence import environment
@@ -33,6 +35,7 @@ OWNED: dict[Module, tuple[str, ...]] = {
     "validation": ("constraints", "validationMessages"),
     "reaction": ("reactions",),
 }
+MODULE_LABELS = {"view": "页面", "validation": "额外校验", "reaction": "联动"}
 GUIDE = {
     "view": ("视图", "物料契约", "数据命令", "Host事件", "Host契约", "创作简写"),
     "validation": ("表达式、校验", "校验与消息", "纯函数签名", "Host契约"),
@@ -72,6 +75,7 @@ class Fragment(BaseModel, extra="forbid"):
     coverage: dict[str, list[str]] = Field(default_factory=dict)
     deferred: dict[str, str] = Field(default_factory=dict)
     blocker: str | None = None
+    view_array_remove_ids: list[str] = Field(default_factory=list)
 
 
 class SchemaCounterexample(BaseModel, extra="forbid"):
@@ -524,9 +528,12 @@ def module_ids(standard, module: Module, constraint_ids):
     return {req.id for req in standard.requirements if req.kind in kinds}
 
 
-def pointer_exists(fragment, pointer):
+_MISSING_POINTER = object()
+
+
+def pointer_value(fragment, pointer):
     if not pointer.startswith("/"):
-        return False
+        return _MISSING_POINTER
     value = fragment
     try:
         for token in pointer[1:].split("/"):
@@ -537,8 +544,39 @@ def pointer_exists(fragment, pointer):
                 else value[key]
             )
     except (IndexError, KeyError, TypeError, ValueError):
-        return False
-    return True
+        return _MISSING_POINTER
+    return value
+
+
+def pointer_exists(fragment, pointer):
+    return pointer_value(fragment, pointer) is not _MISSING_POINTER
+
+
+def scoped_remove_at(fragment, pointer):
+    command = pointer_value(fragment, pointer)
+    return (
+        pointer.startswith(("/views/", "/viewTemplates/"))
+        and pointer.endswith("/on/activate/command")
+        and isinstance(command, dict)
+        and command.get("op") == "array.remove"
+        and isinstance(item := command.get("item"), dict)
+        and isinstance(scope := item.get("$scope"), str)
+        and bool(scope)
+    )
+
+
+def view_command_ownership(standard, evidence):
+    ids = set(evidence.view_array_remove_ids)
+    if not ids:
+        return standard
+    return standard.model_copy(
+        update={
+            "requirements": [
+                req.model_copy(update={"kind": "view"}) if req.id in ids else req
+                for req in standard.requirements
+            ]
+        }
+    )
 
 
 def map_declared_view_requests(fragment, standard, host, coverage):
@@ -606,6 +644,7 @@ async def author_fragment(
     manual,
     previous=None,
     missing_host_ids=(),
+    view_transfers=None,
 ):
     await emit_compose_phase(module, "retrying" if previous else "started")
     try:
@@ -618,6 +657,7 @@ async def author_fragment(
             manual,
             previous,
             missing_host_ids,
+            view_transfers,
         )
     except Exception as error:
         await emit_compose_phase(module, "failed", detail=interruption_reason(error))
@@ -638,6 +678,7 @@ async def generate_fragment(
     manual,
     previous,
     missing_host_ids=(),
+    view_transfers=None,
 ):
     required = module_ids(standard, module, evidence.remaining_validation)
     host_ids = {req.id for req in standard.requirements if req.kind == "host"}
@@ -712,6 +753,8 @@ async def generate_fragment(
             for case in evidence.later_cases
             if isinstance(case, dict) and case.get("layer") in layers
         ]
+    if module == "view" and evidence.view_array_remove_ids:
+        payload["view_array_remove_ids"] = evidence.view_array_remove_ids
     if missing_host_ids:
         payload["missing_host_requirements"] = missing_host_ids
     for key in ("pure_functions", "materials"):
@@ -780,7 +823,9 @@ async def generate_fragment(
                 "filterKey can directly reference the parent. Put any country-dependent notes "
                 "inside a condition too. Use core.and(core.exists(ref), text.isNonBlank(ref)) "
                 "if an existing string can be blank. The condition does not mount children "
-                "while false, and core.and short-circuits. Preserve these guards when repairing "
+                "while false, and core.and short-circuits. For each view_array_remove_ids requirement, "
+                "map coverage to the button's /on/activate/command with array.remove and its member Scope. "
+                "Runtime maintains validation ownership by member identity. Preserve these guards when repairing "
                 "compiler diagnostics. Omit props that only restate material defaults. "
                 "Prefer inline controls with direct schema references when the applicant and "
                 "family rows differ in shape. Do not require a shared whole-object template "
@@ -795,7 +840,11 @@ async def generate_fragment(
                 else ""
             )
             + (
-                "A data watch already reacts to actual changes. For clearing a dependent value "
+                "When a required behavior is an explicit user-controlled deletion of a current array "
+                "member, return its ID in view_array_remove_ids so it can be authored by View. "
+                "Include the ID even if deleting the member must preserve validation ownership. "
+                "This transfer only applies to a direct delete action, never to deletion triggered "
+                "by a data change. A data watch already reacts to actual changes. For clearing a dependent value "
                 "when a parent changes, use the parent watch and a set-to-null command as in the "
                 "published travel example. Do not require a previous-value field for this behavior."
                 " For category-specific data, target only the affected member. When the new "
@@ -812,6 +861,15 @@ async def generate_fragment(
             ),
             {**payload, **notes},
         )
+        if module == "reaction" and view_transfers is not None:
+            view_transfers.extend(sorted(set(result.view_array_remove_ids) & required))
+            if view_transfers:
+                return (
+                    {},
+                    {},
+                    {},
+                    "成员删除入口需要由视图配置：" + "、".join(view_transfers),
+                )
         if result.blocker:
             return {}, {}, {}, result.blocker
         fragment = object_from(result.fragment_text)
@@ -828,6 +886,16 @@ async def generate_fragment(
                 )
             )
             and required <= set(coverage)
+            and (
+                module != "view"
+                or all(
+                    any(
+                        scoped_remove_at(fragment, pointer)
+                        for pointer in coverage.get(key, [])
+                    )
+                    for key in evidence.view_array_remove_ids
+                )
+            )
             and set(coverage) <= required | host_ids
             and set(missing_host_ids) <= set(coverage) | set(result.deferred)
             and set(result.deferred) <= set(coverage) | allowed_deferrals
@@ -839,6 +907,15 @@ async def generate_fragment(
         ):
             return fragment, coverage, result.deferred, None
         problems = []
+        if module == "view":
+            for key in evidence.view_array_remove_ids:
+                if not any(
+                    scoped_remove_at(fragment, pointer)
+                    for pointer in coverage.get(key, [])
+                ):
+                    problems.append(
+                        f"{key} needs a scoped array.remove button command in View."
+                    )
         if missing := required - set(coverage):
             problems.append(
                 f"Missing local requirement coverage: {', '.join(sorted(missing))}."
@@ -864,9 +941,9 @@ async def generate_fragment(
     return {}, {}, {}, "片段未通过写入范围或需求映射检查。" + " ".join(problems)
 
 
-def blocked(checks, reason, evidence=None, checkpoint=None):
+def blocked(checks, reason, evidence=None, checkpoint=None, partial_draft=None):
     return Composition(
-        Blocked(kind="blocked", reason=reason),
+        Blocked(kind="blocked", reason=reason, partial_draft=partial_draft),
         checks,
         evidence,
         compose_checkpoint=checkpoint,
@@ -1053,16 +1130,19 @@ async def assemble_staged(
     tools=None,
     checkpoint=None,
 ):
+    standard = view_command_ownership(standard, evidence)
+    view_transfers: list[str] = []
+    can_transfer = not evidence.view_array_remove_ids
     host = evidence.capabilities.get("host")
     operations = host.get("requests") if isinstance(host, dict) else None
     operations = operations if isinstance(operations, dict) else {}
-    host_owners = {
+    host_owners: dict[str, Module] = {
         req.id: "view" if named_requests([req], operations) else "validation"
         for req in standard.requirements
         if req.kind == "host"
     }
 
-    async def build(module):
+    async def build(module: Module, previous=None):
         if checkpoint is not None and module in checkpoint.fragments:
             await emit_compose_phase(
                 module, "completed", detail="已复用通过局部检查的片段。"
@@ -1076,9 +1156,12 @@ async def assemble_staged(
             schema,
             evidence,
             manual,
-            previous=({}, [{"code": "FRAGMENT_CAPABILITY_GAP", "message": prior_gap}])
-            if prior_gap
-            else None,
+            previous=previous
+            or (
+                ({}, [{"code": "FRAGMENT_CAPABILITY_GAP", "message": prior_gap}])
+                if prior_gap
+                else None
+            ),
             missing_host_ids=(
                 tuple(
                     key
@@ -1088,6 +1171,9 @@ async def assemble_staged(
                 if checkpoint is not None
                 else ()
             ),
+            view_transfers=view_transfers
+            if module == "reaction" and can_transfer
+            else None,
         )
         if checkpoint is not None:
             if result[3]:
@@ -1098,6 +1184,53 @@ async def assemble_staged(
         return result
 
     fragments = await parallel(*(build(module) for module in OWNED))
+    if view_transfers:
+        evidence = evidence.model_copy(
+            update={
+                "view_array_remove_ids": sorted(
+                    set(evidence.view_array_remove_ids) | set(view_transfers)
+                )
+            }
+        )
+        if checkpoint is not None:
+            checkpoint.evidence = evidence
+            original_view = fragments[0][0]
+            if original_view:
+                checkpoint.previous_view_fragment = original_view
+            checkpoint.fragments.pop("view", None)
+            checkpoint.module_diagnostics.pop("reaction", None)
+        standard = view_command_ownership(standard, evidence)
+        can_transfer = False
+        rebuilt_view, rebuilt_reaction = await parallel(
+            build("view"), build("reaction")
+        )
+        original_view, _, _ = fragments[0][:3]
+        if rebuilt_view[3] and original_view:
+            rebuilt_view = (original_view, {}, {}, rebuilt_view[3])
+        fragments = [rebuilt_view, fragments[1], rebuilt_reaction]
+    if checkpoint is not None:
+        view, _, _, view_gap = fragments[0]
+        if view_gap and not view and checkpoint.previous_view_fragment:
+            fragments[0] = (checkpoint.previous_view_fragment, {}, {}, view_gap)
+        elif not view_gap:
+            checkpoint.previous_view_fragment = None
+
+    issues = [
+        DraftIssue(
+            message=(
+                f"{MODULE_LABELS[module]}未完整纳入草稿。{result[3]}"
+                if not result[0]
+                else result[3]
+            ),
+            sourcePointer="/" + OWNED[module][0],
+            requirementIds=sorted(
+                set(re.findall(r"\bR[1-9][0-9]*\b", result[3]))
+                & module_ids(standard, module, evidence.remaining_validation)
+            ),
+        )
+        for module, result in zip(OWNED, fragments)
+        if result[3]
+    ]
     gaps = [
         f"{module}：{result[3]}"
         for module, result in zip(OWNED, fragments)
@@ -1118,7 +1251,6 @@ async def assemble_staged(
             )
             if resolution and resolution.checks.pending_candidate:
                 return resolution
-        return blocked(checks, "；".join(gaps), evidence, checkpoint)
     document = request.requirements_document
     identity = document.document_id if document else standard.goal
     definition: dict = {
@@ -1137,6 +1269,14 @@ async def assemble_staged(
             deferrals[module] = deferred
         for key, paths in mapping.items():
             coverage.setdefault(key, []).extend(paths)
+    if issues:
+        return blocked(
+            checks,
+            "；".join(gaps),
+            evidence,
+            checkpoint,
+            PartialDraft(candidate_text=json_text(definition), issues=issues),
+        )
     missing_host = [
         req
         for req in standard.requirements
@@ -1155,7 +1295,19 @@ async def assemble_staged(
             + "；".join(f"{req.id} {req.subject}" for req in missing_host),
             evidence,
             checkpoint,
+            PartialDraft(
+                candidate_text=json_text(definition),
+                issues=[
+                    DraftIssue(
+                        message=f"{req.subject}缺少 Host 绑定或延期说明。",
+                        sourcePointer="/" + OWNED[host_owners[req.id]][0],
+                        requirementIds=[req.id],
+                    )
+                    for req in missing_host
+                ],
+            ),
         )
+    unmapped: list[DraftIssue] = []
     for req in standard.requirements:
         paths = list(
             dict.fromkeys(
@@ -1174,12 +1326,13 @@ async def assemble_staged(
             )
         )
         if not paths and not (req.kind == "host" and limits):
-            return blocked(
-                checks,
-                f"需求 {req.id} 缺少协议落点：{req.behavior}",
-                evidence,
-                checkpoint,
+            unmapped.append(
+                DraftIssue(
+                    message=f"缺少协议落点：{req.behavior}",
+                    requirementIds=[req.id],
+                )
             )
+            continue
         checks.configuration_mapping.append(
             ConfigurationMapping(
                 requirement_id=req.id,
@@ -1188,7 +1341,16 @@ async def assemble_staged(
                 detail="；".join([req.behavior, *limits]),
             )
         )
-    submit_candidate(checks, json_text(definition))
+    text = json_text(definition)
+    if unmapped:
+        return blocked(
+            checks,
+            "部分需求缺少协议落点。",
+            evidence,
+            checkpoint,
+            PartialDraft(candidate_text=text, issues=unmapped),
+        )
+    submit_candidate(checks, text)
     return Composition(
         None, checks, evidence.model_copy(update={"module_deferrals": deferrals})
     )
@@ -1364,6 +1526,7 @@ async def repair_staged(state, model, tools):
     evidence = composition.binding_evidence
     standard = state["understanding"].standard
     assert digest and evidence and standard
+    standard = view_command_ownership(standard, evidence)
     diagnostics = checks.receipts[digest].diagnostics
     history = state.get("repairs", [])
     before = json.loads(checks.failed_text[digest])

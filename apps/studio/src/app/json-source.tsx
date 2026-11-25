@@ -16,6 +16,8 @@ const modules = {
 } as const;
 type Module = keyof typeof modules;
 
+export type SourceFocus = { path: string; revision: number; section?: Module };
+
 type Props = {
   initialSection?: Module;
   formPath: string;
@@ -26,7 +28,7 @@ type Props = {
   onPendingChange?: (value: boolean) => void;
   onChange: (text: string) => void;
   renderActions?: React.ComponentProps<typeof JsonEditorView>['renderActions'];
-  focusPath?: { path: string; revision: number };
+  focusPath?: SourceFocus;
   pickingReference?: boolean;
 };
 
@@ -61,8 +63,13 @@ function SourceViews({
     seenFocus.current = focusPath;
     if (focusPath)
       beforeLeave(() => {
-        setFocus(focusPath);
-        setMode('json');
+        if (focusPath.section) {
+          setSection(focusPath.section);
+          setMode('schema');
+        } else {
+          setFocus(focusPath);
+          setMode('json');
+        }
       });
   }, [beforeLeave, focusPath]);
   const [repair, setRepair] = useState(0);

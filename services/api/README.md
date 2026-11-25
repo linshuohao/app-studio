@@ -119,7 +119,7 @@ Studio 通过 `/api/platform/agent-conversations` 访问本人在当前空间的
 
 升级已有数据库时先导入 Agent 会话并逐行验证。迁移 `1780000000005-independent-form-drafts` 在一个事务中核对导入证明、提取并验证已交付草稿，然后移除旧会话表。空库直接执行 `db:migrate`。依照前文的角色分离配置，为 Platform 运行角色授予 `platform_form_drafts`、`platform_draft_deliveries` 的读写权限。
 
-迁移 `1780000000006-remove-retired-studio-storage` 退役 Studio 的场景存储和三列写入后未读取的草稿交付元数据。应用前按上述 PostgreSQL 升级流程保存可恢复的备份。草稿文本、修订与交付指纹仍用于编辑和幂等交付。
+迁移 `1780000000006-remove-retired-studio-storage` 退役 Studio 的场景存储和三列写入后未读取的草稿交付元数据。应用前按上述 PostgreSQL 升级流程保存可恢复的备份。草稿文本、修订与交付指纹仍用于编辑和幂等交付。迁移 `1780000000008-draft-editing` 新增草稿编辑权和占用冲突通知。新版本启动前应用迁移，并按前文角色分离配置确认 Platform 运行角色可以读写 `platform_draft_editing` 和 `platform_draft_edit_notices`。
 
 已有混合会话表的升级命令从仓库根执行。先在 Agent 数据库应用 Alembic，再由离线命令通过管道将源行交给 Agent 的导入器。迁移凭据分别通过 `AGENT_DATABASE_URL` 和 `PLATFORM_MIGRATION_DATABASE_URL` 提供。
 

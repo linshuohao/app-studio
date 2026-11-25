@@ -72,3 +72,8 @@ export async function clickTurn(
   assert(turn && turn.message === payload.message);
   return next;
 }
+
+export async function openDeliveredDraft(page, draftName) {
+  const link = page.getByRole('link').filter({ hasText: draftName });
+  await page.goto(await link.getAttribute('href'));
+}

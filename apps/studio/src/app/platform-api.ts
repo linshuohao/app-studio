@@ -120,10 +120,10 @@ export async function platform<T>(
         else if (value.type === 'data-item') request.item?.(value.data as UnderstandingItem);
         else if (value.type === 'data-result') return value.data as T;
         else if (value.type === 'data-failure') {
-          const failure = value.data as number | { status: number; reason: string };
+          const failure = value.data as number | { status: number; reason: string; code?: string };
           throw typeof failure === 'number'
             ? new PlatformError(failure)
-            : new PlatformError(failure.status, failure.reason);
+            : new PlatformError(failure.status, failure.reason, failure.code);
         } else if (value.type === 'error') throw new PlatformError(502);
       }
     } finally {

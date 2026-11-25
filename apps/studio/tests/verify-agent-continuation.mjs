@@ -1,7 +1,12 @@
 // Opt-in live acceptance. Run against an isolated Studio/API with local login enabled.
 import { chromium, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
-import { clickTurn as submit, turnResponse, captureAssistantTurns } from './assistant-browser.mjs';
+import {
+  clickTurn as submit,
+  turnResponse,
+  captureAssistantTurns,
+  openDeliveredDraft,
+} from './assistant-browser.mjs';
 import { createHash } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 const origin = new URL(process.env.CREATE_FORM_STUDIO_URL ?? 'http://127.0.0.1:3200');
@@ -35,7 +40,10 @@ try {
   }
   await page.goto('/');
   await page.getByRole('button', { name: '以本地开发账号登录' }).click();
-  await page.getByRole('button', { name: '表单助手', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: '主导航' })
+    .getByRole('button', { name: 'Agent', exact: true })
+    .click();
   await page
     .getByLabel('发送消息')
     .fill(
@@ -68,6 +76,7 @@ try {
   }
   const original = second.conversation.turns.at(-1).result;
   assert.equal(original.kind, 'proposal', original.reason ?? original.message);
+  await openDeliveredDraft(page, second.draft.name);
   async function preview() {
     const [p] = await Promise.all([
       responses('/preview'),
@@ -107,6 +116,7 @@ try {
   await page.mouse.up();
   const resized = await panel.boundingBox();
   assert(resized.width > start.width + 45 && resized.height > start.height + 15);
+  await page.getByRole('button', { name: '开始编辑', exact: true }).click();
   await page.getByRole('button', { name: '编辑表单名称' }).click();
   await page.getByLabel('表单名称', { exact: true }).fill('旅险 · 连续协作');
   const [firstSave] = await Promise.all([

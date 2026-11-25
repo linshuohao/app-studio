@@ -28,6 +28,7 @@ class FormAuthoringTaskFacts(BaseModel):
     failure: RepairContext | None = None
     compose_checkpoint: ComposeCheckpoint | None = None
     failure_base: str | None = None
+    partial_base: str | None = None
     working_check: CheckReceipt | None = None
     draft_id: str | None = None
 
@@ -69,8 +70,14 @@ class FormAuthoringTaskFacts(BaseModel):
             version="1",
             markdown=message.document or self.pending_message or message.message,
         )
+        # Exact checkpoint drafts can resume Compose. Manual edits enter the
+        # regular revision flow so a checkpoint cannot overwrite user work.
+        resume_compose = self.compose_checkpoint is not None and (
+            base is None or base == self.partial_base
+        )
         return TurnInput(
             message=message.message,
+            read_only=message.readOnly,
             references=message.references,
             context=message.context.model_dump(exclude_none=True),
             history=history,
@@ -80,7 +87,7 @@ class FormAuthoringTaskFacts(BaseModel):
             previous_review=self.review,
             previous_working_check=self.working_check,
             previous_failure=self.failure if base == self.failure_base else None,
-            previous_compose=self.compose_checkpoint if base is None else None,
+            previous_compose=self.compose_checkpoint if resume_compose else None,
             open_questions=self.questions,
         )
 
@@ -105,6 +112,8 @@ class FormAuthoringTaskFacts(BaseModel):
             self.failure = None
             self.failure_base = None
             self.review = None
+            partial = result.get("partial_draft")
+            self.partial_base = partial["candidate_text"] if partial else None
             checkpoint = result.get("compose_checkpoint")
             self.compose_checkpoint = (
                 ComposeCheckpoint.model_validate(checkpoint) if checkpoint else None
@@ -135,4 +144,4 @@ class FormAuthoringTaskFacts(BaseModel):
             self.working_check = CheckReceipt.model_validate(data)
         if data := result.get("repair_context"):
             self.failure = RepairContext.model_validate(data)
-            self.failure_base = base
+            self.failure_base = self.partial_base or base

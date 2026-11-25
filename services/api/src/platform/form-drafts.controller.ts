@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { PlatformDrafts, type DraftAction, type DraftPreview } from './form-drafts.js';
 import { requireStudioOrigin, session } from './session-http.js';
@@ -27,6 +28,44 @@ export class FormDraftsController {
   @Header('Cache-Control', 'no-store')
   get(@Headers('cookie') cookie: string, @Param('id') id: string) {
     return this.drafts.get(session(cookie), id);
+  }
+  @Get(':id/editing')
+  @Header('Cache-Control', 'no-store')
+  editingStatus(
+    @Headers('cookie') cookie: string,
+    @Param('id') id: string,
+    @Query('editorId') editorId?: string,
+    @Query('conversationId') conversationId?: string,
+  ) {
+    return this.drafts.editingStatus(session(cookie), id, editorId, conversationId);
+  }
+  @Post(':id/editing')
+  beginEditing(
+    @Headers('origin') origin: string,
+    @Headers('cookie') cookie: string,
+    @Param('id') id: string,
+    @Body() body: { editorId: string; grantId: string; revision: number },
+  ) {
+    requireStudioOrigin(origin);
+    return this.drafts.beginEditing(
+      session(cookie),
+      id,
+      body?.revision,
+      'human',
+      body?.editorId,
+      body?.grantId,
+    );
+  }
+  @Post(':id/editing/release')
+  @HttpCode(204)
+  async endEditing(
+    @Headers('origin') origin: string,
+    @Headers('cookie') cookie: string,
+    @Param('id') id: string,
+    @Body() body: { token: string },
+  ) {
+    requireStudioOrigin(origin);
+    await this.drafts.endEditing(session(cookie), id, body?.token, 'human');
   }
   @Delete(':id')
   @HttpCode(204)

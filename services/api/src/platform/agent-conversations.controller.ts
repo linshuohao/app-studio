@@ -48,6 +48,7 @@ type TurnInput = {
   draftId?: string;
   draftRevision?: number;
   workingText?: string;
+  readOnly?: boolean;
   formId?: string;
   workId?: string;
 };
@@ -208,10 +209,12 @@ export class AgentConversationsController {
     delivery: Delivery,
     expected: { formId?: string; workId?: string; draftId?: string },
     apply = true,
+    editorId?: string,
   ) {
     if (delivery.target === 'editor') {
       if (
         !delivery.formId ||
+        delivery.draftIssues !== undefined ||
         (expected.formId && delivery.formId !== expected.formId) ||
         (expected.workId && delivery.workId !== expected.workId) ||
         expected.draftId
@@ -230,7 +233,7 @@ export class AgentConversationsController {
       throw new BadGatewayException('Invalid draft target');
     return {
       draft: apply
-        ? ((await this.drafts.receive(session(cookie), actor, delivery)) ?? null)
+        ? ((await this.drafts.receive(session(cookie), actor, delivery, editorId)) ?? null)
         : await this.drafts.delivered(await this.reauthorize(cookie, actor), delivery),
     };
   }
@@ -289,12 +292,13 @@ export class AgentConversationsController {
         draftId?: string;
         draftRevision?: number;
         status: string;
+        readOnly?: boolean;
         references?: ReferenceKey[];
       }[];
     }>(actor, path);
     const attempt = target.attempts?.find((entry) => entry.turnId === turnId);
     const draftId = target.formId ? undefined : attempt?.draftId;
-    if (draftId && attempt?.status !== 'done') {
+    if (draftId && attempt?.readOnly && attempt.status !== 'done') {
       const draft = await this.drafts.get(session(cookie), draftId);
       if (draft.formId || draft.revision !== attempt?.draftRevision)
         throw new ConflictException('草稿已更新，请重新打开。');
@@ -305,27 +309,37 @@ export class AgentConversationsController {
       else await this.authorizeReferenceRead(cookie, actor);
     }
     if (target.formId) await this.checkForm(actor, target.formId, target.workId);
-    const run = async (stream?: TurnStream): Promise<TurnView> => {
-      const { conversation, delivery } = await conversationRequest<TurnResponse>(
-        actor,
-        path + '/turns/' + resourceId(turnId) + '/resume',
-        { method: 'POST', stream },
+    const run = (stream?: TurnStream): Promise<TurnView> =>
+      this.drafts.whileAgentEdits(
+        session(cookie),
+        draftId && attempt?.draftRevision && attempt.status !== 'done' && !attempt.readOnly
+          ? { id: draftId, revision: attempt.draftRevision }
+          : undefined,
+        id,
+        async (editorId) => {
+          const { conversation, delivery } = await conversationRequest<TurnResponse>(
+            actor,
+            path + '/turns/' + resourceId(turnId) + '/resume',
+            { method: 'POST', stream },
+          );
+          await this.reauthorize(cookie, actor);
+          const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);
+          if (
+            conversation.id !== id ||
+            turnIndex < 0 ||
+            (delivery &&
+              (delivery.sourceRevision > turnIndex + 1 ||
+                conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
+          )
+            throw new BadGatewayException('Invalid resumed conversation');
+          return {
+            conversation,
+            ...(delivery
+              ? await this.receive(cookie, actor, delivery, { ...target, draftId }, true, editorId)
+              : {}),
+          };
+        },
       );
-      await this.reauthorize(cookie, actor);
-      const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);
-      if (
-        conversation.id !== id ||
-        turnIndex < 0 ||
-        (delivery &&
-          (delivery.sourceRevision > turnIndex + 1 ||
-            conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
-      )
-        throw new BadGatewayException('Invalid resumed conversation');
-      return {
-        conversation,
-        ...(delivery ? await this.receive(cookie, actor, delivery, { ...target, draftId }) : {}),
-      };
-    };
     if (accept?.includes('text/event-stream'))
       return sendAgentStream(
         response,
@@ -357,6 +371,7 @@ export class AgentConversationsController {
       (body.workingText !== undefined && !body.formId && !body.draftId) ||
       (body.formId && body.draftId) ||
       (body.workId && !body.formId) ||
+      (body.readOnly !== undefined && typeof body.readOnly !== 'boolean') ||
       (body.draftId && (!Number.isSafeInteger(body.draftRevision) || body.draftRevision! < 1))
     )
       throw new BadRequestException('无效的会话输入');
@@ -364,6 +379,7 @@ export class AgentConversationsController {
     const references = await this.resolveReferences(cookie, actor, body.references);
     const run = async (stream?: TurnStream): Promise<TurnView> => {
       let workingText = body.workingText === undefined ? undefined : configText(body.workingText);
+      let editingDraft: Pick<Draft, 'id' | 'revision'> | undefined;
       if (body.draftId) {
         let draft: Draft | undefined;
         try {
@@ -371,13 +387,23 @@ export class AgentConversationsController {
         } catch (e) {
           if (!(e instanceof NotFoundException)) throw e;
         }
+        if (draft && !draft.formId && !body.readOnly && body.draftRevision !== undefined)
+          editingDraft = { id: draft.id, revision: body.draftRevision };
         if (!draft || draft.formId || body.draftRevision !== draft.revision) {
           // A previously committed command may be retried after its own delivery changed the draft.
-          const history = await conversationRequest<Conversation>(actor, '/' + id);
-          if (!history.turns.some((t) => t.turnId === body.turnId))
-            throw new ConflictException('草稿已更新或删除');
+          const history = await conversationRequest<Conversation>(actor, '/' + id).catch(
+            (error: unknown) => {
+              if (error instanceof NotFoundException) return undefined;
+              throw error;
+            },
+          );
+          if (history?.turns.some((t) => t.turnId === body.turnId)) editingDraft = undefined;
+          else if (!editingDraft) throw new ConflictException('草稿已更新或删除');
+        } else {
+          if (workingText !== undefined && workingText !== draft.text)
+            throw new ConflictException('工作稿内容与草稿修订不一致，请先保存草稿');
+          workingText = draft.text;
         }
-        workingText ??= draft?.text;
       }
       let linkedDraftId = body.draftId;
       if (body.formId) {
@@ -400,50 +426,56 @@ export class AgentConversationsController {
           body.formId,
           body.workId,
           body.workingText,
+          ...(body.readOnly ? ['read-only'] : []),
           ...(references.length ? [references.map(referenceIdentity)] : []),
         ]),
       );
-      const { conversation, delivery } = await conversationRequest<TurnResponse>(
-        actor,
-        '/' + id + '/turns',
-        {
-          method: 'POST',
-          stream,
-          body: {
-            turnId: body.turnId,
-            revision: body.revision,
-            message: body.message,
-            document: body.document,
-            ...(references.length && { references }),
-            workingText,
-            draftId: linkedDraftId,
-            draftRevision: body.draftRevision,
-            requestFingerprint,
-            context: {
-              target: 'web',
-              knowledge_version:
-                process.env.CREATE_FORM_KNOWLEDGE_VERSION || 'createform-l1-2026-11-22.2',
-              check_environment: checkEnvironment(this.builds),
-              formId: body.formId,
-              workId: body.workId,
+      return this.drafts.whileAgentEdits(session(cookie), editingDraft, id, async (editorId) => {
+        const { conversation, delivery } = await conversationRequest<TurnResponse>(
+          actor,
+          '/' + id + '/turns',
+          {
+            method: 'POST',
+            stream,
+            body: {
+              turnId: body.turnId,
+              revision: body.revision,
+              message: body.message,
+              document: body.document,
+              ...(references.length && { references }),
+              workingText,
+              draftId: linkedDraftId,
+              draftRevision: body.draftRevision,
+              requestFingerprint,
+              ...(body.readOnly ? { readOnly: true } : {}),
+              context: {
+                target: 'web',
+                knowledge_version:
+                  process.env.CREATE_FORM_KNOWLEDGE_VERSION || 'createform-l1-2026-11-22.2',
+                check_environment: checkEnvironment(this.builds),
+                formId: body.formId,
+                workId: body.workId,
+              },
             },
           },
-        },
-      );
-      await this.reauthorize(cookie, actor);
-      const turn = conversation?.turns?.[body.revision];
-      if (
-        conversation?.id !== id ||
-        turn?.turnId !== body.turnId ||
-        (delivery &&
-          (delivery.sourceRevision > body.revision + 1 ||
-            conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
-      )
-        throw new BadGatewayException('Invalid conversation result');
-      return {
-        conversation,
-        ...(delivery ? await this.receive(cookie, actor, delivery, body) : {}),
-      };
+        );
+        await this.reauthorize(cookie, actor);
+        const turn = conversation?.turns?.[body.revision];
+        if (
+          conversation?.id !== id ||
+          turn?.turnId !== body.turnId ||
+          (delivery &&
+            (delivery.sourceRevision > body.revision + 1 ||
+              conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
+        )
+          throw new BadGatewayException('Invalid conversation result');
+        return {
+          conversation,
+          ...(delivery && !body.readOnly
+            ? await this.receive(cookie, actor, delivery, body, true, editorId)
+            : {}),
+        };
+      });
     };
     if (accept?.includes('text/event-stream'))
       return sendAgentStream(

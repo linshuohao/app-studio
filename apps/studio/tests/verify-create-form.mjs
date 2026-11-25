@@ -66,6 +66,7 @@ try {
   page = draftPage;
   watchErrors(page);
   await expect(page.getByLabel('版本名称')).not.toHaveValue('');
+  await page.getByRole('button', { name: '开始编辑', exact: true }).click();
   await page.getByLabel('版本名称').fill('旅险验收初稿');
   await page.getByRole('button', { name: '返回表单列表' }).click();
   await page.getByRole('main').getByRole('button', { name: '表单草稿', exact: true }).click();
@@ -129,40 +130,21 @@ try {
   await page.getByRole('button', { name: '确认此版试填结果' }).click();
   console.log('草稿重新打开并完成首次试填');
 
+  await page.getByRole('button', { name: '开始编辑', exact: true }).click();
   await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
   await page.getByRole('button', { name: '文本查看 / 修复' }).click();
   const raw = page.getByRole('textbox', { name: '配置原文', exact: true });
   const working = JSON.parse(await raw.inputValue());
-  cityField(working.views).node.props ??= {};
-  cityField(working.views).node.props.placeholder = '请输入抵达城市';
   working.data.schema.description = '旅险工作稿手工说明';
+  await raw.fill(JSON.stringify(working));
+  await page.getByRole('button', { name: '完成编辑', exact: true }).click();
+  await expect(page.getByRole('button', { name: '开始编辑', exact: true })).toBeEnabled();
 
   const composer = page.getByLabel('发送消息', { exact: true });
   if (!(await composer.isVisible()))
     await page.getByRole('button', { name: '展开 Agent 聊天', exact: true }).click();
   await composer.fill('请把' + firstCity.label + '搜索框的提示文字改为“搜索目的地城市”。');
-  let release;
-  const checkpoint = new Promise((resolve) => {
-    release = resolve;
-  });
-  let captured;
-  const submitted = new Promise((resolve) => {
-    captured = resolve;
-  });
-  await page.route('**/turns', async (route) => {
-    captured();
-    await checkpoint;
-    await route.continue();
-  });
-  const revisedPromise = clickTurn(page, '发送', () => composer.press('Enter'));
-  try {
-    await Promise.race([submitted, revisedPromise.then(() => assert.fail('未捕获修改轮次请求'))]);
-    await raw.fill(JSON.stringify(working));
-  } finally {
-    release();
-  }
-  const revised = await revisedPromise;
-  await page.unroute('**/turns');
+  const revised = await clickTurn(page, '发送', () => composer.press('Enter'));
   const latest = revised.conversation.turns.at(-1).result;
   assert.equal(latest.kind, 'proposal', latest.reason ?? latest.message);
   assert.equal(
@@ -170,6 +152,11 @@ try {
     '搜索目的地城市',
   );
 
+  await page.getByRole('button', { name: '开始编辑', exact: true }).click();
+  const manual = JSON.parse(await raw.inputValue());
+  cityField(manual.views).node.props ??= {};
+  cityField(manual.views).node.props.placeholder = '请输入抵达城市';
+  await raw.fill(JSON.stringify(manual));
   await page.getByRole('button', { name: '对比并应用' }).click();
   const merge = page.getByRole('dialog', { name: '对比候选与当前工作稿' });
   await expect(merge.getByRole('button', { name: '应用到当前工作稿' })).toBeDisabled();

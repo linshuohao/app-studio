@@ -23,6 +23,7 @@ class BindingEvidence(BaseModel):
     later_cases: list[JsonValue] = Field(default_factory=list[JsonValue])
     schema_reopened: bool = False
     reflection_rounds: int = 0
+    view_array_remove_ids: list[str] = Field(default_factory=list)
     module_deferrals: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
@@ -33,6 +34,7 @@ class ComposeCheckpoint(BaseModel):
     previous_schema: str | None = None
     diagnostics: list[dict[str, JsonValue]] = Field(default_factory=list)
     evidence: BindingEvidence | None = None
+    previous_view_fragment: dict[str, JsonValue] | None = None
     fragments: dict[str, JsonValue] = Field(default_factory=dict)
     missing_host_ids: list[str] = Field(default_factory=list)
     module_diagnostics: dict[str, str] = Field(default_factory=dict)
@@ -62,6 +64,7 @@ class RepairContext(BaseModel):
 
 
 class CreateFormInput(BaseModel):
+    read_only: bool = False
     message: str = Field(min_length=1)
     references: list[MessageReference] = Field(default_factory=list, max_length=5)
     requirements_document: RequirementsDocument | None = None
@@ -96,7 +99,19 @@ class Answer(CreateFormBusinessResult):
     message: str
 
 
+class DraftIssue(BaseModel):
+    message: str
+    sourcePointer: str = ""
+    requirementIds: list[str] = Field(default_factory=list)
+
+
+class PartialDraft(BaseModel):
+    candidate_text: str
+    issues: list[DraftIssue] = Field(min_length=1)
+
+
 class Blocked(CreateFormBusinessResult):
+    partial_draft: PartialDraft | None = None
     compose_checkpoint: ComposeCheckpoint | None = None
     repair_context: RepairContext | None = None
     kind: Literal["blocked"]

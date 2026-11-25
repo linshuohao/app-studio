@@ -1,6 +1,8 @@
 """Decode complete document records and assemble the authoritative decision once."""
 
 import json
+import logging
+from time import monotonic
 
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.messages import HumanMessage
@@ -18,24 +20,76 @@ from form_agent.integrations.models import text_model
 
 
 async def read_document(model, messages, sources, *, task_intent=False):
+    started = monotonic()
+    timing = {
+        "first_requirement_ms": None,
+        "last_requirement_ms": None,
+        "finish_record_ms": None,
+        "stream_ms": None,
+        "fallback_ms": None,
+        "validation_ms": None,
+        "outcome": "failed",
+    }
+
     def validated(value):
-        result = validate_understanding(value, sources)
-        if task_intent and isinstance(result.decision, Answer):
-            raise InvalidCreateFormResult(
-                "A creation decision must be recorded as a task outcome"
+        started_validation = monotonic()
+        try:
+            result = validate_understanding(value, sources)
+            if task_intent and isinstance(result.decision, Answer):
+                raise InvalidCreateFormResult(
+                    "A creation decision must be recorded as a task outcome"
+                )
+            return result
+        finally:
+            timing["validation_ms"] = round(
+                (timing["validation_ms"] or 0)
+                + (monotonic() - started_validation) * 1000,
+                3,
             )
-        return result
 
     try:
-        result = await stream_document(model, messages, sources)
-        return validated(result)
-    except (ValueError, InvalidCreateFormResult):
-        await adispatch_custom_event("understanding_reset", {})
-        result = await structured(model, DocumentUnderstanding, messages)
-        return validated(result)
+        try:
+            stream_started = monotonic()
+            try:
+                result = await stream_document(
+                    model,
+                    messages,
+                    sources,
+                    timing=timing,
+                    started=started,
+                )
+            finally:
+                timing["stream_ms"] = round((monotonic() - stream_started) * 1000, 3)
+            result = validated(result)
+        except (ValueError, InvalidCreateFormResult) as error:
+            timing["fallback_reason"] = type(error).__name__
+            await adispatch_custom_event("understanding_reset", {})
+            fallback_started = monotonic()
+            try:
+                result = await structured(model, DocumentUnderstanding, messages)
+            finally:
+                timing["fallback_ms"] = round(
+                    (monotonic() - fallback_started) * 1000, 3
+                )
+            result = validated(result)
+        timing["outcome"] = "validated"
+        return result
+    finally:
+        timing["total_ms"] = round((monotonic() - started) * 1000, 3)
+        logging.getLogger("uvicorn.error").info(
+            "understanding_timing %s", json.dumps(timing)
+        )
 
 
-async def stream_document(model, messages, sources):
+async def stream_document(
+    model,
+    messages,
+    sources,
+    *,
+    timing=None,
+    started: float | None = None,
+):
+    started_at = monotonic() if started is None else started
     instruction = (
         "Return newline-delimited JSON, no Markdown. Emit each complete requirement immediately "
         'as {"requirement": Requirement}, each issue as {"issue": RequirementIssue}, '
@@ -56,6 +110,8 @@ async def stream_document(model, messages, sources):
             raise ValueError("Unexpected understanding record")
         if "finish" in record:
             finish = record["finish"]
+            if timing is not None:
+                timing["finish_record_ms"] = round((monotonic() - started_at) * 1000, 3)
             return
         if "requirement" in record:
             item = Requirement.model_validate(record["requirement"])
@@ -74,6 +130,11 @@ async def stream_document(model, messages, sources):
                 source.source_id, ""
             ):
                 raise ValueError("Invalid source excerpt")
+        if timing is not None and isinstance(item, Requirement):
+            now = round((monotonic() - started_at) * 1000, 3)
+            if timing["first_requirement_ms"] is None:
+                timing["first_requirement_ms"] = now
+            timing["last_requirement_ms"] = now
         if isinstance(item, Requirement) or item.disposition == "ask_user":
             await adispatch_custom_event(
                 "understanding_item", {"kind": kind, "text": text}

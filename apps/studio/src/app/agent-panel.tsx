@@ -156,6 +156,7 @@ export function AgentPanel({
   onMessage,
   onSend,
   sendLabel = '发送',
+  composeActions,
   disabled,
   sendDisabled,
   jumpToLatest = false,
@@ -179,6 +180,7 @@ export function AgentPanel({
   onMessage: (value: string) => void;
   onSend: () => void;
   sendLabel?: string;
+  composeActions?: ReactNode;
   disabled: boolean;
   sendDisabled: boolean;
   jumpToLatest?: boolean;
@@ -615,6 +617,7 @@ export function AgentPanel({
           placeholder="输入问题、表单需求或修改意见"
         />
         <div className="agent-compose-actions">
+          {composeActions}
           {onReference && (
             <Button variant="secondary" onClick={() => openPicker()} disabled={!canReference}>
               添加引用

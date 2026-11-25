@@ -355,3 +355,369 @@ it('reports an oversized UTF-8 candidate as a failed check tied to the exact tex
     .expect(200);
   expect(accepted.body).toMatchObject({ candidate_digest: digest(withinLimit), success: true });
 });
+
+it('keeps partial draft issues through replay and only clears applied issues with the full checked candidate', async () => {
+  const conversationId = randomUUID();
+  const issue = { message: '缺少删除绑定', sourcePointer: '/views', requirementIds: ['R26'] };
+  const partial = proposal(config('partial'), { checkId: undefined, draftIssues: [issue] });
+  const first = (await mockTurn(conversationId, partial).expect(201)).body.draft;
+  expect(first.text).toBe(partial.candidateText);
+  expect(first.draftIssues).toEqual([issue]);
+  expect(first.appliedDraftIssues).toEqual([issue]);
+  const replay = (await fetchDelivery(conversationId, partial).expect(201)).body.draft;
+  expect(replay.revision).toBe(first.revision);
+
+  const base = '/form-drafts/' + first.id;
+  const complete = proposal(config('complete'), {
+    draftId: first.id,
+    baseRevision: first.revision,
+    sourceRevision: 2,
+  });
+  const latest = (await mockTurn(conversationId, complete).expect(201)).body.draft;
+  expect(latest.draftIssues).toEqual([]);
+  expect(latest.appliedDraftIssues).toEqual([issue]);
+
+  const merged = (
+    await setup('patch', base)
+      .send({
+        revision: latest.revision,
+        text: config('merged'),
+        appliedDigest: complete.digest,
+        name: '表单',
+        versionName: '初稿',
+      })
+      .expect(200)
+  ).body;
+  expect(merged.appliedDraftIssues).toEqual([issue]);
+  const preview = (
+    await setup('post', base + '/preview')
+      .send({
+        revision: merged.revision,
+        digest: complete.digest,
+      })
+      .expect(201)
+  ).body;
+  await setup('post', base + '/save')
+    .send({
+      revision: merged.revision,
+      digest: complete.digest,
+      previewDigest: preview.digest,
+    })
+    .expect(409);
+
+  const applied = (
+    await setup('patch', base)
+      .send({
+        revision: merged.revision,
+        text: complete.candidateText,
+        appliedDigest: complete.digest,
+        name: '表单',
+        versionName: '初稿',
+      })
+      .expect(200)
+  ).body;
+  expect(applied.appliedDraftIssues).toEqual([]);
+});
+
+it('forwards the saved working text for the exact draft revision and rejects an unpersisted override', async () => {
+  const id = randomUUID();
+  const initial = proposal(config('partial'), {
+    checkId: undefined,
+    draftIssues: [{ message: '待补充规则', sourcePointer: '/reactions', requirementIds: ['R26'] }],
+  });
+  const draft = (await mockTurn(id, initial).expect(201)).body.draft;
+  const text = config('manually-revised');
+  const saved = (
+    await setup('patch', '/form-drafts/' + draft.id)
+      .send({
+        revision: draft.revision,
+        text,
+        appliedDigest: initial.digest,
+        name: '表单',
+        versionName: '初稿',
+      })
+      .expect(200)
+  ).body;
+  const turnId = randomUUID();
+  const request = {
+    revision: 1,
+    turnId,
+    draftId: draft.id,
+    draftRevision: saved.revision,
+    message: '检查当前版本',
+  };
+  const before = upstream.mock.calls.length;
+  await setup('post', '/agent-conversations/' + id + '/turns')
+    .send({
+      ...request,
+      workingText: config('unsaved'),
+    })
+    .expect(409);
+  expect(upstream.mock.calls).toHaveLength(before);
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id,
+        revision: 2,
+        turns: [
+          { turnId: initial.turnId },
+          { turnId, result: { kind: 'answer', message: '已检查' } },
+        ],
+      },
+    }),
+  );
+  await setup('post', '/agent-conversations/' + id + '/turns')
+    .send(request)
+    .expect(201);
+  expect(JSON.parse(upstream.mock.calls.at(-1)![1].body)).toMatchObject({
+    draftId: draft.id,
+    draftRevision: saved.revision,
+    workingText: text,
+  });
+});
+
+it('retains issues from a selectively applied partial candidate when a later candidate arrives', async () => {
+  const conversation = randomUUID();
+  const initial = proposal(config('clean'));
+  const draft = (await mockTurn(conversation, initial).expect(201)).body.draft;
+  const issue = { message: '待补充规则', sourcePointer: '/reactions', requirementIds: ['R26'] };
+  const partial = proposal(config('partial'), {
+    checkId: undefined,
+    draftId: draft.id,
+    baseRevision: draft.revision,
+    sourceRevision: 2,
+    draftIssues: [issue],
+  });
+  const delivered = (await mockTurn(conversation, partial).expect(201)).body.draft;
+  const edit = (
+    await setup('patch', '/form-drafts/' + draft.id)
+      .send({
+        revision: delivered.revision,
+        appliedDigest: partial.digest,
+        text: config('merged-partial'),
+        name: '表单',
+        versionName: '初稿',
+      })
+      .expect(200)
+  ).body;
+  const complete = proposal(config('checked'), {
+    draftId: draft.id,
+    baseRevision: edit.revision,
+    sourceRevision: 3,
+  });
+  const latest = (await mockTurn(conversation, complete).expect(201)).body.draft;
+  expect(latest.draftIssues).toEqual([]);
+  expect(latest.appliedDraftIssues).toEqual([issue]);
+});
+
+it('accepts only one concurrent candidate against the same draft revision', async () => {
+  const conversation = randomUUID();
+  const initial = proposal(config('shared'));
+  const first = (await mockTurn(conversation, initial).expect(201)).body.draft;
+  const candidates = ['candidate-a', 'candidate-b'].map((id) =>
+    proposal(config(id), { draftId: first.id, baseRevision: first.revision, sourceRevision: 2 }),
+  );
+  upstream.mockImplementation((url: URL) =>
+    Promise.resolve(
+      Response.json(candidates.find((candidate) => url.pathname.endsWith(candidate.turnId))),
+    ),
+  );
+  const replies = await Promise.all(
+    candidates.map((candidate) =>
+      setup(
+        'post',
+        '/agent-conversations/' + conversation + '/deliveries/' + candidate.turnId + '/receive',
+      ),
+    ),
+  );
+  expect(replies.map((reply) => reply.status).sort()).toEqual([201, 409]);
+  const current = (await setup('get', '/form-drafts/' + first.id).expect(200)).body;
+  expect(current.revision).toBe(first.revision + 1);
+  expect(current.text).toBe(initial.candidateText);
+  expect(current.candidateText).toBe(
+    replies.find((reply) => reply.status === 201)!.body.draft.candidateText,
+  );
+});
+
+it('serializes two saves of the same working version while allowing a separate working version', async () => {
+  const versions = (
+    await setup('post', '/forms')
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: '协作表单' })
+      .expect(201)
+  ).body;
+  const form = '/forms/' + versions.formId;
+  const createWork = (name: string) =>
+    setup('post', form + '/work')
+      .set('Idempotency-Key', randomUUID())
+      .send({ name, text: config('base') })
+      .expect(201);
+  const [working, separate] = await Promise.all([
+    createWork('同一工作版本'),
+    createWork('独立工作版本'),
+  ]);
+  const save = (workId: string, text: string, basedOnVersionId?: string) =>
+    setup('post', form + '/versions')
+      .set('Idempotency-Key', randomUUID())
+      .send({ workId, text, basedOnVersionId });
+  const original = await save(working.body.id, config('initial')).expect(201);
+  const base = original.body.versionId;
+  const results = await Promise.all([
+    save(working.body.id, config('person-a'), base),
+    save(working.body.id, config('agent-b'), base),
+    save(separate.body.id, config('separate')),
+  ]);
+  expect(
+    results
+      .slice(0, 2)
+      .map((response) => response.status)
+      .sort(),
+  ).toEqual([201, 409]);
+  expect(results[2].status).toBe(201);
+});
+
+it('holds one draft editing slot and rejects competing changes before Agent generation', async () => {
+  const id = randomUUID();
+  const initial = proposal(config('exclusive'));
+  const draft = (await mockTurn(id, initial).expect(201)).body.draft;
+  const editing = '/form-drafts/' + draft.id + '/editing';
+  const human = randomUUID();
+  const grantId = randomUUID();
+  const attempt = () =>
+    setup('post', '/agent-conversations/' + randomUUID() + '/turns').send({
+      turnId: randomUUID(),
+      revision: 0,
+      message: '更改字段',
+      draftId: draft.id,
+      draftRevision: draft.revision,
+    });
+  await setup('post', editing)
+    .send({ editorId: human, grantId, revision: draft.revision })
+    .expect(201);
+  const previousCalls = upstream.mock.calls.length;
+  await attempt().expect(409);
+  expect(upstream.mock.calls).toHaveLength(previousCalls);
+  const blockedStream = await attempt().set('Accept', 'text/event-stream').expect(200);
+  expect(blockedStream.text).toContain('DRAFT_EDITING');
+  expect(blockedStream.text).toContain('草稿正在由人工编辑，本次修改未开始。');
+  expect(upstream.mock.calls).toHaveLength(previousCalls);
+  const questionId = randomUUID();
+  const questionTurn = randomUUID();
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id: questionId,
+        revision: 1,
+        turns: [
+          {
+            turnId: questionTurn,
+            result: { kind: 'answer', message: '当前有一个视图。' },
+          },
+        ],
+      },
+    }),
+  );
+  await setup('post', '/agent-conversations/' + questionId + '/turns')
+    .send({
+      turnId: questionTurn,
+      revision: 0,
+      message: '当前有几个视图？',
+      readOnly: true,
+      draftId: draft.id,
+      draftRevision: draft.revision,
+    })
+    .expect(201);
+  expect(JSON.parse(upstream.mock.calls.at(-1)![1].body)).toMatchObject({ readOnly: true });
+  const noticed = (await setup('get', editing + '?editorId=' + human).expect(200)).body;
+  expect(noticed).toMatchObject({ holder: 'human', own: true, blocked: 'agent' });
+  await setup('post', editing + '/release')
+    .send({ token: randomUUID() })
+    .expect(204);
+  await attempt().expect(409);
+  await setup('post', editing + '/release')
+    .send({ token: grantId })
+    .expect(204);
+
+  let started!: () => void;
+  let finish!: (value: Response) => void;
+  const running = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  upstream.mockImplementationOnce(() => {
+    started();
+    return new Promise<Response>((resolve) => {
+      finish = resolve;
+    });
+  });
+  const nextTurnId = randomUUID();
+  const result = setup('post', '/agent-conversations/' + id + '/turns')
+    .send({
+      turnId: nextTurnId,
+      revision: 1,
+      message: '更改字段',
+      draftId: draft.id,
+      draftRevision: draft.revision,
+    })
+    .then((response) => response);
+  await running;
+  try {
+    await setup('post', editing)
+      .send({ editorId: human, grantId, revision: draft.revision })
+      .expect(409);
+    const forAgent = (await setup('get', editing + '?conversationId=' + id).expect(200)).body;
+    expect(forAgent).toMatchObject({ holder: 'agent', own: true, blocked: 'human' });
+    await attempt().expect(409);
+  } finally {
+    finish(
+      Response.json({
+        conversation: {
+          id,
+          revision: 2,
+          turns: [
+            { turnId: initial.turnId },
+            {
+              turnId: nextTurnId,
+              result: { kind: 'answer', message: '完成检查' },
+            },
+          ],
+        },
+      }),
+    );
+  }
+  expect((await result).status).toBe(201);
+  expect((await setup('get', editing).expect(200)).body.holder).toBeNull();
+});
+
+it('expires a human grant without letting it save or release the next grant', async () => {
+  const draft = (await mockTurn(randomUUID(), proposal(config('lease'))).expect(201)).body.draft;
+  const base = '/form-drafts/' + draft.id;
+  const editorId = randomUUID(),
+    previous = randomUUID(),
+    next = randomUUID();
+  const acquire = (grantId: string) =>
+    setup('post', base + '/editing').send({ editorId, grantId, revision: draft.revision });
+  await acquire(previous).expect(201);
+  await app
+    .get(PlatformDatabase)
+    .executor.execute(
+      "UPDATE platform_draft_editing SET expires_at=now()-interval '1 second' WHERE draft_id=$1",
+      [draft.id],
+    );
+  await acquire(next).expect(201);
+  await setup('post', base + '/editing/release')
+    .send({ token: previous })
+    .expect(204);
+  const edit = {
+    revision: draft.revision,
+    text: config('edited'),
+    appliedDigest: draft.appliedDigest,
+    name: '互斥验证',
+    versionName: '初稿',
+  };
+  await setup('patch', base)
+    .send({ ...edit, editingToken: previous })
+    .expect(409);
+  await setup('patch', base)
+    .send({ ...edit, editingToken: next })
+    .expect(200);
+});

@@ -419,7 +419,11 @@ class ConversationStore:
             attempts.append(
                 {
                     "turnId": tid,
-                    **{k: req[k] for k in ("draftId", "draftRevision") if k in req},
+                    **{
+                        k: req[k]
+                        for k in ("draftId", "draftRevision", "readOnly")
+                        if req.get(k) is not None
+                    },
                     "message": req.get("message", ""),
                     **(
                         {
@@ -546,6 +550,8 @@ class ConversationStore:
         request = message.model_dump(mode="json", exclude_none=True)
         if not message.references:
             request.pop("references")
+        if not message.readOnly:
+            request.pop("readOnly", None)
         signature = fingerprint(
             [
                 message.revision,
@@ -558,6 +564,7 @@ class ConversationStore:
                         k: request.get(k)
                         for k in ("workingText", "draftId", "draftRevision", "document")
                     },
+                    **({"readOnly": True} if message.readOnly else {}),
                     **(
                         {
                             "references": [
@@ -667,11 +674,14 @@ class ConversationStore:
                 conn.execute(update(turns).where(key).values(status="running"))
             facts = FormAuthoringTaskFacts.model_validate(row["task"])
             if (
-                message.draftId
-                and facts.draft_id
+                facts.draft_id
                 and str(message.draftId) != facts.draft_id
+                and (
+                    message.draftId
+                    or (not message.readOnly and not message.context.formId)
+                )
             ):
-                raise ConversationConflict("Draft belongs to another task")
+                raise ConversationConflict("Open the bound draft to request changes")
             return {
                 "message": message,
                 "facts": facts,
@@ -696,6 +706,8 @@ class ConversationStore:
     ):
         revision = message.revision + 1
         tid = str(message.turnId)
+        if message.context.formId:
+            result.pop("partial_draft", None)
         facts.advance(cid, revision, message.message, message.document, base, result)
         committed_at = datetime.now(UTC)
         public = {
@@ -709,7 +721,7 @@ class ConversationStore:
                 reference.public() for reference in message.references
             ]
         delivery = None
-        if result["kind"] == "proposal":
+        if result["kind"] == "proposal" or result.get("partial_draft"):
             draft = (
                 str(message.draftId)
                 if message.draftId
@@ -725,6 +737,7 @@ class ConversationStore:
                 message.draftRevision,
                 message.context.formId,
                 message.context.workId,
+                message.context.check_environment,
             )
             public["draftId"] = draft
             facts.draft_id = draft
@@ -734,7 +747,11 @@ class ConversationStore:
             row = required(conn, cid, owner)
             if row["revision"] != message.revision:
                 raise ConversationConflict("Conversation changed during execution")
-            if delivery and result["candidate_text"] == base:
+            if (
+                delivery
+                and result["kind"] == "proposal"
+                and delivery["candidateText"] == base
+            ):
                 # Showing an existing verified proposal reuses its immutable delivery.
                 latest = conn.execute(
                     select(turns.c.delivery)
@@ -753,6 +770,7 @@ class ConversationStore:
                         "checkEnvironment",
                         "formId",
                         "workId",
+                        "draftIssues",
                     )
                 ):
                     delivery = latest

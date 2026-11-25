@@ -87,6 +87,8 @@ async def route(state: TurnGraphState, *, model: BaseChatModel):
     reading = state.get("understanding")
     if state.get("reply") is not None:
         return {"action": "deliver"}
+    if request.read_only:
+        return {"action": "chat"}
     if previous and previous.action == "understand":
         return {
             "action": "compose"
@@ -152,7 +154,6 @@ async def route(state: TurnGraphState, *, model: BaseChatModel):
         if (
             request.previous_compose
             and not request.references
-            and request.referenced_candidate is None
             and re.fullmatch(
                 r"(?:请)?(?:继续(?:修复|生成)?|重新(?:试一次|生成)|重试|retry|resume)[。！! ]*",
                 request.message.strip(),

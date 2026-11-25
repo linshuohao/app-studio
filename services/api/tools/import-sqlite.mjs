@@ -57,8 +57,11 @@ export async function importSqlite(sourcePath, connectionString) {
     if (
       (versions.length !== 6 &&
         !(
-          versions.length === 7 &&
-          versions[6]?.name === '1780000000006-remove-retired-studio-storage'
+          versions[6]?.name === '1780000000006-remove-retired-studio-storage' &&
+          (versions.length === 7 ||
+            (versions[7]?.name === '1780000000007-agent-partial-draft-issues' &&
+              (versions.length === 8 ||
+                (versions.length === 9 && versions[8]?.name === '1780000000008-draft-editing'))))
         )) ||
       versions[0]?.name !== '1780000000000-platform' ||
       versions[1]?.name !== '1780000000001-scenarios' ||

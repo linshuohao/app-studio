@@ -244,6 +244,9 @@ def test_prd_schema_is_checked_and_modules_receive_only_relevant_requirements(
         assert len(compiled) == 1 and len(checks) == (
             2 if scenario == "unproven" else 3
         )
+        partial = result["partial_draft"]
+        assert json.loads(partial["candidate_text"]) == compiled[0]
+        assert partial["issues"][0]["sourcePointer"] == "/data/schema"
     elif scenario in {"reopen", "binding-reopen", "initial-binding-gap"}:
         assert result["kind"] == "proposal"
         assert compiled[1]["data"] == {"schema": corrected}
@@ -1021,3 +1024,99 @@ def test_retry_rebuilds_only_the_module_missing_a_host_disposition(monkeypatch, 
     else:
         assert mapping.status == "deferred_to_host"
         assert mapping.destinations == []
+
+
+@pytest.mark.parametrize("view_succeeds", [True, False])
+def test_member_delete_moves_from_reaction_to_view_without_losing_the_page(
+    monkeypatch, view_succeeds
+):
+    from form_agent.agent.nodes.compose import staged
+    from form_agent.business.form_authoring.contracts import CreateFormInput
+    from form_agent.business.form_authoring.requirements import StandardRequirements
+
+    facts = standard_requirements()
+    facts["requirements"].append(
+        {
+            "id": "R26",
+            "kind": "reaction",
+            "subject": "被保人名单",
+            "behavior": "点击删除成员，其他成员的错误保持归属",
+            "sources": [{"source_id": "message", "quote": "可删除当前被保人"}],
+        }
+    )
+    standard = StandardRequirements.model_validate(facts)
+    request = CreateFormInput(message="可删除当前被保人", context={"target": "web"})
+    schema = {"type": "object", "properties": {"age": {"type": "integer"}}}
+    view = {"views": {"default": {"material": "section"}}}
+    calls = []
+
+    async def ask(model, result_type, instructions, payload):
+        module = payload["module"]
+        required = payload["required_ids"]
+        calls.append((module, required))
+        if module == "reaction":
+            assert required == ["R26"]
+            return result_type(view_array_remove_ids=["R26"], blocker="R26 属于视图")
+        if "R26" not in required:
+            return result_type(fragment_text=json.dumps(view))
+        if not view_succeeds:
+            return result_type(blocker="R26 缺少删除入口")
+        candidate = {
+            "views": {
+                "default": {
+                    "material": "button",
+                    "on": {
+                        "activate": {
+                            "type": "form.command",
+                            "command": {
+                                "op": "array.remove",
+                                "target": {"source": "data", "path": "/members"},
+                                "item": {"$scope": "member"},
+                            },
+                        }
+                    },
+                }
+            },
+        }
+        return result_type(
+            fragment_text=json.dumps(candidate),
+            coverage={"R26": ["/views/default/on/activate/command"]},
+        )
+
+    monkeypatch.setattr(staged, "ask", ask)
+    evidence = staged.BindingEvidence(
+        target="web", capabilities={}, schema_coverage={"R1": ["/properties/age"]}
+    )
+    checkpoint = staged.ComposeCheckpoint(inputs="test", evidence=evidence)
+
+    def assemble():
+        return asyncio.run(
+            staged.assemble_staged(
+                request,
+                None,
+                standard,
+                schema,
+                checkpoint.evidence,
+                {},
+                staged.CheckEvidence(),
+                checkpoint=checkpoint,
+            )
+        )
+
+    result = assemble()
+    assert ("reaction", ["R26"]) in calls
+    assert ("view", ["R26"]) in calls
+    if view_succeeds:
+        candidate = json.loads(result.checks.pending_candidate)
+        assert candidate["views"]["default"]["on"]["activate"]["command"]["item"] == {
+            "$scope": "member"
+        }
+        assert result.checks.configuration_mapping[-1].requirement_id == "R26"
+    else:
+        for attempt in [result, assemble()]:
+            partial = attempt.draft.partial_draft
+            assert json.loads(partial.candidate_text)["views"] == view["views"]
+            assert json.loads(partial.candidate_text)["data"]["schema"] == schema
+            assert partial.issues[0].requirementIds == ["R26"]
+            assert partial.issues[0].sourcePointer == "/views"
+        assert calls.count(("reaction", ["R26"])) == 1

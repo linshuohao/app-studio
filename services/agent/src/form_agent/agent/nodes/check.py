@@ -85,6 +85,13 @@ async def check(
         summary = detail + "。整表已通过编译，可进入预览。"
         if deferred:
             summary += " 待 Host 集成与验证：" + "；".join(deferred)
+        if evidence := composition.binding_evidence:
+            if evidence.view_array_remove_ids:
+                summary += (
+                    " 待试填验证 "
+                    + "、".join(evidence.view_array_remove_ids)
+                    + " 的成员删除及校验错误归属。"
+                )
         draft = CheckedDraft(
             kind="proposal", candidate_digest=receipt.candidate_digest, summary=summary
         )

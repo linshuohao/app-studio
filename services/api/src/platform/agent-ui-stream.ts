@@ -58,14 +58,26 @@ export function sendAgentStream<T>(
           writer.write({ type: 'data-result', data: result });
           writer.write({ type: 'finish' });
         } catch (error) {
+          const detail = error instanceof HttpException ? error.getResponse() : undefined;
+          const editingConflict =
+            detail &&
+            typeof detail === 'object' &&
+            'code' in detail &&
+            detail.code === 'DRAFT_EDITING' &&
+            'message' in detail &&
+            typeof detail.message === 'string'
+              ? detail.message
+              : undefined;
           writer.write({
             type: 'data-failure',
             data:
               error instanceof AgentTurnFailure
                 ? { status: error.getStatus(), reason: error.reason }
-                : error instanceof HttpException
-                  ? error.getStatus()
-                  : 502,
+                : editingConflict
+                  ? { status: 409, reason: editingConflict, code: 'DRAFT_EDITING' }
+                  : error instanceof HttpException
+                    ? error.getStatus()
+                    : 502,
           });
         }
       },

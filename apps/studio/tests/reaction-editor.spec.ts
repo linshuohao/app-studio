@@ -1,3 +1,4 @@
+import { chooseWorkingVersionAction } from './working-version-menu';
 import { expect, test, type Page } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
 import { goldenData, ratePolicy } from '../../playground/src/demos/travel/policy';
@@ -185,31 +186,37 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
   await click(page, '联动');
   await click(page, '添加联动');
   await page.getByLabel('规则名称', { exact: true }).fill(rule.id);
-  await click(page, '规则 JSON');
-  const modal = page.getByRole('dialog', { name: '规则 JSON' });
-  await modal.getByRole('textbox').fill(JSON.stringify({ ...rule, then: [recordAge] }));
-  await modal.getByRole('button', { name: '应用修改', exact: true }).click();
-  await expect(modal).toBeHidden();
+  const drawer = page.getByRole('dialog', { name: '添加联动', exact: true });
+  await drawer.getByRole('tab', { name: 'JSON 编辑' }).click();
+  await drawer
+    .getByRole('textbox', { name: '规则 JSON' })
+    .fill(JSON.stringify({ ...rule, then: [recordAge] }));
+  await drawer.getByRole('tab', { name: '表单编辑' }).click();
   await click(page, '添加动作');
   await selectTarget(page, '选择目标字段', '/premium', alias);
   await page.getByRole('combobox', { name: '写入值取值来源', exact: true }).click();
   await page.getByRole('option', { name: '函数结果', exact: true }).click();
-  await page.getByRole('combobox', { name: '写入值纯函数', exact: true }).click();
-  await page.getByRole('option', { name: '单人保费', exact: true }).click();
-  const actionDialog = page.getByRole('tabpanel');
+  const fn = page.getByRole('combobox', { name: '写入值纯函数', exact: true });
+  await expect(page.getByRole('combobox', { name: '写入值取值来源', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await fn.press('ArrowDown');
+  await page.getByRole('option', { name: '计算单人保费', exact: true }).click({ timeout: 5000 });
+  const actionDialog = page.getByRole('dialog', { name: /^(添加|编辑)动作$/ });
   const info = actionDialog.getByRole('button', { name: '写入值函数说明', exact: true });
   await info.hover();
   await expect(page.getByRole('tooltip')).toContainText('根据年龄、计划、天数和费率');
   await info.click();
   const help = page.getByRole('dialog', { name: '函数说明', exact: true });
-  await expect(help.getByText('单人保费', { exact: true })).toBeVisible();
+  await expect(help.getByText('计算单人保费', { exact: true })).toBeVisible();
   await expect(help.getByText('根据年龄、计划、天数和费率计算单人金额。')).toBeVisible();
   await expect(help.getByText(/单人试算金额，单位为整数分/)).toBeVisible();
   await help.getByText('查看函数详情与调用示例', { exact: true }).click();
   await expect(help.getByText('200', { exact: true })).toBeVisible();
   await help.getByText('查看函数详情与调用示例', { exact: true }).click();
   await help.getByRole('button', { name: '关闭', exact: true }).click();
-  const planHelp = actionDialog.getByRole('button', { name: '出行方案说明', exact: true });
+  const planHelp = actionDialog.getByRole('button', { name: '投保方案说明', exact: true });
   await planHelp.press('Shift+Tab');
   await page.keyboard.press('Tab');
   await expect(planHelp).toBeFocused();
@@ -224,7 +231,7 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
     .click();
   const policy = actionDialog.locator('[aria-label="ratePolicy 参数说明"]');
   await policy.getByText('查看值结构与约束', { exact: true }).click();
-  await expect(policy.getByText('允许汇总的最多被保人数。')).toBeVisible();
+  await expect(policy.getByText('允许汇总的最多被保险人数。')).toBeVisible();
   await policy.getByText('查看值结构与约束', { exact: true }).click();
 
   const argumentsByField = [
@@ -233,7 +240,7 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
     '表单根 · /days',
     '表单根 · /rates',
   ];
-  for (const [index, parameter] of ['年龄', '出行方案', '行程天数', '费率规则'].entries()) {
+  for (const [index, parameter] of ['出行时年龄', '投保方案', '出行天数', '费率规则'].entries()) {
     await actionDialog.getByRole('combobox', { name: parameter + '取值来源', exact: true }).click();
     await page.getByRole('option', { name: '读取字段', exact: true }).click();
     const picker = page.getByRole('dialog', { name: parameter + '选择字段', exact: true });
@@ -241,7 +248,7 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
     await picker.getByRole('radio', { name: argumentsByField[index], exact: true }).check();
     await picker.getByRole('button', { name: '应用选择', exact: true }).click();
   }
-  await click(page, '应用修改');
+  await click(page, '应用动作');
   await expect(page.getByRole('dialog', { name: '添加动作', exact: true })).toBeHidden();
   await page.getByRole('button', { name: '动作下移', exact: true }).first().click();
   await click(page, '完成规则');
@@ -263,7 +270,7 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
   expect((await save).status()).toBe(201);
   await click(page, '返回版本列表');
   await page.reload();
-  await click(page, '模型草稿');
+  await chooseWorkingVersionAction(page, '编辑配置');
   expect(compactJson(await (await schemaSource(page)).inputValue())).toBe(compactJson(reordered));
   const { region, a, b } = await preview(page);
   const fee = (row: typeof a) => row.getByPlaceholder('成员保费');
@@ -295,8 +302,11 @@ test('authors an ordered scoped reaction, reopens it, and isolates member writes
   await click(page, '关闭预览');
   await click(page, '联动');
   await click(page, '编辑 ' + rule.id);
-  await page.getByRole('tab', { name: /lastRootAge/ }).click();
+  await page.getByRole('button', { name: /lastRootAge/ }).click();
   await page.getByRole('button', { name: /加入观察.*表单根.*\/age/ }).click();
+  const observeAction = page.getByRole('dialog', { name: '编辑动作', exact: true });
+  if (await observeAction.isVisible())
+    await observeAction.getByRole('button', { name: '取消', exact: true }).click();
   await click(page, '完成规则');
   const after = JSON.parse(await (await schemaSource(page)).inputValue());
   expect(after.reactions[1].watch).toEqual([data('/age', alias), data('/age')]);
@@ -318,16 +328,15 @@ test('keeps validation projections separate, guards bound aliases, and edits a H
   await expect(page.getByLabel('首次激活时执行')).not.toBeChecked();
   await expect(page.getByText('整张表单', { exact: true })).toBeVisible();
   await expect(page.getByRole('dialog', { name: '配置执行范围' })).toBeHidden();
-  await click(page, '更改');
-  await page.getByRole('radio', { name: '按数组逐项执行', exact: true }).check();
-  await click(page, '来源数组');
-  const scopePicker = page.getByRole('dialog', { name: '来源数组', exact: true });
+  await page.getByRole('button', { name: /更改范围/ }).click();
+  await selectOption(page, '执行范围', '按数组逐项执行');
+  await click(page, '选择来源数组');
+  const scopePicker = page.getByRole('dialog', { name: '选择来源数组', exact: true });
   await expect(scopePicker.getByRole('complementary', { name: '已选字段' })).toHaveCount(0);
   await scopePicker.getByRole('searchbox').fill('/insureds');
   await scopePicker.getByRole('radio', { disabled: false }).check();
   await scopePicker.getByRole('button', { name: '应用选择', exact: true }).click();
-  await page.getByText('高级设置', { exact: true }).click();
-  await page.getByLabel('成员别名', { exact: true }).fill(alias);
+  await page.getByLabel('成员名称', { exact: true }).fill(alias);
   await click(page, '应用范围');
   await expect(page.getByRole('dialog', { name: '配置执行范围' })).toBeHidden();
   await expect(page.getByText(/逐个成员/)).toBeVisible();
@@ -336,7 +345,8 @@ test('keeps validation projections separate, guards bound aliases, and edits a H
   await picker.getByLabel('搜索字段').fill('/age');
   const projections = ['status', 'issues', 'state'] as const;
   for (const projection of projections) {
-    await picker.getByRole('combobox', { name: '来源', exact: true }).selectOption(projection);
+    const labels = { status: '校验状态', issues: '校验问题列表', state: '完整校验结果' };
+    await selectOption(page, '观察来源', labels[projection]);
     await picker
       .getByRole('checkbox', { name: alias + ' · /age · 校验 ' + projection, exact: true })
       .check();
@@ -345,11 +355,11 @@ test('keeps validation projections separate, guards bound aliases, and edits a H
   await expect(selected.getByRole('heading', { name: '已选 3 项' })).toBeVisible();
   await selected.getByRole('button', { name: '移除 ' + alias + ' · /age · 完整校验结果' }).click();
   await expect(selected.getByRole('heading', { name: '已选 2 项' })).toBeVisible();
-  await picker.getByRole('combobox', { name: '来源', exact: true }).selectOption('state');
+  await selectOption(page, '观察来源', '完整校验结果');
   await picker.getByRole('checkbox', { name: alias + ' · /age · 校验 state', exact: true }).check();
   await click(page, '应用选择');
-  await click(page, '更改');
-  await page.getByRole('radio', { name: '整张表单', exact: true }).check();
+  await page.getByRole('button', { name: /更改范围/ }).click();
+  await selectOption(page, '执行范围', '整张表单');
   await expect(page.getByRole('button', { name: '应用范围' })).toBeDisabled();
   await expect(page.getByRole('dialog', { name: '配置执行范围' }).getByRole('alert')).toContainText(
     alias,
@@ -380,12 +390,16 @@ test('keeps validation projections separate, guards bound aliases, and edits a H
     member: { $expr: read('/age', alias) },
     untouched: { $literal: { ref: data('/not-an-observation') } },
   };
-  await click(page, '编辑动作 JSON');
+  await page
+    .getByRole('dialog', { name: /^(添加|编辑)动作$/ })
+    .locator('.reaction-action-view-bar')
+    .getByRole('button', { name: 'JSON 编辑' })
+    .click();
   await page
     .getByRole('textbox', { name: '动作 JSON', exact: true })
     .fill(JSON.stringify({ type: 'host.emit', event: 'travel.saveDraft', payload }));
-  await click(page, '应用修改');
-  await page.getByRole('tab', { name: /通知宿主/ }).click();
+  await click(page, '应用动作');
+  await page.getByRole('button', { name: /通知宿主/ }).click();
   await expect(
     page.getByRole('button', { name: '加入观察 表单根 · /age', exact: true }),
   ).toBeVisible();
@@ -393,6 +407,10 @@ test('keeps validation projections separate, guards bound aliases, and edits a H
     page.getByRole('button', { name: '加入观察 ' + alias + ' · /age', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: /加入观察.*not-an-observation/ })).toHaveCount(0);
+  await page
+    .getByRole('dialog', { name: '编辑动作', exact: true })
+    .getByRole('button', { name: '取消', exact: true })
+    .click();
   await click(page, '完成规则');
   const doc = JSON.parse(await (await schemaSource(page)).inputValue());
   const expected = projections.map((observe) => ({
@@ -418,9 +436,9 @@ test('keeps a compiler-rejected lexical reference out of a draft with a separate
   await openSchemaDraft(page, raw);
   await click(page, '联动');
   await click(page, '编辑 handle-rule');
-  await click(page, '规则 JSON');
-  const dialog = page.getByRole('dialog', { name: '规则 JSON', exact: true });
-  const editor = dialog.getByRole('textbox');
+  const dialog = page.getByRole('dialog', { name: '编辑联动', exact: true });
+  await dialog.getByRole('tab', { name: 'JSON 编辑' }).click();
+  const editor = dialog.getByRole('textbox', { name: '规则 JSON' });
   await editor.fill(JSON.stringify({ ...opaque, when: read('/age', 'missingAlias') }));
   // Delay delivery of the real check response to exercise the modal's in-flight edit guard.
   let received!: () => void;
@@ -437,16 +455,15 @@ test('keeps a compiler-rejected lexical reference out of a draft with a separate
     await proceed;
     await route.fulfill({ response });
   });
-  await dialog.getByRole('button', { name: '应用修改' }).click();
+  await dialog.getByRole('button', { name: '完成规则' }).click();
   await started;
   try {
     await expect(editor).toBeDisabled();
-    await expect(dialog.getByRole('button', { name: '应用修改' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: '正在检查…' })).toBeDisabled();
   } finally {
     release();
   }
   await expect(dialog.getByRole('alert')).toContainText('/reactions/0');
-  await dialog.getByRole('button', { name: '关闭', exact: true }).click();
   await click(page, '取消');
   expect(await (await schemaSource(page)).inputValue()).toBe(raw);
 });
@@ -462,26 +479,24 @@ test('collapses execution scope after converting an existing travel rule to per-
   const summary = page.locator('.reaction-scope-summary');
   await expect(summary).toContainText('整张表单');
   await expect(dialog).toBeHidden();
-  await click(page, '更改');
-  await expect(dialog.getByRole('radio', { name: '整张表单', exact: true })).toBeChecked();
-  await expect(dialog.getByRole('button', { name: '来源数组' })).toBeHidden();
-  await expect(dialog.getByLabel('成员别名')).toBeHidden();
-  await dialog.getByRole('radio', { name: '按数组逐项执行', exact: true }).check();
-  await expect(dialog.getByLabel('成员别名')).toBeHidden();
+  await page.getByRole('button', { name: /更改范围/ }).click();
+  await expect(dialog.getByRole('combobox', { name: '执行范围' })).toHaveText('整张表单');
+  await expect(dialog.getByRole('button', { name: '选择来源数组' })).toBeHidden();
+  await expect(dialog.getByLabel('成员名称')).toBeHidden();
+  await selectOption(page, '执行范围', '按数组逐项执行');
   await expect(dialog.getByRole('button', { name: '应用范围' })).toBeDisabled();
-  await click(page, '来源数组');
-  const picker = page.getByRole('dialog', { name: '来源数组' });
+  await click(page, '选择来源数组');
+  const picker = page.getByRole('dialog', { name: '选择来源数组' });
   await picker.getByRole('searchbox').fill('/plan');
   await expect(picker.getByRole('radio', { disabled: false })).toHaveCount(0);
   await expect(picker.getByRole('button', { name: '应用选择' })).toBeDisabled();
   await picker.getByRole('searchbox').fill('/insureds');
   await picker.getByRole('radio', { disabled: false }).check();
   await picker.getByRole('button', { name: '应用选择' }).click();
-  await expect(dialog.locator('summary code')).toHaveText('insureds');
-  await expect(dialog.getByLabel('成员别名')).toBeHidden();
+  await expect(dialog.getByLabel('成员名称')).toHaveValue('insureds');
   await click(page, '应用范围');
   await expect(dialog).toBeHidden();
-  await expect(summary).toContainText('/insureds · 逐个成员');
+  await expect(summary).toContainText('被保险人列表 · 逐个成员');
   await click(page, '完成规则');
   const raw = await schemaSource(page);
   const saved = JSON.parse(await raw.inputValue());
@@ -516,26 +531,25 @@ test('writes, moves, then notifies Host using the saved travel form actions', as
     await selectOption(page, '动作类型', name);
   }
   async function applyAction() {
-    await click(page, '应用修改');
-    await expect(page.getByRole('tabpanel')).toBeHidden();
+    await click(page, '应用动作');
+    await expect(page.getByRole('dialog', { name: /^(添加|编辑)动作$/ })).toBeHidden();
   }
   await add('设置字段');
   await selectTarget(page, '选择目标字段', '/estimatedTotalMinor');
   await page.setViewportSize({ width: 1180, height: 900 });
-  await click(page, '写入值编辑表达式 JSON');
-  const expression = page.getByRole('dialog', { name: '写入值 · 表达式 JSON' });
-  await expression.getByRole('textbox').fill(
+  const expression = page.getByRole('region', { name: '写入值', exact: true });
+  await expression.getByRole('button', { name: 'JSON 编辑' }).click();
+  await expression.getByRole('textbox', { name: '写入值 · 表达式 JSON' }).fill(
     JSON.stringify({
       op: 'travel.totalPremium',
       args: [read('/insureds'), read('/plan'), { use: 'tripDays' }, { literal: ratePolicy }],
     }),
   );
-  await expression.getByRole('button', { name: '应用表达式' }).click();
   await applyAction();
 
   await add('移动成员');
   await selectTarget(page, '选择目标数组', '/insureds');
-  const inspector = page.getByRole('tabpanel');
+  const inspector = page.getByRole('dialog', { name: /^(添加|编辑)动作$/ });
   await selectOption(page, '被移动的成员', 'insured');
   await selectOption(page, '目的位置', '指定下标');
   await expect(inspector.getByRole('spinbutton')).toHaveValue('0');
@@ -543,22 +557,25 @@ test('writes, moves, then notifies Host using the saved travel form actions', as
 
   await add('通知宿主');
   await page.getByLabel('事件名', { exact: false }).fill('travel.saveDraft');
-  await page.getByRole('tab', { name: /移动成员/ }).click();
-  const pending = page.getByRole('dialog', { name: '当前修改尚未应用' });
-  await pending.getByRole('button', { name: '留在此处' }).click();
+  const hostAction = page.getByRole('dialog', { name: '添加动作', exact: true });
+  await expect(hostAction).toBeVisible();
+  await expect(
+    page.locator('.reaction-drawer-buttons button').filter({ hasText: '完成规则' }),
+  ).toBeDisabled();
   await expect(page.getByLabel('事件名', { exact: false })).toHaveValue('travel.saveDraft');
   await click(page, '添加消息内容');
-  await click(page, '消息内容编辑表达式 JSON');
-  const message = page.getByRole('dialog', { name: '消息内容 · 表达式 JSON' });
-  await message.getByRole('textbox').fill(JSON.stringify(read('/estimatedTotalMinor')));
-  await message.getByRole('button', { name: '应用表达式' }).click();
+  const message = page.getByRole('region', { name: '消息内容', exact: true });
+  await message.getByRole('button', { name: 'JSON 编辑' }).click();
+  await message
+    .getByRole('textbox', { name: '消息内容 · 表达式 JSON' })
+    .fill(JSON.stringify(read('/estimatedTotalMinor')));
   await applyAction();
-  const tabs = page.getByRole('tablist', { name: '动作执行顺序' });
-  await expect(tabs.getByRole('tab')).toHaveCount(3);
-  const order = () => tabs.getByRole('tab').allTextContents();
+  const tabs = page.getByRole('list', { name: '动作执行顺序' });
+  await expect(tabs.locator('button[aria-haspopup=dialog]')).toHaveCount(3);
+  const order = () => tabs.locator('button[aria-haspopup=dialog]').allTextContents();
   const before = await order();
   await tabs.getByRole('button', { name: '动作上移' }).last().click();
-  await expect(tabs.getByRole('tab').nth(1)).toContainText('通知宿主');
+  await expect(tabs.locator('button[aria-haspopup=dialog]').nth(1)).toContainText('通知宿主');
   await tabs.getByRole('button', { name: '动作下移' }).nth(1).click();
   expect(await order()).toEqual(before);
   await click(page, '完成规则');
@@ -590,7 +607,7 @@ test('writes, moves, then notifies Host using the saved travel form actions', as
   expect(response.status()).toBe(201);
   await click(page, '返回版本列表');
   await page.reload();
-  await click(page, '模型草稿');
+  await chooseWorkingVersionAction(page, '编辑配置');
   expect(compactJson(await (await schemaSource(page)).inputValue())).toBe(authored);
   await click(page, '联动');
   await click(page, '编辑 旅险动作验收');
@@ -690,9 +707,9 @@ for (const width of [1440, 1180]) {
     );
     await click(page, '联动');
     await click(page, '编辑 插入验收');
-    const firstAction = page.getByRole('tab', { name: /插入成员/ }).first();
+    const firstAction = page.getByRole('button', { name: /插入成员/ }).first();
     await firstAction.click();
-    const panel = page.getByRole('tabpanel');
+    const panel = page.getByRole('dialog', { name: /^(添加|编辑)动作$/ });
     const index = panel.getByRole('spinbutton', { name: '下标（从 0 开始）' });
     await expect(index).toHaveValue('0');
     await index.fill('3');
@@ -700,21 +717,25 @@ for (const width of [1440, 1180]) {
     await firstAction.click();
     await expect(index).toHaveValue('0');
     await index.fill('1');
-    await panel.getByRole('button', { name: '应用修改' }).click();
+    await panel.getByRole('button', { name: '应用动作' }).click();
     await expect(panel).toBeHidden();
     await click(page, '添加动作');
     await selectOption(page, '动作类型', '插入成员');
     await panel.getByRole('button', { name: '取消', exact: true }).click();
-    await expect(page.getByRole('tablist', { name: '动作执行顺序' }).getByRole('tab')).toHaveCount(
-      2,
-    );
+    await expect(
+      page.getByRole('list', { name: '动作执行顺序' }).locator('button[aria-haspopup=dialog]'),
+    ).toHaveCount(2);
     await click(page, '添加动作');
     await selectOption(page, '动作类型', '插入成员');
-    await click(page, '编辑动作 JSON');
+    await page
+      .getByRole('dialog', { name: /^(添加|编辑)动作$/ })
+      .locator('.reaction-action-view-bar')
+      .getByRole('button', { name: 'JSON 编辑' })
+      .click();
     await panel
       .getByRole('textbox', { name: '动作 JSON', exact: true })
       .fill(JSON.stringify(action));
-    await panel.getByRole('button', { name: '应用修改' }).click();
+    await panel.getByRole('button', { name: '应用动作' }).click();
     await expect(panel).toBeHidden();
     await click(page, '完成规则');
     const saved = JSON.parse(await (await schemaSource(page)).inputValue());
@@ -745,18 +766,17 @@ test('edits nested batch commands together and preserves untouched value wrapper
   );
   await click(page, '联动');
   await click(page, '编辑 批量动作');
-  await page.getByRole('tab', { name: /批量命令/ }).click();
-  const panel = page.getByRole('tabpanel');
+  await page.getByRole('button', { name: /批量命令/ }).click();
+  const panel = page.getByRole('dialog', { name: /^(添加|编辑)动作$/ });
   const patch = panel
     .locator('details')
     .filter({ has: page.locator('summary', { hasText: '2. 更新对象' }) });
   await patch.locator(':scope > summary').click();
-  await patch.getByRole('button', { name: 'age编辑表达式 JSON' }).click();
-  const editor = page.getByRole('dialog', { name: 'age · 表达式 JSON' });
-  await editor.getByRole('textbox').fill('23');
-  await editor.getByRole('button', { name: '应用表达式' }).click();
+  const editor = patch.getByRole('region', { name: 'age', exact: true });
+  await editor.getByRole('button', { name: 'JSON 编辑' }).click();
+  await editor.getByRole('textbox', { name: 'age · 表达式 JSON' }).fill('23');
   await patch.getByRole('button', { name: '上移' }).click();
-  await click(page, '应用修改');
+  await click(page, '应用动作');
   await expect(panel).toBeHidden();
   await click(page, '完成规则');
   const written = JSON.parse(await (await schemaSource(page)).inputValue());

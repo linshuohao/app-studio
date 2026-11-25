@@ -1,4 +1,4 @@
-// pnpm --filter @form-engine/studio exec node tests/run-agent-ownership.mjs [--live] [--promotion]
+// pnpm --filter @form-engine/studio exec node tests/run-agent-ownership.mjs [--live] [--promotion] [--create-form]
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -14,7 +14,23 @@ const require = createRequire(join(root, 'services/api/package.json'));
 const { Client } = require('pg');
 const live = process.argv.includes('--live');
 const promotion = process.argv.includes('--promotion');
-assert(process.argv.slice(2).every((a) => ['--live', '--promotion'].includes(a)));
+const createForm = process.argv.includes('--create-form');
+const references = process.argv.includes('--form-references');
+const assetReferences = process.argv.includes('--asset-references');
+assert(
+  process.argv
+    .slice(2)
+    .every((a) =>
+      [
+        '--live',
+        '--promotion',
+        '--create-form',
+        '--form-references',
+        '--asset-references',
+      ].includes(a),
+    ),
+);
+assert(!createForm || live, '--create-form requires the real model');
 const processes = [];
 const reserved = await Promise.all(
   Array.from({ length: 3 }, async () => {
@@ -130,7 +146,14 @@ try {
   await Promise.all([ready(api), ready(agent + '/health'), ready(studio)]);
   const health = await (await fetch(agent + '/health')).json();
   assert(health.create_form_ready, 'Configure the local model before running live acceptance.');
-  const test = spawn(process.execPath, ['tests/verify-agent-turn.mjs'], {
+  const script = assetReferences
+    ? 'verify-asset-references.mjs'
+    : references
+      ? 'verify-form-references.mjs'
+      : createForm
+        ? 'verify-create-form.mjs'
+        : 'verify-agent-turn.mjs';
+  const test = spawn(process.execPath, ['tests/' + script], {
     cwd: join(root, 'apps/studio'),
     env: { ...env, CREATE_FORM_STUDIO_URL: studio, STUDIO_TEST_PROMOTION: promotion ? '1' : '0' },
     stdio: 'inherit',

@@ -9,11 +9,18 @@ import {
   ListFilterBar,
   Pagination,
   type Column,
-} from '../components/ui';
-import { Feedback } from '../components/ui/controls';
-import { Field, FormLayout } from '../components/ui/form-layout';
-import { StudioSelect } from '../components/ui/select';
-import { conversationKey, keepConversation, type ConversationLink } from './agent-conversation';
+} from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
+import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
+import {
+  addReference,
+  maxReferences,
+  conversationKey,
+  keepConversation,
+  type ConversationLink,
+  type MessageReference,
+} from './agent-conversation';
 import { AgentDraftBox } from './agent-draft-box';
 import { AgentCreation } from './agent-creation';
 import { AgentConversationList } from './agent-conversation-list';
@@ -89,6 +96,73 @@ export default function Studio() {
   const openedDraft = useRef<string | undefined>(undefined);
   const draftConversation = useRef<string | undefined>(undefined);
   const [agentInstance, setAgentInstance] = useState(0);
+  const agentInstanceRef = useRef(0);
+  function resetAgentInstance() {
+    const next = ++agentInstanceRef.current;
+    setAgentInstance(next);
+    setReferenceDraft(undefined);
+    return next;
+  }
+  const [referenceDraft, setReferenceDraft] = useState<{
+    instance: number;
+    items: MessageReference[];
+  }>();
+  const [pickingReference, setPickingReference] = useState(false);
+  const pageReferenceTrigger = useRef<HTMLButtonElement>(null);
+  function cancelPageReference() {
+    setPickingReference(false);
+    pageReferenceTrigger.current?.focus({ preventScroll: true });
+  }
+  const cancelPageReferenceFromKeyboard = useEffectEvent(cancelPageReference);
+  useEffect(() => {
+    if (!pickingReference) return;
+    const cancel = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        document.querySelector('dialog[open]')
+      )
+        return;
+      event.preventDefault();
+      cancelPageReferenceFromKeyboard();
+    };
+    document.addEventListener('keydown', cancel);
+    return () => document.removeEventListener('keydown', cancel);
+  }, [pickingReference]);
+  const [referenceFocus, setReferenceFocus] = useState(0);
+  const currentReferenceDraft =
+    referenceDraft?.instance === agentInstance ? referenceDraft : undefined;
+  function updateReferences(change: (items: MessageReference[]) => MessageReference[]) {
+    if (agentInstanceRef.current !== agentInstance) return;
+    setReferenceDraft((current) => ({
+      instance: agentInstance,
+      items: change(current?.instance === agentInstance ? current.items : []),
+    }));
+  }
+  function attachReference(reference: MessageReference) {
+    if (
+      !activeConversationId &&
+      !continuation &&
+      (currentReferenceDraft?.items.length ?? 0) >= maxReferences
+    ) {
+      setNotice('一条消息最多添加 5 个引用，请先移除已有引用。');
+      return;
+    }
+    setNotice('');
+    if (activeConversationId || continuation) {
+      const instance = resetAgentInstance();
+      setReferenceDraft({ instance, items: [reference] });
+      setResumeResource(undefined);
+      setActiveConversationId(undefined);
+      writeLocation({ page: 'agent' });
+      void readRoute({ preserveAgentInstance: true });
+    } else {
+      updateReferences((items) => addReference(items, reference));
+    }
+    setPickingReference(false);
+    setAgentPanelOpen(true);
+    setReferenceFocus((value) => value + 1);
+  }
   const [historyOpen, setHistoryOpen] = useState(true);
   const [catalog, setCatalog] = useState<'materials' | 'functions'>();
   const [members, setMembers] = useState(false);
@@ -161,7 +235,8 @@ export default function Studio() {
       if (identity === identitySequence.current) setListLoading(false);
     }
   }
-  async function readRoute({ keepForm = false } = {}) {
+  async function readRoute({ keepForm = false, preserveAgentInstance = false } = {}) {
+    setPickingReference(false);
     let query = new URLSearchParams(window.location.search);
     if (query.has('studio')) {
       const url = new URL(window.location.href);
@@ -212,8 +287,9 @@ export default function Studio() {
         draftConversation.current = query.get('conversation') ?? undefined;
         setResumeResource({ kind: 'drafts', id: routeDraft });
         setActiveConversationId(draftConversation.current);
-        setAgentInstance((current) => current + 1);
+        resetAgentInstance();
       } else if (draftConversation.current !== (query.get('conversation') ?? undefined)) {
+        resetAgentInstance();
         draftConversation.current = query.get('conversation') ?? undefined;
         setResumeResource(
           draftConversation.current
@@ -230,7 +306,10 @@ export default function Studio() {
     if (showAgent) {
       const routeDraft = query.get('draft') ?? undefined;
       const routeConversation = query.get('conversation') ?? undefined;
-      if (routeDraft !== openedDraft.current || routeConversation !== draftConversation.current) {
+      if (
+        !preserveAgentInstance &&
+        (routeDraft !== openedDraft.current || routeConversation !== activeConversationId)
+      ) {
         openedDraft.current = routeDraft;
         draftConversation.current = routeConversation;
         setResumeResource(
@@ -241,7 +320,7 @@ export default function Studio() {
               : undefined,
         );
         setActiveConversationId(draftConversation.current);
-        setAgentInstance((current) => current + 1);
+        resetAgentInstance();
       }
     }
     if (!id) {
@@ -315,6 +394,7 @@ export default function Studio() {
       parkedSearch.current = '';
       setAgentOpen(false);
       setActiveConversationId(undefined);
+      resetAgentInstance();
       setRenamedConversation(undefined);
       openedDraft.current = undefined;
       draftConversation.current = undefined;
@@ -347,6 +427,7 @@ export default function Studio() {
     }
   }
 
+  const applyAccountFromEffect = useEffectEvent(applyAccount);
   const loadInitialTeam = useEffectEvent(() => {
     void loadForms();
     void readRoute();
@@ -361,12 +442,12 @@ export default function Studio() {
     void platform<Account>('/account').then(
       (current) => {
         if (!active || identity !== identitySequence.current) return;
-        applyAccount(current);
+        applyAccountFromEffect(current);
         if (current.membership.status === 'active') loadInitialTeam();
       },
       async (reason) => {
         if (!active || identity !== identitySequence.current) return;
-        applyAccount(null);
+        applyAccountFromEffect(null);
         if (!(reason instanceof PlatformError && reason.status === 401)) {
           setError(failureMessage(reason));
           return;
@@ -392,7 +473,7 @@ export default function Studio() {
       logoutChannel.onmessage = (event) => {
         if (accountRef.current?.userId !== event.data) return;
         ++identitySequence.current;
-        applyAccount(null);
+        applyAccountFromEffect(null);
         writeLocation({});
       };
     const pop = () => readBrowserRoute();
@@ -794,6 +875,19 @@ export default function Studio() {
                       </Menu.Item>
                     )}
                     {canEdit && entry.latestSave && (
+                      <Menu.Item
+                        onClick={() =>
+                          attachReference({
+                            formId: entry.formId,
+                            name: entry.name,
+                            ...entry.latestSave!,
+                          })
+                        }
+                      >
+                        引用到 Agent
+                      </Menu.Item>
+                    )}
+                    {canEdit && entry.latestSave && (
                       <Menu.Item onClick={() => openManagement(entry, 'copy')}>
                         复制为新表单
                       </Menu.Item>
@@ -877,6 +971,7 @@ export default function Studio() {
     setAgentPanelOpen(true);
     setResumeResource({ kind: 'conversations', id: entry.id });
     if (draftPageId) {
+      if (draftConversation.current !== entry.id) resetAgentInstance();
       draftConversation.current = entry.id;
       writeLocation({ page: 'draft', draft: draftPageId, conversation: entry.id }, true);
       return;
@@ -885,7 +980,7 @@ export default function Studio() {
     openedDraft.current = undefined;
     draftConversation.current = undefined;
     if (agentOpen) writeLocation({ page: 'agent', conversation: entry.id }, true);
-    setAgentInstance((current) => current + 1);
+    resetAgentInstance();
   }
 
   const activePage =
@@ -904,12 +999,14 @@ export default function Studio() {
   const showGlobalDock = !showAgentWorkspace && !showDraftWorkspace && (!form || !continuation);
   function openAgentPage() {
     writeLocation({ page: 'agent', conversation: activeConversationId });
-    void readRoute();
+    void readRoute({ preserveAgentInstance: true });
   }
   const agentWorkspace = account &&
     access &&
     canEdit &&
-    ((showGlobalDock && !!activeConversationId) || showDraftWorkspace || showAgentWorkspace) && (
+    ((showGlobalDock && (!!activeConversationId || !!currentReferenceDraft)) ||
+      showDraftWorkspace ||
+      showAgentWorkspace) && (
       <AgentCreation
         key={JSON.stringify([account.userId, access.spaceId, agentInstance])}
         resumeId={
@@ -918,6 +1015,9 @@ export default function Studio() {
         draftId={showDraftWorkspace ? draftPageId : undefined}
         owner={account.userId}
         space={access.spaceId}
+        references={currentReferenceDraft?.items ?? []}
+        updateReferences={updateReferences}
+        referenceFocus={referenceFocus}
         presentation={presentation}
         initialPanelPosition={agentPanelPosition}
         openAgentPage={openAgentPage}
@@ -932,6 +1032,7 @@ export default function Studio() {
           setAgentRevision((value) => value + 1);
         }}
         onConversationChange={(conversation) => {
+          if (agentInstanceRef.current !== agentInstance) return;
           setActiveConversationId(conversation.id);
           setResumeResource({ kind: 'conversations', id: conversation.id });
           setAgentRevision((current) => current + 1);
@@ -948,7 +1049,7 @@ export default function Studio() {
                 ? { kind: 'conversations', id: activeConversationId }
                 : undefined,
             );
-            setAgentInstance((current) => current + 1);
+            resetAgentInstance();
             return;
           }
           if (openedDraft.current) {
@@ -960,7 +1061,7 @@ export default function Studio() {
               conversationId ? { kind: 'conversations', id: conversationId } : undefined,
             );
             setActiveConversationId(conversationId);
-            setAgentInstance((current) => current + 1);
+            resetAgentInstance();
             return;
           }
           navigatePage('forms');
@@ -1016,6 +1117,16 @@ export default function Studio() {
               navigate={navigatePage}
               openForms={openFormsFromBreadcrumb}
             />
+            {canEdit && form && (
+              <Button
+                ref={pageReferenceTrigger}
+                variant="secondary"
+                aria-pressed={pickingReference}
+                onClick={() => setPickingReference(!pickingReference)}
+              >
+                引用页面对象
+              </Button>
+            )}
             {canEdit && !showAgentWorkspace && (
               <AgentConversationPicker
                 activeId={activeConversationId}
@@ -1109,7 +1220,11 @@ export default function Studio() {
               }}
             />
           ) : catalog ? (
-            <AssetCatalog key={catalog} kind={catalog} />
+            <AssetCatalog
+              key={catalog}
+              kind={catalog}
+              onReference={canEdit ? attachReference : undefined}
+            />
           ) : settings ? (
             <>
               <div className="toolbar page-title">
@@ -1378,7 +1493,7 @@ export default function Studio() {
                         writeLocation({ page: 'agent' }, true);
                         setResumeResource(undefined);
                         setActiveConversationId(undefined);
-                        setAgentInstance((current) => current + 1);
+                        resetAgentInstance();
                       }}
                     >
                       新对话
@@ -1404,7 +1519,7 @@ export default function Studio() {
                         writeLocation({ page: 'agent' }, true);
                         setResumeResource(undefined);
                         setActiveConversationId(undefined);
-                        setAgentInstance((current) => current + 1);
+                        resetAgentInstance();
                       }}
                     />
                   </div>
@@ -1439,6 +1554,8 @@ export default function Studio() {
                 }
                 navigating={busy}
                 onBack={backToList}
+                onReference={attachReference}
+                pickingReference={pickingReference && formOpen}
                 onAccessLost={removeEditPermission}
                 onRefreshAccess={refreshAccess}
               />

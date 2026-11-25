@@ -1,5 +1,5 @@
 import { beforeEach, expect, it } from 'vitest';
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { setup, field } from '../fixtures.js';
 // jsdom does not implement native dialog focus/inert behavior; actual browser tests cover it.
 beforeEach(() => {
@@ -62,4 +62,23 @@ it('disables the trigger and cleans up its portal on unmount under Strict Mode',
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   form.unmount();
   expect(document.querySelector('dialog')).toBeNull();
+});
+
+it('keeps the single-date calendar inside its containing dialog', async () => {
+  const form = setup(
+    {
+      material: 'dialog-editor',
+      props: { title: '编辑成员' },
+      slots: { content: [field('date-picker')] },
+    },
+    '2028-02-28',
+  );
+  fireEvent.click(screen.getByRole('button', { name: '编辑' }));
+  const modal = screen.getByRole('dialog', { name: '编辑成员' });
+  fireEvent.click(within(modal).getByRole('button', { name: '打开日期日历' }));
+  const grid = await within(modal).findByRole('grid');
+  const day = grid.querySelector('[data-day="2028-02-29"] button');
+  expect(day).toBeEnabled();
+  if (day) fireEvent.click(day);
+  expect(form.runtime.snapshot()).toEqual({ value: '2028-02-29' });
 });

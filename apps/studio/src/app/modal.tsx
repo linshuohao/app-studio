@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '../components/ui/controls';
+import { Button } from '@form-engine/studio-design-components/controls';
 import { type ReactNode, useEffect, useRef } from 'react';
 
 export function Modal({
@@ -45,7 +45,12 @@ export function Modal({
       className={[wide ? 'wide-dialog' : '', className].filter(Boolean).join(' ')}
       data-studio-modal-size={size}
       data-custom-chrome={customChrome || undefined}
+      data-base-ui-swipe-ignore=""
       aria-label={title}
+      onKeyDown={(event) => {
+        // Native cancel handles this dialog's Escape and leaves the enclosing drawer open.
+        if (event.key === 'Escape') event.stopPropagation();
+      }}
       onCancel={(event) => {
         event.stopPropagation();
         event.preventDefault();

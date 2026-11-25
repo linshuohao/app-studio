@@ -29,3 +29,14 @@ test-results/
 # Platform local persistence, backup and import reports.
 services/api/.platform-data/
 services/agent/.langfuse-evaluation/
+
+# Generated documentation. Keep the reader's CSS, JS, vendor assets and historical sources.
+/docs/reading/*.html
+/docs/reading/decisions/*.html
+/docs/reading/l1/*.html
+/docs/reading/assets/build-report.json
+/docs/reading/assets/knowledge-index.js
+/docs/reading/assets/knowledge-index.json
+/docs/history/index.html
+/docs/validation/index.html
+/docs/architecture-source-inventory.json

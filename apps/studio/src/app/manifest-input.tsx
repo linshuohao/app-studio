@@ -2,7 +2,7 @@
 import Ajv2020 from 'ajv/dist/2020';
 import { LiteralValueEditor, newLiteral, readLiteral, literalSource } from './literal-value-editor';
 import { SchemaJsonValue } from './schema-json-value';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import type { Schema } from '../components/catalog/contract-reference';
 const validator = new Ajv2020({ strict: false, allErrors: true, validateFormats: false });
 export function validateLiteral(schema: Schema, value: unknown) {

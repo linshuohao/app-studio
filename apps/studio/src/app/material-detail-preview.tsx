@@ -5,7 +5,7 @@ import type { JsonValue } from '@form-engine/protocol';
 import type { ViewNode } from '@form-engine/protocol/definition';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { JsonEditor } from '../components/json/json-editor';
-import { Button, Tabs } from '../components/ui';
+import { Button, Tabs } from '@form-engine/studio-design-components';
 import { PreviewRuntime } from './preview-runtime';
 
 export type MaterialPreview = {

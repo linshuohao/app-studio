@@ -3,7 +3,8 @@
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
 from secrets import compare_digest
 from typing import Annotated, Any
 from uuid import UUID, uuid4
@@ -112,23 +113,32 @@ def conversation_router(
         archive = next(
             (item for item in callbacks if isinstance(item, RawTraceArchive)), None
         )
+        reason = None
 
-        async def guarded() -> AsyncIterator[dict[str, Any]]:
+        def record_interruption(detail):
+            nonlocal reason
+            reason = detail
+
+        async def guarded() -> AsyncGenerator[dict[str, Any], None]:
             try:
-                async for event in run_turn_events(
-                    store,
-                    graph,
-                    message,
-                    owner,
-                    cid,
-                    trace,
-                    resume=resume,
-                    timeout_seconds=timeout_seconds,
-                    callbacks=callbacks,
-                    archive=archive,
-                    stream_graph_events=stream_graph_events,
-                ):
-                    yield event
+                async with aclosing(
+                    run_turn_events(
+                        store,
+                        graph,
+                        message,
+                        owner,
+                        cid,
+                        trace,
+                        resume=resume,
+                        timeout_seconds=timeout_seconds,
+                        callbacks=callbacks,
+                        archive=archive,
+                        stream_graph_events=stream_graph_events,
+                        record_interruption=record_interruption,
+                    )
+                ) as stream:
+                    async for event in stream:
+                        yield event
             except asyncio.CancelledError as error:
                 if archive:
                     archive.record("turn.cancelled", error=error)
@@ -150,16 +160,23 @@ def conversation_router(
                 logging.getLogger("uvicorn.error").warning(
                     "Agent turn failed trace=%s type=%s", trace, type(error).__name__
                 )
-                yield {"type": "error", "status": status}
+                yield {
+                    "type": "error",
+                    "status": status,
+                    **({"reason": reason} if reason else {}),
+                }
 
         if "application/x-ndjson" in accept:
 
             async def frames():
-                async for event in guarded():
-                    yield (
-                        json.dumps({"traceId": str(trace), **event}, ensure_ascii=False)
-                        + "\n"
-                    )
+                async with aclosing(guarded()) as stream:
+                    async for event in stream:
+                        yield (
+                            json.dumps(
+                                {"traceId": str(trace), **event}, ensure_ascii=False
+                            )
+                            + "\n"
+                        )
 
             return StreamingResponse(frames(), media_type="application/x-ndjson")
         async for event in guarded():

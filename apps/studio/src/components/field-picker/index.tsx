@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, type ReactNode } from 'react';
 import type { DataReference, ScopeBinder } from '@form-engine/protocol/definition';
-import { Button, Dialog, Input } from '../ui';
+import { Button, Dialog, Input } from '@form-engine/studio-design-components';
 import {
   FieldTree,
   type FieldTreeMetadata,

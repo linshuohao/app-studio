@@ -1,0 +1,306 @@
+{
+  "protocolVersion": "1.0",
+  "id": "family-count",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "adultCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "hasChildren": {
+          "type": "boolean",
+          "default": false
+        },
+        "childCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        }
+      },
+      "required": ["adultCount", "hasChildren"],
+      "additionalProperties": false,
+      "if": {
+        "required": ["hasChildren"],
+        "properties": {
+          "hasChildren": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": ["childCount"]
+      },
+      "else": {
+        "not": {
+          "required": ["childCount"]
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "旅险同行人数"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "成人人数"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/adultCount"
+            }
+          },
+          "children": [
+            {
+              "material": "number-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/adultCount"
+                }
+              },
+              "props": {
+                "inputMode": "numeric"
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "有儿童同行"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/hasChildren"
+            }
+          }
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/hasChildren"
+                    }
+                  },
+                  true
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "儿童人数"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/childCount"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/childCount"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "family-max",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "op": "core.add",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/adultCount"
+                }
+              },
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/childCount"
+                }
+              }
+            ]
+          },
+          6
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/childCount"
+        },
+        "code": "family-max",
+        "message": {
+          "text": "同行总人数不能超过 6 人"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.eq",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/hasChildren"
+                }
+              },
+              true
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/adultCount"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/adultCount"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/childCount"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/childCount"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-children",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/hasChildren"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/childCount"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.not",
+        "args": [
+          {
+            "op": "core.eq",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/hasChildren"
+                }
+              },
+              true
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "hasChildren": false
+      }
+    }
+  }
+}

@@ -227,8 +227,8 @@ pnpm outdated -r
 | pnpm test / test:integration | Vitest 单次运行 / 跨包用例，watch 另设 test:watch |
 | pnpm test:e2e | Playwright，CI 使用生产构建，管理服务启动和清理 |
 | pnpm packages:check | pack 后隔离安装，验证协议 / 纯函数 / Compiler → Runtime / React 物料的 JS、d.ts、exports、Schema、静态 Manifest 与 CSS 消费 |
-| pnpm docs:check | 现有 Python 构建 --check；文档环境按 docs/README 准备 |
-| pnpm check | protocol:schema:check、assets:check、format:check、lint、boundaries、build、typecheck、test、test:integration、packages:check、docs:check；E2E 在 CI 另设必需任务 |
+| pnpm docs:build / docs:check | 生成阅读产物 / 只读校验与源码同步；文档环境按 docs/README 准备 |
+| pnpm check | protocol:schema:check、assets:check、format:check、lint、boundaries、build、typecheck、test、test:integration、packages:check、docs:build、docs:check；E2E 在 CI 另设必需任务 |
 
 Turborepo 按依赖执行，根聚合脚本不得回调自身形成递归。各库 build 输出 dist，Next 申明 .next 产物且排除可变缓存目录，Nest 申明服务产物。检查配置、锁、环境变量和生成源纳入任务输入；dev 设 persistent 且不缓存，E2E、外部服务和不确定测试首期不缓存。缓存正确性先于远程缓存；冷缓存构建必须通过。dev 不执行库预构建或 tsdown watch；通过 exports 的 development 条件读取源码，由 Next 与 Node 开发加载链监听。单元测试与开发类型检查也不依赖 build；Turbo 的 source 传递节点将上游源码变化纳入缓存键。生产 build 仍按 ^build 构建依赖，不能把开发源码验证代替产物验收。
 
@@ -582,6 +582,19 @@ Host 的请求、待处理核验、模式、草稿及模拟提交结果属于验
 
 现有 Python 文档环境继续按 [维护说明](../README.md)准备；不能由 Node 安装替代。协议样例有变更另跑 run_validation.py，当前工程文档变化不修改样例。
 
+### 文档与 Rules 更新规范 {#engineering-rule-maintenance}
+
+规则的行为和适用范围由所属设计主题维护。可静态判定的约束在现有 Lint、依赖图、Schema 或资产工具执行；事务、重放、交互和制品消费由真实入口的测试校验；例外及设计取舍进入审查。
+
+1. 修改前记录规则要保护的行为、适用路径、正常例子和失败反例。新公共约束或长期放宽门禁按 A/B/C 处理。
+2. 更新源条款、执行配置及检查引用，核对局部指引、Skill 和 CI 的实际调用方。工具报告规则标识、适用范围与失败对象。
+3. 先在试点基线验证正常输入和反例。存量偏差、有限例外及复验条件在同一任务记录。按真实失败与误报决定适用范围和升级时机。
+4. 提交前快速检查、CI 的必需检查、复杂变更归档和发布验证各有作用。检查时点、责任人、继续条件改变时同步 [SDLC](workflows.md#workflow-sdlc)。
+
+AI Contract 生成与同步检查由 `tools/docs/build_contracts.py` 提供。Studio 试点复用 Handbook 真实示例和 TreeView / FieldPicker 浏览器验收；资产试点从登记 Manifest 获取预期 ID 与出口，通过独立打包消费者核对实际制品。检查结果区分结构、浏览器、制品及远端执行。
+
+2026-11-25 已将限定试点接入仓库 Quality workflow。AI Contract 生成同步在常规检查前单独执行；独立资产打包消费继续由 `pnpm check` 执行一次并复用工作区 pnpm store，另跑资产出口反例；Studio 在安装浏览器后仅运行 `pnpm handbook:check:tree`。配置、远端运行和托管分支保护分别按实际证据记录。
+
 ### 契约、行为理解与审查收口 {#engineering-contract-review}
 
 2026-10-24 用户确认按契约驱动与证据验证调整协作规则；执行步骤及产物以[项目工作流](workflows.md#workflow-contract-evidence)为唯一流程正文。工程任务先引用现行模块契约做[只读预检](workflows.md#implementation-preflight)，明确本轮行为、不变量、反例、消费者、验证入口与真实阻塞，再按可观察行为小批实现。内部方案是否自主决定取决于是否改变对外语义，不由文件或类名判断。
@@ -666,7 +679,7 @@ pnpm build
 pnpm test:e2e
 ```
 
-Python 文档环境仍按 docs/README.md 准备；CI 已配置相同步骤。`pnpm check` 只检查文档同步，不暗中改写生成物；正文变更后先 `pnpm docs:build`。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。
+Python 文档环境按 docs/README.md 准备，CI 采用相同依赖。`pnpm check` 先生成本地阅读产物，再执行只读同步检查。单独运行 `pnpm docs:check` 时，先用 `pnpm docs:build` 准备产物。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。
 
 主动升级使用 `pnpm toolchain:update`，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。
 

@@ -41,6 +41,36 @@ export async function checkConstraints(
   return result.diagnostics.filter((item) => item.severity === 'error');
 }
 
+export async function checkConstraintChange(
+  formPath: string,
+  profile: string,
+  before: string,
+  next: string,
+  accepts: (item: ConstraintDiagnostic) => boolean,
+  signal?: AbortSignal,
+) {
+  const candidate = (await checkConstraints(formPath, profile, next, signal)).filter(accepts);
+  if (!candidate.length) return [];
+  const diagnosisKey = (model: Model, { code, message, sourcePointer }: ConstraintDiagnostic) => {
+    const owner = sourcePointer.match(/^(\/constraints\/\d+)(.*)$/);
+    const rule = owner && model.byPath.get(owner[1]!);
+    const id = rule && model.str(child(rule, 'id'));
+    // A removed rule shifts subsequent indices. Match the surviving owner and relative path.
+    return JSON.stringify([code, message, id ? [id, owner![2]] : sourcePointer]);
+  };
+  const beforeModel = semanticModel(before);
+  const afterModel = semanticModel(next);
+  const baseline = (await checkConstraints(formPath, profile, before, signal))
+    .filter(accepts)
+    .map((item) => diagnosisKey(beforeModel, item));
+  return candidate.filter((item) => {
+    const index = baseline.indexOf(diagnosisKey(afterModel, item));
+    if (index < 0) return true;
+    baseline.splice(index, 1);
+    return false;
+  });
+}
+
 export function referencingRules(model: Model, id: string) {
   return (child(model.root, 'constraints')?.children ?? []).flatMap((rule) =>
     (child(rule, 'requires')?.children ?? []).flatMap((req) =>

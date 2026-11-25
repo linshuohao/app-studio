@@ -1,0 +1,211 @@
+{
+  "protocolVersion": "1.0",
+  "id": "city-search-code",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "countryCode": {
+          "type": "string",
+          "enum": ["CN", "JP"]
+        },
+        "city": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["id", "label"],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["countryCode", "city"],
+      "additionalProperties": false,
+      "not": {
+        "required": ["city"],
+        "properties": {
+          "city": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "远程城市搜索 · 编码交付"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "国家"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/countryCode"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/countryCode"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "CN",
+                    "label": "中国"
+                  },
+                  {
+                    "id": "JP",
+                    "label": "日本"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/countryCode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.not",
+                    "args": [
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/countryCode"
+                            }
+                          },
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "城市"
+              },
+              "bind": "/city",
+              "children": [
+                {
+                  "material": "remote-select",
+                  "bind": "/city",
+                  "props": {
+                    "filterKey": {
+                      "$expr": {
+                        "ref": {
+                          "source": "data",
+                          "path": "/countryCode"
+                        }
+                      }
+                    }
+                  },
+                  "requests": {
+                    "search": {
+                      "type": "host.request",
+                      "request": "travel.searchCities"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "reactions": [
+    {
+      "id": "clear-city",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/countryCode"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/city"
+          },
+          "value": null
+        }
+      ],
+      "runOnActivate": false
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "requests": {
+        "travel.searchCities": {
+          "input": {
+            "query": "搜索词",
+            "filterKey": "筛选编码或 null"
+          },
+          "output": {
+            "items": [
+              {
+                "id": "选项编码",
+                "label": "显示内容"
+              }
+            ]
+          },
+          "behavior": "filterKey 为当前国家编码，id 和 label 来自城市目录。"
+        }
+      },
+      "delivery": {
+        "countryCode": "/countryCode",
+        "city": "/city/id"
+      }
+    }
+  }
+}

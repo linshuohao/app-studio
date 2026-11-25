@@ -1,10 +1,15 @@
 'use client';
-import { IconButton, Button, Feedback, Input } from '../components/ui/controls';
-import { Menu } from '../components/ui/menu';
-import { Field, FormLayout } from '../components/ui/form-layout';
+import {
+  IconButton,
+  Button,
+  Feedback,
+  Input,
+} from '@form-engine/studio-design-components/controls';
+import { Menu } from '@form-engine/studio-design-components/menu';
+import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
 import { RecordIdentity } from '../components/record-identity';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import { versionLabel } from './record-labels';
 import { CatalogInsert } from './catalog-insert';
 import type { CatalogKind } from './catalog-targets';
@@ -13,10 +18,13 @@ import {
   keepConversation,
   readConversation,
   type ConversationLink,
+  type FormReference,
 } from './agent-conversation';
 import { FormAgentSidebar } from './form-agent-sidebar';
 import { AgentDockButton } from './agent-dock-button';
+import { semanticModel } from './semantic-model';
 import { JsonSource } from './json-source';
+import './page-reference.css';
 import { writeLocation } from './studio-location';
 import { compactJson, displayJson, storageJson } from './format-json';
 import { Modal } from './modal';
@@ -43,6 +51,10 @@ export function FormEditor({
   canEdit,
   navigating,
   onBack,
+  onReference,
+  onObjectReference,
+  pickingReference = false,
+  referencePointer,
   backLabel,
   parked = false,
   onAccessLost,
@@ -56,6 +68,10 @@ export function FormEditor({
   canEdit: boolean;
   navigating: boolean;
   onBack: () => void;
+  onReference?: () => void;
+  onObjectReference?: (reference: FormReference) => void;
+  pickingReference?: boolean;
+  referencePointer?: string;
   backLabel: string;
   parked?: boolean;
   onAccessLost: () => void;
@@ -67,7 +83,9 @@ export function FormEditor({
   const [diff, setDiff] = useState<{ left: string; right: string }>();
   const [text, setText] = useState(() => displayJson(form.text));
   const acceptedUrl = useRef('');
-  const [focusPath, setFocusPath] = useState<{ path: string; revision: number }>();
+  const [focusPath, setFocusPath] = useState(() =>
+    referencePointer ? { path: referencePointer, revision: 0 } : undefined,
+  );
   useEffect(() => {
     acceptedUrl.current = location.pathname + location.search;
   }, []);
@@ -171,14 +189,9 @@ export function FormEditor({
     setAlreadySaved(false);
     if (!pending) {
       try {
-        const compact = compactJson(text);
-        if (new TextEncoder().encode(compact).length > 16384) throw new RangeError();
-      } catch (reason) {
-        setError(
-          reason instanceof RangeError
-            ? '内容超过大小上限，压缩后最多 16 KiB。'
-            : 'JSON 格式无效，请修复后再保存。',
-        );
+        compactJson(text);
+      } catch {
+        setError('JSON 格式无效，请修复后再保存。');
         return;
       }
     }
@@ -217,6 +230,32 @@ export function FormEditor({
     }
   }
 
+  const [referenceError, setReferenceError] = useState('');
+  const canPickObject = pickingReference && !!versionId && !hasUnsavedInput && !blocked;
+  function pickObject(event: SyntheticEvent) {
+    if (!canPickObject || !(event.target instanceof Element)) return;
+    const element = event.target.closest<HTMLElement>('[data-reference-path]');
+    const pointer = element?.dataset.referencePath;
+    if (!element || !pointer || !versionId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const model = semanticModel(savedText);
+    if (!model?.byPath.has(pointer) || model.ambiguous.has(pointer)) {
+      setReferenceError('此对象无法在已保存配置中唯一定位。');
+      return;
+    }
+    const version = working.history.find((row) => row.versionId === versionId) ?? form.version;
+    setReferenceError('');
+    onObjectReference?.({
+      formId: form.formId,
+      versionId,
+      name: form.name,
+      versionName: version?.versionId === versionId ? version.name : undefined,
+      savedAt: version?.versionId === versionId ? version.savedAt : '',
+      pointer,
+      objectLabel: element.dataset.referenceLabel,
+    });
+  }
   const inspection = editable || (versionId && !dirty);
 
   return (
@@ -308,6 +347,11 @@ export function FormEditor({
                 {busy && pending ? '正在保存…' : pending ? '重试本次保存' : '保存配置'}
               </Button>
             </>
+          )}
+          {onReference && (
+            <Button variant="secondary" onClick={onReference}>
+              引用到 Agent
+            </Button>
           )}
           {!editable && versionId && (
             <Button variant="secondary" onClick={() => setShowSaveDetails(true)}>
@@ -425,7 +469,38 @@ export function FormEditor({
               onOpen={() => setAgentOpen(true)}
             />
           )}
-          <div className="design-source" inert={agentBusy || navigating}>
+          {pickingReference && (
+            <Feedback kind="status">
+              {canPickObject
+                ? '点选高亮的字段、控件或规则。按 Escape 退出。'
+                : '请先保存当前配置，再引用页面对象。'}
+            </Feedback>
+          )}
+          {pickingReference && referenceError && <Feedback kind="error">{referenceError}</Feedback>}
+          <div
+            className="design-source"
+            inert={agentBusy || navigating}
+            data-pick-reference={canPickObject || undefined}
+            onClickCapture={pickObject}
+            onDragStartCapture={(event) => {
+              if (
+                canPickObject &&
+                event.target instanceof Element &&
+                event.target.closest('[data-reference-path]')
+              ) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            }}
+            onKeyDownCapture={(event) => {
+              if (
+                (event.key === 'Enter' || event.key === ' ') &&
+                event.target instanceof HTMLElement &&
+                event.target.matches('article[data-reference-path]')
+              )
+                pickObject(event);
+            }}
+          >
             <JsonSource
               formPath={path}
               profile={profile}
@@ -465,6 +540,7 @@ export function FormEditor({
               )}
 
               focusPath={focusPath}
+              pickingReference={canPickObject}
               text={text}
               readOnly={!editable}
               onChange={(value) => {

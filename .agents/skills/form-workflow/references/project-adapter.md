@@ -16,7 +16,7 @@
 
 ## OpenSpec
 
-真实规则读 `docs/design/workflows.md#workflow-openspec`，命令 / schema 以仓库和实际安装为准。复杂变更复用当前相关 Change 与 `form-change`；轻量任务不强制建 Change。独立 ai-co 不是运行依赖，不更换本项目 schema、命令或 hooks。
+按下列仓库规则执行，命令和 schema 以实际安装与配置为准。复杂变更复用当前相关 Change 与 `form-change`；轻量任务不强制建 Change。独立 ai-co 不是运行依赖，不更换本项目 schema、命令或 hooks。
 
 - `docs/design/` 保持唯一主规格；Change 只保存当前范围、验收增量、实施设计、单一任务和必要证据。禁止默认 sync 或向 `openspec/specs/` 写主规格，不复制 `docs/superpowers/plans/`。
 - 新专题确认后才落盘。实施中实质变化检查上下游、重开受影响任务、撤销相应证据并标记审查过期；仍适用的成果明确复用。取消 / 缩减不能勾选为成功完成，也不走成功归档。

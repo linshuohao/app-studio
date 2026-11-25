@@ -1,15 +1,15 @@
 'use client';
 import { createPortal } from 'react-dom';
 import { Modal } from './modal';
-import { EditorViewSwitch } from '../components/ui/editor-view-switch';
+import { EditorViewSwitch } from '@form-engine/studio-design-components/editor-view-switch';
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { JsonSchema, PureFunctionManifest } from '@form-engine/protocol/capability';
 import type { Expression, ReactionAction } from '@form-engine/protocol/definition';
 import { FieldPicker, fieldsFromReactionFields } from '../components/field-picker';
 import { JsonEditor } from '../components/json/json-editor';
 import type { JsonNode } from '../components/json/model';
-import { Button, Input } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Button, Input } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { ExpressionEditor } from './expression-editor';
 import type { FunctionDocumentation } from './function-catalog';
 import type { ExpressionVerificationContext } from './expression-verification';

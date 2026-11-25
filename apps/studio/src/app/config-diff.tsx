@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { parseJson, type JsonNode } from '../components/json/model';
 import { displayJson } from './format-json';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { Modal } from './modal';
 import {
   failureMessage,

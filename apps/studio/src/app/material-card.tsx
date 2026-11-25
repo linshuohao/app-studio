@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { JsonValue } from '@form-engine/protocol';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { platform } from './platform-api';
-import { Button } from '../components/ui';
+import { Button } from '@form-engine/studio-design-components';
 import { PreviewRuntime } from './preview-runtime';
 
 type Preview = { prepared: ReadonlyPreparedForm; data: JsonValue };
@@ -13,6 +13,7 @@ export function MaterialCard({
   onOpen,
   selected,
   detailsAction = false,
+  onReference,
 }: {
   asset: {
     id: string;
@@ -24,6 +25,7 @@ export function MaterialCard({
   };
   onOpen: (button: HTMLButtonElement) => void;
   detailsAction?: boolean;
+  onReference?: () => void;
   selected?: boolean;
 }) {
   const container = useRef<HTMLElement>(null);
@@ -128,6 +130,11 @@ export function MaterialCard({
           <small>
             {asset.category || '未分类'} · {asset.implementation || '未标注'}
           </small>
+          {onReference && (
+            <Button variant="text" aria-label={'引用到 Agent：' + asset.id} onClick={onReference}>
+              引用到 Agent
+            </Button>
+          )}
           <Button
             variant="secondary"
             {...openProps}

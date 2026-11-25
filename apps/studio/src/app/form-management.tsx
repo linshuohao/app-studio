@@ -1,8 +1,8 @@
 'use client';
 
 import { type FormEvent, useState } from 'react';
-import { Button, Feedback, Input } from '../components/ui/controls';
-import { Field, FormLayout } from '../components/ui/form-layout';
+import { Button, Feedback, Input } from '@form-engine/studio-design-components/controls';
+import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
 import {
   accessDenied,
   failureMessage,

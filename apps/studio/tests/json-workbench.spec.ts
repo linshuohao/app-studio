@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
 import { basicDefinition } from '../../playground/src/demos/basic/definition';
+import { schemaSource } from './data-schema-fixture';
+import { chooseWorkingVersionAction } from './working-version-menu';
+import {
+  chooseWorkingPublication,
+  createWorkingVersion,
+  saveWorkingConfig,
+  workingVersionRow,
+} from './working-version-fixture';
 
 test('edits JSON nodes, validates and compresses saves, and restores exact routes', async ({
   page,
@@ -19,6 +27,8 @@ test('edits JSON nodes, validates and compresses saves, and restores exact route
   await page.getByRole('button', { name: '新建表单' }).click();
   await page.getByLabel('表单名称').fill('节点编辑验收');
   await page.getByRole('button', { name: '创建表单' }).click();
+  await createWorkingVersion(page, '节点编辑草稿');
+  await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
   await expect(page.getByRole('region', { name: '配置原文' })).toBeVisible();
   await expect(page.getByRole('textbox', { name: '配置原文' })).toHaveCount(0);
   await page.getByRole('button', { name: '导入 JSON', exact: true }).click();
@@ -57,34 +67,47 @@ test('edits JSON nodes, validates and compresses saves, and restores exact route
     '{"n":9007199254740993,"n":-0,"obj":{"name":"整块修改","nested":{"enabled":true}},"items":[42]}',
   );
   await expect(page.getByText('已保存', { exact: true })).toBeVisible();
-  const version = await page.locator('.version code').textContent();
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await page.getByRole('button', { name: `查看版本 ${version}` }).click();
+  const formId = new URL(page.url()).searchParams.get('form');
+  const workUrl = page.url();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  await chooseWorkingVersionAction(page, '保存历史');
+  await page
+    .getByRole('dialog', { name: '保存历史' })
+    .getByRole('button', { name: '查看快照' })
+    .click();
+  await expect(page).toHaveURL(/tab=history&version=/);
   const historyUrl = page.url();
   await page.reload();
   await expect(page.getByText('只读配置', { exact: true })).toBeVisible();
   expect(page.url()).toBe(historyUrl);
+  await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
+  await expect(page.getByRole('region', { name: '配置原文' })).toBeVisible();
   await expect(page.getByRole('button', { name: '编辑 /obj/name', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: '配置工作台' }).click();
-  await page.getByRole('button', { name: '文本查看 / 修复' }).click();
-  await page.getByLabel('配置原文').fill('{"bad":');
+  await page.goto(workUrl);
+  const editor = await schemaSource(page);
+  await editor.fill('{"bad":');
   await page.getByRole('button', { name: '保存配置', exact: true }).click();
   await expect(page.getByText('JSON 格式无效，请修复后再保存。')).toBeVisible();
-  await page.getByLabel('配置原文').fill(
+  const version = await saveWorkingConfig(
+    page,
     JSON.stringify({
       ...basicDefinition,
       views: { desktop: basicDefinition.views.main, mobile: basicDefinition.views.main },
     }),
   );
-  await page.getByRole('button', { name: '保存并发布' }).click();
-  await expect(page.getByRole('button', { name: '确认发布' })).toBeDisabled();
-  await page.getByLabel('发布名称（选填）').fill('节点编辑首版');
-  await page.getByLabel('发布 Web 视图').click();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  const publish = await chooseWorkingPublication(page, '节点编辑草稿');
+  await expect(publish.getByRole('button', { name: '确认发布' })).toBeDisabled();
+  await publish.getByLabel('发布名称', { exact: true }).fill('节点编辑首版');
+  await publish.getByRole('combobox', { name: 'Web 视图' }).click();
   await page.getByRole('option', { name: 'desktop', exact: true }).click();
-  await page.getByRole('button', { name: '确认发布' }).click();
-  await expect(page.getByText('发布成功', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '查看发布记录' }).click();
+  await publish.getByRole('button', { name: '确认发布' }).click();
+  const row = workingVersionRow(page, '节点编辑草稿');
+  await expect(row.getByText(/已发布/)).toBeVisible();
+  await chooseWorkingVersionAction(page, '查看本次发布', row);
   await expect(page.getByRole('heading', { name: '节点编辑首版', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: `查看配置版本 ${version}` })).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('form')).toBe(formId);
   const url = page.url();
   await page.reload();
   await expect(page.getByRole('link', { name: '在示例 Host 中打开' })).toBeVisible();
@@ -146,7 +169,13 @@ test('ignores a late form response after Back and keeps directory deep links rea
   await page.reload();
   await expect(page.getByRole('heading', { name: '加法', exact: true })).toBeVisible();
   expect(page.url()).toBe(detail);
-  await expect(page.getByRole('heading', { name: '配置示例' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '调用示例' })).toBeVisible();
+  await page.getByRole('button', { name: '配置示例', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '配置示例' })).toBeVisible();
+  await page
+    .getByRole('dialog', { name: '配置示例' })
+    .getByRole('button', { name: '关闭' })
+    .click();
   await page
     .locator('.studio-navigation')
     .getByRole('button', { name: '表单', exact: true })
@@ -243,7 +272,10 @@ test('keeps every page within narrow and wide viewports with long titles and JSO
       else if (route === '/?form=' + formId)
         await expect(page.getByRole('button', { name: '版本列表', exact: true })).toBeVisible();
       else if (route.includes('&work=')) {
-        await page.getByRole('button', { name: '编辑 /views', exact: true }).click();
+        await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
+        const editViews = page.getByRole('button', { name: '编辑 /views', exact: true });
+        await editViews.scrollIntoViewIfNeeded();
+        await editViews.click({ timeout: 5000 });
         await expect(page.getByLabel('对象 JSON')).toHaveValue(/\n    /);
         const box = await page.getByRole('dialog').evaluate((el) => {
           const b = el.getBoundingClientRect();
@@ -257,12 +289,15 @@ test('keeps every page within narrow and wide viewports with long titles and JSO
       } else if (route.includes('asset=remote-select'))
         await expect(page.getByRole('heading', { name: '物料契约' })).toBeVisible();
       else if (route.includes('asset='))
-        await expect(page.getByRole('heading', { name: '使用说明' })).toBeVisible();
-      else if (route.includes('catalog=materials'))
+        await expect(page.getByRole('heading', { name: '调用示例' })).toBeVisible();
+      else if (route.includes('catalog=materials')) {
+        const search = page.getByRole('searchbox', { name: '搜索资产' });
+        await search.fill('remote-select');
+        await search.press('Enter');
         await expect(
           page.getByRole('button', { name: '查看 remote-select', exact: true }),
         ).toBeVisible();
-      else if (route.includes('catalog=functions'))
+      } else if (route.includes('catalog=functions'))
         await expect(page.getByRole('heading', { name: '纯函数目录', exact: true })).toBeVisible();
       else if (route.includes('page=members'))
         await expect(page.getByRole('button', { name: '编辑成员 studio-test' })).toBeVisible();
@@ -288,6 +323,15 @@ test('keeps every page within narrow and wide viewports with long titles and JSO
         ).toEqual([]);
       const wrapped = await page.getByRole('button').evaluateAll((buttons) =>
         buttons
+          .flatMap((button) => {
+            // Compact field rows can put the name and its metadata on separate lines.
+            const fieldText = [
+              ...button.querySelectorAll<HTMLElement>(
+                '.studio-field-row-label, .studio-field-row-meta',
+              ),
+            ];
+            return fieldText.length ? fieldText : [button];
+          })
           .filter(
             (b) =>
               b.getBoundingClientRect().width > 0 &&

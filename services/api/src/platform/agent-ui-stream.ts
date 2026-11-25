@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { HttpException } from '@nestjs/common';
 import { createUIMessageStream, pipeUIMessageStreamToResponse } from 'ai';
 import type { Response } from 'express';
-import type { TurnStream } from './create-form-agent.js';
+import { AgentTurnFailure, type TurnStream } from './create-form-agent.js';
 
 export function sendAgentStream<T>(
   response: Response,
@@ -43,6 +43,7 @@ export function sendAgentStream<T>(
             },
             traceId,
             progress: (message) => writer.write({ type: 'data-progress', data: message }),
+            phase: (value) => writer.write({ type: 'data-compose-phase', data: value }),
             reset: () => writer.write({ type: 'data-reset', data: true }),
             item: (item) => writer.write({ type: 'data-item', data: item }),
           });
@@ -59,7 +60,12 @@ export function sendAgentStream<T>(
         } catch (error) {
           writer.write({
             type: 'data-failure',
-            data: error instanceof HttpException ? error.getStatus() : 502,
+            data:
+              error instanceof AgentTurnFailure
+                ? { status: error.getStatus(), reason: error.reason }
+                : error instanceof HttpException
+                  ? error.getStatus()
+                  : 502,
           });
         }
       },

@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RequirementsDocument(BaseModel):
@@ -109,11 +109,17 @@ class StandardRequirements(BaseModel):
 
 class ConfigurationMapping(BaseModel):
     requirement_id: str
-    destinations: list[str] = Field(min_length=1)
+    destinations: list[str]
     status: Literal[
         "ready", "deferred_to_host", "needs_source", "needs_user", "unavailable"
     ]
     detail: str
+
+    @model_validator(mode="after")
+    def require_destination(self):
+        if not self.destinations and self.status != "deferred_to_host":
+            raise ValueError("A mapped requirement needs a configuration destination")
+        return self
 
 
 class RequirementsTrace(BaseModel):

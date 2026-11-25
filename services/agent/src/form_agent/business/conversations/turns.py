@@ -3,15 +3,13 @@
 import asyncio
 from contextlib import aclosing
 
-from sqlalchemy import update
-
 from form_agent.agent.budgets import TURN_RECURSION_LIMIT
 from form_agent.business.conversations.store import (
     StoreUnavailable,
     TurnJournal,
     db_step,
-    turns,
 )
+from form_agent.execution.errors import interruption_reason
 from form_agent.execution.journal import execution_scope
 
 
@@ -28,6 +26,7 @@ async def run_turn_events(
     callbacks,
     archive,
     stream_graph_events,
+    record_interruption,
 ):
     if archive:
         archive.record(
@@ -88,21 +87,15 @@ async def run_turn_events(
                                 break
                             else:
                                 raise RuntimeError("Missing graph result")
-            finally:
-
-                def release():
-                    with conn.begin():
-                        conn.execute(
-                            update(turns)
-                            .where(
-                                turns.c.conversation_id == cid,
-                                turns.c.turn_id == str(message.turnId),
-                                turns.c.status == "running",
-                            )
-                            .values(status="failed")
-                        )
-
-                await db_step(release)
+            except (Exception, asyncio.CancelledError, GeneratorExit) as error:
+                reason = (
+                    "表单助手暂时不可用，请稍后继续。"
+                    if isinstance(error, StoreUnavailable)
+                    else interruption_reason(error)
+                )
+                record_interruption(reason)
+                await journal.interrupt(reason)
+                raise
     for batch in batches:
         yield batch
     if archive:

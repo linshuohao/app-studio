@@ -1,0 +1,1361 @@
+{
+  "protocolVersion": "1.0",
+  "id": "request",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "department": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "requester": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "costCenter": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "urgency": {
+          "type": "string",
+          "enum": ["normal", "urgent"],
+          "default": "normal"
+        },
+        "neededBy": {
+          "type": "string",
+          "format": "date"
+        },
+        "businessPurpose": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 240
+        },
+        "budgetMinor": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 200000000
+        },
+        "emergencyReason": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 200
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 32
+              },
+              "description": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 120
+              },
+              "category": {
+                "type": "string",
+                "enum": ["office", "equipment", "service"]
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000
+              },
+              "unitPriceMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000
+              },
+              "comparisonNo": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 30
+              },
+              "serviceScope": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 200
+              },
+              "lineId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["sku", "description", "category", "quantity", "unitPriceMinor", "lineId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "category": {
+                      "const": "service"
+                    }
+                  },
+                  "required": ["category"]
+                },
+                "then": {
+                  "required": ["serviceScope"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["serviceScope"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 30
+        }
+      },
+      "required": [
+        "department",
+        "requester",
+        "costCenter",
+        "urgency",
+        "neededBy",
+        "businessPurpose",
+        "budgetMinor",
+        "confirmed",
+        "lines"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "urgency": {
+                "const": "urgent"
+              }
+            },
+            "required": ["urgency"]
+          },
+          "then": {
+            "required": ["emergencyReason"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["emergencyReason"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "部门采购预算与比价送审"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "单据信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "申请部门"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/department"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/department"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "申请人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/requester"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/requester"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "成本中心编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/costCenter"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/costCenter"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "采购优先级"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/urgency"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/urgency"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "normal",
+                        "label": "普通"
+                      },
+                      {
+                        "id": "urgent",
+                        "label": "紧急"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "最迟需要日期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/neededBy"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/neededBy"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "项目用途"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/businessPurpose"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/businessPurpose"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "申请预算上限"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/budgetMinor"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/budgetMinor"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/urgency"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/urgency"
+                            }
+                          },
+                          "urgent"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "紧急采购理由"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/emergencyReason"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/emergencyReason"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "checkbox",
+              "props": {
+                "label": "确认在预算范围内发起审批"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/confirmed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "采购项明细"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/lines"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "采购项"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "采购物品编码"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/sku",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/sku",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "物品规格"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/description",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/description",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "品类"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/category",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/category",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "office",
+                              "label": "办公消耗品"
+                            },
+                            {
+                              "id": "equipment",
+                              "label": "固定设备"
+                            },
+                            {
+                              "id": "service",
+                              "label": "外部服务"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "数量"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/quantity",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/quantity",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "预算单价"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/unitPriceMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/unitPriceMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/quantity",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/unitPriceMinor",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "预计小计（元）"
+                        },
+                        "children": [
+                          {
+                            "material": "value-display",
+                            "props": {
+                              "value": {
+                                "$expr": {
+                                  "op": "core.mul",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/quantity",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/unitPriceMinor",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "format": "moneyMinor"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/quantity",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/unitPriceMinor",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.gte",
+                              "args": [
+                                {
+                                  "op": "core.mul",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/quantity",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/unitPriceMinor",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                500000
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "比价记录编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/comparisonNo",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/comparisonNo",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/category",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/category",
+                                    "scope": "person"
+                                  }
+                                },
+                                "service"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "服务验收范围"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/serviceScope",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/serviceScope",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/lines"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除采购项",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/lines"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加采购项",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/lines"
+                            }
+                          }
+                        ]
+                      },
+                      30
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addPurchaseLine"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "提交采购审批"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitPurchaseApproval"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "comparison-required",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/comparisonNo",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/comparisonNo",
+          "scope": "person"
+        },
+        "code": "comparison-required",
+        "message": {
+          "text": "请填写比价记录编号"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/quantity",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/unitPriceMinor",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.gte",
+            "args": [
+              {
+                "op": "core.mul",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/quantity",
+                      "scope": "person"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/unitPriceMinor",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              500000
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lines"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "purchase-budget-and-unique",
+      "kind": "external",
+      "validator": "business.validatePurchaseBudget",
+      "target": {
+        "source": "data",
+        "path": "/budgetMinor"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/budgetMinor"
+        },
+        {
+          "source": "data",
+          "path": "/lines"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-emergency-emergencyReason",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/urgency"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/emergencyReason"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/emergencyReason"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/urgency"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/urgency"
+                        }
+                      },
+                      "urgent"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-service-serviceScope",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/category",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/serviceScope",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/serviceScope",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/category",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/category",
+                          "scope": "person"
+                        }
+                      },
+                      "service"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lines"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-comparison",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/unitPriceMinor",
+          "scope": "person"
+        },
+        {
+          "source": "data",
+          "path": "/quantity",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/comparisonNo",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/comparisonNo",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/quantity",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/unitPriceMinor",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/quantity",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/unitPriceMinor",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.mul",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/quantity",
+                              "scope": "person"
+                            }
+                          },
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/unitPriceMinor",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      500000
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lines"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "lines": [],
+        "urgency": "normal",
+        "confirmed": false
+      },
+      "validators": {
+        "business.validatePurchaseBudget": "本地检查各行物品号唯一和整单金额不超预算。"
+      },
+      "events": {
+        "business.addPurchaseLine": "生成稳定 lineId 并追加空行，最多 30 行。",
+        "business.submitPurchaseApproval": "校验快照、计算各项小计和合计、标准化物品号，幂等写送审单。"
+      }
+    }
+  }
+}

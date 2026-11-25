@@ -1,7 +1,7 @@
 import type { DataReference, Expression } from '@form-engine/protocol/definition';
 import { FieldPickerControl, fieldReferenceId, referenceFieldRows } from './field-picker';
 import { type ReactionField, watchLabel } from './reaction-fields';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 
 function dataField(expr?: Expression) {
   return expr && typeof expr === 'object' && 'ref' in expr && expr.ref.source === 'data'

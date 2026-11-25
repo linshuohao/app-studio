@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, DataTable, type Column } from '../../components/ui';
-import { Feedback } from '../../components/ui/controls';
+import { Button, DataTable, type Column } from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
 import type { PreparedViewNode, PreparedHostRequestIntent } from '@form-engine/protocol/prepared';
 import { JsonEditor } from '../../components/json/json-editor';
 import { ContractPanel, type Schema } from '../../components/catalog/contract-reference';

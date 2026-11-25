@@ -1,0 +1,29 @@
+{
+  "authority": ["docs/design/platform-studio.md", "docs/design/workflows.md"],
+  "scope": [
+    "packages/studio-design/components/package.json",
+    "packages/studio-design/components/src",
+    "packages/studio-design/components/styles.css",
+    "packages/studio-design/tokens",
+    "packages/studio-design/guidelines.md",
+    "packages/studio-design/handbook/studio-components",
+    "packages/studio-design/handbook/studio-design-handbook.html",
+    "packages/studio-design/handbook/build.mjs",
+    "packages/studio-design/handbook/tests",
+    "apps/studio/src/app/layout.tsx",
+    "apps/studio/src/app/studio-ui.css",
+    ".agents/context/routes.yaml",
+    ".agents/skills/form-workflow/SKILL.md",
+    "tools/docs/studio_catalog.py",
+    "tools/docs/build_contracts.py",
+    "pnpm-lock.yaml"
+  ],
+  "checks": [
+    ["pnpm", "docs:build"],
+    ["pnpm", "docs:check"],
+    [".venv-docs/bin/python", "tools/docs/build_contracts.py", "--check"],
+    [".venv-docs/bin/python", "tools/docs/select_references.py", "--check"],
+    ["pnpm", "boundaries"],
+    ["env", "STUDIO_TEST_BROWSER_CHANNEL=chrome", "pnpm", "handbook:check:tree"]
+  ]
+}

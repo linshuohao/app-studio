@@ -118,8 +118,8 @@ test('ignores a team-list response that arrives after logout', async ({ page, ba
   );
   await page.goto('/');
   await held;
-  await page.getByRole('button', { name: '账号设置', exact: true }).click();
-  await page.getByRole('button', { name: '退出登录', exact: true }).click();
+  await page.getByRole('button', { name: '我的账号', exact: true }).click();
+  await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
   await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
   release();
   await page.unrouteAll({ behavior: 'wait' });

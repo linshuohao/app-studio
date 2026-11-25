@@ -325,3 +325,196 @@
     position: static;
   }
 }
+
+/* shadcn/ui form controls, scoped to the runtime material stylesheet. */
+.fe-date-input {
+  display: flex;
+  align-items: stretch;
+  gap: 0.375rem;
+}
+.fe-date-input > .fe-input {
+  flex: 1;
+}
+.fe-date-trigger {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: 2.6rem;
+  padding: 0.375rem;
+  font-size: 1.125rem;
+}
+.fe-date-trigger svg,
+.fe-checkbox-indicator svg {
+  width: 1rem;
+  height: 1rem;
+}
+.fe-date-positioner {
+  z-index: 1200;
+}
+.fe-date-popup,
+.fe-range-calendar {
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid var(--fe-border, #94a3b8);
+  border-radius: 0.625rem;
+  background: Canvas;
+  color: CanvasText;
+}
+.fe-date-popup {
+  max-height: var(--available-height);
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.16);
+}
+.fe-range-calendar {
+  margin-top: 0.75rem;
+}
+.fe-calendar {
+  padding: 0.625rem;
+  font-size: 0.875rem;
+}
+.fe-calendar-year {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+.fe-calendar-year .fe-input {
+  width: 5rem;
+  min-height: 2rem;
+  padding-block: 0.125rem;
+}
+.fe-calendar .rdp-months {
+  position: relative;
+}
+.fe-calendar .rdp-nav {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.fe-calendar .rdp-month_caption {
+  display: grid;
+  place-items: center;
+  min-height: 2rem;
+}
+.fe-calendar .rdp-dropdown_root {
+  position: relative;
+  display: inline-flex;
+}
+.fe-calendar .rdp-dropdown {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+.fe-calendar .rdp-caption_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  pointer-events: none;
+}
+.fe-calendar .rdp-dropdown:focus-visible + .rdp-caption_label {
+  outline: 2px solid #2563eb;
+  border-radius: 0.25rem;
+}
+.fe-calendar .rdp-chevron {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+.fe-calendar .rdp-month_grid {
+  border-collapse: collapse;
+}
+.fe-calendar .rdp-weekday {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+.fe-calendar :is(.rdp-day_button, .rdp-button_previous, .rdp-button_next) {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.fe-calendar :is(.rdp-day_button, .rdp-button_previous, .rdp-button_next):hover {
+  background: color-mix(in srgb, CanvasText 10%, Canvas);
+}
+.fe-calendar :is(.rdp-day_button, .rdp-button_previous, .rdp-button_next):focus-visible,
+.fe-choice-control:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.fe-calendar :is(:disabled, [aria-disabled='true']) {
+  opacity: 0.45;
+  cursor: default;
+}
+.fe-calendar .rdp-today .rdp-day_button {
+  font-weight: 700;
+}
+.fe-calendar .rdp-selected .rdp-day_button,
+.fe-calendar .rdp-selected .rdp-day_button:hover {
+  background: #1d4ed8;
+  color: white;
+}
+.fe-textarea {
+  display: block;
+  resize: vertical;
+}
+.fe-choice-group {
+  display: grid;
+  gap: 0.5rem;
+}
+.fe-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fe-choice-control {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 1px solid var(--fe-border, #64748b);
+  background: Canvas;
+  color: CanvasText;
+  cursor: pointer;
+}
+.fe-radio {
+  border-radius: 50%;
+}
+.fe-checkbox-item {
+  border-radius: 0.25rem;
+}
+.fe-choice-control[data-checked] {
+  border-color: #1d4ed8;
+}
+.fe-checkbox-item[data-checked] {
+  background: #1d4ed8;
+  color: white;
+}
+.fe-radio-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #1d4ed8;
+}
+.fe-checkbox-indicator {
+  display: grid;
+}
+.fe-choice-control[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

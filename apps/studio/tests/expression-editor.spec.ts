@@ -8,11 +8,9 @@ import { openSchemaDraft, schemaSource } from './data-schema-fixture';
 const compare = (op: string, ...args: Expression[]): Expression => ({ op, args });
 
 async function setExpression(dialog: Locator, label: string, raw: string) {
-  await dialog.getByRole('button', { name: label + '编辑表达式 JSON', exact: true }).click();
-  const source = dialog.page().getByRole('dialog', { name: label + ' · 表达式 JSON', exact: true });
-  await source.getByRole('textbox').fill(raw);
-  await source.getByRole('button', { name: '应用表达式', exact: true }).click();
-  await expect(source).toBeHidden();
+  await dialog.getByRole('button', { name: 'JSON 编辑', exact: true }).click();
+  await dialog.getByRole('textbox', { name: label + ' · 表达式 JSON', exact: true }).fill(raw);
+  await dialog.getByRole('button', { name: '表单编辑', exact: true }).click();
 }
 
 test('the shared editor verifies, applies, undoes and reopens expressions from the real travel definition', async ({
@@ -43,7 +41,7 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   }
   const run = (dialog: Locator) => dialog.getByRole('button', { name: '运行验证' }).click();
   const result = (dialog: Locator) =>
-    dialog.getByRole('region', { name: '给定值验证' }).getByRole('status');
+    dialog.getByRole('region', { name: '给定值验证' }).locator('output');
 
   await openSchemaDraft(page, source);
   await click('布局');
@@ -53,27 +51,26 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   await click('编辑显示条件');
   const layout = page.getByRole('dialog', { name: '显示条件', exact: true });
   await setExpression(layout, '显示条件', JSON.stringify(layoutCondition));
-  const rootToggle = layout.getByRole('button', { name: '收起显示条件', exact: true });
+  const rootToggle = layout.getByRole('button', { name: '表达式', exact: true });
   await rootToggle.press('Space');
-  await expect(layout.locator('.expression-fold-summary')).toContainText('全部满足');
-  await expect(layout.locator('.expression-fold-summary')).toHaveCSS('white-space', 'nowrap');
-  const detailsTrigger = layout.getByRole('button', { name: '显示条件表达式详情', exact: true });
+  await expect(rootToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(layout.getByText('逻辑与（', { exact: true }).first()).toBeVisible();
+  await expect(layout.getByRole('button', { name: '表单编辑', exact: true })).toBeHidden();
+  await rootToggle.press('Enter');
+  await expect(rootToggle).toHaveAttribute('aria-expanded', 'true');
+  const firstComparison = layout.getByRole('button', { name: '展开条件 1', exact: true }).first();
+  const detailsTrigger = layout.getByRole('button', { name: '条件 1表达式详情', exact: true });
   await detailsTrigger.press('Enter');
-  const details = page.getByRole('dialog', { name: '显示条件 · 表达式详情', exact: true });
-  const parameters = details.locator('dl').first().locator(':scope > div');
-  await expect(parameters).toHaveCount(2);
-  const branch = parameters.first().locator('dd > details').first();
-  await branch.locator('summary').first().press('Enter');
-  await expect(branch.locator('dl').first()).toBeVisible();
+  const details = page.getByRole('dialog', { name: '条件 1 · 表达式详情', exact: true });
+  await expect(details.getByText('相等比较（', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(details).toBeHidden();
   await expect(detailsTrigger).toBeFocused();
-  await layout.getByRole('button', { name: '展开显示条件', exact: true }).press('Enter');
-  const firstComparison = layout.getByRole('button', { name: '展开条件 1', exact: true }).first();
   await firstComparison.press('Enter');
   const leftSource = layout.getByRole('combobox', { name: '左侧值取值来源', exact: true });
   await leftSource.click();
   await page.getByRole('option', { name: '函数结果', exact: true }).click();
+  await expect(leftSource).toHaveText('函数结果');
   await layout.getByRole('combobox', { name: '左侧值纯函数', exact: true }).click();
   await expect(page.getByRole('group', { name: '比较与判断' })).toBeVisible();
   await page.getByRole('option', { name: '大于', exact: true }).click();
@@ -84,19 +81,29 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
     layout.locator('.expression-fold-summary').filter({ hasText: '0 大于 0' }),
   ).toBeVisible();
   await setExpression(layout, '显示条件', JSON.stringify(layoutCondition));
-  const tree = layout.getByRole('region', { name: '条件树' });
+  await layout.getByRole('button', { name: '显示条件：验证表达式', exact: true }).click();
+  const layoutTrial = page.getByRole('dialog', { name: '验证表达式 · 显示条件', exact: true });
+  const tree = layoutTrial.getByRole('region', { name: '条件树' });
   await expect(tree.getByText('全部满足', { exact: true }).first()).toBeVisible();
   await expect(tree.getByText('任一满足', { exact: true })).toBeVisible();
-  await expect(tree.getByText('2 项 · 在编辑区展开')).toBeVisible();
 
-  await enterFormData(layout);
-  await run(layout);
-  await expect(result(layout)).toHaveText('条件成立 · 显示');
+  await enterFormData(layoutTrial);
+  await run(layoutTrial);
+  await expect(result(layoutTrial)).toHaveText('条件成立 · 显示');
   await expect(tree.getByText('短路跳过', { exact: true })).toHaveCount(1);
-  await layout.getByLabel('样例 · /plan', { exact: true }).fill('plus');
-  await run(layout);
-  await expect(result(layout)).toHaveText('条件不成立 · 隐藏');
+  await layoutTrial.getByLabel('样例 · /plan', { exact: true }).fill('plus');
+  await run(layoutTrial);
+  await expect(result(layoutTrial)).toHaveText('条件不成立 · 隐藏');
   await expect(tree.getByText('短路跳过', { exact: true })).toHaveCount(3);
+  await tree.getByRole('button', { name: /任一满足/ }).click();
+  await expect(layoutTrial).toBeHidden();
+  const locatedCondition = layout
+    .getByRole('group', { name: '条件 2', exact: true })
+    .and(layout.locator('.expression-field[data-depth="1"]'));
+  await expect(locatedCondition).toBeFocused();
+  await expect(
+    locatedCondition.getByRole('button', { name: '收起条件 2', exact: true }),
+  ).toBeVisible();
   await layout.getByRole('button', { name: '应用显示条件', exact: true }).click();
   await expect(layout).toBeHidden();
   const editor = await schemaSource(page);
@@ -112,7 +119,7 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   await expect(editor).toHaveValue(laidOut);
 
   await click('联动');
-  await click('estimate-total');
+  await click('编辑 estimate-total');
   await click('添加条件');
   const reaction = page.getByRole('dialog', { name: '成立条件', exact: true });
   await setExpression(reaction, '条件', JSON.stringify(reactionCondition));
@@ -130,23 +137,24 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
       has: page.getByRole('heading', { name: '成立条件', exact: true }),
     })
     .last();
-  await expect(conditionSummary.getByRole('list').first()).toBeVisible();
-  await expect(
-    conditionSummary.getByText(
-      '出发日期（缺失时取空值）到返程日期（缺失时取空值）的天数（含首尾） 等于 2',
-      { exact: true },
-    ),
-  ).toBeVisible();
-  const disclosure = conditionSummary.locator('summary').filter({ hasText: '查看定义' });
-  await expect(conditionSummary.getByText('日期天数', { exact: true })).toBeHidden();
+  await conditionSummary.locator('summary[aria-label="第一个条件的取值"]').click();
+  await conditionSummary.locator('summary[aria-label="左侧值的取值"]').click();
+  const disclosure = conditionSummary.getByText('引用具名表达式 tripDays', { exact: true });
+  const dates = conditionSummary.getByText('计算含首尾的天数（', { exact: true });
+  await expect(dates).toBeHidden();
   await disclosure.click();
-  await expect(conditionSummary.getByText('日期天数', { exact: true })).toBeVisible();
-  const start = conditionSummary.locator('dt').filter({ hasText: '业务上期望 开始日期字符串' });
-  await expect(start).toContainText('start');
-  await expect(start.locator('+ dd')).toContainText('/travel/startDate');
+  await expect(dates).toBeVisible();
+  await conditionSummary.locator('summary[aria-label="出发日期的取值"]').click();
+  const start = conditionSummary.locator(
+    'summary[aria-label="出发日期的取值"] + .expression-reading-argument-body > .expression-reading-source > code',
+  );
+  await expect(start).toHaveText('root/travel/startDate');
+  await expect(start).toBeVisible();
+  await expect(conditionSummary.getByText(/业务上期望 开始日期字符串/)).toBeVisible();
   await expect(conditionSummary.getByText('左侧待比较的值。', { exact: true })).toBeVisible();
   await disclosure.click();
   await expect(start).toBeHidden();
+  await click('完成规则');
   const reacted = await (await schemaSource(page)).inputValue();
   expect(JSON.parse(reacted).reactions[1].when).toEqual(reactionCondition);
   await click('撤销');
@@ -155,19 +163,22 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   await expect(editor).toHaveValue(reacted);
 
   await click('校验');
-  await click('guardian-required');
+  await click('编辑 guardian-required');
   await click('编辑判断表达式');
   const assertion = page.getByRole('dialog', { name: '编辑判断表达式', exact: true });
   await setExpression(assertion, '判断表达式', JSON.stringify(constraintExpression));
-  await enterFormData(assertion);
-  await run(assertion);
-  await expect(result(assertion)).toHaveText('断言失败');
-  await assertion.getByLabel('person样例成员').fill('2');
-  await run(assertion);
-  await expect(result(assertion)).toHaveText('断言通过');
+  await assertion.getByRole('button', { name: '判断表达式：验证表达式' }).click();
+  const assertionTrial = page.getByRole('dialog', { name: '验证表达式 · 判断表达式' });
+  await enterFormData(assertionTrial);
+  await run(assertionTrial);
+  await expect(result(assertionTrial)).toHaveText('断言失败');
+  await assertionTrial.getByLabel('person样例成员').fill('2');
+  await run(assertionTrial);
+  await expect(result(assertionTrial)).toHaveText('断言通过');
+  await assertionTrial.getByRole('button', { name: '关闭', exact: true }).click();
   await assertion.getByRole('button', { name: '应用表达式', exact: true }).click();
   await expect(assertion).toBeHidden();
-  await expect(page.getByText(/person · \/age.*等于 12/).first()).toBeVisible();
+  await click('完成');
   const final = await (await schemaSource(page)).inputValue();
   expect(
     JSON.parse(final).constraints.find((item: { id: string }) => item.id === 'guardian-required')
@@ -212,12 +223,15 @@ test('layout expression verification ignores a canceled response and rejects the
   await value.selectOption('expression');
   await property.getByRole('button', { name: '编辑表达式', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '禁用 · 表达式', exact: true });
-  const run = dialog.getByRole('button', { name: '运行验证', exact: true });
+  const trial = page.getByRole('dialog', { name: '验证表达式 · 禁用 · 表达式', exact: true });
+  const run = trial.getByRole('button', { name: '运行验证', exact: true });
   await setExpression(dialog, '禁用 · 表达式', '"错类型"');
+  await dialog.getByRole('button', { name: '禁用 · 表达式：验证表达式' }).click();
   await run.click();
   await expect(
-    dialog.getByRole('status').filter({ hasText: '结果与当前位置的类型不匹配' }),
+    trial.getByRole('status').filter({ hasText: '结果与当前位置的类型不匹配' }),
   ).toBeVisible();
+  await trial.getByRole('button', { name: '关闭', exact: true }).click();
   await dialog.getByRole('button', { name: '应用表达式', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('常量不符合参数或结果要求');
 
@@ -226,8 +240,9 @@ test('layout expression verification ignores a canceled response and rejects the
     '禁用 · 表达式',
     JSON.stringify(compare('core.eq', { ref: ref('/plan') }, 'basic')),
   );
-  const sample = dialog.getByLabel('样例 · /plan', { exact: true });
-  await sample.fill('basic');
+  await dialog.getByRole('button', { name: '禁用 · 表达式：验证表达式' }).click();
+  const sample = trial.getByRole('textbox', { name: '表单数据 JSON', exact: true });
+  await sample.fill('{"plan":"basic"}');
   let release!: () => void;
   const hold = new Promise<void>((resolve) => {
     release = resolve;
@@ -251,23 +266,26 @@ test('layout expression verification ignores a canceled response and rejects the
   await run.click();
   await intercepted;
   try {
-    await sample.fill('plus');
-    await sample.fill('basic');
+    await sample.fill('{"plan":"plus"}');
+    await sample.fill('{"plan":"basic"}');
     await expect(run).toBeEnabled();
   } finally {
     release();
   }
   await run.click();
-  await expect(dialog.getByRole('status').filter({ hasText: '结果 · true' })).toBeVisible();
+  await expect(trial.getByRole('status').filter({ hasText: '结果 · true' })).toBeVisible();
+  await trial.getByRole('button', { name: '关闭', exact: true }).click();
   await dialog.getByRole('button', { name: '应用表达式', exact: true }).click();
   await expect(dialog).toBeHidden();
+  await page.getByRole('button', { name: '应用属性', exact: true }).click();
+  await expect(page.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
+  await page
+    .getByRole('dialog', { name: '固定选项', exact: true })
+    .getByRole('button', { name: '关闭', exact: true })
+    .click();
   await expect(
-    page
-      .getByRole('region', { name: '真实表单预览' })
-      .getByRole('combobox', { name: '出行方案', exact: true }),
+    page.getByRole('region', { name: '真实表单预览' }).getByRole('combobox', { name: /^投保方案/ }),
   ).toBeDisabled();
-  await inspector.getByRole('button', { name: '应用属性', exact: true }).click();
-  await expect(inspector.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
   const edited = JSON.parse(await (await schemaSource(page)).inputValue());
   expect(
     edited.views.desktop.slots.default[1].slots.default[3].slots.default[0].props.disabled,

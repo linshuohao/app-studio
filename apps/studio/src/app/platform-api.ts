@@ -50,6 +50,12 @@ export type OpenForm = FormSummary & {
 };
 
 export type UnderstandingItem = { kind: 'requirement' | 'question'; text: string };
+export type ComposePhase = {
+  stage: 'schema' | 'capabilities' | 'view' | 'validation' | 'reaction' | 'compile';
+  status: 'started' | 'completed' | 'retrying' | 'failed';
+  attempt?: number;
+  detail?: string;
+};
 export class PlatformError extends Error {
   constructor(
     readonly status: number,
@@ -71,6 +77,7 @@ export async function platform<T>(
     reset?: () => void;
     item?: (value: UnderstandingItem) => void;
     progress?: (message: string) => void;
+    phase?: (value: ComposePhase) => void;
   },
 ): Promise<T> {
   const response = await fetch(`/api/platform${path}`, {
@@ -108,11 +115,16 @@ export async function platform<T>(
           text = '';
           request.text?.('');
         } else if (value.type === 'data-progress') request.progress(String(value.data));
+        else if (value.type === 'data-compose-phase') request.phase?.(value.data as ComposePhase);
         else if (value.type === 'data-reset') request.reset?.();
         else if (value.type === 'data-item') request.item?.(value.data as UnderstandingItem);
         else if (value.type === 'data-result') return value.data as T;
-        else if (value.type === 'data-failure') throw new PlatformError(Number(value.data));
-        else if (value.type === 'error') throw new PlatformError(502);
+        else if (value.type === 'data-failure') {
+          const failure = value.data as number | { status: number; reason: string };
+          throw typeof failure === 'number'
+            ? new PlatformError(failure)
+            : new PlatformError(failure.status, failure.reason);
+        } else if (value.type === 'error') throw new PlatformError(502);
       }
     } finally {
       await reader.cancel();
@@ -146,8 +158,9 @@ export function failureMessage(error: unknown) {
     case 409:
       return '操作发生冲突，请刷新当前数据后再试。';
     case 400:
+      return error.detail ?? '输入不符合要求。';
     case 413:
-      return '输入不符合要求。配置文本上限为 16 KiB。';
+      return '请求内容超过大小上限。';
     default:
       return '服务暂时无法完成操作，请重试。';
   }

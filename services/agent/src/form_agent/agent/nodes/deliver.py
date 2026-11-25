@@ -37,6 +37,10 @@ def deliver_creation(state: FormAuthoringState) -> dict[str, TurnResult]:
     # text decisions can only contribute their human-readable content.
     if isinstance(result, (Clarification, Blocked, Answer)):
         result.repair_context = None
+    if isinstance(result, Blocked):
+        result.compose_checkpoint = (
+            composition.compose_checkpoint if composition else None
+        )
     if isinstance(result, Answer):
         result.check = None
     result.requirements_trace = None

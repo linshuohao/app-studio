@@ -1,0 +1,1756 @@
+{
+  "protocolVersion": "1.0",
+  "id": "inspection",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "originalOrder": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 32
+        },
+        "inspector": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["shop", "warehouse"]
+        },
+        "receivedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "parcelNo": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "inspectionNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "returns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "originalLine": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 32
+              },
+              "returns": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500
+              },
+              "disposition": {
+                "type": "string",
+                "enum": ["restock", "repair", "discard"]
+              },
+              "reason": {
+                "type": "string",
+                "enum": ["unused", "packaging", "defect", "mismatch"]
+              },
+              "inspectionEvidence": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 40
+              },
+              "repairHub": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 30
+              },
+              "isolationBin": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 30
+              },
+              "lineNote": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 160
+              },
+              "returnId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["originalLine", "returns", "disposition", "reason", "returnId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "repair"
+                    }
+                  },
+                  "required": ["disposition"]
+                },
+                "then": {
+                  "required": ["repairHub"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["repairHub"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "discard"
+                    }
+                  },
+                  "required": ["disposition"]
+                },
+                "then": {
+                  "required": ["isolationBin"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["isolationBin"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "restock"
+                    }
+                  },
+                  "required": ["disposition"]
+                },
+                "then": {},
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["inspectionEvidence"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": ["originalOrder", "inspector", "origin", "receivedDate", "confirmed", "returns"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "warehouse"
+              }
+            },
+            "required": ["origin"]
+          },
+          "then": {
+            "required": ["parcelNo"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["parcelNo"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "退回商品质检与库存分流"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "收件信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "原交易单号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/originalOrder"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/originalOrder"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "质检员"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/inspector"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/inspector"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "受理来源"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/origin"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/origin"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "shop",
+                        "label": "门店柜台"
+                      },
+                      {
+                        "id": "warehouse",
+                        "label": "仓库寄回"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "签收日期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/receivedDate"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/receivedDate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/origin"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/origin"
+                            }
+                          },
+                          "warehouse"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "物流单号"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/parcelNo"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/parcelNo"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "整单复核备注"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/inspectionNote"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/inspectionNote"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "checkbox",
+              "props": {
+                "label": "已逐项核对退回实物"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/confirmed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "退件明细"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/returns"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "退件"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "原交易明细编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/originalLine",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/originalLine",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "实收退件数量"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/returns",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/returns",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "质检结论"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/disposition",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/disposition",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "restock",
+                              "label": "可入库"
+                            },
+                            {
+                              "id": "repair",
+                              "label": "送维修"
+                            },
+                            {
+                              "id": "discard",
+                              "label": "隔离待处置"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "质检原因"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/reason",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/reason",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "unused",
+                              "label": "未使用"
+                            },
+                            {
+                              "id": "packaging",
+                              "label": "包装受损"
+                            },
+                            {
+                              "id": "defect",
+                              "label": "商品故障"
+                            },
+                            {
+                              "id": "mismatch",
+                              "label": "配件缺失"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.or",
+                          "args": [
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/disposition",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.eq",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/disposition",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    "repair"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/disposition",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.eq",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/disposition",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    "discard"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "质检记录编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/inspectionEvidence",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/inspectionEvidence",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/disposition",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/disposition",
+                                    "scope": "person"
+                                  }
+                                },
+                                "repair"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "维修点编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/repairHub",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/repairHub",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/disposition",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/disposition",
+                                    "scope": "person"
+                                  }
+                                },
+                                "discard"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "隔离库位"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/isolationBin",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/isolationBin",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "明细备注"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/lineNote",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/lineNote",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/returns"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除退件",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/returns"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加退件",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/returns"
+                            }
+                          }
+                        ]
+                      },
+                      20
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addReturnItem"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "交付质检清单"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.sendReturnInspection"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "return-evidence",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/inspectionEvidence",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/inspectionEvidence",
+          "scope": "person"
+        },
+        "code": "return-evidence",
+        "message": {
+          "text": "请填写质检记录编号"
+        }
+      },
+      "when": {
+        "op": "core.or",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  },
+                  "repair"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  },
+                  "discard"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/returns"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "return-reason",
+      "kind": "internal",
+      "assert": {
+        "op": "core.or",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      },
+                      "restock"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "core.or",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "unused"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "packaging"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      },
+                      "repair"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "core.or",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "defect"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "mismatch"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      },
+                      "discard"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "core.or",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "packaging"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "defect"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason",
+                              "scope": "person"
+                            }
+                          },
+                          "mismatch"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/reason",
+          "scope": "person"
+        },
+        "code": "return-reason",
+        "message": {
+          "text": "质检原因与当前结论不匹配"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/disposition",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/reason",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/returns"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "return-source",
+      "kind": "external",
+      "validator": "business.validateOrderReturns",
+      "target": {
+        "source": "data",
+        "path": "/originalOrder"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/originalOrder"
+        },
+        {
+          "source": "data",
+          "path": "/returns"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-parcel-parcelNo",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/origin"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/parcelNo"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/parcelNo"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/origin"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/origin"
+                        }
+                      },
+                      "warehouse"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-repair-repairHub",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/disposition",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/repairHub",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/repairHub",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      },
+                      "repair"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/returns"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-isolation-isolationBin",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/disposition",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/isolationBin",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/isolationBin",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/disposition",
+                          "scope": "person"
+                        }
+                      },
+                      "discard"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/returns"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-evidence-for-restock",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/disposition",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/inspectionEvidence",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/inspectionEvidence",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/disposition",
+                      "scope": "person"
+                    }
+                  },
+                  "restock"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/returns"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "returns": [],
+        "confirmed": false
+      },
+      "validators": {
+        "business.validateOrderReturns": "核对原交易、交易明细及可用剩余数量，重复对所有涉事行告警，迟到结果按验证输入快照失效。"
+      },
+      "events": {
+        "business.addReturnItem": "分配 returnId 后追加空行。",
+        "business.sendReturnInspection": "验证完整快照，下游按结论分流。写入前重新检验剩余额度，按提交键幂等。"
+      }
+    }
+  }
+}

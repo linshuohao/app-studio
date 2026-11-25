@@ -1,7 +1,12 @@
 import { chooseWorkingVersionAction } from './working-version-menu';
 import { expect, test } from '@playwright/test';
 import { compactJson } from '../src/components/json/format';
-import { closeWorkbenchDrawer, openSchemaDraft, schemaSource } from './data-schema-fixture';
+import {
+  chooseSchemaOption,
+  closeWorkbenchDrawer,
+  openSchemaDraft,
+  schemaSource,
+} from './data-schema-fixture';
 
 const schema = '/data/schema';
 const source = String.raw`{
@@ -44,7 +49,7 @@ test('keeps long field names on one line at regular density and opens a drawer',
   await expect(field).toBeFocused();
   await expect(field).toContainText('文本 · 必填');
   await page.keyboard.press('Enter');
-  const drawer = page.getByRole('dialog', { name: fieldName, exact: true });
+  const drawer = page.getByRole('dialog', { name: '字段配置 · ' + fieldName, exact: true });
   await expect(drawer).toBeVisible();
   await closeWorkbenchDrawer(page);
   await expect(field).toBeFocused();
@@ -59,8 +64,8 @@ test('edits a nested schema token, shares exact undo, saves and reopens the work
     '[data-schema-path="' + schema + '/properties/people/items/properties/age"]',
   );
   await age.click();
-  await page.getByLabel('最小值', { exact: true }).fill('18');
-  await page.getByRole('button', { name: '应用属性修改', exact: true }).click();
+  await page.getByLabel('下限', { exact: true }).fill('18');
+  await page.getByRole('button', { name: '应用到工作台', exact: true }).click();
   const expected = source.replace('"minimum":1', '"minimum":18');
   const input = await schemaSource(page);
   await expect(input).toHaveValue(expected);
@@ -78,7 +83,7 @@ test('edits a nested schema token, shares exact undo, saves and reopens the work
   await page.getByRole('button', { name: '返回版本列表', exact: true }).click();
   await chooseWorkingVersionAction(page, '编辑配置');
   await age.click();
-  await expect(page.getByLabel('最小值', { exact: true })).toHaveValue('18');
+  await expect(page.getByLabel('下限', { exact: true })).toHaveValue('18');
   expect(compactJson(await (await schemaSource(page)).inputValue())).toBe(compactJson(expected));
 });
 
@@ -150,17 +155,21 @@ test('builds an object array, removes its required integer and restores both wit
   await openSchemaDraft(page, '{}');
   const click = (name: string) => page.getByRole('button', { name, exact: true }).click();
   await click('创建数据模型');
-  async function add(name: string, type: string, action = '新增字段', close = true) {
+  async function add(name: string | undefined, type: string, action = '新增字段', close = true) {
     await click(action);
-    await page.getByLabel('字段名', { exact: true }).fill(name);
-    await page.getByLabel('节点类型', { exact: true }).selectOption(type);
+    if (name) await page.getByLabel('字段名', { exact: true }).fill(name);
+    await chooseSchemaOption(
+      page,
+      page.getByLabel('节点类型', { exact: true }),
+      new RegExp(' · ' + type + '$'),
+    );
     await click('确认新增');
     if (close) await closeWorkbenchDrawer(page);
   }
   await add('名单', 'array');
-  await add('数组元素', 'object', '新增数组元素 名单');
+  await add(undefined, 'object', '新增数组元素 名单');
   await add('年龄', 'integer', '新增子字段 数组元素', false);
-  await page.getByLabel('最小值', { exact: true }).fill('0');
+  await page.getByLabel('下限', { exact: true }).fill('0');
   await page.getByRole('checkbox', { name: '始终必填' }).check();
   await click('应用到工作台');
   await closeWorkbenchDrawer(page);
@@ -199,8 +208,12 @@ test('switches a single local reference and lists direct and array uses from a s
   await openSchemaDraft(page, JSON.stringify(fixture));
   const pick = (p: string) => page.locator('[data-schema-path="' + schema + p + '"]').click();
   await pick('/properties/alternate');
-  await page.getByLabel('引用目标', { exact: true }).selectOption('#/$defs/Person');
-  await closeWorkbenchDrawer(page);
+  await chooseSchemaOption(
+    page,
+    page.getByRole('combobox', { name: '引用目标' }),
+    /Person · #\/\$defs\/Person/,
+  );
+  await page.getByRole('button', { name: '应用到工作台', exact: true }).click();
   await page.getByRole('button', { name: '收起根模型', exact: true }).click();
   await pick('/$defs/Person/properties/name');
   await closeWorkbenchDrawer(page);
@@ -214,7 +227,7 @@ test('switches a single local reference and lists direct and array uses from a s
     await expect(uses.getByRole('button', { name: label, exact: true })).toBeVisible();
   await expect(uses.getByText(schema + '/properties/roster/items')).toBeVisible();
   await page.getByLabel('最短长度', { exact: true }).fill('3');
-  await page.getByRole('button', { name: '应用属性修改', exact: true }).click();
+  await page.getByRole('button', { name: '应用到工作台', exact: true }).click();
   fixture.data.schema.$defs.Person.properties.name.minLength = 3;
   fixture.data.schema.properties.alternate.$ref = '#/$defs/Person';
   expect(JSON.parse(await (await schemaSource(page)).inputValue())).toEqual(fixture);
@@ -227,7 +240,7 @@ test('returns to the selected array field in the narrow outline', async ({ page 
     '[data-schema-path="/data/schema/properties/people/items/properties/age"]',
   );
   await field.click();
-  await expect(page.getByLabel('最小值', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('下限', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await closeWorkbenchDrawer(page);
   await expect(field).toHaveAttribute('aria-pressed', 'true');
@@ -244,7 +257,8 @@ test('keeps a referenced definition when the author attempts deletion and expose
   await uses.getByText('共享定义「Person」 · 已知影响 1 处').click();
   await expect(uses.getByRole('button', { name: '模板「card」的参数「person」' })).toBeVisible();
   await expect(uses.getByText('/viewTemplates/card/params/person/schemaRef')).toBeVisible();
-  await page.getByRole('button', { name: '删除定义', exact: true }).click();
+  await closeWorkbenchDrawer(page);
+  await page.getByRole('button', { name: '删除定义 Person', exact: true }).click();
   await expect(page.getByRole('button', { name: '确认删除', exact: true })).toBeDisabled();
   await expect(page.getByText('此操作涉及使用位置，请在 JSON 中核对后编辑。')).toBeVisible();
   await page.getByRole('button', { name: '取消', exact: true }).click();
@@ -257,10 +271,11 @@ test('explains format and previews regex drafts without saving examples', async 
     '{"data":{"schema":{"properties":{"zip":{"type":"string","format":"custom"}}}}}',
   );
   await page.locator('[data-schema-path="/data/schema/properties/zip"]').click();
-  await expect(page.getByLabel('格式', { exact: true })).toHaveAccessibleDescription(
+  await page.getByText(/^高级属性/).click();
+  await expect(page.getByLabel('格式名称', { exact: true })).toHaveAccessibleDescription(
     /当前引擎不会用它校验字段值/,
   );
-  await page.getByText('高级配置', { exact: true }).click();
+  await page.getByText(/^更多校验/).click();
   const pattern = page.getByLabel('正则匹配', { exact: true });
   await expect(pattern).toHaveAccessibleDescription(/例如.*6.*位数字/);
   await pattern.fill('[');
@@ -287,7 +302,7 @@ test('explains format and previews regex drafts without saving examples', async 
   await sample.fill('0123456');
   await testMatch.click();
   await expect(page.getByText('不匹配', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '应用属性修改' }).click();
+  await page.getByRole('button', { name: '应用到工作台' }).click();
   const source = await schemaSource(page);
   expect(JSON.parse(await source.inputValue()).data.schema.properties.zip).toEqual({
     type: 'string',

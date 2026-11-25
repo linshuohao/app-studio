@@ -1,9 +1,9 @@
 import './rule-list.css';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactionAction, ValueSpec } from '@form-engine/protocol/definition';
-import { Button, Input } from '../components/ui';
+import { Button, Input } from '@form-engine/studio-design-components';
 import { JsonEditor } from '../components/json/json-editor';
-import { Tabs } from '../components/ui/tabs';
+import { Tabs } from '@form-engine/studio-design-components/tabs';
 import { ExpressionDisplay } from './expression-display';
 import { Modal } from './modal';
 import { checkReaction } from './reaction-check';
@@ -17,6 +17,7 @@ import { useFunctionCatalog, type FunctionDocumentation } from './function-catal
 import type { ReactionExpressionContext } from './reaction-expression-model';
 
 type Props = {
+  pickingReference?: boolean;
   formPath: string;
   profile: string;
   text: string;
@@ -219,7 +220,12 @@ function RuleList({ model: m, list, ...props }: Props & { model: Model; list?: J
       {cards.map(
         (c, i) =>
           c.terms.includes(query) && (
-            <article key={i}>
+            <article
+              key={i}
+              tabIndex={props.pickingReference ? 0 : undefined}
+              data-reference-path={'/reactions/' + i}
+              data-reference-label={'联动规则 · ' + c.id}
+            >
               <header>
                 <h3>{c.id}</h3>
                 {!props.readOnly && (

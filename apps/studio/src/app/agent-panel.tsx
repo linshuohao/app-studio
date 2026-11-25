@@ -1,9 +1,20 @@
 'use client';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Button, IconButton, Input } from '../components/ui/controls';
-import { Icon } from '../components/ui';
-import { failureMessage } from './platform-api';
-import type { PanelPosition } from './agent-conversation';
+import { Button, IconButton, Input } from '@form-engine/studio-design-components/controls';
+import { Icon } from '@form-engine/studio-design-components';
+import { AgentMessage, AgentReply } from './agent-reply';
+import { failureMessage, platform, type FormListEntry } from './platform-api';
+import { Modal } from './modal';
+import type { Summary } from './asset-catalog';
+import {
+  maxReferences,
+  assetReference,
+  referenceId,
+  referenceLabel,
+  referenceUrl,
+  type MessageReference,
+  type PanelPosition,
+} from './agent-conversation';
 import './agent-panel.css';
 
 export function ConversationTitle({
@@ -89,6 +100,46 @@ export function ConversationTitle({
   );
 }
 
+export function AgentUserMessage({
+  text,
+  references,
+}: {
+  text: string;
+  references?: MessageReference[];
+}) {
+  return (
+    <AgentMessage text={text}>
+      <div data-speaker="user">
+        <b>你</b>
+        <AgentReply text={text} />
+        <MessageReferenceLinks references={references} />
+      </div>
+    </AgentMessage>
+  );
+}
+
+function MessageReferenceLinks({ references }: { references?: MessageReference[] }) {
+  if (!references?.length) return null;
+  return (
+    <ul className="agent-form-references" aria-label="消息引用">
+      {references.map((reference) => (
+        <li key={referenceId(reference)}>
+          <a href={referenceUrl(reference)} target="_blank" rel="noreferrer">
+            {referenceLabel(reference)}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const referenceCommands = [
+  { kind: 'form', label: '表单' },
+  { kind: 'function', label: '纯函数' },
+  { kind: 'material', label: '物料' },
+] as const;
+type ReferenceKind = (typeof referenceCommands)[number]['kind'];
+
 export function AgentPanel({
   title = 'Agent 协作',
   conversationId,
@@ -108,6 +159,10 @@ export function AgentPanel({
   disabled,
   sendDisabled,
   jumpToLatest = false,
+  references,
+  onReference,
+  onRemoveReference,
+  referenceFocus = 0,
 }: {
   title?: string;
   conversationId?: string;
@@ -127,6 +182,10 @@ export function AgentPanel({
   disabled: boolean;
   sendDisabled: boolean;
   jumpToLatest?: boolean;
+  references?: MessageReference[];
+  onReference?: (reference: MessageReference) => void;
+  onRemoveReference?: (versionId: string) => void;
+  referenceFocus?: number;
 }) {
   const id = useId(),
     panel = useRef<HTMLElement>(null);
@@ -135,6 +194,93 @@ export function AgentPanel({
   const following = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
 
+  const composer = useRef<HTMLTextAreaElement>(null);
+  const [picker, setPicker] = useState<ReferenceKind>();
+  const [command, setCommand] = useState<{
+    start: number;
+    end: number;
+    token: string;
+    selected: number;
+  }>();
+  const commandListId = id + '-commands';
+  const commandOptions = command
+    ? referenceCommands.filter(({ kind }) => ('/' + kind).startsWith(command.token))
+    : [];
+  const [resultsData, setResultsData] =
+    useState<{ reference: MessageReference; keywords: string }[]>();
+  const pickerLabel = referenceCommands.find(({ kind }) => kind === picker)?.label;
+  const [search, setSearch] = useState('');
+  const searchInput = useRef<HTMLElement>(null);
+  const [searchError, setSearchError] = useState('');
+  const results = useRef<HTMLDivElement>(null);
+  const pickerRequest = useRef(0);
+  const canReference = !!onReference && !disabled && (references?.length ?? 0) < maxReferences;
+
+  useEffect(() => {
+    if (open && referenceFocus) composer.current?.focus({ preventScroll: true });
+  }, [open, referenceFocus]);
+
+  useEffect(() => {
+    if (!picker) return;
+    const frame = requestAnimationFrame(() => searchInput.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [picker]);
+
+  function openPicker(kind: ReferenceKind = 'form') {
+    setCommand(undefined);
+    const request = ++pickerRequest.current;
+    setSearch('');
+    setSearchError('');
+    setResultsData(undefined);
+    setPicker(kind);
+    const entries =
+      kind === 'form'
+        ? platform<FormListEntry[]>('/forms').then((rows) =>
+            rows.flatMap((row) =>
+              row.latestSave
+                ? [
+                    {
+                      reference: { formId: row.formId, name: row.name, ...row.latestSave },
+                      keywords: [row.name, row.description].join(' '),
+                    },
+                  ]
+                : [],
+            ),
+          )
+        : platform<Summary[]>('/catalog/' + (kind === 'function' ? 'functions' : 'materials')).then(
+            (rows) =>
+              rows.map((row) => ({
+                reference: assetReference(kind, row),
+                keywords: [row.id, row.title, row.summary, row.description].join(' '),
+              })),
+          );
+    void entries.then(
+      (rows) => {
+        if (request === pickerRequest.current) setResultsData(rows);
+      },
+      (error) => {
+        if (request === pickerRequest.current) setSearchError(failureMessage(error));
+      },
+    );
+  }
+
+  function closePicker() {
+    pickerRequest.current += 1;
+    setPicker(undefined);
+    requestAnimationFrame(() => composer.current?.focus());
+  }
+
+  const searchWords = search.trim().toLocaleLowerCase().split(/\s+/u);
+  const matches = resultsData?.filter(
+    ({ reference, keywords }) =>
+      !references?.some((item) => referenceId(item) === referenceId(reference)) &&
+      searchWords.every((word) => keywords.toLocaleLowerCase().includes(word)),
+  );
+  function selectCommand(kind: ReferenceKind) {
+    if (!command) return;
+    onMessage(message.slice(0, command.start) + message.slice(command.end));
+    openPicker(kind);
+  }
   function syncScroll() {
     const el = history.current;
     if (!el) return;
@@ -348,20 +494,211 @@ export function AgentPanel({
         )}
       </div>
       <div className="agent-compose">
+        {!!references?.length && (
+          <ul className="agent-form-references" aria-label="待发送的引用">
+            {references.map((reference) => (
+              <li key={referenceId(reference)}>
+                <a href={referenceUrl(reference)} target="_blank" rel="noreferrer">
+                  {referenceLabel(reference)}
+                </a>
+                <IconButton
+                  icon="Minus"
+                  aria-label={'移除引用 ' + reference.name}
+                  title="移除引用"
+                  disabled={disabled}
+                  onClick={() => {
+                    onRemoveReference?.(referenceId(reference));
+                    composer.current?.focus();
+                  }}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+        {command && canReference && (
+          <div
+            id={commandListId}
+            className="agent-command-menu"
+            role="listbox"
+            aria-label="斜杠命令"
+          >
+            {commandOptions.map(({ kind, label }, index) => (
+              <Button
+                key={kind}
+                id={commandListId + '-' + index}
+                type="button"
+                role="option"
+                aria-selected={index === command.selected}
+                tabIndex={-1}
+                variant="secondary"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectCommand(kind)}
+              >
+                <code>/{kind}</code> 引用{label}
+              </Button>
+            ))}
+          </div>
+        )}
         <label className="sr-only" htmlFor={id}>
           {label}
         </label>
         <textarea
           id={id}
+          ref={composer}
           rows={2}
           value={message}
           disabled={disabled}
-          onChange={(e) => onMessage(e.target.value)}
+          aria-autocomplete={onReference ? 'list' : undefined}
+          aria-controls={command && canReference ? commandListId : undefined}
+          aria-activedescendant={
+            command && canReference ? commandListId + '-' + command.selected : undefined
+          }
+          onBlur={() => setCommand(undefined)}
+          onClick={() => setCommand(undefined)}
+          onChange={(event) => {
+            const { value, selectionStart } = event.currentTarget;
+            const native = event.nativeEvent as InputEvent;
+            const before = value.slice(0, selectionStart);
+            const token = before.match(/(?:^|\s)(\/[a-z]*)$/u)?.[1];
+            const inputType = native.inputType;
+            const typed =
+              inputType === 'insertText' || (command && inputType === 'deleteContentBackward');
+            if (
+              canReference &&
+              !native.isComposing &&
+              typed &&
+              token &&
+              referenceCommands.some(({ kind }) => ('/' + kind).startsWith(token))
+            ) {
+              const start = selectionStart - token.length;
+              const exact = referenceCommands.find(({ kind }) => '/' + kind === token);
+              if (exact) {
+                onMessage(value.slice(0, start) + value.slice(selectionStart));
+                openPicker(exact.kind);
+                return;
+              }
+              setCommand({ start, end: selectionStart, token, selected: 0 });
+            } else setCommand(undefined);
+            onMessage(value);
+          }}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+            if (command && canReference) {
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                setCommand(undefined);
+                return;
+              }
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const offset = event.key === 'ArrowDown' ? 1 : -1;
+                setCommand({
+                  ...command,
+                  selected:
+                    (command.selected + offset + commandOptions.length) % commandOptions.length,
+                });
+                return;
+              }
+              if (!event.shiftKey && (event.key === 'Tab' || event.key === 'Enter')) {
+                event.preventDefault();
+                const item = commandOptions[command.selected];
+                if (item) selectCommand(item.kind);
+                return;
+              }
+              if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
+                setCommand(undefined);
+            }
+            if (event.key !== 'Enter' || event.shiftKey) return;
+            event.preventDefault();
+            if (!event.repeat && !disabled && !sendDisabled && message.trim()) onSend();
+          }}
           placeholder="输入问题、表单需求或修改意见"
         />
-        <Button disabled={sendDisabled || !message.trim()} onClick={onSend}>
-          {sendLabel}
-        </Button>
+        <div className="agent-compose-actions">
+          {onReference && (
+            <Button variant="secondary" onClick={() => openPicker()} disabled={!canReference}>
+              添加引用
+            </Button>
+          )}
+          <Button
+            disabled={disabled || sendDisabled || !message.trim()}
+            onClick={onSend}
+            title="Enter 发送，Shift+Enter 换行"
+          >
+            {sendLabel}
+          </Button>
+        </div>
+        {picker && (
+          <Modal title={'引用' + pickerLabel} onClose={closePicker} size="standard">
+            <div className="action-row" aria-label="引用类型">
+              {referenceCommands.map(({ kind, label }) => (
+                <Button
+                  key={kind}
+                  variant="text"
+                  aria-pressed={picker === kind}
+                  onClick={() => openPicker(kind)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <Input
+              type="search"
+              ref={(element) => {
+                searchInput.current = element;
+                element?.setAttribute('autofocus', '');
+              }}
+              aria-label={'搜索' + pickerLabel}
+              placeholder="搜索名称、标识或说明"
+              value={search}
+              onChange={(event) => setSearch(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+                const first = results.current?.querySelector('button');
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  first?.focus();
+                }
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  first?.click();
+                }
+              }}
+            />
+            {searchError ? (
+              <p role="alert">{searchError}</p>
+            ) : !matches ? (
+              <p role="status">正在加载…</p>
+            ) : (
+              !matches.length && <p role="status">没有匹配的可引用版本。</p>
+            )}
+            <div
+              className="agent-reference-results"
+              ref={results}
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+                event.preventDefault();
+                const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
+                const index = buttons.indexOf(event.target as HTMLButtonElement);
+                buttons[index + (event.key === 'ArrowDown' ? 1 : -1)]?.focus();
+              }}
+            >
+              {matches?.map(({ reference }) => (
+                <Button
+                  key={referenceId(reference)}
+                  variant="secondary"
+                  onClick={() => {
+                    if (!canReference) return;
+                    onReference?.(reference);
+                    closePicker();
+                  }}
+                >
+                  {referenceLabel(reference)}
+                </Button>
+              ))}
+            </div>
+          </Modal>
+        )}
       </div>
     </aside>
   );

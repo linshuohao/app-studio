@@ -26,3 +26,8 @@ Configuration diagnostics return a failed receipt; execution faults are exceptio
 
 def candidate_digest(text: str) -> str:
     return f"sha256:{sha256(text.encode('utf-8')).hexdigest()}"
+
+
+CheckSchema = Callable[
+    [dict[str, JsonValue], str, list[JsonValue]], Awaitable[CheckReceipt]
+]

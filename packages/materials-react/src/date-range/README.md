@@ -3,7 +3,7 @@
 确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。
 
 - Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。
-- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。配置任一项时，开始日期使用浏览器原生日期控件；确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。
+- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入或打开日历选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。
 - Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。
 - 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。
 - 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。

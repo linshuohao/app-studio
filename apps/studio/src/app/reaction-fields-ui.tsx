@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import type { ReactionWatch, ValidationObservation } from '@form-engine/protocol/definition';
-import { Button } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Button } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { Modal } from './modal';
 import {
   FieldPickerContent,

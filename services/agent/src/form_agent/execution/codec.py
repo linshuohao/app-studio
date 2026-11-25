@@ -10,6 +10,7 @@ from pydantic import BaseModel
 @cache
 def _types():
     from form_agent.agent import authoring_state, state
+    from form_agent.business.conversations import references
     from form_agent.business.form_authoring import contracts, requirements
     from form_agent.integrations import compiler
 
@@ -17,6 +18,7 @@ def _types():
     # so interrupted turns also remain readable by the previous service version.
     modules = (
         ("form_agent.contracts", contracts),
+        ("form_agent.contracts", references),
         ("form_agent.requirements", requirements),
         ("form_agent.turn_state", state),
         ("form_agent.create_form.state", authoring_state),

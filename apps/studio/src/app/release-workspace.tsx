@@ -10,8 +10,8 @@ import {
   Pagination,
   Tabs,
   type Column,
-} from '../components/ui';
-import { Feedback } from '../components/ui/controls';
+} from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
 import { ReleaseHostExample, ReleaseIntegration } from './host/requirements';
 import { Modal } from './modal';
 import {
@@ -21,6 +21,7 @@ import {
   type Release,
   type ReleaseDiagnostic,
 } from './platform-api';
+import type { FormReference } from './agent-conversation';
 import { releaseLabel, versionLabel } from './record-labels';
 import './release-workspace.css';
 
@@ -176,12 +177,14 @@ function ReleaseDetail({
   onBack,
   backLabel,
   onVersion,
+  onReference,
 }: {
   release: Release;
   versionName: string;
   onBack: () => void;
   backLabel: string;
   onVersion: (id: string) => void;
+  onReference?: () => void;
 }) {
   const [diagnosticsTrigger, showDiagnostics] = useState<HTMLButtonElement>();
   const [copyStatus, setCopyStatus] = useState('');
@@ -199,6 +202,11 @@ function ReleaseDetail({
             {releaseLabel(release)}
           </h1>
           <div className="action-row">
+            {onReference && (
+              <Button variant="secondary" onClick={onReference}>
+                引用到 Agent
+              </Button>
+            )}
             <Button variant="secondary" onClick={(event) => showDiagnostics(event.currentTarget)}>
               发布诊断（{release.diagnostics.length}）
             </Button>
@@ -309,6 +317,7 @@ export function ReleaseWorkspace({
   onBack,
   backLabel,
   onVersion,
+  onReference,
 }: {
   path: string;
   releaseId?: string;
@@ -318,6 +327,7 @@ export function ReleaseWorkspace({
   onBack: () => void;
   backLabel: string;
   onVersion: (id: string) => void;
+  onReference?: (version: Omit<FormReference, 'formId' | 'name'>) => void;
 }) {
   const [response, setResponse] = useState<{ rows: Release[]; versions: VersionSummary[] }>();
   const [error, setError] = useState('');
@@ -353,6 +363,16 @@ export function ReleaseWorkspace({
         onBack={onBack}
         backLabel={backLabel}
         onVersion={onVersion}
+        onReference={
+          onReference
+            ? () =>
+                onReference({
+                  versionId: selected.versionId,
+                  versionName: versionName(selected.versionId),
+                  savedAt: selected.publishedAt ?? '',
+                })
+            : undefined
+        }
       />
     );
   if (response && !releaseId)

@@ -1,4 +1,4 @@
-import { Button } from '../components/ui';
+import { Button } from '@form-engine/studio-design-components';
 import { FieldTree } from '../components/field-tree';
 import { JsonEditor } from '../components/json/json-editor';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -45,7 +45,7 @@ type Actions = {
 
 export function DataSchemaEditor({ position, text, apply, locate, repair, readOnly }: Actions) {
   const { beforeLeave } = useSchemaNavigation();
-  const [nextDrawer, setNextDrawer] = useState(false);
+  const [nextDrawer, setNextDrawer] = useState(true);
   const [returnPath, setReturnPath] = useState<string>();
   const [initialAction, setInitialAction] = useState<SchemaNodeAction>();
   const [trigger, setTrigger] = useState<HTMLElement>();
@@ -151,7 +151,14 @@ export function DataSchemaEditor({ position, text, apply, locate, repair, readOn
         showPath={false}
         nodes={nodes}
         activeId={nodes.find(({ item }) => item.node.start === chosen?.node.start)?.id}
-        browseButtonProps={({ item }) => ({ 'data-schema-path': item.node.path })}
+        browseButtonProps={({ item }) => ({
+          'data-schema-path': item.node.path,
+          'data-reference-path':
+            item.role !== 'root' && !model.ambiguous.has(item.node.path)
+              ? item.node.path
+              : undefined,
+          'data-reference-label': '字段 · ' + item.label,
+        })}
         onActivate={({ item }, event) => openEditor(item.node.path, event.currentTarget)}
         isExpanded={(id) => !collapsed.has(id)}
         toggleLabel={(node, open) => (open ? '收起' : '展开') + node.label}
@@ -305,8 +312,12 @@ export function DataSchemaEditor({ position, text, apply, locate, repair, readOn
           readonly={readOnly}
           returnFocus={trigger}
           returnToField={!!returnPath}
-          apply={(next, path) => {
+          apply={(next, path, keepOpen) => {
             applyEdit(next);
+            if (keepOpen) {
+              setSelection(path);
+              return;
+            }
             if (returnPath) {
               select(returnPath);
               setReturnPath(undefined);
@@ -329,12 +340,11 @@ export function DataSchemaEditor({ position, text, apply, locate, repair, readOn
               setReturnPath(undefined);
             } else setDetail(false);
           }}
-          openRelated={(path, next) => {
-            if (next && next !== text) applyEdit(next);
+          openRelated={(path) => {
             setReturnPath(returnPath ?? chosen.node.path);
             select(path);
           }}
-          locate={(path) => beforeLeave(() => locate(path))}
+          locate={locate}
         />
       )}
       {detail && !nextDrawer && (

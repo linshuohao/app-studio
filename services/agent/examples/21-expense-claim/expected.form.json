@@ -1,0 +1,1600 @@
+{
+  "protocolVersion": "1.0",
+  "id": "claim",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "employeeNo": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 24
+        },
+        "employee": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "project": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 24
+        },
+        "travelStart": {
+          "type": "string",
+          "format": "date"
+        },
+        "travelEnd": {
+          "type": "string",
+          "format": "date"
+        },
+        "advanceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "claimNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "attested": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "expenses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "expenseType": {
+                "type": "string",
+                "enum": ["rail", "hotel", "meal", "taxi"]
+              },
+              "occurredOn": {
+                "type": "string",
+                "format": "date"
+              },
+              "grossMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000000
+              },
+              "claimMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000000
+              },
+              "invoiceId": {
+                "type": "string",
+                "minLength": 6,
+                "maxLength": 40
+              },
+              "route": {
+                "type": "string",
+                "minLength": 6,
+                "maxLength": 120
+              },
+              "nights": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 30
+              },
+              "exceptionNote": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 180
+              },
+              "expenseId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "expenseType",
+              "occurredOn",
+              "grossMinor",
+              "claimMinor",
+              "invoiceId",
+              "expenseId"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "expenseType": {
+                      "const": "hotel"
+                    }
+                  },
+                  "required": ["expenseType"]
+                },
+                "then": {
+                  "required": ["nights"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["nights"]
+                      },
+                      {
+                        "required": ["exceptionNote"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "expenseType": {
+                      "const": "taxi"
+                    }
+                  },
+                  "required": ["expenseType"]
+                },
+                "then": {
+                  "required": ["route"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["route"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 40
+        }
+      },
+      "required": [
+        "employeeNo",
+        "employee",
+        "project",
+        "travelStart",
+        "travelEnd",
+        "advanceMinor",
+        "attested",
+        "expenses"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "跨城市差旅费用报销"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "单据信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "报销人工号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/employeeNo"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/employeeNo"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "报销人姓名"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/employee"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/employee"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "项目编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/project"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/project"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "出差开始日"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/travelStart"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/travelStart"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "出差结束日"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/travelEnd"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/travelEnd"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "已领借款"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/advanceMinor"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/advanceMinor"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "报销备注"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/claimNote"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/claimNote"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "checkbox",
+              "props": {
+                "label": "确认费用真实且未重复报销"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/attested"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "费用明细"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/expenses"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "费用"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "费用类目"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/expenseType",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/expenseType",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "rail",
+                              "label": "铁路"
+                            },
+                            {
+                              "id": "hotel",
+                              "label": "住宿"
+                            },
+                            {
+                              "id": "meal",
+                              "label": "误餐"
+                            },
+                            {
+                              "id": "taxi",
+                              "label": "市内交通"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "费用发生日"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/occurredOn",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/occurredOn",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "票面金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/grossMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/grossMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "申报金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/claimMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/claimMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "票据编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/invoiceId",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/invoiceId",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/expenseType",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/expenseType",
+                                    "scope": "person"
+                                  }
+                                },
+                                "taxi"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "乘车起讫点"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/route",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/route",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/expenseType",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/expenseType",
+                                    "scope": "person"
+                                  }
+                                },
+                                "hotel"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "入住晚数"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/nights",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "number-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/nights",
+                                "scope": "person"
+                              }
+                            },
+                            "props": {
+                              "inputMode": "numeric"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/expenseType",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.eq",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/expenseType",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    "hotel"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/nights",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/claimMinor",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.gt",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/claimMinor",
+                                    "scope": "person"
+                                  }
+                                },
+                                {
+                                  "op": "core.mul",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/nights",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    45000
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "超标准说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/exceptionNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/exceptionNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/expenses"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除费用",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/expenses"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加费用",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/expenses"
+                            }
+                          }
+                        ]
+                      },
+                      40
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addExpense"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "提交财务审核"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.sendExpenseClaim"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "expense-trip",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/travelStart"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/travelEnd"
+            }
+          },
+          30
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/travelEnd"
+        },
+        "code": "expense-trip",
+        "message": {
+          "text": "结束日不得早于开始日，最多 30 个自然日。"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/travelStart"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/travelEnd"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "invoice-limit",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/claimMinor",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/grossMinor",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/claimMinor",
+          "scope": "person"
+        },
+        "code": "invoice-limit",
+        "message": {
+          "text": "申报金额不得大于票面金额"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/claimMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/grossMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "expense-during-trip",
+      "kind": "internal",
+      "assert": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/travelStart"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/occurredOn",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          },
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/occurredOn",
+                      "scope": "person"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/travelEnd"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/occurredOn",
+          "scope": "person"
+        },
+        "code": "expense-during-trip",
+        "message": {
+          "text": "费用发生日须位于出差期间"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/travelStart"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/travelEnd"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/occurredOn",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "hotel-exception-note",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/exceptionNote",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/exceptionNote",
+          "scope": "person"
+        },
+        "code": "hotel-exception-note",
+        "message": {
+          "text": "请填写住宿超标说明"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/expenseType",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/expenseType",
+                      "scope": "person"
+                    }
+                  },
+                  "hotel"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/nights",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/claimMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.gt",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/claimMinor",
+                  "scope": "person"
+                }
+              },
+              {
+                "op": "core.mul",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/nights",
+                      "scope": "person"
+                    }
+                  },
+                  45000
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "invoice-availability",
+      "kind": "external",
+      "validator": "business.validateExpenseInvoices",
+      "target": {
+        "source": "data",
+        "path": "/expenses"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/employeeNo"
+        },
+        {
+          "source": "data",
+          "path": "/expenses"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-taxi-route-route",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/expenseType",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/route",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/route",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/expenseType",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/expenseType",
+                          "scope": "person"
+                        }
+                      },
+                      "taxi"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-hotel-nights-nights",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/expenseType",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/nights",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/nights",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/expenseType",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/expenseType",
+                          "scope": "person"
+                        }
+                      },
+                      "hotel"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-hotel-exception",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/expenseType",
+          "scope": "person"
+        },
+        {
+          "source": "data",
+          "path": "/nights",
+          "scope": "person"
+        },
+        {
+          "source": "data",
+          "path": "/claimMinor",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/exceptionNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/exceptionNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/expenseType",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/expenseType",
+                              "scope": "person"
+                            }
+                          },
+                          "hotel"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/nights",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/claimMinor",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gt",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/claimMinor",
+                          "scope": "person"
+                        }
+                      },
+                      {
+                        "op": "core.mul",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/nights",
+                              "scope": "person"
+                            }
+                          },
+                          45000
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/expenses"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "expenses": [],
+        "attested": false
+      },
+      "validators": {
+        "business.validateExpenseInvoices": "本单标准化票号查重与财务已报销票据验证，错误按 expenseId 定位到 invoiceId。"
+      },
+      "events": {
+        "business.addExpense": "生成稳定 expenseId 并追加空行，最多 40 行。",
+        "business.sendExpenseClaim": "校验后按同一快照交付实际申报总额、预借款和有符号差额；写入前核验票据仍可用，按提交键幂等。"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+[data-pick-reference] [data-reference-path] {
+  cursor: pointer;
+  outline: 1px dashed var(--studio-border);
+  outline-offset: -1px;
+}
+
+[data-pick-reference] [data-reference-path]:hover,
+[data-pick-reference] [data-reference-path]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}

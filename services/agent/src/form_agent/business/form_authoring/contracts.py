@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, JsonValue, model_validator
 
+from form_agent.business.conversations.references import MessageReference
 from form_agent.business.form_authoring.requirements import (
     ConfigurationMapping,
     RequirementsDocument,
@@ -15,6 +16,26 @@ class BindingEvidence(BaseModel):
     target: str
     knowledge_version: str | None = None
     capabilities: dict[str, JsonValue]
+    schema_check: CheckReceipt | None = None
+    remaining_validation: dict[str, str] = Field(default_factory=dict)
+    schema_coverage: dict[str, list[str]] = Field(default_factory=dict)
+    schema_cases: list[JsonValue] = Field(default_factory=list[JsonValue])
+    later_cases: list[JsonValue] = Field(default_factory=list[JsonValue])
+    schema_reopened: bool = False
+    reflection_rounds: int = 0
+    module_deferrals: dict[str, dict[str, str]] = Field(default_factory=dict)
+
+
+class ComposeCheckpoint(BaseModel):
+    inputs: str
+    schema_cases: list[JsonValue] | None = None
+    later_cases: list[JsonValue] = Field(default_factory=list)
+    previous_schema: str | None = None
+    diagnostics: list[dict[str, JsonValue]] = Field(default_factory=list)
+    evidence: BindingEvidence | None = None
+    fragments: dict[str, JsonValue] = Field(default_factory=dict)
+    missing_host_ids: list[str] = Field(default_factory=list)
+    module_diagnostics: dict[str, str] = Field(default_factory=dict)
 
 
 class PreviousReview(BaseModel):
@@ -42,6 +63,7 @@ class RepairContext(BaseModel):
 
 class CreateFormInput(BaseModel):
     message: str = Field(min_length=1)
+    references: list[MessageReference] = Field(default_factory=list, max_length=5)
     requirements_document: RequirementsDocument | None = None
     previous_standard: StandardRequirements | None = None
     history: list[dict[str, JsonValue]] = Field(
@@ -50,6 +72,7 @@ class CreateFormInput(BaseModel):
     previous_review: PreviousReview | None = None
     previous_working_check: CheckReceipt | None = None
     previous_failure: RepairContext | None = None
+    previous_compose: ComposeCheckpoint | None = None
     open_questions: list[str] = Field(default_factory=list)
     referenced_candidate: str | None = None
     context: dict[str, JsonValue]
@@ -74,6 +97,7 @@ class Answer(CreateFormBusinessResult):
 
 
 class Blocked(CreateFormBusinessResult):
+    compose_checkpoint: ComposeCheckpoint | None = None
     repair_context: RepairContext | None = None
     kind: Literal["blocked"]
     reason: str

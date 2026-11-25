@@ -113,6 +113,10 @@ export function withTravelPreviewHost(source: CompileInput['catalog']): CompileI
         ...source.host?.requests,
         'travel.searchCities': { payloadSchema, resultSchema },
       },
+      events: {
+        ...source.host?.events,
+        'travel.previewUnderwritingSubmit': {},
+      },
       validators: {
         ...source.host?.validators,
         'travel.checkPassportDuplicates': { contractVersion: '1' },

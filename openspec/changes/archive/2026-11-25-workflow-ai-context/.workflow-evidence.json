@@ -1,0 +1,42 @@
+{
+  "fingerprint": "0041322ff37bbab971fad275e242952b801f94b5fdda801da497ac43e509990a",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_contracts.py",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/docs",
+      "-p",
+      "test_*.py"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "node",
+      "tools/docs/test_search.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tools/engineering/assets/packed-asset-exports.test.mjs"
+    ],
+    [
+      "pnpm",
+      "handbook:check:tree"
+    ],
+    [
+      "pnpm",
+      "packages:check"
+    ]
+  ]
+}

@@ -101,7 +101,26 @@ function proveSchemas(
     b = target.schema;
   if (b === true) return result('compatible', 'Unconstrained destination.');
   if (a === false) return result('compatible', 'Empty source accepts no values.');
-  if (b === false || a === true) return result('unproven', 'No provable value shape.');
+  if (b === false) return result('unproven', 'No provable value shape.');
+  const types = (schema: Exclude<JsonSchema, boolean>) =>
+    typeof schema.type === 'string'
+      ? [schema.type]
+      : Array.isArray(schema.type)
+        ? schema.type.filter((v): v is string => typeof v === 'string')
+        : [];
+  const dstTypes = types(b);
+  const acceptedTypes = (sourceTypes: string[]) =>
+    sourceTypes.every(
+      (t) => dstTypes.includes(t) || (t === 'integer' && dstTypes.includes('number')),
+    );
+  // Source assertions can only narrow the explicit type. A type-only
+  // destination does not require us to understand those extra assertions.
+  const srcTypes = a === true ? [] : types(a);
+  if (srcTypes.length && Object.keys(b).length === 1 && own(b, 'type') && acceptedTypes(srcTypes))
+    return result('compatible', 'Explicit source types satisfy the destination.');
+  if (a === true && Object.keys(b).length === 0)
+    return result('compatible', 'Unconstrained destination.');
+  if (a === true) return result('unproven', 'No provable value shape.');
   // 简单联合只在没有其他断言时拆分；不能丢弃与 anyOf / oneOf 并列的约束。
   const sourceUnion = schemaUnionBranches(source, 'anyOf') ?? schemaUnionBranches(source, 'oneOf');
   if (sourceUnion) {
@@ -140,14 +159,6 @@ function proveSchemas(
     ].some((key) => own(a, key) || own(b, key))
   )
     return result('unproven', 'Schema composition is outside this slice of the proof subset.');
-  const types = (schema: Exclude<JsonSchema, boolean>) =>
-    typeof schema.type === 'string'
-      ? [schema.type]
-      : Array.isArray(schema.type)
-        ? schema.type.filter((v): v is string => typeof v === 'string')
-        : [];
-  const srcTypes = types(a),
-    dstTypes = types(b);
   if (
     !dstTypes.length &&
     !own(b, 'enum') &&
@@ -168,9 +179,7 @@ function proveSchemas(
   )
     return result('compatible', 'No structural destination constraints.');
   if (!srcTypes.length || !dstTypes.length) return result('unproven', 'Missing definite type.');
-  if (
-    !srcTypes.every((t) => dstTypes.includes(t) || (t === 'integer' && dstTypes.includes('number')))
-  )
+  if (!acceptedTypes(srcTypes))
     return result('incompatible', 'Source types are not accepted by destination.');
   const values = (schema: Exclude<JsonSchema, boolean>): JsonValue[] | undefined =>
     own(schema, 'const') ? [schema.const!] : Array.isArray(schema.enum) ? schema.enum : undefined;

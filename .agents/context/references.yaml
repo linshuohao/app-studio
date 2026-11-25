@@ -1,0 +1,133 @@
+references:
+  project-typescript-files:
+    file: references/project/typescript-files.md
+    suffixes:
+    - .ts
+    - .tsx
+  project-python:
+    file: references/project/python-project.md
+    suffixes:
+    - .py
+  microsoft-typescript-modeling:
+    file: references/upstream/microsoft-typescript/strict-modeling.md
+    source: https://github.com/microsoft/typescript-skills/blob/23092049dbed25b1db0905b9ee4762ac7877e652/plugins/typescript/skills/typescript-strict/SKILL.md
+    revision: 23092049dbed25b1db0905b9ee4762ac7877e652
+    license: references/upstream/microsoft-typescript/LICENSE
+    suffixes:
+    - .ts
+    - .tsx
+    scope: 仅复用类型建模与诊断修复章节；按项目验证范围执行
+  microsoft-packed-types:
+    file: references/upstream/microsoft-typescript/packed-declarations.md
+    source: https://github.com/microsoft/typescript-skills/blob/23092049dbed25b1db0905b9ee4762ac7877e652/plugins/typescript/skills/typescript-publish-types/SKILL.md
+    revision: 23092049dbed25b1db0905b9ee4762ac7877e652
+    license: references/upstream/microsoft-typescript/LICENSE
+    paths:
+    - packages/
+    intents:
+    - ts-declarations
+    scope: 只用包外声明消费章节；保留 pnpm 打包入口
+  python-writing-patterns:
+    file: references/upstream/python-development/python-anti-patterns.md
+    source: https://github.com/wshobson/agents/blob/c96b5f6552dba32e4492307493ee613581430715/plugins/python-development/skills/python-anti-patterns/SKILL.md
+    revision: c96b5f6552dba32e4492307493ee613581430715
+    license: references/upstream/python-development/LICENSE
+    suffixes:
+    - .py
+    scope: 异常、资源关闭、异步阻塞及类型注解原文摘录
+  react-derived-state:
+    file: references/upstream/vercel-react/rerender-derived-state-no-effect.md
+    source: https://github.com/vercel-labs/agent-skills/blob/5a37a6329fbad3666c3207392a6a7c0110e92efb/skills/react-best-practices/rules/rerender-derived-state-no-effect.md
+    revision: 5a37a6329fbad3666c3207392a6a7c0110e92efb
+    license: references/upstream/vercel-react/LICENSE
+    paths:
+    - apps/studio/
+    - packages/studio-design/components/
+    - apps/playground/
+    - packages/renderer-react/
+    - packages/materials-react/
+    suffixes:
+    - .ts
+    - .tsx
+    intents:
+    - react-render
+  react-parallel-await:
+    file: references/upstream/vercel-react/async-parallel.md
+    source: https://github.com/vercel-labs/agent-skills/blob/5a37a6329fbad3666c3207392a6a7c0110e92efb/skills/react-best-practices/rules/async-parallel.md
+    revision: 5a37a6329fbad3666c3207392a6a7c0110e92efb
+    license: references/upstream/vercel-react/LICENSE
+    paths:
+    - apps/studio/
+    - packages/studio-design/components/
+    - apps/playground/
+    - packages/renderer-react/
+    - packages/materials-react/
+    suffixes:
+    - .ts
+    - .tsx
+    intents:
+    - react-async
+  next-server-client:
+    file: references/upstream/next/server-client.md
+    source: https://nextjs.org/docs/app/getting-started/server-and-client-components
+    revision: npm next@16.4.5
+    license: references/upstream/next/LICENSE
+    paths:
+    - apps/studio/
+    - packages/studio-design/components/
+    - apps/playground/
+    suffixes:
+    - .ts
+    - .tsx
+    intents:
+    - next-boundary
+  nestjs-controllers:
+    file: references/upstream/nestjs/controllers.md
+    source: https://github.com/nestjs/docs.nestjs.com/blob/8decee4911aacaabfbd7d8c67a48af350c560501/content/controllers.md
+    revision: 8decee4911aacaabfbd7d8c67a48af350c560501
+    license: references/upstream/nestjs/LICENSE
+    paths:
+    - services/api/src/
+    suffixes:
+    - .ts
+    intents:
+    - nest-http
+    scope: 只提取 Controller 的 HTTP 职责；业务约束沿用项目 Contract
+  fastapi-response-models:
+    file: references/upstream/fastapi/responses.md
+    source: https://fastapi.tiangolo.com/ai-development/
+    revision: PyPI fastapi==0.165.0
+    license: references/upstream/fastapi/LICENSE
+    paths:
+    - services/agent/src/form_agent/api/
+    suffixes:
+    - .py
+    intents:
+    - fastapi-http
+    scope: 包内官方 Skill 的 responses 参考摘录；保留当前公开兼容与工具链
+  project-fastapi-transport:
+    file: references/project/fastapi-transport.md
+    paths:
+    - services/agent/src/form_agent/api/
+    suffixes:
+    - .py
+    intents:
+    - fastapi-http
+  project-langgraph-state:
+    file: references/project/langgraph-state.md
+    paths:
+    - services/agent/src/form_agent/
+    suffixes:
+    - .py
+    intents:
+    - langgraph-state
+  project-next-studio:
+    file: references/project/next-studio.md
+    paths: [apps/studio/]
+    suffixes: [.ts, .tsx]
+    intents: [next-boundary]
+  project-nest-http:
+    file: references/project/nest-http.md
+    paths: [services/api/src/]
+    suffixes: [.ts]
+    intents: [nest-http]

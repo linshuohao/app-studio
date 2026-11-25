@@ -8,6 +8,7 @@ import { PlatformDatabase } from '../src/platform/database.js';
 import { checkEnvironment } from '../src/platform/create-form-agent.js';
 import { ReleaseBuild } from '../src/platform/release-build.js';
 import type { Delivery } from '../src/platform/form-drafts.js';
+import { maxConfigTextBytes } from '../src/platform/forms.js';
 
 const origin = 'http://127.0.0.1:3200';
 let app: INestApplication;
@@ -22,6 +23,11 @@ const config = (id: string) =>
     data: { schema: { type: 'object' } },
     views: { default: { material: 'section' } },
   });
+const largeConfig = (id: string) => {
+  const definition = JSON.parse(config(id));
+  definition.data.schema.description = '字'.repeat(5600);
+  return JSON.stringify(definition);
+};
 const digest = (text: string) => 'sha256:' + createHash('sha256').update(text).digest('hex');
 const setup = (method: 'post' | 'get' | 'delete' | 'patch', path: string) =>
   http[method]('/api/platform' + path)
@@ -191,17 +197,18 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
   const second = await mockTurn(id, revised).expect(201);
   expect(second.body.draft.text).toBe(editedText);
   expect(second.body.draft.candidateText).toBe(revised.candidateText);
+  const mergedText = largeConfig('merged');
   const merge = await setup('patch', base)
     .send({
       revision: second.body.draft.revision,
-      text: config('merged'),
+      text: mergedText,
       appliedDigest: revised.digest,
       name: '旅行',
       versionName: '首版',
     })
     .expect(200);
   await fetchDelivery(id, revised).expect(201);
-  expect((await setup('get', base)).body.text).toBe(config('merged'));
+  expect((await setup('get', base)).body.text).toBe(mergedText);
   upstream.mockResolvedValueOnce(new Response(null, { status: 204 }));
   await setup('delete', '/agent-conversations/' + id).expect(204);
   expect((await setup('get', '/form-drafts')).body.map((x: { id: string }) => x.id)).toContain(
@@ -224,7 +231,7 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
   expect(
     (await setup('get', '/forms/' + saved.body.formId + '/versions/' + saved.body.versionId)).body
       .text,
-  ).toBe(config('merged'));
+  ).toBe(mergedText);
   // A newly opened editor conversation can edit the saved form without
   // recreating its deleted conversation or introducing another form draft.
   // Discovery on another browser gets the same server-verified draft reference
@@ -263,7 +270,7 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
       turnId: editorDelivery.turnId,
       formId: saved.body.formId,
       workId: saved.body.workId,
-      workingText: config('merged'),
+      workingText: mergedText,
     })
     .expect(201);
   expect(editor.body.editorProposal.id).toBe(editorDelivery.id);
@@ -279,7 +286,7 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
       turnId: randomUUID(),
       formId: saved.body.formId,
       workId: randomUUID(),
-      workingText: config('merged'),
+      workingText: mergedText,
     })
     .expect(404);
   expect((await setup('get', '/form-drafts')).body).toEqual([]);
@@ -325,8 +332,9 @@ it('rejects stale revisions and invalid deliveries, deleting a draft cannot remo
 it('reports an oversized UTF-8 candidate as a failed check tied to the exact text', async () => {
   const check = () =>
     http.post('/internal/agent-tools/check').set('X-Agent-Service-Token', 'private-service');
-  const small = config('size-check');
-  const candidate = JSON.stringify({ ...JSON.parse(small), description: '字'.repeat(5600) });
+  const large = largeConfig('size-check');
+  const withinLimit = large + ' '.repeat(maxConfigTextBytes - Buffer.byteLength(large));
+  const candidate = withinLimit + ' ';
   const environment = checkEnvironment(app.get(ReleaseBuild));
 
   const response = await check()
@@ -343,7 +351,7 @@ it('reports an oversized UTF-8 candidate as a failed check tied to the exact tex
   await check().send({ candidate_text: 42, check_environment: environment }).expect(400);
   await check().send({ candidate_text: candidate, check_environment: 'unknown-build' }).expect(503);
   const accepted = await check()
-    .send({ candidate_text: small, check_environment: environment })
+    .send({ candidate_text: withinLimit, check_environment: environment })
     .expect(200);
-  expect(accepted.body).toMatchObject({ candidate_digest: digest(small), success: true });
+  expect(accepted.body).toMatchObject({ candidate_digest: digest(withinLimit), success: true });
 });

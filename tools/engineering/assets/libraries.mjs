@@ -16,6 +16,7 @@ export async function checkLibraries(root, base, assets, changes, consumed) {
   for (const pkg of workspace.packages) {
     const dir = relative(root, pkg.dir).replaceAll('\\', '/');
     if (!dir.startsWith('packages/')) continue;
+    if (dir.startsWith('packages/studio-design/') && pkg.packageJson.private) continue;
     const entries = assets.filter((a) => a.dir === dir);
     const paths = [
       ...new Set([

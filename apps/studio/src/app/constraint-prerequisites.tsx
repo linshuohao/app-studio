@@ -1,6 +1,6 @@
 import type { ValidationPrerequisite } from '@form-engine/protocol/definition';
 import type { JsonNode } from '../components/json/model';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { addPrerequisite } from './constraint-model';
 import { child, type Model } from './semantic-model';
 

@@ -1,0 +1,773 @@
+{
+  "protocolVersion": "1.0",
+  "id": "family-quote",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "countryCode": {
+          "type": "string",
+          "enum": ["JP", "TH"]
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "plan": {
+          "type": "string",
+          "enum": ["basic", "plus"]
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "memberId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "premiumMinor": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": ["memberId", "name", "birthDate"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "quote": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "totalMinor": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": ["id", "totalMinor", "expiresAt"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["countryCode", "startDate", "endDate", "plan", "members"],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "家庭旅行险报价"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "目的地"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/countryCode"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/countryCode"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "JP",
+                    "label": "日本"
+                  },
+                  {
+                    "id": "TH",
+                    "label": "泰国"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "material": "date-range",
+          "props": {
+            "label": "保险期间",
+            "startLabel": "起保日",
+            "endLabel": "终保日"
+          },
+          "bindings": {
+            "start": {
+              "source": "data",
+              "path": "/startDate"
+            },
+            "end": {
+              "source": "data",
+              "path": "/endDate"
+            }
+          }
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "保障计划"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/plan"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/plan"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "basic",
+                    "label": "基础版"
+                  },
+                  {
+                    "id": "plus",
+                    "label": "增强版"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "scope": {
+            "from": {
+              "source": "data",
+              "path": "/members"
+            },
+            "mode": "each",
+            "as": "person"
+          },
+          "node": {
+            "material": "section",
+            "props": {
+              "title": "同行人"
+            },
+            "children": [
+              {
+                "material": "field",
+                "props": {
+                  "label": "姓名"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "data",
+                    "path": "/name",
+                    "scope": "person"
+                  }
+                },
+                "children": [
+                  {
+                    "material": "text-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/name",
+                        "scope": "person"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "material": "field",
+                "props": {
+                  "label": "出生日期（YYYY-MM-DD）"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "data",
+                    "path": "/birthDate",
+                    "scope": "person"
+                  }
+                },
+                "children": [
+                  {
+                    "material": "text-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/birthDate",
+                        "scope": "person"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "material": "condition",
+                "props": {
+                  "visible": {
+                    "$expr": {
+                      "op": "core.exists",
+                      "args": [
+                        {
+                          "ref": {
+                            "source": "data",
+                            "path": "/quote/id"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "个人报价（元）"
+                    },
+                    "children": [
+                      {
+                        "material": "value-display",
+                        "props": {
+                          "value": {
+                            "$expr": {
+                              "ref": {
+                                "source": "data",
+                                "path": "/premiumMinor",
+                                "scope": "person"
+                              }
+                            }
+                          },
+                          "format": "moneyMinor"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "material": "condition",
+                "props": {
+                  "visible": {
+                    "$expr": true
+                  }
+                },
+                "children": [
+                  {
+                    "material": "button",
+                    "props": {
+                      "label": "删除同行人",
+                      "variant": "danger"
+                    },
+                    "on": {
+                      "activate": {
+                        "type": "form.command",
+                        "command": {
+                          "op": "array.remove",
+                          "target": {
+                            "source": "data",
+                            "path": "/members"
+                          },
+                          "item": {
+                            "$scope": "person"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "添加同行人",
+            "disabled": {
+              "$expr": {
+                "op": "core.gte",
+                "args": [
+                  {
+                    "op": "core.length",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/members"
+                        }
+                      }
+                    ]
+                  },
+                  6
+                ]
+              }
+            }
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "travel.addQuoteMember"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "获取报价"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "travel.requestFamilyQuote"
+            }
+          }
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/quote/id"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "总额（元）"
+              },
+              "children": [
+                {
+                  "material": "value-display",
+                  "props": {
+                    "value": {
+                      "$expr": {
+                        "ref": {
+                          "source": "data",
+                          "path": "/quote/totalMinor"
+                        }
+                      }
+                    },
+                    "format": "moneyMinor"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "有效期至"
+              },
+              "children": [
+                {
+                  "material": "value-display",
+                  "props": {
+                    "value": {
+                      "$expr": {
+                        "ref": {
+                          "source": "data",
+                          "path": "/quote/expiresAt"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "确认报价",
+            "disabled": {
+              "$expr": {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/quote/id"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "travel.confirmFamilyQuote"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "trip-length",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endDate"
+            }
+          },
+          30
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endDate"
+        },
+        "code": "trip-length",
+        "message": {
+          "text": "保险期间应为 1 至 30 个自然日"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/startDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/endDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/endDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "quote-birth-date",
+      "kind": "internal",
+      "assert": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/birthDate",
+                      "scope": "person"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "op": "date.inclusiveDays",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/birthDate",
+                          "scope": "person"
+                        }
+                      },
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/startDate"
+                        }
+                      }
+                    ]
+                  },
+                  null
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/birthDate",
+          "scope": "person"
+        },
+        "code": "quote-birth-date",
+        "message": {
+          "text": "出生日期不得晚于起保日"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/birthDate",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/birthDate",
+                          "scope": "person"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/startDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/members"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "invalidate-quote",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/countryCode"
+        },
+        {
+          "source": "data",
+          "path": "/startDate"
+        },
+        {
+          "source": "data",
+          "path": "/endDate"
+        },
+        {
+          "source": "data",
+          "path": "/plan"
+        }
+      ],
+      "then": [
+        {
+          "type": "host.emit",
+          "event": "travel.invalidateQuote"
+        }
+      ],
+      "runOnActivate": false
+    },
+    {
+      "id": "check-quote-members",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/members"
+        }
+      ],
+      "then": [
+        {
+          "type": "host.emit",
+          "event": "travel.invalidateQuoteIfInputChanged"
+        }
+      ],
+      "runOnActivate": false
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "members": []
+      },
+      "events": {
+        "travel.addQuoteMember": "插入稳定 ID 的空成员，最多 6 名。",
+        "travel.requestFamilyQuote": "本地校验后按行程及 memberId、姓名、生日发起报价，只接受完整且对应当前输入的报价回包，按 ID 写回成员保费。失败保留输入并提示重试。",
+        "travel.invalidateQuote": "作废请求代次并清除旧报价和明细。",
+        "travel.invalidateQuoteIfInputChanged": "比较名单 ID、姓名和出生日期，忽略 Host 写回的保费字段。输入变化时作废请求代次并清空旧报价。",
+        "travel.confirmFamilyQuote": "核对本地完整校验、快照及截止时间，交付当前输入和对应报价编号。"
+      }
+    }
+  }
+}

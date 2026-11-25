@@ -5,7 +5,7 @@ import type { ViewNode } from '@form-engine/protocol/definition';
 import { useState, type ReactNode } from 'react';
 import { ContractTable, schemaType } from '../components/catalog/contract-reference';
 import { JsonEditor } from '../components/json/json-editor';
-import { Button } from '../components/ui';
+import { Button } from '@form-engine/studio-design-components';
 import { capabilitySetup } from './material-capability-examples';
 import { Modal } from './modal';
 import { MaterialDescription } from './material-description';

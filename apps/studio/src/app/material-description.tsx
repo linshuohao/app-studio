@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { IconButton } from '../components/ui';
+import { IconButton } from '@form-engine/studio-design-components';
 import { Modal } from './modal';
 
 export function MaterialDescription({ title, text }: { title: string; text: string }) {

@@ -19,9 +19,8 @@ test('isolates Compiler diagnostics, preserves adjacent tokens and routes ambigu
   const button = (name: string) => page.getByRole('button', { name, exact: true });
   await button('联动').click();
   await button('编辑 editable').click();
-  await button('更改').click();
-  await page.getByText('高级设置', { exact: true }).click();
-  await page.getByLabel('成员别名', { exact: true }).fill('covered');
+  await page.getByRole('button', { name: /更改范围/ }).click();
+  await page.getByLabel('成员名称', { exact: true }).fill('covered');
   await button('应用范围').click();
 
   const renamed = rule.replace('"current"', '"covered"');
@@ -32,47 +31,45 @@ test('isolates Compiler diagnostics, preserves adjacent tokens and routes ambigu
 
   await button('联动').click();
   await button('编辑 editable').click();
-  await button('规则 JSON').click();
-  const dialog = page.getByRole('dialog', { name: '规则 JSON', exact: true });
-  const editor = dialog.getByRole('textbox');
+  const dialog = page.getByRole('dialog', { name: '编辑联动', exact: true });
+  await dialog.getByRole('tab', { name: 'JSON 编辑' }).click();
+  const editor = dialog.getByRole('textbox', { name: '规则 JSON' });
   const invalidWatch = '"watch":[{"source":"data","scope":"notBound","path":""}]';
   await editor.fill(renamed.replace('"watch":[]', invalidWatch));
   const checked = page.waitForResponse(
     (response) => response.request().method() === 'POST' && response.url().endsWith('/check'),
   );
-  await dialog.getByRole('button', { name: '应用修改' }).click();
+  await button('完成规则').click();
   expect((await checked).ok()).toBeTruthy();
   await expect(dialog.getByRole('alert')).toContainText('/reactions/1/watch/0');
   await expect(dialog.getByRole('alert')).toContainText('notBound');
-  await dialog.getByRole('button', { name: '关闭', exact: true }).click();
   await button('取消').click();
   expect(compactJson(await (await schemaSource(page)).inputValue())).toBe(compactJson(expected));
 
   await button('联动').click();
   await button('编辑 editable').click();
-  await button('规则 JSON').click();
+  await dialog.getByRole('tab', { name: 'JSON 编辑' }).click();
   const valid = renamed.replace(
     '"watch":[]',
     '"watch":[{"source":"data","scope":"covered","path":"/age"}]',
   );
   await editor.fill(valid);
-  await dialog.getByRole('button', { name: '应用修改' }).click();
-  await expect(dialog).toBeHidden();
   await button('完成规则').click();
+  await expect(dialog).toBeHidden();
   const accepted = await schemaSource(page);
   expect(compactJson(await accepted.inputValue())).toBe(compactJson(input.replace(rule, valid)));
 
   await button('联动').click();
   await button('编辑 editable').click();
-  await button('更改').click();
+  await page.getByRole('button', { name: /更改范围/ }).click();
   const scopeEditor = page.getByRole('dialog', { name: '配置执行范围', exact: true });
-  await expect(scopeEditor.locator('summary code')).toHaveText('covered');
-  await scopeEditor.getByRole('button', { name: '来源数组', exact: true }).click();
-  const arrayPicker = page.getByRole('dialog', { name: '来源数组', exact: true });
+  await expect(scopeEditor.getByLabel('成员名称')).toHaveValue('covered');
+  await scopeEditor.getByRole('button', { name: '/people', exact: true }).click();
+  const arrayPicker = page.getByRole('dialog', { name: '/people', exact: true });
   await arrayPicker.getByRole('searchbox').fill('/labels');
   await arrayPicker.getByRole('radio', { disabled: false }).check();
   await arrayPicker.getByRole('button', { name: '应用选择', exact: true }).click();
-  await expect(scopeEditor.locator('summary code')).toHaveText('covered');
+  await expect(scopeEditor.getByLabel('成员名称')).toHaveValue('covered');
   await expect(scopeEditor.getByRole('button', { name: '应用范围', exact: true })).toBeDisabled();
   await expect(scopeEditor.getByRole('alert')).toContainText('/reactions/1/watch/0');
   await scopeEditor.getByRole('button', { name: '取消', exact: true }).click();
@@ -92,8 +89,7 @@ test('isolates Compiler diagnostics, preserves adjacent tokens and routes ambigu
     .filter({ hasText: 'editable' })
     .getByRole('button', { name: '在 JSON 中定位' })
     .click();
-  await page.getByRole('button', { name: '文本查看 / 修复', exact: true }).click();
-  const repair = page.getByRole('textbox', { name: '配置原文', exact: true });
+  const repair = await schemaSource(page);
   await expect(repair).toBeVisible();
   expect(compactJson(await repair.inputValue())).toBe(compactJson(ambiguous));
 });
@@ -108,17 +104,16 @@ test('edits a data-independent rule in an empty draft and drags repeated actions
   await button('添加联动').click();
   await page.getByLabel('规则名称', { exact: true }).fill('notify');
   const event = (name: string) => ({ type: 'host.emit', event: name });
-  await button('规则 JSON').click();
-  const dialog = page.getByRole('dialog', { name: '规则 JSON' });
-  await dialog.getByRole('textbox').fill(
+  const dialog = page.getByRole('dialog', { name: '添加联动', exact: true });
+  await dialog.getByRole('tab', { name: 'JSON 编辑' }).click();
+  await dialog.getByRole('textbox', { name: '规则 JSON' }).fill(
     JSON.stringify({
       id: 'notify',
       watch: [],
       then: [event('first'), event('repeat'), event('repeat')],
     }),
   );
-  await dialog.getByRole('button', { name: '应用修改' }).click();
-  await expect(dialog).toBeHidden();
+  await dialog.getByRole('tab', { name: '表单编辑' }).click();
   const actions = page.getByRole('region', { name: '规则配置' }).getByRole('listitem');
   const source = actions.first();
   const target = actions.nth(2);
@@ -134,7 +129,7 @@ test('edits a data-independent rule in an empty draft and drags repeated actions
   await page.mouse.move(destination.x + 30, destination.y + 16, { steps: 8 });
   await page.mouse.move(destination.x + 35, destination.y + 16);
   await page.mouse.up();
-  await expect(actions.first()).toContainText('通知宿主 · repeat');
+  await expect(actions.first()).toContainText(/通知宿主.*repeat/);
   await button('完成规则').click();
   const raw = await schemaSource(page);
   expect(JSON.parse(await raw.inputValue())).toEqual({
@@ -166,9 +161,8 @@ test('新增与编辑共用右侧抽屉，完成回到原卡片，取消丢弃�
   expect(box?.width).toBe(840);
   expect(box!.x + box!.width).toBe(1440);
   await drawer.getByLabel('规则名称').fill('通知规则');
-  await button('规则 JSON').click();
-  const raw = page.getByRole('dialog', { name: '规则 JSON', exact: true });
-  await raw.getByRole('textbox').fill(
+  await drawer.getByRole('tab', { name: 'JSON 编辑' }).click();
+  await drawer.getByRole('textbox', { name: '规则 JSON' }).fill(
     JSON.stringify({
       id: '通知规则',
       watch: [],
@@ -177,8 +171,6 @@ test('新增与编辑共用右侧抽屉，完成回到原卡片，取消丢弃�
       then: [{ type: 'host.emit', event: 'demo.ready' }],
     }),
   );
-  await raw.getByRole('button', { name: '应用修改' }).click();
-  await expect(raw).toBeHidden();
   await button('完成规则').click();
   const card = page
     .locator('.reaction-list article')

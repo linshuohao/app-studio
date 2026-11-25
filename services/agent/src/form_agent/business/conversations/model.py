@@ -6,6 +6,8 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 
 from pydantic import BaseModel, Field
 
+from form_agent.business.conversations.references import MessageReference
+
 
 class Owner(BaseModel, frozen=True):
     user: str
@@ -25,6 +27,7 @@ class Message(BaseModel, extra="forbid"):
     revision: int = Field(ge=0)
     message: str = Field(min_length=1)
     context: Context
+    references: list[MessageReference] = Field(default_factory=list, max_length=5)
     document: str | None = None
     requestFingerprint: str | None = None
     workingText: str | None = None

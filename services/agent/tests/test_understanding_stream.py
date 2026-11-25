@@ -55,9 +55,5 @@ def test_only_complete_business_records_are_exposed(monkeypatch):
     assert result.standard.issues[0].disposition == "ask_user"
     seen.clear()
     with pytest.raises(ValueError, match="source excerpt"):
-        asyncio.run(
-            document.stream_document(
-                Model(), [], {"document": "无匹配引文"}
-            )
-        )
+        asyncio.run(document.stream_document(Model(), [], {"document": "无匹配引文"}))
     assert not seen

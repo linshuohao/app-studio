@@ -1,14 +1,18 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { AttemptHistory, useRunningConversation } from './agent-attempt';
+import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
 import { AgentIssues } from './agent-issues';
-import { AgentReply, AgentCandidateCard } from './agent-reply';
+import { AgentReply, AgentCandidateCard, AgentMessage } from './agent-reply';
 import { renameConversation } from './agent-conversation';
-import { AgentPanel } from './agent-panel';
+import { AgentPanel, AgentUserMessage } from './agent-panel';
 import { AgentMerge } from './agent-merge';
-import { platform, failureMessage, PlatformError } from './platform-api';
+import { platform, failureMessage, PlatformError, type ComposePhase } from './platform-api';
 import {
   assistantText,
+  addReference,
+  referenceId,
+  referenceRequest,
+  type MessageReference,
   keepConversation,
   type ConversationLink,
   type AssistantConversation,
@@ -50,6 +54,13 @@ export function FormAgentSidebar({
   const [progress, setProgress] = useState(''),
     [replyText, setReplyText] = useState(''),
     [sent, setSent] = useState('');
+  const [references, setReferences] = useState<MessageReference[]>([]);
+  const submitting = useRef(false);
+  const [phases, setPhases] = useState<ComposePhase[]>([]);
+  const [resumingTurn, setResumingTurn] = useState<string>();
+  function recordPhase(event: ComposePhase) {
+    setPhases((previous) => [...previous, event]);
+  }
   const [review, setReview] = useState(false),
     [loaded, setLoaded] = useState(false);
   const conversationId = useRef(initialChat?.id);
@@ -124,33 +135,37 @@ export function FormAgentSidebar({
   }, [open, currentId, latestProposal, chatKey, scope]);
   const unfinished = conversation?.attempts?.filter((a) => a.status !== 'done') ?? [];
   const activeAttempt = unfinished.some((a) => a.status === 'running' || a.resumable);
-  useRunningConversation(
-    conversation,
-    scope,
-    setConversation,
-    open && !sent,
-    locked && !!activeAttempt,
-  );
+  useRunningConversation(conversation, scope, setConversation, open && !sent && !resumingTurn);
   async function resumeTurn(turnId: string) {
     if (!conversation || locked || disabled) return;
     setLocked(true);
     setError('');
+    setProgress('正在继续处理');
+    setPhases([]);
+    setReplyText('');
+    setResumingTurn(turnId);
     try {
       const next = await platform<TurnResponse>(
         '/agent-conversations/' + conversation.id + '/turns/' + turnId + '/resume',
-        {},
+        { progress: setProgress, phase: recordPhase },
       );
       setConversation(next.conversation);
       if (next.editorProposal) setProposal(next.editorProposal);
     } catch (e) {
-      setError(failureMessage(e));
+      const persisted = await platform<AssistantConversation>(
+        '/agent-conversations/' + conversation.id + scope,
+      ).catch(() => undefined);
+      if (persisted) setConversation(persisted);
+      setError(e instanceof PlatformError && e.detail ? e.detail : failureMessage(e));
     } finally {
       setLocked(false);
+      setResumingTurn(undefined);
     }
   }
   async function send() {
     const content = message.trim();
-    if (!content || !loaded || disabled || locked || activeAttempt) return;
+    if (!content || !loaded || disabled || locked || activeAttempt || submitting.current) return;
+    submitting.current = true;
     const id = conversationId.current ?? crypto.randomUUID();
     conversationId.current = id;
     const payload = {
@@ -159,6 +174,7 @@ export function FormAgentSidebar({
       formId,
       workId,
       workingText: source,
+      ...(references.length && { references: references.map(referenceRequest) }),
     };
     const fingerprint = JSON.stringify(payload);
     if (retry.current?.fingerprint !== fingerprint)
@@ -166,6 +182,7 @@ export function FormAgentSidebar({
     setSent(content);
     setMessage('');
     setProgress('正在处理消息');
+    setPhases([]);
     setReplyText('');
     setError('');
     setLocked(true);
@@ -173,14 +190,16 @@ export function FormAgentSidebar({
       const result = await platform<TurnResponse>('/agent-conversations/' + id + '/turns', {
         text: setReplyText,
         progress: setProgress,
+        phase: recordPhase,
         body: { ...payload, turnId: retry.current.id },
       });
       setConversation(result.conversation);
+      setReferences([]);
       if (result.editorProposal) setProposal(result.editorProposal);
       keepConversation(chatKey, { id, position: position.current });
       retry.current = null;
     } catch (e) {
-      setError(failureMessage(e));
+      setError(e instanceof PlatformError && e.detail ? e.detail : failureMessage(e));
       const persisted = await platform<AssistantConversation>(
         '/agent-conversations/' + id + scope,
       ).catch(() => undefined);
@@ -188,10 +207,16 @@ export function FormAgentSidebar({
         setConversation(persisted);
         keepConversation(chatKey, { id, position: position.current });
       }
-      if (!persisted?.attempts?.some((a) => a.turnId === retry.current?.id)) setMessage(content);
+      if (
+        persisted?.attempts?.some((a) => a.turnId === retry.current?.id) ||
+        persisted?.turns.some((t) => t.turnId === retry.current?.id)
+      )
+        setReferences([]);
+      else setMessage(content);
     } finally {
       setLocked(false);
       setSent('');
+      submitting.current = false;
     }
   }
   function clearProposal() {
@@ -228,6 +253,11 @@ export function FormAgentSidebar({
         label="修改要求"
         message={message}
         onMessage={setMessage}
+        references={references}
+        onReference={(reference) => setReferences((items) => addReference(items, reference))}
+        onRemoveReference={(id) =>
+          setReferences((items) => items.filter((item) => referenceId(item) !== id))
+        }
         onSend={send}
         sendLabel="发送修改要求"
         disabled={locked}
@@ -235,23 +265,24 @@ export function FormAgentSidebar({
       >
         {conversation?.turns.map((t) => (
           <section key={t.turnId}>
-            <div data-speaker="user">
-              <b>你</b>
-              <AgentReply text={t.message} />
-            </div>
+            <AgentUserMessage text={t.message} references={t.references} />
             {conversation?.attempts
               ?.filter((a) => a.turnId === t.turnId && a.status === 'done')
               .map((a) => (
                 <AttemptHistory key={a.turnId} attempt={a} disabled />
               ))}
-            <div data-speaker="assistant">
-              <b>表单助手</b>
-              <AgentReply text={assistantText(t.result)} />
-              {t.result.issues && t.result.verification && (
-                <AgentIssues issues={t.result.issues} verification={t.result.verification} />
-              )}
-              {t.result.kind === 'proposal' && <AgentCandidateCard>已生成候选</AgentCandidateCard>}
-            </div>
+            <AgentMessage text={assistantText(t.result)}>
+              <div data-speaker="assistant">
+                <b>表单助手</b>
+                <AgentReply text={assistantText(t.result)} />
+                {t.result.issues && t.result.verification && (
+                  <AgentIssues issues={t.result.issues} verification={t.result.verification} />
+                )}
+                {t.result.kind === 'proposal' && (
+                  <AgentCandidateCard>已生成候选</AgentCandidateCard>
+                )}
+              </div>
+            </AgentMessage>
           </section>
         ))}
         {!sent &&
@@ -260,21 +291,20 @@ export function FormAgentSidebar({
               key={attempt.turnId}
               attempt={attempt}
               disabled={locked || disabled}
+              livePhases={resumingTurn === attempt.turnId ? phases : undefined}
               resume={() => void resumeTurn(attempt.turnId)}
             />
           ))}
-        {sent && (
-          <section data-speaker="user">
-            <b>你</b>
-            <AgentReply text={sent} />
-          </section>
-        )}
+        {sent && <AgentUserMessage text={sent} />}
         {locked && <p role="status">{progress}</p>}
+        {!!sent && <ComposeProgress events={phases} />}
         {locked && replyText && (
-          <section data-speaker="assistant">
-            <b>表单助手</b>
-            <AgentReply text={replyText} streaming />
-          </section>
+          <AgentMessage text={replyText}>
+            <section data-speaker="assistant">
+              <b>表单助手</b>
+              <AgentReply text={replyText} streaming />
+            </section>
+          </AgentMessage>
         )}
         {error && <p role="alert">{error}</p>}
         {proposal && (

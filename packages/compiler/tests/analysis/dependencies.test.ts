@@ -148,6 +148,69 @@ describe('shared expression analysis and generated watch', () => {
     expect(codes(value)).toContain('FUNCTION_ARGUMENT_INCOMPATIBLE');
   });
 
+  it('proves conditional Props and narrows nullable types only after a short-circuit guard', () => {
+    const value = source();
+    const bool = { type: 'boolean' } as const;
+    const primitive = { type: ['integer', 'null'] };
+    const register = (
+      id: string,
+      parameters: CompileInput['catalog']['pureFunctions'][string]['manifest']['parameters'],
+      returns: CompileInput['catalog']['pureFunctions'][string]['manifest']['returns'],
+    ) => {
+      value.catalog.pureFunctions[id] = {
+        manifest: { id, version: '1', parameters, returns },
+        artifact: { id: 'core-build', platform: 'web', digest },
+      };
+    };
+    register('nullableAge', [], primitive);
+    register(
+      'core.ne',
+      ['a', 'b'].map((name) => ({ name, schema: primitive })),
+      bool,
+    );
+    register(
+      'core.and',
+      ['a', 'b'].map((name) => ({ name, schema: bool })),
+      bool,
+    );
+    register(
+      'core.if',
+      [
+        { name: 'condition', schema: bool },
+        { name: 'then', schema: true },
+        { name: 'else', schema: true },
+      ],
+      true,
+    );
+    value.catalog.materials.input!.manifest.propsSchema = {
+      type: 'object',
+      properties: { disabled: bool },
+    };
+    const age = { op: 'nullableAge', args: [] };
+    const guard = { op: 'core.ne', args: [age, null] };
+    const comparison = { op: 'core.lt', args: [age, 18] };
+    const set = (args: Expression[], fallback: Expression = false) => {
+      value.definition.views.only = {
+        material: 'input',
+        props: {
+          disabled: { $expr: { op: 'core.if', args: [true, { op: 'core.and', args }, fallback] } },
+        },
+      };
+    };
+    set([guard, comparison]);
+    expect(prepared(value).definition.views.only).toBeDefined();
+    set([comparison, guard]);
+    expect(codes(value)).toContain('FUNCTION_ARGUMENT_INCOMPATIBLE');
+    set([guard, comparison], 'choice');
+    expect(codes(value)).toContain('PROPS_UNPROVEN');
+    register('nullableAge', [{ name: 'value', schema: { type: 'number' } }], primitive);
+    set([
+      { op: 'core.ne', args: [{ op: 'nullableAge', args: [0] }, null] },
+      { op: 'core.lt', args: [{ op: 'nullableAge', args: [-0] }, 18] },
+    ]);
+    expect(codes(value)).toContain('FUNCTION_ARGUMENT_INCOMPATIBLE');
+  });
+
   it('checks dynamic Props shape against the manifest and keeps static value restrictions', () => {
     const value = source();
     value.catalog.materials.input!.manifest.propsSchema = {

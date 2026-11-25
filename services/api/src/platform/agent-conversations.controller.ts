@@ -32,11 +32,19 @@ import { configText, PlatformForms } from './forms.js';
 import { ReleaseBuild } from './release-build.js';
 import { requireStudioOrigin, session } from './session-http.js';
 
+import {
+  referenceIdentity,
+  referenceKey,
+  resolveReference,
+  type ReferenceKey,
+} from './agent-reference.js';
+
 type TurnInput = {
   turnId: string;
   revision: number;
   message: string;
   document?: string;
+  references?: ReferenceKey[];
   draftId?: string;
   draftRevision?: number;
   workingText?: string;
@@ -80,6 +88,34 @@ export class AgentConversationsController {
       ))
     )
       throw new NotFoundException();
+  }
+  private async authorizeReferenceRead(cookie: string, owner: AccessContext) {
+    const actor = await this.access.authenticate(session(cookie), 'form:view');
+    if (actor.userId !== owner.userId || actor.spaceId !== owner.spaceId)
+      throw new ConflictException('会话所属空间已改变');
+    return actor;
+  }
+  private async resolveReferences(cookie: string, owner: AccessContext, input: unknown) {
+    if (input === undefined) return [];
+    if (!Array.isArray(input) || input.length > 5)
+      throw new BadRequestException('一条消息最多添加 5 个引用。');
+    if (!input.length) return [];
+    const actor = await this.authorizeReferenceRead(cookie, owner);
+    const references = [];
+    const seen = new Set<string>();
+    let bytes = 0;
+    for (const item of input) {
+      const key = referenceKey(item);
+      const identity = JSON.stringify(referenceIdentity(key));
+      if (seen.has(identity)) throw new BadRequestException('消息引用重复。');
+      seen.add(identity);
+      const reference = await resolveReference(key, actor.spaceId, this.forms, this.builds);
+      bytes += Buffer.byteLength(reference.text);
+      if (bytes > 16 * 1024)
+        throw new BadRequestException('引用内容合计过大，请移除部分引用后重试。');
+      references.push(reference);
+    }
+    return references;
   }
   private async linkedDraft(actor: AccessContext, formId: string, workId: string) {
     const saved = await this.db.executor.one<{ id: string }>(
@@ -237,8 +273,10 @@ export class AgentConversationsController {
   async resume(
     @Headers('origin') origin: string,
     @Headers('cookie') cookie: string,
+    @Headers('accept') accept: string,
     @Param('id') id: string,
     @Param('turnId') turnId: string,
+    @Res() response: Response,
   ) {
     requireStudioOrigin(origin);
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
@@ -246,7 +284,13 @@ export class AgentConversationsController {
     const target = await conversationRequest<{
       formId?: string;
       workId?: string;
-      attempts?: { turnId: string; draftId?: string; draftRevision?: number; status: string }[];
+      attempts?: {
+        turnId: string;
+        draftId?: string;
+        draftRevision?: number;
+        status: string;
+        references?: ReferenceKey[];
+      }[];
     }>(actor, path);
     const attempt = target.attempts?.find((entry) => entry.turnId === turnId);
     const draftId = target.formId ? undefined : attempt?.draftId;
@@ -255,26 +299,40 @@ export class AgentConversationsController {
       if (draft.formId || draft.revision !== attempt?.draftRevision)
         throw new ConflictException('草稿已更新，请重新打开。');
     }
+    if (attempt?.references?.length) {
+      const savedForms = attempt.references.filter((reference) => 'formId' in reference);
+      if (savedForms.length) await this.resolveReferences(cookie, actor, savedForms);
+      else await this.authorizeReferenceRead(cookie, actor);
+    }
     if (target.formId) await this.checkForm(actor, target.formId, target.workId);
-    const { conversation, delivery } = await conversationRequest<TurnResponse>(
-      actor,
-      path + '/turns/' + resourceId(turnId) + '/resume',
-      { method: 'POST' },
-    );
-    await this.reauthorize(cookie, actor);
-    const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);
-    if (
-      conversation.id !== id ||
-      turnIndex < 0 ||
-      (delivery &&
-        (delivery.sourceRevision > turnIndex + 1 ||
-          conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
-    )
-      throw new BadGatewayException('Invalid resumed conversation');
-    return {
-      conversation,
-      ...(delivery ? await this.receive(cookie, actor, delivery, { ...target, draftId }) : {}),
+    const run = async (stream?: TurnStream): Promise<TurnView> => {
+      const { conversation, delivery } = await conversationRequest<TurnResponse>(
+        actor,
+        path + '/turns/' + resourceId(turnId) + '/resume',
+        { method: 'POST', stream },
+      );
+      await this.reauthorize(cookie, actor);
+      const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);
+      if (
+        conversation.id !== id ||
+        turnIndex < 0 ||
+        (delivery &&
+          (delivery.sourceRevision > turnIndex + 1 ||
+            conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
+      )
+        throw new BadGatewayException('Invalid resumed conversation');
+      return {
+        conversation,
+        ...(delivery ? await this.receive(cookie, actor, delivery, { ...target, draftId }) : {}),
+      };
     };
+    if (accept?.includes('text/event-stream'))
+      return sendAgentStream(
+        response,
+        run,
+        (result) => result.conversation.turns.find((turn) => turn.turnId === turnId)!.result,
+      );
+    response.status(201).json(await run());
   }
   @Post(':id/turns')
   @Header('Cache-Control', 'no-store')
@@ -303,6 +361,7 @@ export class AgentConversationsController {
     )
       throw new BadRequestException('无效的会话输入');
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
+    const references = await this.resolveReferences(cookie, actor, body.references);
     const run = async (stream?: TurnStream): Promise<TurnView> => {
       let workingText = body.workingText === undefined ? undefined : configText(body.workingText);
       if (body.draftId) {
@@ -341,6 +400,7 @@ export class AgentConversationsController {
           body.formId,
           body.workId,
           body.workingText,
+          ...(references.length ? [references.map(referenceIdentity)] : []),
         ]),
       );
       const { conversation, delivery } = await conversationRequest<TurnResponse>(
@@ -354,6 +414,7 @@ export class AgentConversationsController {
             revision: body.revision,
             message: body.message,
             document: body.document,
+            ...(references.length && { references }),
             workingText,
             draftId: linkedDraftId,
             draftRevision: body.draftRevision,

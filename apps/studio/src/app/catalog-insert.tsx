@@ -3,14 +3,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from './modal';
 import { FieldPickerControl, fieldReferenceId, referenceFieldRows } from './field-picker';
 import { platform, failureMessage } from './platform-api';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { ManifestInput, defaultLiteral, validateLiteral } from './manifest-input';
 import { JsonEditor } from '../components/json/json-editor';
 import { addNode, editNode } from '../components/json/model';
 import { compactJson } from '../components/json/format';
 import { type Detail, type Summary } from './asset-catalog';
 import { schemaType, type Schema } from '../components/catalog/contract-reference';
-import { CardList, Button } from '../components/ui';
+import { CardList, Button } from '@form-engine/studio-design-components';
 import { MaterialCard } from './material-card';
 import { insertionContext, type CatalogKind } from './catalog-targets';
 

@@ -1,0 +1,442 @@
+{
+  "protocolVersion": "1.0",
+  "id": "household-roster",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "groupNo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "memberId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "role": {
+                "type": "string",
+                "enum": ["adult", "minor"]
+              },
+              "documentNo": {
+                "type": "string",
+                "minLength": 6,
+                "maxLength": 20,
+                "pattern": "^[A-Z0-9]{6,20}$"
+              },
+              "guardianId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["memberId", "name", "role", "documentNo"],
+            "additionalProperties": false,
+            "if": {
+              "required": ["role"],
+              "properties": {
+                "role": {
+                  "const": "minor"
+                }
+              }
+            },
+            "then": {
+              "required": ["guardianId"]
+            },
+            "else": {
+              "not": {
+                "required": ["guardianId"]
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "contains": {
+            "required": ["role"],
+            "properties": {
+              "role": {
+                "const": "adult"
+              }
+            }
+          }
+        },
+        "adultOptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["id", "label"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["groupNo", "members", "adultOptions"],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "家庭出行人员申报"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "团队编号"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/groupNo"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/groupNo"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "scope": {
+            "from": {
+              "source": "data",
+              "path": "/members"
+            },
+            "mode": "each",
+            "as": "person"
+          },
+          "node": {
+            "material": "section",
+            "props": {
+              "title": "家庭成员"
+            },
+            "children": [
+              {
+                "material": "field",
+                "props": {
+                  "label": "姓名"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "data",
+                    "path": "/name",
+                    "scope": "person"
+                  }
+                },
+                "children": [
+                  {
+                    "material": "text-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/name",
+                        "scope": "person"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "material": "field",
+                "props": {
+                  "label": "人员类别"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "data",
+                    "path": "/role",
+                    "scope": "person"
+                  }
+                },
+                "children": [
+                  {
+                    "material": "select",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/role",
+                        "scope": "person"
+                      }
+                    },
+                    "props": {
+                      "options": [
+                        {
+                          "id": "adult",
+                          "label": "成年"
+                        },
+                        {
+                          "id": "minor",
+                          "label": "未成年"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "material": "field",
+                "props": {
+                  "label": "证件号"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "data",
+                    "path": "/documentNo",
+                    "scope": "person"
+                  }
+                },
+                "children": [
+                  {
+                    "material": "text-input",
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/documentNo",
+                        "scope": "person"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "material": "condition",
+                "props": {
+                  "visible": {
+                    "$expr": {
+                      "op": "core.eq",
+                      "args": [
+                        {
+                          "ref": {
+                            "source": "data",
+                            "path": "/role",
+                            "scope": "person"
+                          }
+                        },
+                        "minor"
+                      ]
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "监护人"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/guardianId",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/guardianId",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": {
+                            "$expr": {
+                              "ref": {
+                                "source": "data",
+                                "path": "/adultOptions"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "material": "condition",
+                "props": {
+                  "visible": {
+                    "$expr": true
+                  }
+                },
+                "children": [
+                  {
+                    "material": "button",
+                    "props": {
+                      "label": "移到首位"
+                    },
+                    "on": {
+                      "activate": {
+                        "type": "form.command",
+                        "command": {
+                          "op": "array.move",
+                          "target": {
+                            "source": "data",
+                            "path": "/members"
+                          },
+                          "item": {
+                            "$scope": "person"
+                          },
+                          "position": {
+                            "kind": "index",
+                            "index": 0
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "material": "button",
+                    "props": {
+                      "label": "删除家庭成员",
+                      "variant": "danger"
+                    },
+                    "on": {
+                      "activate": {
+                        "type": "form.command",
+                        "command": {
+                          "op": "array.remove",
+                          "target": {
+                            "source": "data",
+                            "path": "/members"
+                          },
+                          "item": {
+                            "$scope": "person"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "添加家庭成员",
+            "disabled": {
+              "$expr": {
+                "op": "core.gte",
+                "args": [
+                  {
+                    "op": "core.length",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/members"
+                        }
+                      }
+                    ]
+                  },
+                  8
+                ]
+              }
+            }
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "travel.addHouseholdMember"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "member-relationships",
+      "kind": "external",
+      "validator": "travel.validateHousehold",
+      "target": {
+        "source": "data",
+        "path": "/guardianId",
+        "scope": "person"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/members"
+        }
+      ],
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/members"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "reconcile-guardians",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/members"
+        }
+      ],
+      "then": [
+        {
+          "type": "host.emit",
+          "event": "travel.reconcileHousehold"
+        }
+      ],
+      "runOnActivate": false
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "members": [],
+        "adultOptions": []
+      },
+      "validators": {
+        "travel.validateHousehold": "本地按成员身份报告重复证件号、不可用 guardianId，并把错误归到对应证件号或监护人字段。"
+      },
+      "events": {
+        "travel.addHouseholdMember": "本地生成稳定 memberId 并插入空成员，最多 8 人。",
+        "travel.reconcileHousehold": "本地更新 adultOptions（id 为 memberId，label 为姓名），删除成年人的 guardianId、以及已非成人或已删除的引用；仅在值变化时写入。"
+      },
+      "delivery": {
+        "groupNo": "/groupNo",
+        "members": "/members"
+      }
+    }
+  }
+}

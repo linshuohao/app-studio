@@ -11,7 +11,6 @@
     "apps/studio/tests/data-schema.spec.ts",
     "apps/studio/tests/schema-rules.spec.ts",
     "apps/studio/tests/schema-navigation.spec.ts",
-    "prototypes/field-drawer-complete-review.html",
     "apps/studio/playwright.config.ts"
   ],
   "checks": [

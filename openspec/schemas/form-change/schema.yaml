@@ -29,4 +29,4 @@ artifacts:
 apply:
   requires: [tasks]
   tracks: tasks.md
-  instruction: Read docs/design authority and pending tasks. Use project form-workflow and load delivery/debug capabilities as needed; use applicable Superpowers methods within the same task. Verify before checking tasks. Reassess affected evidence after changes. Archive only using project wrapper with --skip-specs after knowledge maintenance and gates.
+  instruction: Read pending tasks and load applicable contracts from .agents/context/ via form-workflow. Use delivery/debug methods as needed and retain source links for traceability. Verify before checking tasks. Reassess affected evidence after changes. Archive only using project wrapper with --skip-specs after knowledge maintenance and gates.

@@ -1,5 +1,7 @@
 # pure-functions
 
+从仓库根运行 `node tools/engineering/catalog-docs.mjs --lookup date.inclusiveDays`，按函数 ID 从当前资产目录读取签名、说明、实现和示例。内置函数也使用同一命令，例如 `--lookup core.if`。
+
 ## 新增纯函数
 
 1. 用 `pnpm asset:new function --id <namespace.functionName>` 生成目录。业务函数使用业务命名空间，`core.*` 预留给引擎。函数 ID 用稳定的英文标识，业务名称由目录元数据提供。

@@ -1,13 +1,14 @@
 'use client';
 
-import { StudioSelect } from '../components/ui/select';
-import { Button } from '../components/ui/controls';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
+import { Button } from '@form-engine/studio-design-components/controls';
 import { SchemaJsonValue } from './schema-json-value';
 import { JsonEditor } from '../components/json/json-editor';
 import { useId, useState } from 'react';
 import type { JsonNode } from '../components/json/model';
 import { dataSchemaModel, type DataSchemaModel } from './data-schema-model';
 import { RegexInput } from './regex-input';
+import { SchemaDefinitionUses } from './schema-definition-uses';
 import { child, escapeKey } from './semantic-model';
 import { usePendingNavigation, useSchemaNavigation } from './schema-navigation';
 
@@ -219,33 +220,6 @@ function encode(property: Property, value: string) {
   return value;
 }
 
-function usageLabel(path: string, model: DataSchemaModel) {
-  const parts = path
-    .slice(1)
-    .split('/')
-    .map((key) => key.replaceAll('~1', '/').replaceAll('~0', '~'));
-  if (parts[0] === 'viewTemplates' && parts[2] === 'params' && parts[4] === 'schemaRef')
-    return `模板「${parts[1]}」的参数「${parts[3]}」`;
-  if (parts[0] === 'validationMessages') return `第 ${Number(parts[1]) + 1} 条校验文案`;
-
-  const item = model.nodes.find((entry) => entry.node.path === path);
-  if (!item) return `模型约束「${parts.at(-1)}」`;
-  const names: string[] = [];
-  let ancestor = item.owner;
-  while (ancestor) {
-    const parent = model.nodes.find((entry) => entry.node.path === ancestor);
-    if (!parent || parent.role === 'root') break;
-    names.unshift(parent.label);
-    ancestor = parent.owner;
-  }
-  if (item.node.key === 'items' && item.role === 'items')
-    return names.length ? `数组「${names.join(' › ')}」的元素` : '根数组的元素';
-  names.push(item.label);
-  const kind =
-    item.role === 'definition' ? '共享定义' : item.role === 'field' ? '字段' : '模型节点';
-  return `${kind}「${names.join(' › ')}」`;
-}
-
 function refValue(name: string) {
   try {
     return '#/$defs/' + encodeURIComponent(escapeKey(name));
@@ -327,9 +301,6 @@ export function SchemaInspector({
   const rootPath = model.schema.path;
   const isField = item.role === 'field',
     isDef = item.role === 'definition';
-  const definition = model.definitions.find(
-    (d) => node.path === d.node.path || node.path.startsWith(d.node.path + '/'),
-  );
   const impacts = model.impacts(node.path);
   const target = model.str(child(node, '$ref')) ?? '';
   const local = model.localRef(node.path);
@@ -506,25 +477,7 @@ export function SchemaInspector({
         <p role="alert">此位置包含重复属性，请在 JSON 中定位。</p>
       ) : (
         <>
-          {definition && (
-            <section aria-label="共享定义使用位置">
-              <details>
-                <summary>
-                  共享定义「{definition.label}」 · 已知影响 {impacts.paths.length} 处
-                </summary>
-                {impacts.paths.map((path) => (
-                  <div key={path}>
-                    {jump(path, usageLabel(path, model))}
-                    <div>
-                      <small>{path}</small>
-                    </div>
-                  </div>
-                ))}
-                {!impacts.unknown && !impacts.paths.length && <p>当前配置中未找到使用位置。</p>}
-              </details>
-              {impacts.unknown && <p>存在无法静态确认的引用，请在 JSON 中检查其作用域。</p>}
-            </section>
-          )}
+          <SchemaDefinitionUses model={model} path={node.path} locate={locate} />
           {pendingOwner === 'rules' && (
             <p className="muted">保存或取消当前规则后，可以继续修改模型属性。</p>
           )}

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { closeWorkbenchDrawer, openSchemaDraft, schemaSource } from './data-schema-fixture';
+import {
+  chooseSchemaOption,
+  closeWorkbenchDrawer,
+  openSchemaDraft,
+  schemaSource,
+} from './data-schema-fixture';
 
 const root = '/data/schema';
 const group = root + '/properties/insured';
@@ -23,21 +28,19 @@ test('protects pending values on node and view changes and keeps one undo per ap
   const select = (path: string) => page.locator('[data-schema-path="' + path + '"]').click();
   const click = (name: string) => page.getByRole('button', { name, exact: true }).click();
   await select(age);
-  const minimum = page.getByLabel('最小值', { exact: true });
-  await minimum.fill('abc');
-  await page.keyboard.press('Escape');
+  const drawer = page.getByRole('dialog', { name: '字段配置 · age', exact: true });
+  await drawer.getByRole('button', { name: 'JSON 编辑', exact: true }).click();
+  const nodeSource = drawer.getByRole('textbox', { name: '字段配置 JSON', exact: true });
+  await nodeSource.fill('{"type":');
+  await click('在 JSON 中定位');
   await click('应用并继续');
-  await expect(minimum).toHaveValue('abc');
-  await expect(
-    page
-      .getByRole('region', { name: '模型属性' })
-      .getByText('最小值需要有效的 JSON 值。', { exact: true }),
-  ).toBeVisible();
-  await minimum.fill('7');
+  await expect(nodeSource).toHaveValue('{"type":');
+  await expect(drawer.getByText('请先修正字段 JSON。', { exact: true })).toBeVisible();
+  await nodeSource.fill('{"type":"integer","minimum":7}');
   await page.keyboard.press('Escape');
   await click('留在此处');
-  await expect(minimum).toHaveValue('7');
-  await page.getByRole('button', { name: '在 JSON 中定位', exact: true }).click();
+  await expect(nodeSource).toHaveValue('{"type":"integer","minimum":7}');
+  await click('在 JSON 中定位');
   await click('应用并继续');
   const source = await schemaSource(page);
   expect(
@@ -46,6 +49,7 @@ test('protects pending values on node and view changes and keeps one undo per ap
   await click('撤销');
   expect(JSON.parse(await source.inputValue())).toEqual(fixture);
   await click('字段');
+  const minimum = drawer.getByLabel('下限', { exact: true });
   await expect(minimum).toHaveValue('0');
   await minimum.fill('8');
   await page.keyboard.press('Escape');
@@ -78,7 +82,7 @@ test('restores the outline, scroll and narrow detail; falls back to the nearest 
   await page.getByRole('button', { name: '在 JSON 中定位', exact: true }).click();
   await schemaSource(page);
   await page.getByRole('button', { name: '字段', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'age', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '字段配置 · age', exact: true })).toBeVisible();
   expect(await outline.evaluate((el) => el.scrollTop)).toBe(before);
   await expect(outline.locator('button[aria-label="展开extra"]')).toHaveAttribute(
     'aria-expanded',
@@ -91,7 +95,7 @@ test('restores the outline, scroll and narrow detail; falls back to the nearest 
   delete changed.data.schema.properties.insured.properties.age;
   await editor.fill(JSON.stringify(changed));
   await page.getByRole('button', { name: '字段', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'insured', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '字段配置 · insured', exact: true })).toBeVisible();
   await closeWorkbenchDrawer(page);
   await expect(page.locator('[data-schema-path="' + group + '"]')).toHaveAttribute(
     'aria-pressed',
@@ -99,32 +103,38 @@ test('restores the outline, scroll and narrow detail; falls back to the nearest 
   );
 });
 
-test('keeps the other editor and draft-writing tools locked until the active edit finishes', async ({
+test('isolates field and rule edits from the workspace until the drawer is applied', async ({
   page,
 }) => {
   await openSchemaDraft(page, JSON.stringify(fixture));
   await page.locator('[data-schema-path="' + age + '"]').click();
-  const minimum = page.getByLabel('最小值', { exact: true });
+  const drawer = page.getByRole('dialog', { name: '字段配置 · age', exact: true });
+  const minimum = drawer.getByLabel('下限', { exact: true });
   await minimum.fill('7');
-  const addRule = page.getByRole('combobox', { name: '添加规则或约束' });
-  await expect(addRule).toBeDisabled();
-  await expect(
-    page
-      .getByRole('group', { name: '配置原文工具栏' })
-      .getByRole('button', { name: '导入 JSON', exact: true }),
-  ).toBeHidden();
   await expect(page.locator('button.workspace-save')).toBeDisabled();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '留在此处', exact: true }).click();
   await expect(minimum).toHaveValue('7');
-  await page.getByRole('button', { name: '取消属性修改', exact: true }).click();
-  await addRule.selectOption('condition');
+
+  const apply = drawer.getByRole('button', { name: '应用到工作台', exact: true });
+  await chooseSchemaOption(
+    page,
+    drawer.getByRole('combobox', { name: '添加规则或约束' }),
+    '新增 anyOf 分支',
+  );
+  const rule = page.getByRole('dialog', { name: '新增组合分支', exact: true });
   await expect(minimum).toBeDisabled();
-  await page
-    .getByRole('form', { name: '新增条件规则' })
-    .getByRole('button', { name: '取消', exact: true })
-    .click();
+  await expect(apply).toBeDisabled();
+  await expect(page.locator('button.workspace-save')).toBeDisabled();
+  await rule.getByRole('button', { name: '取消', exact: true }).click();
   await expect(minimum).toBeEnabled();
+  await expect(minimum).toHaveValue('7');
+  await apply.click();
+  const output = JSON.parse(await (await schemaSource(page)).inputValue());
+  expect(output.data.schema.properties.insured.properties.age).toEqual({
+    type: 'integer',
+    minimum: 7,
+  });
 });
 
 test('keeps module navigation visible and returns from JSON to the originating module', async ({
@@ -145,7 +155,6 @@ test('keeps module navigation visible and returns from JSON to the originating m
   ] as const) {
     await page.getByRole('button', { name: label, exact: true }).click();
     if (exists) {
-      await expect(page.getByText('/' + key, { exact: true })).toBeVisible();
       await page.getByRole('button', { name: '在 JSON 中编辑', exact: true }).click();
       await expect(page.locator('[data-json-path="/' + key + '"]:focus')).toHaveCount(1);
     } else {
@@ -158,12 +167,13 @@ test('keeps module navigation visible and returns from JSON to the originating m
       await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
     }
     await page.getByRole('button', { name: '返回' + label, exact: true }).click();
-    await expect(
-      page.getByRole('heading', {
-        name: label === '联动' ? '联动规则' : exists ? label : '校验规则',
-        exact: true,
-      }),
-    ).toBeVisible();
+    const moduleView = exists
+      ? page.getByRole('region', { name: '布局编辑器', exact: true })
+      : page.getByRole('heading', {
+          name: label === '联动' ? '联动规则' : '校验规则',
+          exact: true,
+        });
+    await expect(moduleView).toBeVisible();
   }
   await page.getByRole('button', { name: '预览配置' }).click();
   await expect(page.getByRole('dialog', { name: '选择 Web 视图' })).toBeVisible();

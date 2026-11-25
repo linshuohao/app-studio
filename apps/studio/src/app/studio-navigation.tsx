@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Icon, Menu, type IconName } from '../components/ui';
+import { Button, Icon, Menu, type IconName } from '@form-engine/studio-design-components';
 import type { Access, Account } from './platform-api';
 import './studio-navigation.css';
 

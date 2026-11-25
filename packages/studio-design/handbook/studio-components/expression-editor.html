@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>表达式编辑器 · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../../components/styles.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+    <link rel="stylesheet" href="../studio-technical-samples.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/components/field-picker/field-picker.css" />
+  </head>
+  <body class="studio-content">
+    <div class="shell">
+      <aside>
+        <header><span class="mark" aria-hidden="true">S</span>Form Studio</header>
+        <nav aria-label="组件目录">
+          <a href="../studio-design-handbook.html">组件总览</a><a href="tokens.html">Design Token</a
+          ><a href="../studio-design-handbook.html#design-icon">Design Icon · 图标</a><b>通用</b
+          ><a href="button.html">Button · 按钮</a><a href="icon.html">Icon · 图标</a
+          ><a href="icon-button.html">IconButton · 图标按钮</a
+          ><a href="feedback.html">Feedback · 状态反馈</a><b>表单</b
+          ><a href="form.html">Form · 表单</a><a href="field.html">Field · 表单字段</a
+          ><a href="input.html">Input · 输入框</a><a href="select.html">Select · 下拉选择</a
+          ><a href="textarea.html">Textarea · 多行文本</a
+          ><a href="field-layout.html">Field · 带提示的字段布局</a
+          ><a href="studioselect.html">StudioSelect · 选项选择器</a><b>数据筛选</b
+          ><a href="listfilterbar.html">ListFilterBar · 筛选栏</a><b>数据展示</b
+          ><a href="treeview.html">TreeView · 树视图</a
+          ><a href="datatable.html">DataTable · 数据表格</a
+          ><a href="cardlist.html">CardList · 卡片列表</a
+          ><a href="tableresults.html">TableResults · 表格结果区域</a><b>导航</b
+          ><a href="pagination.html">Pagination · 分页器</a
+          ><a href="tabs.html">Tabs · 标签页 · 切换同页内容</a><b>布局</b
+          ><a href="grid.html">Grid · 栅格</a><a href="griditem.html">GridItem · 栅格子项</a
+          ><a href="formlayout.html">FormLayout · 表单布局</a
+          ><a href="masterdetail.html">MasterDetail · 主从布局</a><b>浮层</b
+          ><a href="menu.html">Menu · 下拉菜单</a><a href="modal.html">Dialog · 弹窗</a
+          ><a href="drawer.html">Drawer · 抽屉</a><a href="tooltip.html">Tooltip · 悬浮提示</a
+          ><a href="native-modal.html">Modal · 原生模态框</a><b>业务组件</b
+          ><a href="field-picker.html">FieldPicker · 字段选择器 · 单选与多选</a
+          ><a aria-current="page" href="expression-editor.html"
+            >ExpressionEditor · 取值来源与表达式编辑</a
+          ><a href="json-editor.html">JsonEditor · JSON 原文与层级编辑</a
+          ><a href="action-editor.html">ActionEditor · 联动动作配置</a><b>物料与契约</b
+          ><a href="material-detail-preview.html">MaterialDetailPreview · 物料详情预览</a
+          ><a href="record-identity.html">RecordIdentity · 记录标识</a
+          ><a href="contract-table.html">ContractTable · 契约字段表</a
+          ><a href="contract-panel.html">ContractPanel · 契约面板</a
+          ><a href="material-card.html">MaterialCard · 物料卡片</a
+          ><a href="material-description.html">MaterialDescription · 物料说明</a
+          ><a href="manifest-input.html">ManifestInput · 物料常量输入</a
+          ><a href="value-input.html">ValueInput · 物料属性值</a><b>配置工具</b
+          ><a href="json-source.html">JsonSource · 配置工作稿</a
+          ><a href="schema-navigation.html">SchemaNavigation · 编辑离开确认</a
+          ><a href="json-editor-view.html">JsonEditorView · 共享历史的 JSON 编辑视图</a
+          ><a href="config-inspection.html">ConfigInspection · 配置检查与预览</a
+          ><a href="preview-runtime.html">PreviewRuntime · 运行时试填</a
+          ><a href="diff-result.html">DiffResult · 差异结果</a
+          ><a href="config-diff.html">ConfigDiff · 配置版本对比</a><b>字段与表达式</b
+          ><a href="expression-verification-panel.html">ExpressionVerificationPanel · 表达式验证</a
+          ><a href="regex-input.html">RegexInput · 正则输入</a
+          ><a href="field-tree.html">FieldTree · 字段树</a
+          ><a href="field-picker-dialog.html">FieldPickerDialog · 字段选择对话框</a
+          ><a href="field-picker-control.html">FieldPickerControl · 字段选择入口</a
+          ><a href="layout-field-picker.html">LayoutFieldPicker · 布局绑定字段选择</a
+          ><a href="reaction-field-picker.html">ReactionFieldPicker · 联动字段选择</a
+          ><a href="reaction-scope-editor.html">ReactionScopeEditor · 联动作用域</a
+          ><a href="expression-display.html">ExpressionDisplay · 表达式摘要</a
+          ><a href="expression-definition.html">ExpressionDefinition · 表达式定义</a
+          ><a href="function-help.html">FunctionHelp · 函数说明</a
+          ><a href="argument-help.html">ArgumentHelp · 参数说明</a
+          ><a href="layout-expression-dialog.html">LayoutExpressionDialog · 布局表达式对话框</a
+          ><b>助手</b><a href="agent-merge.html">AgentMerge · 候选合并</a
+          ><a href="agent-panel.html">AgentPanel · 助手对话面板</a
+          ><a href="agent-reply.html">AgentReply · 助手回复</a
+          ><a href="agent-candidate-card.html">AgentCandidateCard · 候选配置卡片</a
+          ><a href="agent-issues.html">AgentIssues · 需求缺口</a><b>Host 接入</b
+          ><a href="requirements.html">Requirements · Host 能力需求</a
+          ><a href="release-host-example.html">ReleaseHostExample · Host 接入示例</a
+          ><a href="release-integration.html">ReleaseIntegration · 发布接入说明</a><b>管理操作</b
+          ><a href="copy-form.html">CopyForm · 复制表单</a
+          ><a href="form-management.html">FormManagement · 表单管理操作</a
+          ><a href="operation-records.html">OperationRecords · 操作记录</a
+          ><a href="account-security.html">AccountSecurity · 账号安全设置</a>
+        </nav>
+      </aside>
+      <main id="studio-main">
+        <article data-studio-ui>
+          <style>
+            #studio-main .expression-draft,
+            #studio-main .example {
+              background: var(--studio-surface);
+            }
+            .expression-draft .example {
+              display: grid;
+              gap: var(--studio-space-12);
+              align-content: start;
+            }
+            .expression-draft output {
+              margin: 0;
+              min-height: var(--studio-control-height-dense);
+            }
+            .expression-draft .actions {
+              display: flex;
+              flex-wrap: wrap;
+              gap: var(--studio-space-8);
+            }
+            .expression-draft pre {
+              margin: 0;
+            }
+          </style>
+          <div class="expression-draft">
+            <header class="hero">
+              <small>业务组件</small>
+              <h1>ExpressionEditor 表达式编辑器</h1>
+              <p>
+                为表单中的一个位置配置计算逻辑，例如判断投保人是否达到最低年龄，或计算某个属性的值。页面指定当前位置允许读取的内容和需要的结果类型，编辑器帮助用户填写并检查表达式。
+              </p>
+              <div class="page-contents">
+                <a href="#value-source">取值来源</a><a href="#model">业务数据</a
+                ><a href="#contract">入参与出参</a><a href="#slots">Slots</a
+                ><a href="#examples">操作样例</a><a href="#review">交互说明</a>
+              </div>
+            </header>
+            <section class="doc-section" id="value-source">
+              <h2>取值来源</h2>
+              <p>
+                这里打开的是家庭旅行投保表单的「估算总保费」联动。它把被保人列表、出行方案、行程天数和费率规则传给总保费函数。
+              </p>
+              <p>
+                <strong>具名表达式就是给一段计算起名字。</strong>
+                这个表单把「从出发日到返程日的天数（含首尾）」定义为
+                <code>tripDays</code>。保费函数的「行程天数」参数选择它时，保存的是
+                <code>{"use":"tripDays"}</code>。试算时，引擎用当前表单的日期计算天数。样例从
+                2028-02-28 到 2028-02-29，传入保费函数的是数字 2。
+              </p>
+              <section class="handbook-preview">
+                <iframe
+                  class="component-playground"
+                  title="保费取值来源 · 交互预览"
+                  sandbox="allow-scripts"
+                  loading="lazy"
+                  src="assets/business-playground-runner.html?run#value"
+                ></iframe>
+                <a class="playground-link" href="business-playground.html#value">单独打开预览</a>
+              </section>
+              <details class="handbook-source">
+                <summary>组件使用代码 · JSX</summary>
+                <iframe
+                  class="component-playground"
+                  title="保费取值来源 · JSX 使用代码"
+                  loading="lazy"
+                  src="business-playground.html?code#value"
+                ></iframe>
+              </details>
+            </section>
+            <section class="doc-section" id="model">
+              <h2>业务数据</h2>
+              <p>
+                Studio 通过 useFunctionCatalog 读取 /catalog/functions，再按函数 id
+                和版本读取详情。编辑器接收 manifests 与文档。选择函数后，按 parameters
+                创建必填参数，按 optional 和 restParameter 支持追加参数；returns
+                描述输出类型。每个参数都可以再选函数，子函数的返回值成为父函数的输入，最外层返回类型与使用位置的
+                expected 对齐。
+              </p>
+              <p>
+                下面的离线交互稿从项目的核心函数注册表和旅行场景函数生成目录；实际 Studio
+                使用当前平台目录。
+              </p>
+              <p>
+                下方的监护人校验取自
+                <code>guardian-required</code
+                >。表单逐位读取被保人年龄，调用「是否需要监护人」；返回真时，再检查监护人姓名是否已填写。
+              </p>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>表达式来源</th>
+                    <th>编辑时看到的内容</th>
+                    <th>协议结果</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">固定值</th>
+                    <td>数值、文本、布尔值或 JSON 值</td>
+                    <td>原始标量，或使用 <code>{ literal }</code> 包装对象与数组</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">读取引用</th>
+                    <td>用字段选择器显示业务标签与归属</td>
+                    <td><code>{ ref }</code>，保留路径及适用的局部作用域</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">函数计算</th>
+                    <td>函数名称、参数含义和结果类型，每个参数可继续配置表达式</td>
+                    <td><code>{ op, args }</code>，参数按签名排序</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">具名表达式</th>
+                    <td>从当前表单可用的具名表达式中选择</td>
+                    <td><code>{ use }</code>，保存引用名称</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="doc-section" id="contract">
+              <h2>入参与出参</h2>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>用途</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>label</code></th>
+                    <td><code>string</code></td>
+                    <td>当前用途，例如“可见条件”或“保费参数”。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>raw</code></th>
+                    <td><code>string</code></td>
+                    <td>当前表达式的 JSON 原文。编辑器保留无效旧值，可通过 JSON 入口修复。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>fields</code></th>
+                    <td><code>ReactionField[]</code></td>
+                    <td>
+                      可见字段列表。每项包含 ref、schema、depth 和 label，可提供 title 与
+                      description。
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>manifests</code></th>
+                    <td><code>PureFunctionManifest[]</code></td>
+                    <td>目录函数的 id、version、parameters、restParameter 和 returns。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>functionDocs?</code></th>
+                    <td><code>ReadonlyMap&lt;string, FunctionDocumentation&gt;</code></td>
+                    <td>按函数 ID 获取标题、类别、参数说明和 displayTemplate。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>named?</code></th>
+                    <td><code>Record&lt;string, Expression&gt;</code></td>
+                    <td>当前表单可引用的具名表达式。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>expected?</code></th>
+                    <td><code>JsonSchema</code></td>
+                    <td>调用位置要求的结果类型。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>showLabel?</code></th>
+                    <td><code>boolean</code></td>
+                    <td>是否显示表达式组标题。省略时显示，可在弹窗标题已说明用途时关闭。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>advisory?</code></th>
+                    <td><code>boolean</code></td>
+                    <td>开启后把类型兼容性作为提示。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>allowValidation?</code></th>
+                    <td><code>boolean</code></td>
+                    <td>允许选取校验投影；关闭时通过 FieldPicker 选择数据字段。</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>verification?</code></th>
+                    <td><code>ExpressionVerificationContext</code></td>
+                    <td>
+                      提供表单与作用域的试算上下文，组件在表达式工具栏中提供验证入口，并在弹窗中运行验证。
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>onChange</code></th>
+                    <td><code>(raw: string) =&gt; void</code></td>
+                    <td>将编辑后的表达式原文交回调用方；调用方管理应用、取消和保存。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="doc-section" id="slots">
+              <h2>Slots</h2>
+              <p>当前没有自定义插槽。函数和参数的说明由目录提供。</p>
+            </section>
+            <section class="doc-section technical" id="examples">
+              <h2>监护人校验与试算</h2>
+              <p>切换儿童 B 和成人 A，点击「试算条件」，观察同一条规则在两位被保人身上的结果。</p>
+              <iframe
+                class="component-playground"
+                src="expression-travel.html"
+                title="家庭旅行投保 · 监护人校验与试算"
+                loading="lazy"
+              ></iframe>
+              <a class="playground-link" href="expression-travel.html">单独打开样例</a>
+            </section>
+            <section class="doc-section" id="review">
+              <h2>交互说明</h2>
+              <p>
+                选择「函数结果」后通过分组 Select
+                选择函数。「逻辑与」和「逻辑或」位于「逻辑组合」分组。根函数和新选的子函数默认展开，圆形箭头用于收起或展开。收起后摘要只占一行；点击右侧「详情」可按参数逐项查看实际取值，并展开子函数和结构化常量。按
+                Escape 返回「详情」按钮。函数选择框右侧、参数名旁的圆形 i
+                可悬浮或聚焦查看说明；点击函数 i
+                可查看完整签名和示例。外层页面负责将当前值写入配置。
+              </p>
+              <p>
+                <a href="../../../../apps/studio/src/app/expression-editor.tsx">现有 Studio 编辑器</a> ·
+                <a href="../../../protocol/src/definition/expression.ts">表达式协议</a>
+              </p>
+            </section>
+          </div>
+        </article>
+        <section>
+          <h2>弹窗模式</h2>
+          <p>
+            独立编辑表达式使用 ExpressionEditorDialog。传入与内联编辑相同的 raw、onChange、label
+            和作用域，再提供
+            title、onClose、onApply。编辑期间由调用方持有草稿，点击右下角主按钮才应用。无效 JSON
+            禁用应用；busy 期间锁定编辑、应用和关闭。error 显示业务检查反馈，action
+            可指定提交按钮文案。
+          </p>
+          <p>
+            宽版弹窗仅显示一次标题，内容区独立滚动。Tab 可到达编辑控件与底部主操作，Escape
+            关闭当前弹层。
+          </p>
+        </section>
+      </main>
+    </div>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

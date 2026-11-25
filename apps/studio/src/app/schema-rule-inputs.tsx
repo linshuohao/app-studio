@@ -1,7 +1,7 @@
 'use client';
 
-import { StudioSelect } from '../components/ui/select';
-import { Button, Input } from '../components/ui';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
+import { Button, Input } from '@form-engine/studio-design-components';
 import { FieldPicker } from '../components/field-picker';
 import { schemaTypes } from './schema-drawer-values';
 import { child, escapeKey } from './semantic-model';

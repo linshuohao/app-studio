@@ -7,7 +7,9 @@ from pydantic import JsonValue
 from test_create_form import DOCUMENT, ScriptedModel, standard_requirements, tool_call
 
 from form_agent.agent.tools.dependencies import AgentToolDependencies
-from form_agent.business.form_authoring.contracts import CheckReceipt
+from form_agent.business.form_authoring.contracts import (
+    CheckReceipt,
+)
 from form_agent.integrations.compiler import candidate_digest
 
 

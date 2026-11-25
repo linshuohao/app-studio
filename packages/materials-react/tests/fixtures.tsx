@@ -12,9 +12,11 @@ import {
   type HostRequestRegistry,
 } from '@form-engine/renderer-react';
 import {
+  createTextarea,
   createTextInput,
   createNumberInput,
   createCheckbox,
+  createCheckboxGroup,
   createSelect,
   createButton,
   createField,
@@ -25,7 +27,9 @@ import {
   createArrayEditor,
   createDialogEditor,
   createInsuredSummary,
+  createDatePicker,
   createDateRange,
+  createRadioGroup,
   createRemoteSelect,
 } from '../src/index.js';
 const artifact = {
@@ -34,9 +38,11 @@ const artifact = {
   digest: `sha256:${'4'.repeat(64)}` as const,
 };
 const definitions = [
+  createTextarea,
   createTextInput,
   createNumberInput,
   createCheckbox,
+  createCheckboxGroup,
   createSelect,
   createButton,
   createField,
@@ -47,7 +53,9 @@ const definitions = [
   createArrayEditor,
   createDialogEditor,
   createInsuredSummary,
+  createDatePicker,
   createDateRange,
+  createRadioGroup,
   createRemoteSelect,
 ].map((create) => create(artifact));
 const materials = createMaterialRegistry(definitions);

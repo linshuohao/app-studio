@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Button, Feedback } from '../components/ui/controls';
+import { Button, Feedback } from '@form-engine/studio-design-components/controls';
 import { Modal } from './modal';
 import { compareAgentDraft } from './agent-merge-model';
 import { displayJson } from './format-json';

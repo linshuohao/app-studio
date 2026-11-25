@@ -1,14 +1,14 @@
-import { chooseWorkingVersionAction } from './working-version-menu';
-import { type Page as SourcePage } from '@playwright/test';
-async function textMode(page: SourcePage) {
-  if (!(await page.getByRole('textbox', { name: '配置原文', exact: true }).isVisible()))
-    await page.getByRole('button', { name: /^(文本查看 \/ 修复|格式化文本)$/ }).click();
-}
-
 import { expect, type Page, test } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
 import { openSchemaDraft, schemaSource } from './data-schema-fixture';
 import { basicInformationDefinition } from './basic-information-fixture';
+import { chooseWorkingVersionAction } from './working-version-menu';
+import {
+  chooseWorkingPublication,
+  createWorkingVersion,
+  saveWorkingConfig as save,
+  workingVersionRow,
+} from './working-version-fixture';
 
 async function create(page: Page, name: string) {
   await page.goto('/');
@@ -40,113 +40,116 @@ async function openPreviewDraft(page: Page, name: string, definition: object) {
   await page.goto(`/?form=${formId}&work=${(await draft.json()).id}`);
 }
 
-async function save(page: Page, text: string) {
-  await textMode(page);
-  await page.getByLabel('配置原文').fill(text);
-  const saved = page.waitForResponse(
-    (response) => response.url().endsWith('/versions') && response.request().method() === 'POST',
-  );
-  await page.getByRole('button', { name: '保存配置', exact: true }).click();
-  const response = await saved;
-  expect(response.status()).toBe(201);
-  const { versionId } = await response.json();
-  await expect(page.locator('.version code')).toHaveText(versionId);
-  return versionId as string;
-}
-
-test('reads exact history, resumes editing, copies an archived version and restores it', async ({
+test('reads exact history, forks a historical snapshot, copies an archived version and restores it', async ({
   page,
 }) => {
   await create(page, '历史验收');
-  const editor = page.getByLabel('配置原文');
   const raw = ' {\n    "不能解析": \n';
-  // Legacy API preserves invalid historical text; Studio now rejects creating it.
+  // Cover the read-only and copy paths for historical text that the editor now rejects when saving.
   const formId = new URL(page.url()).searchParams.get('form');
   const legacy = await page.request.post(`/api/platform/forms/${formId}/versions`, {
     headers: { 'idempotency-key': crypto.randomUUID(), Origin: new URL(page.url()).origin },
     data: { text: raw, basedOnVersionId: null },
   });
-  expect(legacy.ok()).toBeTruthy();
+  expect(legacy.status()).toBe(201);
   const first = (await legacy.json()).versionId;
-  await page.reload();
-  await save(page, '{"second":true}');
-  const openFirst = page.getByRole('button', { name: `查看版本 ${first}` });
-  await textMode(page);
-  await editor.fill('仍需保留的缓冲');
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await openFirst.click();
-  await page.getByRole('button', { name: '配置工作台' }).click();
-  await textMode(page);
-  await expect(editor).toHaveValue('仍需保留的缓冲');
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await textMode(page);
+  const saved = '/?form=' + formId + '&tab=history&version=' + first;
+  await page.goto(saved);
+  const editor = await schemaSource(page);
   await expect(editor).toHaveValue(raw);
-  await textMode(page);
   await expect(editor).not.toBeEditable();
   await expect(page.getByRole('button', { name: '检查配置' })).toHaveCount(0);
   await page.getByRole('button', { name: '预览配置' }).click();
   await expect(page.getByText('JSON_SYNTAX')).toBeVisible();
-  await expect(page.getByLabel('受控试填')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: '受控预览' })).toHaveCount(0);
+  await page.getByRole('button', { name: '关闭预览' }).click();
 
-  page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: '基于此版本继续编辑' }).click();
-  await textMode(page);
-  await expect(editor).toBeEditable();
-  const third = await save(page, '{"third":true}');
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await page.getByRole('button', { name: `查看版本 ${third}` }).click();
-  await expect(page.locator(`[data-version-id="${first}"]`)).toBeVisible();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  await chooseWorkingVersionAction(page, '基于此版创建新版');
+  await page.getByLabel('版本名称', { exact: true }).fill('历史分支');
+  await page.getByRole('button', { name: '创建并编辑' }).click();
+  const branch = await schemaSource(page);
+  const branchUrl = page.url();
+  await expect(branch).toHaveValue(raw);
+  await expect(branch).toBeEditable();
+  const second = await save(page, '{"second":true}');
+  const fork = await page.request.get(`/api/platform/forms/${formId}/versions/${second}`);
+  expect(fork.ok()).toBeTruthy();
+  expect(await fork.json()).toMatchObject({ basedOnVersionId: first });
+  await branch.fill('仍需保留的缓冲');
+  await page.reload();
+  expect(page.url()).toBe(branchUrl);
+  await page.getByText('本机草稿（1）', { exact: true }).click();
+  await page.getByRole('button', { name: '恢复编辑', exact: true }).click();
+  await expect(await schemaSource(page)).toHaveValue('仍需保留的缓冲');
+  await save(page, '{"third":true}');
+  await page.getByRole('button', { name: '返回版本列表' }).click();
   await page.getByRole('button', { name: '管理表单', exact: true }).click();
-  page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: '归档表单' }).click();
-  await page.getByRole('button', { name: '关闭', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '历史验收（已归档）' })).toBeVisible();
-  await openFirst.click();
-  await page.getByRole('button', { name: '复制为新表单', exact: true }).click();
-  await page.getByLabel('新表单名称').fill('归档复制验收');
-  const copies = '**/api/platform/forms/*/copies';
+  await page.getByRole('menuitem', { name: '归档表单', exact: true }).click();
+  await page.getByRole('button', { name: '确认归档', exact: true }).click();
+
+  // The public copy API accepts the exact legacy snapshot after its source is archived.
+  const copyBody = { name: '归档复制验收', versionId: first };
+  const copyHeaders = {
+    'Idempotency-Key': crypto.randomUUID(),
+    Origin: new URL(page.url()).origin,
+  };
+  const copies = `/api/platform/forms/${formId}/copies`;
+  const copy = await page.request.post(copies, { headers: copyHeaders, data: copyBody });
+  expect(copy.status()).toBe(201);
+  const copied = await copy.json();
+  const retry = await page.request.post(copies, { headers: copyHeaders, data: copyBody });
+  expect(retry.status()).toBe(201);
+  expect(await retry.json()).toEqual(copied);
+  await page.getByRole('button', { name: '管理表单', exact: true }).click();
+  await page.getByRole('menuitem', { name: '恢复表单', exact: true }).click();
+  await page.getByRole('button', { name: '确认恢复', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '历史验收', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '管理表单', exact: true }).click();
+  await page.getByRole('menuitem', { name: '复制为新表单', exact: true }).click();
+  const modal = page.getByRole('dialog', { name: '复制为新表单' });
+  await modal.getByLabel('新表单名称').fill('已保存配置副本');
+  let copiedVersion: string | undefined;
   await page.route(
-    copies,
+    '**' + copies,
     async (route) => {
-      expect((await route.fetch()).status()).toBe(201);
+      const response = await route.fetch();
+      expect(response.status()).toBe(201);
+      copiedVersion = (await response.json()).versionId;
       await route.abort();
     },
     { times: 1 },
   );
-  await page.getByRole('button', { name: '确认复制' }).click();
-  const retry = page.getByRole('button', { name: '重试复制' });
-  await expect(retry).toBeVisible();
-  await page.route(copies, (route) => route.fulfill({ status: 403 }), { times: 1 });
-  await retry.click();
-  await expect(page.getByText('当前账号没有操作权限。')).toBeVisible();
-  await retry.click();
-  await expect(page.getByText('已创建「归档复制验收」')).toBeVisible();
-  await page.getByRole('button', { name: '管理表单', exact: true }).click();
-  await page.getByRole('button', { name: '恢复表单' }).click();
-  await page.getByRole('button', { name: '关闭', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '历史验收', exact: true })).toBeVisible();
+  await modal.getByRole('button', { name: '确认复制' }).click();
+  const retryCopy = modal.getByRole('button', { name: '重试复制' });
+  await expect(retryCopy).toBeVisible();
+  await page.route('**' + copies, (route) => route.fulfill({ status: 403 }), { times: 1 });
+  await retryCopy.click();
+  await expect(modal.getByRole('alert')).toContainText('当前账号没有操作权限');
+  const confirmed = page.waitForResponse((response) => response.url().endsWith(copies));
+  await retryCopy.click();
+  expect((await (await confirmed).json()).versionId).toBe(copiedVersion);
+  await expect(page.getByText(/已创建「已保存配置副本」/)).toBeVisible();
   await page.getByRole('button', { name: '返回表单列表' }).click();
-  const copy = page.getByRole('button', { name: '打开 归档复制验收' });
-  await expect(copy).toHaveCount(1);
-  await copy.click();
-  await textMode(page);
-  await expect(editor).toHaveValue(raw);
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await expect(page.getByRole('button', { name: /^查看版本 / })).toHaveCount(1);
+  const copiedForm = page.getByRole('button', { name: '打开 归档复制验收', exact: true });
+  await expect(copiedForm).toHaveCount(1);
+  await copiedForm.click();
+  await chooseWorkingVersionAction(page, '查看配置');
+  await expect(await schemaSource(page)).toHaveValue(raw);
+  await expect(page).toHaveURL(new RegExp('work=' + copied.versionId));
 });
 
 test('discards late checks and runs independent travel previews with simulated Host effects', async ({
   page,
 }) => {
-  await create(page, '受控预览验收');
-  const editor = page.getByLabel('配置原文');
+  await createRecoveryWork(page, '受控预览验收');
+  const editor = page.getByRole('textbox', { name: '配置原文', exact: true });
   const text = JSON.stringify({
     ...travelDefinition,
     views: { desktop: travelDefinition.views.desktop },
   });
-  await textMode(page);
+  await schemaSource(page);
   await editor.fill(text);
-  await page.getByLabel('Web 视图').fill('desktop');
 
   let release!: () => void;
   const held = new Promise<void>((resolve) => {
@@ -166,7 +169,8 @@ test('discards late checks and runs independent travel previews with simulated H
   const firstRequest = page.waitForRequest('**/api/platform/forms/*/check');
   await check.click();
   await firstRequest;
-  await textMode(page);
+  await page.getByRole('button', { name: '关闭检查', exact: true }).click();
+  await schemaSource(page);
   await editor.fill('{"invalid":');
   await check.click();
   await expect(page.getByText('JSON_SYNTAX')).toBeVisible();
@@ -177,8 +181,9 @@ test('discards late checks and runs independent travel previews with simulated H
   release();
   await late;
   await expect(page.getByText('配置检查通过')).toHaveCount(0);
+  await page.getByRole('button', { name: '关闭检查', exact: true }).click();
 
-  await textMode(page);
+  await schemaSource(page);
   await editor.fill(text);
   const preview = page.getByRole('button', { name: '预览配置' });
   let releasePreview!: () => void;
@@ -204,7 +209,7 @@ test('discards late checks and runs independent travel previews with simulated H
   await expect(page.getByLabel('受控试填')).toHaveCount(0);
 
   await preview.click();
-  const sandbox = page.getByRole('region', { name: '受控试填' });
+  const sandbox = page.getByRole('region', { name: '受控预览' });
   await expect(sandbox.getByText('家庭短期出行投保录入单')).toBeVisible();
   await expect(sandbox.getByText('监护人姓名')).toBeVisible();
   const browserTraffic: string[] = [];
@@ -268,10 +273,10 @@ test('discards late checks and runs independent travel previews with simulated H
   await preview.click();
   await expect(applicant).toHaveValue('投保人示例');
   await expect(sandbox.getByText(/未完成市|模拟提交/)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^查看版本 / })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '查看快照' })).toHaveCount(0);
 
   await page.getByRole('button', { name: '关闭预览' }).click();
-  await textMode(page);
+  await schemaSource(page);
   await editor.fill(text.replace('travel.checkEligibility', 'travel.unknownProductionValidator'));
   await preview.click();
   await expect(
@@ -339,113 +344,94 @@ test('keeps a frozen copy receipt replayable when the unsaved source is archived
   page,
 }) => {
   await create(page, '未保存的复制来源');
-  const editor = page.getByLabel('配置原文');
-  await textMode(page);
-  await editor.fill('{"冻结原文":true}');
-  await page.getByRole('button', { name: '复制为新表单', exact: true }).click();
-  await page.getByLabel('新表单名称').fill('冻结副本');
-  await page.route(
-    '**/api/platform/forms/*/copies',
-    async (route) => {
-      expect((await route.fetch()).status()).toBe(201);
-      await route.abort();
-    },
-    { times: 1 },
-  );
-  await page.getByRole('button', { name: '确认复制' }).click();
-  const retry = page.getByRole('button', { name: '重试复制' });
-  await expect(retry).toBeVisible();
-  await textMode(page);
-  await editor.fill('{"复制请求发出后的修改":true}');
+  const formId = new URL(page.url()).searchParams.get('form');
+  const copies = `/api/platform/forms/${formId}/copies`;
+  const origin = new URL(page.url()).origin;
+  const data = { name: '冻结副本', text: '{"冻结原文":true}', basedOnVersionId: null };
+  const headers = { 'Idempotency-Key': crypto.randomUUID(), Origin: origin };
+  // The current UI copies saved snapshots. Exercise the historical raw-text request at its public API.
+  const copied = await page.request.post(copies, { headers, data });
+  expect(copied.status()).toBe(201);
+  const receipt = await copied.json();
   await page.getByRole('button', { name: '管理表单', exact: true }).click();
-  page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: '归档表单' }).click();
-  await page.getByRole('button', { name: '关闭', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '未保存的复制来源（已归档）' })).toBeVisible();
-  await retry.click();
-  await expect(page.getByText('已创建「冻结副本」')).toBeVisible();
-  await textMode(page);
-  await expect(editor).toHaveValue('{\n    "复制请求发出后的修改": true\n}\n');
-
-  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('menuitem', { name: '归档表单', exact: true }).click();
+  await page.getByRole('button', { name: '确认归档', exact: true }).click();
+  const retry = await page.request.post(copies, { headers, data });
+  expect(retry.status()).toBe(201);
+  expect(await retry.json()).toEqual(receipt);
+  const newCopy = await page.request.post(copies, {
+    headers: { ...headers, 'Idempotency-Key': crypto.randomUUID() },
+    data: { ...data, name: '归档后不得创建' },
+  });
+  expect(newCopy.status()).toBe(409);
   await page.getByRole('button', { name: '返回表单列表' }).click();
-  await page.getByRole('combobox', { name: '表单状态', exact: true }).click();
-  await page.getByRole('option', { name: '已归档', exact: true }).click();
-  await page
-    .getByRole('search', { name: '表单筛选' })
-    .getByRole('button', { name: '确认', exact: true })
-    .click();
-  await page.getByRole('button', { name: '管理 未保存的复制来源' }).click();
-  await page.getByRole('menuitem', { name: '恢复表单' }).click();
-  await page.getByRole('button', { name: '确认恢复', exact: true }).click();
-  await page.getByRole('combobox', { name: '表单状态', exact: true }).click();
-  await page.getByRole('option', { name: '使用中', exact: true }).click();
-  await page
-    .getByRole('search', { name: '表单筛选' })
-    .getByRole('button', { name: '确认', exact: true })
-    .click();
-  await expect(page.getByRole('button', { name: '管理 未保存的复制来源' })).toBeVisible();
-  const copy = page.getByRole('button', { name: '打开 冻结副本' });
+  const copy = page.getByRole('button', { name: '打开 冻结副本', exact: true });
   await expect(copy).toHaveCount(1);
   await copy.click();
-  await textMode(page);
-  await expect(editor).toHaveValue('{\n    "冻结原文": true\n}\n');
+  await chooseWorkingVersionAction(page, '查看配置');
+  await expect(await schemaSource(page)).toHaveValue('{\n    "冻结原文": true\n}\n');
 });
 
 test('compares draft and historical configuration without replacing the draft', async ({
   page,
 }) => {
-  await create(page, '差异验收');
+  await createRecoveryWork(page, '差异验收');
   await save(page, '{"amount":9007199254740993}');
   await save(page, '{"amount":9007199254740994}');
-  await textMode(page);
-  await page.getByLabel('配置原文').fill('{"amount":9007199254740995}');
+  const editor = await schemaSource(page);
+  await editor.fill('{"amount":9007199254740995}');
   await page.getByRole('button', { name: '更多操作' }).click();
   await page.getByRole('menuitem', { name: '查看改动' }).click();
   const dialog = page.getByRole('dialog', { name: '配置对比' });
   await dialog.getByText('修改　/amount', { exact: true }).click();
   await expect(dialog.getByText('9007199254740995', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: '返回' }).click();
-  await page.getByRole('button', { name: '配置历史', exact: true }).click();
-  await page.getByRole('button', { name: '对比版本' }).click();
+  await expect(editor).toHaveValue(/^\s*\{\s*"amount":\s*9007199254740995\s*\}\s*$/);
+  await save(page);
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  await chooseWorkingVersionAction(page, '保存历史');
+  await page.getByRole('button', { name: '对比快照' }).click();
   await dialog.getByText('修改　/amount', { exact: true }).click();
-  await expect(dialog.getByText('9007199254740993', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('9007199254740994', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('9007199254740995', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: '返回' }).click();
-  await page.getByRole('button', { name: '配置工作台' }).click();
-  await textMode(page);
-  await expect(page.getByLabel('配置原文')).toHaveValue(
-    /^\s*\{\s*"amount":\s*9007199254740995\s*\}\s*$/,
-  );
+  await page
+    .getByRole('dialog', { name: '保存历史' })
+    .getByRole('button', { name: '关闭' })
+    .click();
+  await chooseWorkingVersionAction(page, '编辑配置');
+  await expect(await schemaSource(page)).toHaveValue(/"amount":\s*9007199254740995/);
 });
 
 test('compares a publish candidate with the previous successful release', async ({ page }) => {
-  await create(page, '发布对比验收');
-  await textMode(page);
+  const name = '发布对比验收';
+  await createRecoveryWork(page, name);
   const initial = JSON.stringify({
     ...travelDefinition,
     views: { desktop: travelDefinition.views.desktop },
   });
-  await page.getByLabel('配置原文').fill(initial);
-  await page.getByRole('button', { name: '保存并发布' }).click();
-  await page.getByRole('button', { name: '查看配置差异' }).click();
+  await save(page, initial);
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  let release = await chooseWorkingPublication(page, name + '草稿');
+  await release.getByRole('button', { name: '与上次发布对比' }).click();
   const diff = page.getByRole('dialog', { name: '配置对比' });
   await expect(diff.getByText('首次发布，尚无上一次发布配置。')).toBeVisible();
   await diff.getByRole('button', { name: '返回' }).click();
-  await page.getByRole('button', { name: '确认发布' }).click();
-  await expect(page.getByRole('link', { name: '打开 Host', exact: true })).toBeVisible();
-  await textMode(page);
-  await page.getByLabel('配置原文').fill(initial.replace('家庭短期出行投保录入单', '新版家庭出行'));
-  await page.getByRole('button', { name: '保存并发布' }).click();
-  await page.getByRole('button', { name: '查看配置差异' }).click();
+  await release.getByRole('button', { name: '确认发布' }).click();
+  await expect(workingVersionRow(page, name + '草稿').getByText(/已发布/)).toBeVisible();
+  await chooseWorkingVersionAction(page, '基于此版创建新版');
+  await page.getByLabel('版本名称', { exact: true }).fill('对比新版');
+  await page.getByRole('button', { name: '创建并编辑', exact: true }).click();
+  await save(page, initial.replace('家庭短期出行投保录入单', '新版家庭出行'));
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  release = await chooseWorkingPublication(page, '对比新版');
+  await release.getByRole('button', { name: '与上次发布对比' }).click();
   await expect(diff.getByText(/修改 1/)).toBeVisible();
 });
 
 async function createRecoveryWork(page: Page, name: string) {
   await create(page, name);
-  await page.getByRole('button', { name: '新建草稿', exact: true }).click();
-  await page.getByLabel('版本名称', { exact: true }).fill(name + '草稿');
-  await page.getByRole('button', { name: '创建并编辑', exact: true }).click();
-  await expect(page.getByRole('heading', { name: name + '草稿', exact: true })).toBeVisible();
+  await createWorkingVersion(page, name + '草稿');
 }
 
 test('refresh restores exact invalid text and metadata, tabs keep separate drafts and logout clears them', async ({
@@ -519,10 +505,12 @@ test('narrow configuration comparison stacks both values and fits the viewport',
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await create(page, '窄屏对比');
+  await createRecoveryWork(page, '窄屏对比');
   await save(page, JSON.stringify({ long: 'x'.repeat(300) }));
-  await textMode(page);
-  await page.getByLabel('配置原文').fill(JSON.stringify({ long: 'y'.repeat(300) }));
+  await schemaSource(page);
+  await page
+    .getByRole('textbox', { name: '配置原文', exact: true })
+    .fill(JSON.stringify({ long: 'y'.repeat(300) }));
   await page.getByRole('button', { name: '更多操作' }).click();
   await page.getByRole('menuitem', { name: '查看改动' }).click();
   const dialog = page.getByRole('dialog', { name: '配置对比' });
@@ -738,11 +726,17 @@ test('narrow catalog supports cancelling and adding a named expression to a draf
   await page.getByRole('button', { name: '插入函数' }).click();
   const dialog = page.getByRole('dialog', { name: '插入函数' });
   await expect(dialog).toBeVisible();
-  expect(
-    await dialog.evaluate(
-      (e) => e.scrollWidth <= e.clientWidth && e.getBoundingClientRect().right <= innerWidth,
-    ),
-  ).toBe(true);
+  const bounds = await dialog.evaluate((node) => ({
+    scrollWidth: node.scrollWidth,
+    clientWidth: node.clientWidth,
+    right: node.getBoundingClientRect().right,
+    viewport: innerWidth,
+    overflowing: [...node.querySelectorAll<HTMLElement>('*')]
+      .filter((child) => child.getBoundingClientRect().right > node.getBoundingClientRect().right)
+      .map((child) => child.className || child.tagName),
+  }));
+  expect(bounds.scrollWidth, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.clientWidth);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.viewport);
   await dialog.getByRole('button', { name: '关闭', exact: true }).click();
   await expect(editor).toHaveValue(base);
   await page.getByRole('button', { name: '插入函数' }).click();
@@ -827,6 +821,7 @@ test('narrow Studio journey keeps an edited draft consistent through preview, Ho
   await fits(host);
   const releaseId = new URL(host.url()).searchParams.get('releaseId')!;
   await host.close();
+  await page.getByRole('button', { name: '返回版本列表', exact: true }).click();
   await page.getByRole('button', { name: '操作记录', exact: true }).click();
   const log = page.getByRole('dialog', { name: '表单操作记录' });
   await log.getByRole('button', { name: /发布表单.*基础信息正式版/ }).click();

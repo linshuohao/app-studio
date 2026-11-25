@@ -1,0 +1,1026 @@
+{
+  "protocolVersion": "1.0",
+  "id": "loan",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requester": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "projectCode": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 24
+        },
+        "pickupMode": {
+          "type": "string",
+          "enum": ["counter", "courier"]
+        },
+        "loanDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "siteAddress": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 160
+        },
+        "siteContact": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "sitePhone": {
+          "type": "string",
+          "minLength": 11,
+          "maxLength": 11,
+          "pattern": "^1[0-9]{10}$"
+        },
+        "accepted": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "assetTag": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 30
+              },
+              "useType": {
+                "type": "string",
+                "enum": ["indoor", "outdoor", "bench"]
+              },
+              "handoverNote": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 200
+              },
+              "weatherCover": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 120
+              },
+              "itemId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["assetTag", "useType", "itemId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "useType": {
+                      "const": "outdoor"
+                    }
+                  },
+                  "required": ["useType"]
+                },
+                "then": {
+                  "required": ["weatherCover"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["weatherCover"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "requester",
+        "projectCode",
+        "pickupMode",
+        "loanDate",
+        "dueDate",
+        "accepted",
+        "items"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "pickupMode": {
+                "const": "courier"
+              }
+            },
+            "required": ["pickupMode"]
+          },
+          "then": {
+            "required": ["siteAddress", "siteContact", "sitePhone"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["siteAddress"]
+                },
+                {
+                  "required": ["siteContact"]
+                },
+                {
+                  "required": ["sitePhone"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "培训设备借用与交还"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "申请资料"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "领用人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/requester"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/requester"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "项目编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/projectCode"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/projectCode"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "交付方式"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/pickupMode"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/pickupMode"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "counter",
+                        "label": "库房自取"
+                      },
+                      {
+                        "id": "courier",
+                        "label": "配送到项目现场"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "date-range",
+              "props": {
+                "label": "保险期间",
+                "startLabel": "起保日",
+                "endLabel": "终保日"
+              },
+              "bindings": {
+                "start": {
+                  "source": "data",
+                  "path": "/loanDate"
+                },
+                "end": {
+                  "source": "data",
+                  "path": "/dueDate"
+                }
+              }
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/pickupMode"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/pickupMode"
+                            }
+                          },
+                          "courier"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "现场地址"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/siteAddress"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/siteAddress"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "签收联系人"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/siteContact"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/siteContact"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "签收手机号"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/sitePhone"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/sitePhone"
+                        }
+                      },
+                      "props": {
+                        "inputMode": "tel"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "设备清单"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/items"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "设备"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "设备资产编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/assetTag",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/assetTag",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "用途"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/useType",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/useType",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "indoor",
+                              "label": "室内课程"
+                            },
+                            {
+                              "id": "outdoor",
+                              "label": "户外采集"
+                            },
+                            {
+                              "id": "bench",
+                              "label": "车间测试"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "交接说明"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/handoverNote",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/handoverNote",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/useType",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/useType",
+                                    "scope": "person"
+                                  }
+                                },
+                                "outdoor"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "防雨保护说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/weatherCover",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/weatherCover",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除设备",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/items"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加设备",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/items"
+                            }
+                          }
+                        ]
+                      },
+                      8
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addLoanItem"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "我已核对借用期限和归还责任"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/accepted"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "申请借用"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitEquipmentLoan"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "loan-duration",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/loanDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/dueDate"
+            }
+          },
+          14
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/dueDate"
+        },
+        "code": "loan-duration",
+        "message": {
+          "text": "结束日不得早于开始日，最多 14 个自然日。"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/loanDate"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/dueDate"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "asset-tag-unique",
+      "kind": "external",
+      "validator": "business.validateLoanAssets",
+      "target": {
+        "source": "data",
+        "path": "/items"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/items"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-shipping-siteAddress",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/pickupMode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/siteAddress"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/siteAddress"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      },
+                      "courier"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-shipping-siteContact",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/pickupMode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/siteContact"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/siteContact"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      },
+                      "courier"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-shipping-sitePhone",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/pickupMode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/sitePhone"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/sitePhone"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/pickupMode"
+                        }
+                      },
+                      "courier"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-cover-weatherCover",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/useType",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/weatherCover",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/weatherCover",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/useType",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/useType",
+                          "scope": "person"
+                        }
+                      },
+                      "outdoor"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/items"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "items": [],
+        "accepted": false
+      },
+      "validators": {
+        "business.validateLoanAssets": "同步对稳定成员的资产编号去首尾空白并转大写后查重，返回两处资产编号字段错误。"
+      },
+      "events": {
+        "business.addLoanItem": "生成 itemId 并追加空设备行。",
+        "business.submitEquipmentLoan": "校验通过后生成同一快照的库房借用记录。去空白及大写后交付 assetTag。失败时保留工作值。"
+      }
+    }
+  }
+}

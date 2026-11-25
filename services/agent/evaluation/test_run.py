@@ -2,9 +2,52 @@ import asyncio
 import base64
 import json
 
-from run import load_cases, run_case, score_case, summarize
+from langchain_core.messages import AIMessage, AIMessageChunk
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, LLMResult
+from run import ModelUsage, load_cases, run_case, score_case, summarize
 
 from form_agent.observability.raw_trace import RawTraceArchive
+
+
+def test_model_usage_includes_streams_and_exposes_missing_provider_usage():
+    usage = ModelUsage()
+    for message, generation in [
+        (
+            AIMessage(
+                content="",
+                usage_metadata={
+                    "input_tokens": 60,
+                    "output_tokens": 10,
+                    "total_tokens": 70,
+                    "input_token_details": {"cache_read": 20},
+                },
+            ),
+            ChatGeneration,
+        ),
+        (
+            AIMessageChunk(
+                content="",
+                usage_metadata={
+                    "input_tokens": 25,
+                    "output_tokens": 5,
+                    "total_tokens": 30,
+                },
+            ),
+            ChatGenerationChunk,
+        ),
+        (AIMessage(content="usage unavailable"), ChatGeneration),
+    ]:
+        usage.on_chat_model_start({}, [])
+        usage.on_llm_end(LLMResult(generations=[[generation(message=message)]]))
+    assert usage.snapshot() == {
+        "calls": 3,
+        "reported_calls": 2,
+        "complete": False,
+        "input_tokens": 85,
+        "output_tokens": 15,
+        "total_tokens": 100,
+        "cached_input_tokens": 20,
+    }
 
 
 def test_reference_and_business_counterexample_use_the_same_compiler(tmp_path):

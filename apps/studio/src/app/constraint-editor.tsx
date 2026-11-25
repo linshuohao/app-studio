@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input } from '../components/ui/controls';
+import { Button, Input } from '@form-engine/studio-design-components/controls';
 import { usePendingNavigation } from './schema-navigation';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -11,7 +11,13 @@ import type {
 } from '@form-engine/protocol/definition';
 import { ConstraintRequirement, commonRequirement } from './constraint-requirement';
 import { ConstraintPrerequisites } from './constraint-prerequisites';
-import { addPrerequisite, readConstraint, referencingRules } from './constraint-model';
+import {
+  addPrerequisite,
+  checkConstraintChange,
+  readConstraint,
+  referencingRules,
+  type ConstraintDiagnostic,
+} from './constraint-model';
 import { verificationContext } from './expression-verification';
 import { useFunctionCatalog, type FunctionDocumentation } from './function-catalog';
 import { travelEligibilityValidator } from './host/validator-registration';
@@ -30,6 +36,7 @@ import './constraint-editor.css';
 import './rule-list.css';
 
 type Props = {
+  pickingReference?: boolean;
   formPath: string;
   profile: string;
   text: string;
@@ -42,6 +49,8 @@ type Dialog = { source: string; profile: string; mode: Mode };
 const rootTarget = { source: 'data', path: '' } as const;
 const emptyRequires: ValidationPrerequisite[] = [];
 const errorText = (error: unknown) => (error instanceof Error ? error.message : '无法应用修改。');
+const isPrerequisite = ({ code }: ConstraintDiagnostic) => code.startsWith('PREREQUISITE_');
+const diagnosticText = ({ code, message }: ConstraintDiagnostic) => code + ' · ' + message;
 
 export function ConstraintEditor(props: Props) {
   const model = useMemo(() => {
@@ -244,7 +253,12 @@ function RuleList({ model, list, ...props }: Props & { model: Model; list?: Json
       {!!nodes.length && !visible.length && <p>没有匹配的校验规则。</p>}
       {visible.map(({ index: i, id, rule }) => {
         return (
-          <article key={i}>
+          <article
+            key={i}
+            tabIndex={props.pickingReference ? 0 : undefined}
+            data-reference-path={'/constraints/' + i}
+            data-reference-label={'校验规则 · ' + id}
+          >
             <header>
               <h3>{id}</h3>
               <div className="action-row">
@@ -314,6 +328,7 @@ function RuleDrawer({
     references: { path: string; id: string }[];
     nextRule?: string;
     path: string;
+    diagnostics: ConstraintDiagnostic[];
   }>();
   const active = dialog?.source === text && dialog.profile === profile ? dialog : undefined;
   const { manifests, functionDocs, error: catalogError, reload } = useFunctionCatalog();
@@ -376,15 +391,47 @@ function RuleDrawer({
     try {
       await work();
     } catch (e) {
-      setError(errorText(e));
+      if (!(e instanceof DOMException && e.name === 'AbortError')) setError(errorText(e));
     } finally {
       setBusy(false);
     }
   }
   const sourceRef = useRef(currentText);
+  const draftRef = useRef(text);
+  const checks = useRef<AbortController | null>(null);
+  useLayoutEffect(() => {
+    const controller = new AbortController();
+    checks.current = controller;
+    return () => controller.abort();
+  }, [formPath, profile]);
   useLayoutEffect(() => {
     sourceRef.current = currentText;
-  }, [currentText]);
+    draftRef.current = text;
+  }, [currentText, text]);
+  async function checkChange(
+    next: string,
+    accepts: (item: ConstraintDiagnostic) => boolean,
+    baseline = text,
+  ) {
+    const signal = checks.current?.signal;
+    const diagnostics = await checkConstraintChange(
+      formPath,
+      profile,
+      baseline,
+      next,
+      accepts,
+      signal,
+    );
+    signal?.throwIfAborted();
+    if (draftRef.current !== text || sourceRef.current !== session.base)
+      throw Error('规则草稿已更改，请重新核验。');
+    return diagnostics;
+  }
+  async function commitChecked(next: string, accepts = isPrerequisite) {
+    const diagnostics = await checkChange(next, accepts);
+    if (diagnostics.length) throw Error(diagnostics.map(diagnosticText).join('；'));
+    commit(next);
+  }
   function finish(next: string) {
     if (sourceRef.current !== session.base) throw Error('工作草稿已更新，请取消后重新打开规则。');
     apply(next);
@@ -414,12 +461,18 @@ function RuleDrawer({
     const references = referencingRules(model, rule.id);
     const updated = semanticModel(next);
     const nextNode = label === '删除校验规则' ? undefined : updated.byPath.get(node.path);
+    const diagnostics = await checkChange(
+      next,
+      isPrerequisite,
+      label === '删除校验规则' ? session.base : text,
+    );
     setImpact({
       next,
       label,
       references,
       path: node.path,
       nextRule: nextNode && updated.raw(nextNode),
+      diagnostics,
     });
     open('impact');
   }
@@ -463,7 +516,11 @@ function RuleDrawer({
         );
       else close();
     } else if (active?.mode === 'field') {
-      commit(addPrerequisite(model, node, { kind: 'field', phase: 'sync', target: refs[0]! }));
+      void attempt(() =>
+        commitChecked(
+          addPrerequisite(model, node, { kind: 'field', phase: 'sync', target: refs[0]! }),
+        ),
+      );
     }
   }
 
@@ -629,7 +686,7 @@ function RuleDrawer({
                     node={node}
                     current={requires}
                     disabled={busy}
-                    apply={commit}
+                    apply={(next) => void attempt(() => commitChecked(next))}
                   />
                 </div>
               </dd>
@@ -771,7 +828,10 @@ function RuleDrawer({
           onApply={() =>
             void attempt(() => {
               validateReactionExpression(raw, context);
-              commit(model.property(node, active.mode, raw));
+              return commitChecked(
+                model.property(node, active.mode, raw),
+                ({ code }) => code === 'VALIDATION_NOT_AVAILABLE',
+              );
             })
           }
           {...context}
@@ -817,7 +877,15 @@ function RuleDrawer({
               引用规则 {item.id} · <code>{item.path}</code>
             </p>
           ))}
+          {impact.diagnostics.length > 0 && (
+            <ul role="alert">
+              {impact.diagnostics.map((item, i) => (
+                <li key={i}>{diagnosticText(item)}</li>
+              ))}
+            </ul>
+          )}
           <button
+            disabled={busy || impact.diagnostics.length > 0}
             onClick={() =>
               void attempt(() =>
                 impact.label === '删除校验规则' ? finish(impact.next) : commit(impact.next),

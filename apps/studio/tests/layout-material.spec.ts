@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
-import { openSchemaDraft, schemaSource } from './data-schema-fixture';
+import { closeWorkbenchDrawer, openSchemaDraft, schemaSource } from './data-schema-fixture';
+import { chooseWorkingVersionAction } from './working-version-menu';
 
 test('逐层修改选项和事件命令，原文未编辑部分可逐字恢复', async ({ page }) => {
   const source = String.raw`{
@@ -17,34 +18,43 @@ test('逐层修改选项和事件命令，原文未编辑部分可逐字恢复',
   await page.getByRole('button', { name: '布局', exact: true }).click();
   const outline = page.getByRole('navigation', { name: '视图大纲' });
   const settings = page.getByRole('region', { name: '控件配置' });
-  await outline.getByRole('button', { name: 'select', exact: true }).click();
-  await settings.getByText('选项设置', { exact: true }).click();
+  await outline.getByRole('button', { name: /^select/ }).click();
+  await settings.getByLabel('选项设置', { exact: true }).click();
   await settings.getByLabel('第 1 项显示名称', { exact: true }).fill('新标签');
   await settings.getByRole('button', { name: '＋ 添加选项' }).click();
   await settings.getByLabel('第 2 项写入值', { exact: true }).fill('B');
   await settings.getByLabel('第 2 项显示名称', { exact: true }).fill('第二项');
-  await settings.getByRole('button', { name: '应用属性' }).click();
+  await page.getByRole('button', { name: '应用属性', exact: true }).click();
   await expect(settings.getByLabel('第 1 项显示名称', { exact: true })).toBeHidden();
 
-  await settings.getByText('选项设置', { exact: true }).click();
+  await settings.getByLabel('选项设置', { exact: true }).click();
   await settings.getByLabel('属性 options来源', { exact: true }).selectOption('expression');
   await settings.getByLabel('属性 options协议 JSON', { exact: true }).fill('{"$expr":false}');
-  await settings.getByRole('button', { name: '应用属性' }).click();
+  await page.getByRole('button', { name: '应用属性', exact: true }).click();
   await expect(settings.getByRole('alert')).toBeVisible();
 
-  await outline.getByRole('button', { name: '设置选项', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '固定选项' })
+    .getByRole('button', { name: '关闭', exact: true })
+    .click();
   await page
     .getByRole('dialog', { name: '当前修改尚未应用' })
     .getByRole('button', { name: '放弃修改并继续' })
     .click();
-  await settings.getByText('事件 activate', { exact: true }).click();
+  await outline.getByRole('button', { name: /^设置选项/ }).click();
+  await settings.locator('summary').filter({ hasText: '事件 activate' }).click();
   await settings.getByLabel('Host 事件 activate').fill('尚未应用的事件');
   await expect(settings.getByLabel('显示名称', { exact: true })).toBeDisabled();
-  await settings.getByLabel('事件意图 activate').selectOption('form.command');
+  const eventIntent = settings.getByRole('combobox', { name: '事件意图 activate' });
+  await eventIntent.click();
+  await page.getByRole('option', { name: '表单命令', exact: true }).click();
+  await expect(eventIntent).toHaveText('表单命令');
   const command = { op: 'set', target: { source: 'data', path: '/pick' }, value: 'B' };
-  await settings.getByLabel('命令 activate').fill(JSON.stringify(command));
+  await settings
+    .getByRole('textbox', { name: '命令 activate', exact: true })
+    .fill(JSON.stringify(command));
   await settings.getByRole('button', { name: '应用事件 activate' }).click();
-  await expect(settings.getByLabel('命令 activate')).toBeHidden();
+  await expect(settings.getByRole('textbox', { name: '命令 activate', exact: true })).toBeHidden();
 
   const editor = await schemaSource(page);
   const result = await editor.inputValue();
@@ -71,24 +81,25 @@ test('edits the real travel template inline, previews pending values, then appli
   await click('布局');
   const outline = page.getByRole('navigation', { name: '视图大纲' });
   const inspector = page.getByRole('region', { name: '控件配置' });
-  const preview = page.getByRole('region', { name: '真实表单预览' });
-  const plan = preview.getByRole('combobox', { name: '出行方案', exact: true });
+  const preview = page.locator('[aria-label="真实表单预览"]');
+  const plan = preview
+    .locator('select')
+    .filter({ has: page.locator('option', { hasText: '升级方案' }) });
   const path = '/views/desktop/slots/default/1/slots/default/3/slots/default/0';
-  await outline.locator('[data-node-path="' + path + '"]').click();
   await expect(plan.locator('option').nth(1)).toHaveText('基础方案');
   await plan.selectOption({ label: '升级方案' });
   await expect(plan.locator('option:checked')).toHaveText('升级方案');
+  await outline.locator('[data-node-path="' + path + '"]').click();
   await inspector.getByLabel('提示文字', { exact: true }).fill('选择本次出行方案');
-  await inspector.getByText('选项设置', { exact: true }).click();
+  await inspector.getByLabel('选项设置', { exact: true }).click();
   await inspector.getByLabel('第 1 项显示名称').fill('基础方案（试编）');
   await inspector.getByRole('button', { name: '下移第 1 项', exact: true }).click();
+  await expect(page.locator('.workspace-save')).toBeDisabled();
   await expect(plan.locator('option').last()).toHaveText('基础方案（试编）');
   await expect(plan.locator('option').first()).toHaveText('选择本次出行方案');
   await expect(plan.locator('option:checked')).toHaveText('升级方案');
-  await expect(page.getByRole('button', { name: '保存配置', exact: true })).toBeDisabled();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await inspector.getByRole('button', { name: '应用属性', exact: true }).click();
-  await expect(inspector.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
+  await page.getByRole('button', { name: '应用属性', exact: true }).click();
+  await expect(page.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
 
   const editor = await schemaSource(page);
   const edited = await editor.inputValue();
@@ -114,7 +125,7 @@ test('edits the real travel template inline, previews pending values, then appli
   expect((await saved).status()).toBe(201);
   await click('返回版本列表');
   await page.reload();
-  await click('编辑配置');
+  await chooseWorkingVersionAction(page, '编辑配置');
   await click('布局');
   await expect(plan.locator('option').last()).toHaveText('基础方案（试编）');
   expect(JSON.parse(await (await schemaSource(page)).inputValue())).toEqual(expected);
@@ -133,6 +144,10 @@ test('discard prevents an in-flight property check from committing into the draf
   await openSchemaDraft(page, source);
   await page.getByRole('button', { name: '布局', exact: true }).click();
   const inspector = page.getByRole('region', { name: '控件配置' });
+  await page
+    .getByRole('navigation', { name: '视图大纲' })
+    .locator('[data-node-path="/views/desktop"]')
+    .click();
   const { promise, resolve } = Promise.withResolvers<void>();
   await page.route('**/check', async (route) => {
     await promise;
@@ -141,17 +156,23 @@ test('discard prevents an in-flight property check from committing into the draf
   try {
     await inspector.getByLabel('标题', { exact: true }).fill('不应保存的标题');
     const checking = page.waitForRequest('**/check');
-    await inspector.getByRole('button', { name: '应用属性', exact: true }).click();
+    await page.getByRole('button', { name: '应用属性', exact: true }).click();
     await checking;
-    await page.getByRole('button', { name: '复制布局', exact: true }).click();
+    const drawer = page.getByRole('dialog', { name: '原分区', exact: true });
+    await drawer.getByRole('button', { name: '关闭', exact: true }).click();
     await page.getByRole('button', { name: '放弃修改并继续', exact: true }).click();
+    await page.getByRole('button', { name: '复制布局', exact: true }).click();
     const copy = page.getByRole('dialog', { name: '复制布局', exact: true });
     await expect(copy).toBeVisible();
     const checked = page.waitForResponse('**/check');
     resolve();
     expect((await checked).ok()).toBeTruthy();
     await copy.getByRole('button', { name: '关闭', exact: true }).click();
-    await expect(inspector.getByLabel('标题', { exact: true })).toBeEnabled();
+    await page
+      .getByRole('navigation', { name: '视图大纲' })
+      .locator('[data-node-path="/views/desktop"]')
+      .click();
+    await expect(inspector.getByLabel('标题', { exact: true })).toHaveValue('原分区');
     await expect(await schemaSource(page)).toHaveValue(source);
   } finally {
     resolve();
@@ -182,7 +203,7 @@ test('repairing an incomplete number to its original value clears pending naviga
     .click();
   const input = page.getByLabel('最长字符数', { exact: true });
   await input.fill('');
-  await expect(page.getByRole('button', { name: '保存配置', exact: true })).toBeDisabled();
+  await expect(page.locator('.workspace-save')).toBeDisabled();
   await input.fill('12');
   await expect(page.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
   await expect(await schemaSource(page)).toHaveValue(source);
@@ -206,10 +227,15 @@ test('an unavailable preview Host does not retain the old runtime controls', asy
   await page.getByRole('button', { name: '布局', exact: true }).click();
   const preview = page.getByRole('region', { name: '真实表单预览' });
   await expect(preview.getByRole('button', { name: '旧预览按钮' })).toBeVisible();
+  await page
+    .getByRole('navigation', { name: '视图大纲' })
+    .locator('[data-node-path="/views/desktop"]')
+    .click();
   const inspector = page.getByRole('region', { name: '控件配置' });
-  await inspector.getByText('事件 activate', { exact: true }).click();
+  await inspector.locator('summary').filter({ hasText: '事件 activate' }).click();
   await inspector.getByLabel('Host 事件 activate').fill('unavailable.sampleHost');
   await inspector.getByRole('button', { name: '应用事件 activate' }).click();
+  await closeWorkbenchDrawer(page);
   await expect(preview.getByText(/未配置这些模拟能力.*unavailable.sampleHost/)).toBeVisible();
   await expect(preview.getByRole('button', { name: '旧预览按钮' })).toHaveCount(0);
 });

@@ -2,7 +2,7 @@
 
 import { useId, type ReactNode } from 'react';
 import type { UnderstandingItem } from './platform-api';
-import { AgentReply } from './agent-reply';
+import { AgentMessage, AgentReply } from './agent-reply';
 
 export function AgentInteractionCard({
   title,
@@ -62,10 +62,12 @@ export function AgentTurnProgress({
         </details>
       )}
       {text && (
-        <div data-speaker="assistant">
-          <b>表单助手</b>
-          <AgentReply text={text} streaming />
-        </div>
+        <AgentMessage text={text}>
+          <div data-speaker="assistant">
+            <b>表单助手</b>
+            <AgentReply text={text} streaming />
+          </div>
+        </AgentMessage>
       )}
     </>
   );

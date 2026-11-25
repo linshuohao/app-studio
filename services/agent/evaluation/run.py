@@ -13,13 +13,22 @@ from time import monotonic
 from uuid import uuid4
 
 from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.messages import AIMessage
+from langchain_core.outputs import ChatGeneration, LLMResult
+from pydantic import JsonValue
 from starlette.config import Config
 
 from form_agent.agent.budgets import TURN_RECURSION_LIMIT
 from form_agent.agent.graph import build_turn_graph
 from form_agent.agent.tools.dependencies import AgentToolDependencies
-from form_agent.business.conversations.model import Context, Message, public_result
-from form_agent.business.form_authoring.contracts import CheckReceipt
+from form_agent.business.conversations.model import (
+    Context,
+    Message,
+    public_result,
+)
+from form_agent.business.form_authoring.contracts import (
+    CheckReceipt,
+)
 from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
 from form_agent.integrations.compiler import candidate_digest
 from form_agent.integrations.models import configured_model
@@ -28,7 +37,7 @@ from form_agent.observability.raw_trace import RawTraceArchive
 HERE = Path(__file__).resolve().parent
 AGENT = HERE.parent
 ROOT = AGENT.parent.parent
-PAIRED = AGENT / "examples/create-form/paired"
+EXAMPLES = AGENT / "examples"
 MANUAL = AGENT / "knowledge/createform-l1-2026-11-22.2.md"
 ENVIRONMENT = "createform-eval-web"
 SCORER = "createform-score-v1"
@@ -44,6 +53,52 @@ class RouteEvidence(BaseCallbackHandler):
     def on_chain_start(self, serialized, inputs, *, name=None, metadata=None, **kwargs):
         if name in NODES and (metadata or {}).get("langgraph_node") == name:
             self.nodes.append(name)
+
+
+class ModelUsage(BaseCallbackHandler):
+    """Record reported usage once per completed provider call, including streamed calls."""
+
+    def __init__(self):
+        self.started = 0
+        self.reported = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self.cached_input_tokens = 0
+
+    def on_chat_model_start(self, serialized, messages, **kwargs):
+        self.started += 1
+
+    def on_llm_end(self, response: LLMResult, **kwargs):
+        usages = [
+            generation.message.usage_metadata
+            for batch in response.generations
+            for generation in batch
+            if isinstance(generation, ChatGeneration)
+            and isinstance(generation.message, AIMessage)
+            and generation.message.usage_metadata
+        ]
+        if not usages:
+            return
+        self.reported += 1
+        for usage in usages:
+            if usage is None:
+                continue
+            self.input_tokens += usage["input_tokens"]
+            self.output_tokens += usage["output_tokens"]
+            self.cached_input_tokens += usage.get("input_token_details", {}).get(
+                "cache_read", 0
+            )
+
+    def snapshot(self):
+        return {
+            "calls": self.started,
+            "reported_calls": self.reported,
+            "complete": self.started > 0 and self.started == self.reported,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "total_tokens": self.input_tokens + self.output_tokens,
+            "cached_input_tokens": self.cached_input_tokens,
+        }
 
 
 async def bridge(operation, archive=None, **inputs):
@@ -86,13 +141,14 @@ async def bridge(operation, archive=None, **inputs):
     return json.loads(output)
 
 
-async def run_case(case, mode, callbacks=(), archive=None):
+async def run_case(case, mode, callbacks=(), archive=None, *, compose="staged"):
     started = monotonic()
     checks, turns, routes = [], [], []
     candidate = None
     error = None
     runtime = {}
     generation_ms = None
+    usage = ModelUsage()
 
     async def compile_candidate(context, text):
         receipt = CheckReceipt.model_validate(
@@ -101,11 +157,16 @@ async def run_case(case, mode, callbacks=(), archive=None):
         checks.append(receipt.model_dump())
         return receipt
 
-    async def protocol(context, query):
+    async def protocol(context, query) -> JsonValue:
         return {"knowledge_version": MANUAL.stem, "markdown": MANUAL.read_text()}
 
     async def catalog(context, kind, query):
         return await bridge("catalog", archive, kind=kind, query=query)
+
+    async def check_schema(context, text, cases):
+        return CheckReceipt.model_validate(
+            await bridge("check-schema", archive, schema=text, cases=cases)
+        )
 
     try:
         if mode == "agent":
@@ -113,7 +174,12 @@ async def run_case(case, mode, callbacks=(), archive=None):
             conversation = str(uuid4())
             graph = build_turn_graph(
                 configured_model(),
-                AgentToolDependencies(protocol, catalog, compile_candidate),
+                AgentToolDependencies(
+                    protocol,
+                    catalog,
+                    compile_candidate,
+                    check_schema if compose == "staged" else None,
+                ),
             )
             clarification = case.get("clarification")
             messages = ["请按这份 PRD 创建表单。"]
@@ -142,6 +208,7 @@ async def run_case(case, mode, callbacks=(), archive=None):
                             "recursion_limit": TURN_RECURSION_LIMIT,
                             "callbacks": [
                                 route,
+                                usage,
                                 *callbacks,
                                 *([archive] if archive else []),
                             ],
@@ -163,7 +230,7 @@ async def run_case(case, mode, callbacks=(), archive=None):
                 if index == 0 and clarification and result["kind"] != "clarification":
                     break
         else:
-            candidate = (PAIRED / case["fixture"] / "expected.form.json").read_text()
+            candidate = (EXAMPLES / case["fixture"] / "expected.form.json").read_text()
             if (
                 mode == "reference-broken"
                 and case["id"] == "country-change-clears-city"
@@ -188,6 +255,7 @@ async def run_case(case, mode, callbacks=(), archive=None):
     result = score_case(case, mode, turns, routes, checks, runtime, error, started)
     if mode == "agent":
         result["agent_ms"] = generation_ms
+        result["model_usage"] = usage.snapshot()
     return result
 
 
@@ -300,7 +368,7 @@ def load_cases():
         raise ValueError("Evaluation cases require unique IDs")
     for item in cases.values():
         item["markdown"] = (
-            PAIRED / item["fixture"] / (item["prd"] + ".md")
+            EXAMPLES / item["fixture"] / (item["prd"] + ".md")
         ).read_text()
         if target := item.get("reuse_assertions"):
             item["assertions"] = cases[target]["assertions"]
@@ -345,7 +413,9 @@ def save_report(output, metadata, results, experiment_url=None):
         print(f"Langfuse: {experiment_url}")
 
 
-async def run_item(case, mode, callbacks=(), archive_path=None, trace_id=None):
+async def run_item(
+    case, mode, callbacks=(), archive_path=None, trace_id=None, *, compose="staged"
+):
     label = f"{case['id']} #{case['trial']}"
     print(f"Running {label}", flush=True)
     archive = (
@@ -360,7 +430,7 @@ async def run_item(case, mode, callbacks=(), archive_path=None, trace_id=None):
     )
     if archive:
         archive.record("evaluation.start", case=case, mode=mode)
-    result = await run_case(case, mode, callbacks, archive)
+    result = await run_case(case, mode, callbacks, archive, compose=compose)
     if archive:
         archive.record("evaluation.end", output=result)
     print(f"{label}: {result['failure_at']} ({result['elapsed_ms']} ms)", flush=True)
@@ -386,6 +456,7 @@ def run_langfuse(items, args, metadata, archive_path):
             callbacks=(CallbackHandler(public_key=public_key),),
             archive_path=archive_path,
             trace_id=client.get_current_trace_id(),
+            compose=args.compose,
         )
 
     def evaluate(*, output, **kwargs):
@@ -483,6 +554,14 @@ def main():
         "--mode", choices=["agent", "reference", "reference-broken"], default="agent"
     )
     parser.add_argument("--case", action="append")
+    parser.add_argument("--compose", choices=["legacy", "staged"], default="staged")
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        choices=range(1, 6),
+        default=1,
+        help="Run up to this many offline cases at once",
+    )
     parser.add_argument("--repeat", type=int, choices=range(1, 11), default=1)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
@@ -496,6 +575,8 @@ def main():
         help="Read local Langfuse/model settings",
     )
     args = parser.parse_args()
+    if args.jobs != 1 and not args.offline:
+        parser.error("--jobs requires --offline")
     for env_file in args.env_file:
         for name, value in Config(env_file).file_values.items():
             os.environ.setdefault(name, value)
@@ -526,6 +607,8 @@ def main():
         "suite": version,
         "scorer": SCORER,
         "mode": args.mode,
+        "compose": args.compose,
+        "jobs": args.jobs,
         "environment": ENVIRONMENT,
         "model": os.getenv("CREATE_FORM_MODEL", "") if args.mode == "agent" else "",
         "dataset_digest": sha256(
@@ -546,10 +629,18 @@ def main():
     if args.offline:
 
         async def run_all():
-            return [
-                await run_item(item["input"], args.mode, archive_path=archive_path)
-                for item in items
-            ]
+            slots = asyncio.Semaphore(args.jobs)
+
+            async def run(item):
+                async with slots:
+                    return await run_item(
+                        item["input"],
+                        args.mode,
+                        archive_path=archive_path,
+                        compose=args.compose,
+                    )
+
+            return await asyncio.gather(*(run(item) for item in items))
 
         results, url = asyncio.run(run_all()), None
     else:

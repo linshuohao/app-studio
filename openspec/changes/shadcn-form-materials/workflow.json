@@ -1,0 +1,29 @@
+{
+  "authority": ["docs/design/extension-integration.md"],
+  "scope": [
+    "packages/materials-react/src",
+    "packages/materials-react/tests",
+    "packages/materials-react/catalog-docs.json",
+    "packages/materials-react/package.json",
+    "pnpm-lock.yaml",
+    "apps/studio/src/app/web-capabilities.ts",
+    "apps/studio/tests/catalog-experience.spec.ts",
+    "apps/playground/src/demos/catalog.tsx",
+    "apps/playground/src/demos/interactions",
+    "services/api/src/platform/material-previews.ts",
+    "services/api/src/platform/catalog-documentation.ts",
+    "tests/e2e/interactions.spec.ts",
+    ".changeset/asset-4a5ccc3b-2f58-4b03-992c-d565f6833af4.md",
+    ".changeset/asset-85641006-c219-42d8-bf4a-ebd91328e526.md",
+    ".changeset/asset-972baeb4-4fa4-4bea-b2a1-f185e2fae90f.md",
+    ".changeset/asset-b5a04ea4-a55d-4255-b0f7-bfe481234ea0.md",
+    ".changeset/asset-bed74c64-bb84-4576-94e2-1cf36b69aa2c.md"
+  ],
+  "checks": [
+    ["pnpm", "assets:check"],
+    ["pnpm", "--filter", "@form-engine/materials-react", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/materials-react", "test", "--maxWorkers=2"],
+    ["node", "tools/engineering/catalog-docs.mjs", "--check"],
+    [".venv-docs/bin/python", "tools/docs/build_docs.py", "--check"]
+  ]
+}

@@ -1,0 +1,18 @@
+.status {
+  position: fixed;
+  z-index: 40;
+  inset-inline: var(--studio-space-16);
+  inset-block-end: var(--studio-space-16);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.notice {
+  padding: var(--studio-space-8) var(--studio-space-12);
+  border: 1px solid var(--studio-warning-border);
+  border-radius: var(--studio-radius-8);
+  background: var(--studio-warning-bg);
+  color: var(--studio-warning-fg);
+  font: var(--studio-type-control);
+}

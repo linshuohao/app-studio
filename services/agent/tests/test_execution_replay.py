@@ -127,14 +127,24 @@ def test_public_answer_survives_mid_stream_provider_failure(tmp_path, monkeypatc
     url = "/internal/v1/conversations/" + str(uuid4())
     body = message()
     with TestClient(app(engine, [decision("chat")])) as client:
-        assert client.post(url + "/turns", headers=AUTH, json=body).status_code == 502
-        events = client.get(url, headers=AUTH).json()["attempts"][0]["events"]
-        assert {"type": "text_delta", "delta": "已经发送的半句"} in events
+        response = client.post(
+            url + "/turns",
+            headers={**AUTH, "Accept": "application/x-ndjson"},
+            json=body,
+        )
+        failure = json.loads(list(response.iter_lines())[-1])
+        assert failure["status"] == 502
+        assert failure["reason"] == "无法连接上游服务，请稍后继续。"
+        attempt = client.get(url, headers=AUTH).json()["attempts"][0]
+        assert attempt["status"] == "interrupted" and attempt["resumable"]
+        assert attempt["interruptionReason"] == failure["reason"]
+        assert {"type": "text_delta", "delta": "已经发送的半句"} in attempt["events"]
     with TestClient(app(engine, [])) as client:
         res = client.post(url + "/turns/" + body["turnId"] + "/resume", headers=AUTH)
         assert res.status_code == 200, res.text
         saved = res.json()["conversation"]
         assert saved["turns"][0]["result"]["message"] == "新的完整回答"
+        assert "interruptionReason" not in saved["attempts"][0]
         projected = ""
         for event in saved["attempts"][0]["events"]:
             if event["type"] == "text_reset":

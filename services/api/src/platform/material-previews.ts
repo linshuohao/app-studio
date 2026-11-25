@@ -1,4 +1,4 @@
-import type { FormDefinition, ViewNode } from '@form-engine/protocol/definition';
+import type { FormDefinition, MaterialNode, ViewNode } from '@form-engine/protocol/definition';
 import type { JsonValue } from '@form-engine/protocol';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { remoteSelectManifest } from '@form-engine/materials-react/manifests';
@@ -21,6 +21,19 @@ const amount: ViewNode = {
   material: 'value-display',
   props: { value: 12800, format: 'moneyMinor' },
 };
+function controlField(
+  label: string,
+  path: string,
+  control: Omit<MaterialNode, 'bindings'>,
+): ViewNode {
+  const bindings = { value: ref(path) };
+  return {
+    material: 'field',
+    props: { label },
+    bindings,
+    slots: { default: [{ ...control, bindings }] },
+  };
+}
 const examples: Record<string, ViewNode> = {
   'array-editor': {
     material: 'array-editor',
@@ -125,6 +138,32 @@ const examples: Record<string, ViewNode> = {
     props: { label: '出行日期' },
     bindings: { start: ref('/start'), end: ref('/end') },
   },
+  'date-picker': controlField('出生日期', '/birthDate', {
+    material: 'date-picker',
+    props: { min: '1900-01-01', max: '2028-12-31' },
+  }),
+  textarea: controlField('备注', '/notes', {
+    material: 'textarea',
+    props: { placeholder: '请输入备注', rows: 3, maxLength: 200 },
+  }),
+  'radio-group': controlField('出行方式', '/mode', {
+    material: 'radio-group',
+    props: {
+      options: [
+        { id: 'train', label: '高铁' },
+        { id: 'flight', label: '飞机' },
+      ],
+    },
+  }),
+  'checkbox-group': controlField('通知渠道', '/notifications', {
+    material: 'checkbox-group',
+    props: {
+      options: [
+        { id: 'email', label: '电子邮件' },
+        { id: 'sms', label: '短信' },
+      ],
+    },
+  }),
   'remote-select': {
     material: 'remote-select',
     props: { placeholder: '搜索目的地', filterKey: 'CN' },
@@ -142,6 +181,9 @@ const data: JsonValue = {
   start: '2026-12-01',
   end: '2026-12-05',
   city: null,
+  birthDate: '1990-06-15',
+  notes: '',
+  notifications: ['email'],
 };
 const readOnlyName: ViewNode = {
   ...field,
@@ -178,6 +220,9 @@ function compilePreview(
           insured: { type: 'object' },
           start: { type: ['string', 'null'] },
           end: { type: ['string', 'null'] },
+          birthDate: { type: ['string', 'null'] },
+          notes: { type: 'string' },
+          notifications: { type: 'array', items: { type: 'string' } },
           city: remoteSelectManifest.bindings!.value!.schema,
         },
       },

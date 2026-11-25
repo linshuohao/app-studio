@@ -1,13 +1,13 @@
 'use client';
 
-import { EditorViewSwitch } from '../components/ui/editor-view-switch';
-import { StudioSelect } from '../components/ui/select';
+import { EditorViewSwitch } from '@form-engine/studio-design-components/editor-view-switch';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { createPortal } from 'react-dom';
 import { JsonEditor } from '../components/json/json-editor';
 import { Modal } from './modal';
 import { SchemaConditionsGuide } from './schema-conditions-guide';
 import { FieldPicker } from '../components/field-picker';
-import { Button, IconButton } from '../components/ui/controls';
+import { Button, IconButton } from '@form-engine/studio-design-components/controls';
 import { useId, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { JsonNode } from '../components/json/model';
@@ -603,7 +603,7 @@ function RuleCards({ model, text, node, apply, locate, compact, readOnly, openRe
           return !!branch && mentionsField(model, branch, node.key!);
         }) &&
           (compact && openRelated ? (
-            <section className="schema-rule-card">
+            <section className="schema-rule-card" aria-label={caption}>
               <h5>{caption}</h5>
               <p>{ruleText(model, n)}</p>
               <Button variant="text" onClick={() => openRelated(parent!.path)}>

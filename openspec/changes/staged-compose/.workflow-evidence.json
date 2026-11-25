@@ -1,0 +1,56 @@
+{
+  "fingerprint": "8ab5192c9d7e8d31f9f8f7305adee969923168d992c5e2bb84204b8c7bdae2ea",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ],
+    [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests",
+      "services/agent/evaluation/test_run.py",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/compiler",
+      "test"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/runtime",
+      "test"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "test"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/compiler",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "catalog:check"
+    ]
+  ]
+}

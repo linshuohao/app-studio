@@ -1,0 +1,342 @@
+{
+  "protocolVersion": "1.0",
+  "id": "runtime-dependency",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": ["contactName", "startDate", "endDate"],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "旅行险预登记与渠道核验"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "联系人姓名"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/contactName"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/contactName"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "date-range",
+          "props": {
+            "label": "保险期间",
+            "startLabel": "起保日",
+            "endLabel": "终保日"
+          },
+          "bindings": {
+            "start": {
+              "source": "data",
+              "path": "/startDate"
+            },
+            "end": {
+              "source": "data",
+              "path": "/endDate"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "提交预登记"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "travel.submitPreregistration"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "trip-length",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endDate"
+            }
+          },
+          30
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endDate"
+        },
+        "code": "trip-length",
+        "message": {
+          "text": "保险期间应为 1 至 30 个自然日"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/startDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/endDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/endDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "start-window",
+      "kind": "internal",
+      "assert": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "context",
+                      "path": "/businessDate"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          },
+          {
+            "op": "core.gte",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "context",
+                      "path": "/businessDate"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              2
+            ]
+          },
+          {
+            "op": "core.lte",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "context",
+                      "path": "/businessDate"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              91
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/startDate"
+        },
+        "code": "start-window",
+        "message": {
+          "text": "起保日须在业务日期后的第 1 至 90 天"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "context",
+                  "path": "/businessDate"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startDate"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.not",
+                "args": [
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/startDate"
+                        }
+                      },
+                      null
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "context": {
+        "businessDate": "北京时间业务日期，YYYY-MM-DD。缺失时只能预览，不能正式交付。"
+      },
+      "events": {
+        "travel.submitPreregistration": "对当前快照完整校验后送渠道核验姓名及起止日期。展示拒绝原因，仅在同一快照通过后提交。"
+      }
+    }
+  }
+}

@@ -136,6 +136,144 @@
       }
     ]
   },
+  "date-picker": {
+    "title": "日期选择",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "键入或从日历选择单个日期。",
+    "annotations": {
+      "/propsSchema/properties/min": "可选日期的下限，包含当天。",
+      "/propsSchema/properties/max": "可选日期的上限，包含当天。",
+      "/propsSchema/properties/readOnly": "只读展示当前日期。",
+      "/propsSchema/properties/disabled": "禁用日期输入。",
+      "/propsSchema/properties/placeholder": "空日期的输入提示。",
+      "/bindings/value": "严格 YYYY-MM-DD 公历日期，清空为 null。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "min": "1900-01-01",
+          "max": "2028-12-31"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "1990-06-15"
+        }
+      }
+    ]
+  },
+  "textarea": {
+    "title": "多行文本",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "输入备注和其他多行文本。",
+    "annotations": {
+      "/propsSchema/properties/rows": "可见行数，默认 3。",
+      "/propsSchema/properties/maxLength": "最大文本长度。",
+      "/propsSchema/properties/readOnly": "只读展示当前文本。",
+      "/propsSchema/properties/disabled": "禁用文本输入。",
+      "/propsSchema/properties/placeholder": "空文本的输入提示。",
+      "/bindings/value": "保留换行与空白，清空写空字符串。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "rows": 3,
+          "maxLength": 200
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "第一行\n第二行"
+        }
+      }
+    ]
+  },
+  "radio-group": {
+    "title": "单选组",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "从一组可见选项中选择一项。",
+    "annotations": {
+      "/propsSchema/properties/options": "选项列表，每项包含唯一的 id 和显示 label。",
+      "/propsSchema/properties/options/items/properties/id": "选项的稳定 ID。",
+      "/propsSchema/properties/options/items/properties/label": "用户看到的选项文字。",
+      "/propsSchema/properties/disabled": "禁用组内全部选项。",
+      "/bindings/value": "选中的选项 ID，空态为 null。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "options": [
+            {
+              "id": "train",
+              "label": "高铁"
+            },
+            {
+              "id": "flight",
+              "label": "飞机"
+            }
+          ]
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "train"
+        }
+      }
+    ]
+  },
+  "checkbox-group": {
+    "title": "多选组",
+    "category": "输入",
+    "implementation": "React",
+    "summary": "从一组可见选项中选择多项。",
+    "annotations": {
+      "/propsSchema/properties/options": "选项列表，每项包含唯一的 id 和显示 label。",
+      "/propsSchema/properties/options/items/properties/id": "选项的稳定 ID。",
+      "/propsSchema/properties/options/items/properties/label": "用户看到的选项文字。",
+      "/propsSchema/properties/disabled": "禁用组内全部选项。",
+      "/bindings/value": "已选的选项 ID 数组，清空为 []。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "options": [
+            {
+              "id": "email",
+              "label": "电子邮件"
+            },
+            {
+              "id": "sms",
+              "label": "短信"
+            }
+          ]
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": ["email"]
+        }
+      }
+    ]
+  },
   "date-range": {
     "title": "日期范围",
     "category": "输入",

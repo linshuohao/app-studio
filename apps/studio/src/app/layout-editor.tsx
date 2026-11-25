@@ -1,8 +1,8 @@
 'use client';
 import { JsonEditor } from '../components/json/json-editor';
 import { type CSSProperties, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Button, Drawer, Field, Icon, Input, Tabs } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Button, Drawer, Field, Icon, Input, Tabs } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import * as manifests from '@form-engine/materials-react/manifests';
 import { compactJson } from '../components/json/format';
 import type { JsonNode } from '../components/json/model';
@@ -279,6 +279,8 @@ function LayoutWorkspace({
       <section className={'layout-block' + (node === n ? ' selected' : '')} key={n.start}>
         <button
           className="layout-node-name"
+          data-reference-path={n.path}
+          data-reference-label={'控件 · ' + label}
           draggable={items.some((i) => i.node === n && !!i.parent)}
           onDragStart={(e) => {
             e.dataTransfer.setData('text/plain', n.path);
@@ -498,6 +500,8 @@ function LayoutWorkspace({
                           variant="text"
                           className="layout-outline-row"
                           data-node-path={i.node.path}
+                          data-reference-path={i.node.path}
+                          data-reference-label={'控件 · ' + name}
                           aria-pressed={node === i.node}
                           style={{
                             paddingInlineStart:
@@ -639,7 +643,7 @@ function LayoutWorkspace({
                         </Drawer.Close>
                       </div>
                     </header>
-                    <div className="layout-drawer-body">
+                    <Drawer.Content className="layout-drawer-body">
                       <section className="layout-inspector" aria-label="节点设置">
                         {error && <p role="alert">{error}</p>}
                         {readOnly ? (
@@ -722,7 +726,7 @@ function LayoutWorkspace({
                                         {destinations
                                           .filter(({ problem }) => problem)
                                           .map(({ pos, id }) => (
-                                            <option key={id} value={id} disabled>
+                                            <option key={id} value={id}>
                                               {destinationName(pos)} · 受限
                                             </option>
                                           ))}
@@ -769,7 +773,7 @@ function LayoutWorkspace({
                           </>
                         )}
                       </section>
-                    </div>
+                    </Drawer.Content>
                     <div className="layout-drawer-footer" ref={setDrawerFooter} />
                   </>
                 )}
@@ -802,7 +806,7 @@ function LayoutWorkspace({
                   </div>
                   <Drawer.Close render={<Button variant="text" />}>关闭</Drawer.Close>
                 </header>
-                <div className="layout-drawer-body">
+                <Drawer.Content className="layout-drawer-body">
                   {dialog && (
                     <form
                       className="layout-settings-form"
@@ -839,7 +843,7 @@ function LayoutWorkspace({
                       </footer>
                     </form>
                   )}
-                </div>
+                </Drawer.Content>
               </Drawer.Popup>
             </Drawer.Viewport>
           </Drawer.Portal>

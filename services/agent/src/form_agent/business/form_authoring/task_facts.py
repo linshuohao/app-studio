@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from form_agent.business.conversations.model import Message
 from form_agent.business.form_authoring.contracts import (
     CheckReceipt,
+    ComposeCheckpoint,
     PreviousReview,
     RepairContext,
     TurnInput,
@@ -25,6 +26,7 @@ class FormAuthoringTaskFacts(BaseModel):
     candidate: str | None = None
     questions: list[str] = Field(default_factory=list)
     failure: RepairContext | None = None
+    compose_checkpoint: ComposeCheckpoint | None = None
     failure_base: str | None = None
     working_check: CheckReceipt | None = None
     draft_id: str | None = None
@@ -69,6 +71,7 @@ class FormAuthoringTaskFacts(BaseModel):
         )
         return TurnInput(
             message=message.message,
+            references=message.references,
             context=message.context.model_dump(exclude_none=True),
             history=history,
             requirements_document=doc,
@@ -77,6 +80,7 @@ class FormAuthoringTaskFacts(BaseModel):
             previous_review=self.review,
             previous_working_check=self.working_check,
             previous_failure=self.failure if base == self.failure_base else None,
+            previous_compose=self.compose_checkpoint if base is None else None,
             open_questions=self.questions,
         )
 
@@ -101,6 +105,10 @@ class FormAuthoringTaskFacts(BaseModel):
             self.failure = None
             self.failure_base = None
             self.review = None
+            checkpoint = result.get("compose_checkpoint")
+            self.compose_checkpoint = (
+                ComposeCheckpoint.model_validate(checkpoint) if checkpoint else None
+            )
             if trace_data := result.get("requirements_trace"):
                 trace = RequirementsTrace.model_validate(trace_data)
                 for entry in [*trace.standard.requirements, *trace.standard.issues]:

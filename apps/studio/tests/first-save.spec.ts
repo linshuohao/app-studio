@@ -201,6 +201,9 @@ for (const delayedPhase of ['create', 'open']) {
   test(`late ${delayedPhase} response preserves newer browser navigation`, async ({ page }) => {
     await signIn(page);
     await page.getByRole('button', { name: '物料', exact: true }).click();
+    const catalogPage = page.getByRole('navigation', { name: '分页' }).getByRole('status');
+    await expect(catalogPage).toHaveText(/^第 1 \/ \d+ 页，共 \d+ 条$/);
+    const originalPage = await catalogPage.innerText();
     await page
       .locator('.studio-navigation')
       .getByRole('button', { name: '表单', exact: true })
@@ -230,8 +233,14 @@ for (const delayedPhase of ['create', 'open']) {
     await pending;
     await page.goBack();
     await expect(page).toHaveURL(/catalog=materials/);
+    const lateResponse = page.waitForResponse((response) =>
+      delayedPhase === 'create'
+        ? response.request().method() === 'POST' && response.url().endsWith('/forms')
+        : response.request().method() === 'GET' && /\/forms\/[^/?]+$/.test(response.url()),
+    );
     unblock();
-    await expect(page.getByRole('navigation', { name: '分页' })).toContainText('第 1 / 3 页');
+    await lateResponse;
+    await expect(catalogPage).toHaveText(originalPage);
     await expect(page.locator('.material-card')).toHaveCount(6);
     await expect(
       page.locator('.studio-navigation').getByRole('button', { name: '表单', exact: true }),

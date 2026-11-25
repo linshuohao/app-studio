@@ -53,6 +53,7 @@ def project_public_event(event):
     if kind == "on_custom_event" and name in (
         "understanding_item",
         "understanding_reset",
+        "compose_phase",
     ):
         return {"type": name, **event["data"]}
     elif kind == "on_custom_event" and name == "public_text":

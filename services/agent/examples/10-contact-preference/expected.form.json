@@ -1,0 +1,329 @@
+{
+  "protocolVersion": "1.0",
+  "id": "contact-preference",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "channel": {
+          "type": "string",
+          "enum": ["phone", "email"]
+        },
+        "mobile": {
+          "type": "string",
+          "minLength": 11,
+          "maxLength": 11,
+          "pattern": "^1[0-9]{10}$"
+        },
+        "emailAddress": {
+          "type": "string",
+          "minLength": 1,
+          "format": "email"
+        },
+        "memo": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        }
+      },
+      "required": ["contactName", "channel"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": ["channel"],
+            "properties": {
+              "channel": {
+                "const": "phone"
+              }
+            }
+          },
+          "then": {
+            "required": ["mobile"],
+            "not": {
+              "required": ["emailAddress"]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["channel"],
+            "properties": {
+              "channel": {
+                "const": "email"
+              }
+            }
+          },
+          "then": {
+            "required": ["emailAddress"],
+            "not": {
+              "required": ["mobile"]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "旅客联系偏好登记"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "旅客称呼"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/contactName"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/contactName"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "联系渠道"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/channel"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/channel"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "phone",
+                    "label": "电话"
+                  },
+                  {
+                    "id": "email",
+                    "label": "邮件"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/channel"
+                    }
+                  },
+                  "phone"
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "电话"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/mobile"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/mobile"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "tel"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/channel"
+                    }
+                  },
+                  "email"
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "邮箱"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/emailAddress"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/emailAddress"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "备注"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/memo"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/memo"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "reactions": [
+    {
+      "id": "clear-old-phone",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/channel"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/mobile"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.not",
+        "args": [
+          {
+            "op": "core.eq",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/channel"
+                }
+              },
+              "phone"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-old-email",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/channel"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/emailAddress"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.not",
+        "args": [
+          {
+            "op": "core.eq",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/channel"
+                }
+              },
+              "email"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

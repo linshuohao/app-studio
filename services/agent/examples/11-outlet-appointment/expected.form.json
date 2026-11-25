@@ -1,0 +1,280 @@
+{
+  "protocolVersion": "1.0",
+  "id": "outlet-appointment",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "cityCode": {
+          "type": "string",
+          "enum": ["SHA", "TYO"]
+        },
+        "outlet": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["id", "label"],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pickupPeriod": {
+          "type": "string",
+          "enum": ["AM", "PM"]
+        }
+      },
+      "required": ["contactName", "cityCode", "outlet", "pickupPeriod"],
+      "additionalProperties": false,
+      "not": {
+        "required": ["outlet"],
+        "properties": {
+          "outlet": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "目的地服务网点预约"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "联系人"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/contactName"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/contactName"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "目的地城市"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/cityCode"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/cityCode"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "SHA",
+                    "label": "上海"
+                  },
+                  {
+                    "id": "TYO",
+                    "label": "东京"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "material": "condition",
+          "props": {
+            "visible": {
+              "$expr": {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/cityCode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.not",
+                    "args": [
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/cityCode"
+                            }
+                          },
+                          null
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "领取网点"
+              },
+              "bind": "/outlet",
+              "children": [
+                {
+                  "material": "remote-select",
+                  "bind": "/outlet",
+                  "props": {
+                    "filterKey": {
+                      "$expr": {
+                        "ref": {
+                          "source": "data",
+                          "path": "/cityCode"
+                        }
+                      }
+                    }
+                  },
+                  "requests": {
+                    "search": {
+                      "type": "host.request",
+                      "request": "travel.searchOutlets"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "领取时段"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/pickupPeriod"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/pickupPeriod"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "AM",
+                    "label": "上午"
+                  },
+                  {
+                    "id": "PM",
+                    "label": "下午"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "reactions": [
+    {
+      "id": "forget-outlet",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/cityCode"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/outlet"
+          },
+          "value": null
+        }
+      ],
+      "runOnActivate": false
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "requests": {
+        "travel.searchOutlets": {
+          "input": {
+            "query": "搜索词",
+            "filterKey": "筛选编码或 null"
+          },
+          "output": {
+            "items": [
+              {
+                "id": "选项编码",
+                "label": "显示内容"
+              }
+            ]
+          },
+          "behavior": "filterKey 为当前城市。id 为网点编号，label 拼接名称和地址。仅使用当前筛选条件最新响应。"
+        }
+      },
+      "delivery": {
+        "contactName": "/contactName",
+        "cityCode": "/cityCode",
+        "outletId": "/outlet/id",
+        "pickupPeriod": "/pickupPeriod"
+      }
+    }
+  }
+}

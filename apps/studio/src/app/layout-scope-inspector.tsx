@@ -14,7 +14,7 @@ import {
 import { LayoutFieldPicker, fieldReferenceId } from './layout-field-picker';
 import { isDataRef, type LayoutBindingField } from './layout-material-value';
 import { Modal } from './modal';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 
 type Props = {
   m: Model;

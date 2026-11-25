@@ -1,0 +1,55 @@
+/* The Studio root already uses a 13px rem. Keep its existing geometry outside the sample. */
+:root {
+  --studio-font: system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --studio-font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --studio-type-caption: 400 calc(12rem / 13) / calc(18rem / 13) var(--studio-font);
+  --studio-type-control: 500 calc(14rem / 13) / calc(20rem / 13) var(--studio-font);
+  --studio-type-body: 400 calc(14rem / 13) / calc(22rem / 13) var(--studio-font);
+  --studio-type-section: 600 calc(16rem / 13) / calc(24rem / 13) var(--studio-font);
+  --studio-type-title: 600 calc(24rem / 13) / calc(32rem / 13) var(--studio-font);
+  --studio-type-code: 400 1rem / calc(20rem / 13) var(--studio-font-mono);
+  --studio-type-tree-label: 600 calc(12rem / 13) / calc(18rem / 13) var(--studio-font);
+  --studio-type-tree-meta: 400 calc(11rem / 13) / calc(16rem / 13) var(--studio-font);
+  --studio-type-tree-path: 400 calc(11rem / 13) / calc(16rem / 13) var(--studio-font-mono);
+
+  --studio-bg: #f8f9fb;
+  --studio-surface: #fff;
+  --studio-surface-muted: #f2f4f7;
+  --studio-text: #23272f;
+  --studio-text-muted: #525966;
+  --studio-border: #d9dee6;
+  --studio-control-border: #768293;
+  --studio-primary: #262c36;
+  --studio-on-primary: #fff;
+  --studio-primary-hover: #171c24;
+  --studio-hover: #f0f2f6;
+  --studio-selected: #e8eef8;
+  --studio-focus-ring: #315b9b;
+  --studio-success-fg: #166534;
+  --studio-success-bg: #effaf2;
+  --studio-success-border: #a2cbb0;
+  --studio-warning-fg: #794710;
+  --studio-warning-bg: #fff8e7;
+  --studio-warning-border: #dbc08a;
+  --studio-danger-fg: #981b2d;
+  --studio-danger-bg: #fff1f2;
+  --studio-danger-border: #e8b1b9;
+  --studio-info-fg: #244b82;
+  --studio-info-bg: #eff5ff;
+  --studio-info-border: #b4c8e6;
+  --studio-disabled-fg: #555e6c;
+  --studio-disabled-bg: #eff1f4;
+  --studio-overlay-shadow: 0 8px 28px #16192326;
+
+  --studio-space-4: 4px;
+  --studio-space-8: 8px;
+  --studio-space-12: 12px;
+  --studio-space-16: 16px;
+  --studio-space-24: 24px;
+  --studio-space-32: 32px;
+  --studio-radius-4: 4px;
+  --studio-radius-8: 8px;
+  --studio-radius-12: 12px;
+  --studio-control-height: 36px;
+  --studio-control-height-dense: 32px;
+}

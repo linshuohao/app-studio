@@ -4,7 +4,7 @@
     {
       "id": "contact-length",
       "group": "fields",
-      "fixture": "01",
+      "fixture": "01-field-validation",
       "prd": "complete",
       "assertions": [
         { "id": "contact.required", "data": {}, "expected": "invalid" },
@@ -25,7 +25,7 @@
     {
       "id": "contact-clarify-length",
       "group": "clarification",
-      "fixture": "01",
+      "fixture": "01-field-validation",
       "prd": "needs-material",
       "clarification": {
         "terms": ["长度", "字符", "上下限"],
@@ -36,7 +36,7 @@
     {
       "id": "country-enum",
       "group": "fields",
-      "fixture": "02",
+      "fixture": "02-enum-values",
       "prd": "complete",
       "assertions": [
         {
@@ -60,7 +60,7 @@
     {
       "id": "country-change-clears-city",
       "group": "reaction",
-      "fixture": "04",
+      "fixture": "05-clear-on-change",
       "prd": "complete",
       "assertions": [
         {
@@ -82,7 +82,7 @@
     {
       "id": "remote-city-contract",
       "group": "host",
-      "fixture": "05",
+      "fixture": "08-city-search-object",
       "prd": "complete",
       "assertions": [
         {

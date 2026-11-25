@@ -1,4 +1,3 @@
-import { compileDataSchema } from '@form-engine/protocol/internal/schema';
 import type { CompileInput, CompileResult } from '../types.js';
 import { PREPARED_FORMAT_VERSION } from '../types.js';
 import { Diagnostics } from '../diagnostics/collector.js';
@@ -17,6 +16,7 @@ import { compileView } from '../view/compile.js';
 import { TemplateCompiler } from '../view/templates.js';
 import { InteractionCompiler } from '../view/interactions.js';
 import { assemblePrepared } from '../output/assemble.js';
+import { executableDataSchema } from './data-schema.js';
 
 /**
  * 输入检查 → 规范化 → 共享引用 / 表达式分析 → 规则与视图准备 → Prepared 装配。
@@ -97,16 +97,7 @@ export function compile(input: CompileInput): CompileResult {
   if (diagnostics.failed || !view) return fail();
   // 只在所选视图检查通过后组装产物，携带实际引用的资源和能力锁。
   const schemas = models.resources();
-  try {
-    compileDataSchema(definition.data.schema, schemas);
-  } catch (error) {
-    diagnostics.error(
-      'DATA_SCHEMA_INVALID',
-      '/data/schema',
-      error instanceof Error ? error.message : String(error),
-    );
-    return fail();
-  }
+  if (!executableDataSchema(definition.data.schema, schemas, diagnostics)) return fail();
   const prepared = assemblePrepared(
     {
       definition,

@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>组件总览 · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../tokens/tokens.css" />
+    <link rel="stylesheet" href="../components/styles.css" />
+    <link rel="stylesheet" href="../../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="studio-handbook.css" />
+    <link rel="stylesheet" href="studio-technical-samples.css" />
+  </head>
+  <body class="studio-content">
+    <div class="shell">
+      <aside>
+        <header><span class="mark" aria-hidden="true">S</span>Form Studio</header>
+        <nav aria-label="组件目录">
+          <a href="../guidelines.md">Studio Design 设计准则</a>
+          <a aria-current="page" href="studio-design-handbook.html">组件总览</a
+          ><a href="studio-components/tokens.html">Design Token</a
+          ><a href="#design-icon">Design Icon · 图标</a><b>通用</b
+          ><a href="studio-components/button.html">Button · 按钮</a
+          ><a href="studio-components/icon.html">Icon · 图标</a
+          ><a href="studio-components/icon-button.html">IconButton · 图标按钮</a
+          ><a href="studio-components/feedback.html">Feedback · 状态反馈</a><b>表单</b
+          ><a href="studio-components/form.html">Form · 表单</a
+          ><a href="studio-components/field.html">Field · 表单字段</a
+          ><a href="studio-components/input.html">Input · 输入框</a
+          ><a href="studio-components/select.html">Select · 下拉选择</a
+          ><a href="studio-components/textarea.html">Textarea · 多行文本</a
+          ><a href="studio-components/field-layout.html">Field · 带提示的字段布局</a
+          ><a href="studio-components/studioselect.html">StudioSelect · 选项选择器</a><b>数据筛选</b
+          ><a href="studio-components/listfilterbar.html">ListFilterBar · 筛选栏</a><b>数据展示</b
+          ><a href="studio-components/treeview.html">TreeView · 树视图</a
+          ><a href="studio-components/datatable.html">DataTable · 数据表格</a
+          ><a href="studio-components/cardlist.html">CardList · 卡片列表</a
+          ><a href="studio-components/tableresults.html">TableResults · 表格结果区域</a><b>导航</b
+          ><a href="studio-components/pagination.html">Pagination · 分页器</a
+          ><a href="studio-components/tabs.html">Tabs · 标签页 · 切换同页内容</a><b>布局</b
+          ><a href="studio-components/grid.html">Grid · 栅格</a
+          ><a href="studio-components/griditem.html">GridItem · 栅格子项</a
+          ><a href="studio-components/formlayout.html">FormLayout · 表单布局</a
+          ><a href="studio-components/masterdetail.html">MasterDetail · 主从布局</a><b>浮层</b
+          ><a href="studio-components/menu.html">Menu · 下拉菜单</a
+          ><a href="studio-components/modal.html">Dialog · 弹窗</a
+          ><a href="studio-components/drawer.html">Drawer · 抽屉</a
+          ><a href="studio-components/tooltip.html">Tooltip · 悬浮提示</a
+          ><a href="studio-components/native-modal.html">Modal · 原生模态框</a><b>业务组件</b
+          ><a href="studio-components/field-picker.html">FieldPicker · 字段选择器 · 单选与多选</a
+          ><a href="studio-components/expression-editor.html"
+            >ExpressionEditor · 取值来源与表达式编辑</a
+          ><a href="studio-components/editor-view-switch.html"
+            >EditorViewSwitch · 表单与 JSON 切换</a
+          ><a href="studio-components/json-editor.html">JsonEditor · JSON 原文与层级编辑</a
+          ><a href="studio-components/action-editor.html">ActionEditor · 联动动作配置</a
+          ><b>物料与契约</b
+          ><a href="studio-components/material-detail-preview.html"
+            >MaterialDetailPreview · 物料详情预览</a
+          ><a href="studio-components/record-identity.html">RecordIdentity · 记录标识</a
+          ><a href="studio-components/contract-table.html">ContractTable · 契约字段表</a
+          ><a href="studio-components/contract-panel.html">ContractPanel · 契约面板</a
+          ><a href="studio-components/material-card.html">MaterialCard · 物料卡片</a
+          ><a href="studio-components/material-description.html">MaterialDescription · 物料说明</a
+          ><a href="studio-components/manifest-input.html">ManifestInput · 物料常量输入</a
+          ><a href="studio-components/literal-value-list.html">LiteralValueList · 值列表</a
+          ><a href="studio-components/literal-value-editor.html">LiteralValueEditor · 固定值编辑</a
+          ><a href="studio-components/value-input.html">ValueInput · 物料属性值</a><b>配置工具</b
+          ><a href="studio-components/json-source.html">JsonSource · 配置工作稿</a
+          ><a href="studio-components/schema-navigation.html">SchemaNavigation · 编辑离开确认</a
+          ><a href="studio-components/json-editor-view.html"
+            >JsonEditorView · 共享历史的 JSON 编辑视图</a
+          ><a href="studio-components/config-inspection.html">ConfigInspection · 配置检查与预览</a
+          ><a href="studio-components/preview-runtime.html">PreviewRuntime · 运行时试填</a
+          ><a href="studio-components/diff-result.html">DiffResult · 差异结果</a
+          ><a href="studio-components/config-diff.html">ConfigDiff · 配置版本对比</a
+          ><b>字段与表达式</b
+          ><a href="studio-components/expression-verification-panel.html"
+            >ExpressionVerificationPanel · 表达式验证</a
+          ><a href="studio-components/regex-input.html">RegexInput · 正则输入</a
+          ><a href="studio-components/field-tree.html">FieldTree · 字段树</a
+          ><a href="studio-components/field-picker-dialog.html"
+            >FieldPickerDialog · 字段选择对话框</a
+          ><a href="studio-components/field-picker-control.html"
+            >FieldPickerControl · 字段选择入口</a
+          ><a href="studio-components/layout-field-picker.html"
+            >LayoutFieldPicker · 布局绑定字段选择</a
+          ><a href="studio-components/reaction-field-picker.html"
+            >ReactionFieldPicker · 联动字段选择</a
+          ><a href="studio-components/reaction-scope-editor.html"
+            >ReactionScopeEditor · 联动作用域</a
+          ><a href="studio-components/expression-display.html">ExpressionDisplay · 表达式展示</a
+          ><a href="studio-components/function-help.html">FunctionHelp · 函数说明</a
+          ><a href="studio-components/argument-help.html">ArgumentHelp · 参数说明</a
+          ><a href="studio-components/layout-expression-dialog.html"
+            >LayoutExpressionDialog · 布局表达式对话框</a
+          ><b>助手</b><a href="studio-components/agent-merge.html">AgentMerge · 候选合并</a
+          ><a href="studio-components/agent-attempt.html">AttemptHistory · 轮次进度</a
+          ><a href="studio-components/agent-panel.html">AgentPanel · 助手对话面板</a
+          ><a href="studio-components/agent-reply.html">AgentReply · 助手回复</a
+          ><a href="studio-components/agent-candidate-card.html"
+            >AgentCandidateCard · 候选配置卡片</a
+          ><a href="studio-components/agent-issues.html">AgentIssues · 需求缺口</a><b>Host 接入</b
+          ><a href="studio-components/requirements.html">Requirements · Host 能力需求</a
+          ><a href="studio-components/release-host-example.html"
+            >ReleaseHostExample · Host 接入示例</a
+          ><a href="studio-components/release-integration.html">ReleaseIntegration · 发布接入说明</a
+          ><b>管理操作</b><a href="studio-components/copy-form.html">CopyForm · 复制表单</a
+          ><a href="studio-components/form-management.html">FormManagement · 表单管理操作</a
+          ><a href="studio-components/operation-records.html">OperationRecords · 操作记录</a
+          ><a href="studio-components/account-security.html">AccountSecurity · 账号安全设置</a>
+        </nav>
+      </aside>
+      <main id="studio-main">
+        <article data-studio-ui>
+          <header class="hero" id="guide">
+            <small>Form Studio / Design Handbook</small>
+            <h1>Studio 设计手册</h1>
+            <p>
+              基础组件优先复用 Base UI 的属性和交互，通过 Studio Design Token 统一外观。Base UI
+              缺少完整组件时，再组合已有控件与原生
+              HTML。每个条目提供外观示例、可操作样例、调用代码，以及属性、事件和内容区域说明。
+            </p>
+            <a href="studio-components/tokens.html">Design Token</a>
+          </header>
+          <section class="section">
+            <h2>在 Studio 中使用</h2>
+            <p>
+              在组件页编辑完整 JSX
+              使用示例即可更新预览。代码包含组件导入、示例数据、状态、事件回调与渲染。展开「属性用途与取值」查看参数含义。「重置示例」恢复初始状态。示例直接导入
+              Studio 组件，组件或示例源码变更后运行 <code>pnpm handbook:build</code> 更新手册。
+            </p>
+            <p>
+              基础组件优先从
+              <code>apps/studio/src/components/ui</code> 导入。业务组件使用各自页面标明的代码入口或
+              JSX 示例中的导入路径。
+            </p>
+            <pre><code>import { Button, DataTable, type Column } from '../components/ui';</code></pre>
+          </section>
+          <section class="section" id="design-icon">
+            <h2>Design Icon · 图标</h2>
+            <p>
+              Studio
+              设计稿、手册样例与页面实现只能选用项目图标库已收录的图标，同一操作使用同一图标。缺少合适图标时，先提交使用场景、需要表达的含义及现有图标的差异，评审通过并纳入库后再使用。页面通过基础组件库使用图标，避免临时手绘
+              SVG、使用字符或 emoji 代替图标、直接引入其他图标库。
+            </p>
+            <h3>Studio 统一图标库 · Lucide</h3>
+            <p>
+              从项目基础组件库导入 <code>Icon</code>，用 <code>name</code> 选取下表中的图标，例如
+              <code>&lt;Icon name="Columns3" /&gt;</code>。下拉框的 <code>Select.Icon</code> 和
+              <code>Select.ItemIndicator</code>
+              已内置展开和选中图标。图标继承控件的文字颜色；带文字的按钮由文字提供可访问名称，纯图标按钮由按钮提供动作名称，例如「列设置」。
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>图形</th>
+                  <th>含义</th>
+                  <th>库内名称</th>
+                  <th>Studio 使用场景</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span data-handbook-icon="Search"></span></td>
+                  <th scope="row">搜索</th>
+                  <td><code>Search</code></td>
+                  <td>提交筛选条件</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ChevronDown"></span></td>
+                  <th scope="row">展开</th>
+                  <td><code>ChevronDown</code></td>
+                  <td>打开下拉选项</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ArrowUpDown"></span></td>
+                  <th scope="row">可排序</th>
+                  <td><code>ArrowUpDown</code></td>
+                  <td>提示表头可切换排序</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ArrowUp"></span></td>
+                  <th scope="row">升序</th>
+                  <td><code>ArrowUp</code></td>
+                  <td>当前列按升序排列</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ArrowDown"></span></td>
+                  <th scope="row">降序</th>
+                  <td><code>ArrowDown</code></td>
+                  <td>当前列按降序排列</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="Columns3"></span></td>
+                  <th scope="row">列设置</th>
+                  <td><code>Columns3</code></td>
+                  <td>选择要显示的表格列</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ChevronLeft"></span></td>
+                  <th scope="row">上一页</th>
+                  <td><code>ChevronLeft</code></td>
+                  <td>返回上一页结果</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="ChevronRight"></span></td>
+                  <th scope="row">下一页</th>
+                  <td><code>ChevronRight</code></td>
+                  <td>前往下一页结果</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="Check"></span></td>
+                  <th scope="row">已选中</th>
+                  <td><code>Check</code></td>
+                  <td>标记已选的下拉选项或可见列</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="PanelLeftOpen"></span></td>
+                  <th scope="row">展开侧栏</th>
+                  <td><code>PanelLeftOpen</code></td>
+                  <td>展开全局导航或对话列表</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="PanelLeftClose"></span></td>
+                  <th scope="row">收起侧栏</th>
+                  <td><code>PanelLeftClose</code></td>
+                  <td>收起全局导航或对话列表</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="Bot"></span></td>
+                  <th scope="row">Agent</th>
+                  <td><code>Bot</code></td>
+                  <td>打开 Agent 工作区</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="FileText"></span></td>
+                  <th scope="row">表单</th>
+                  <td><code>FileText</code></td>
+                  <td>打开表单列表或当前工作版本</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="Component"></span></td>
+                  <th scope="row">物料</th>
+                  <td><code>Component</code></td>
+                  <td>打开物料目录</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="FunctionSquare"></span></td>
+                  <th scope="row">纯函数</th>
+                  <td><code>FunctionSquare</code></td>
+                  <td>打开纯函数目录</td>
+                </tr>
+                <tr>
+                  <td><span data-handbook-icon="Users"></span></td>
+                  <th scope="row">成员</th>
+                  <td><code>Users</code></td>
+                  <td>打开成员管理</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              <a href="https://lucide.dev/icons/">Lucide 图标目录</a> ·
+              <a href="https://lucide.dev/license">图标许可</a>
+            </p>
+          </section>
+          <!-- Lucide icon license
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+—-
+
+The following Lucide icons are derived from the Feather project:
+
+airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+The MIT License (MIT) (for the icons listed above)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-->
+          <div id="component-api">
+            <label for="component-search">查找组件</label>
+            <input type="search" id="component-search" placeholder="组件名或用途" />
+            <p id="component-no-results" role="status" hidden>没有匹配的组件。</p>
+            <section class="library-group">
+              <h2>通用</h2>
+              <div class="library-links">
+                <a href="studio-components/button.html"
+                  ><strong>Button</strong><small>按钮</small></a
+                ><a href="studio-components/icon.html"><strong>Icon</strong><small>图标</small></a
+                ><a href="studio-components/icon-button.html"
+                  ><strong>IconButton</strong><small>图标按钮</small></a
+                ><a href="studio-components/feedback.html"
+                  ><strong>Feedback</strong><small>状态反馈</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>表单</h2>
+              <div class="library-links">
+                <a href="studio-components/form.html"><strong>Form</strong><small>表单</small></a
+                ><a href="studio-components/field.html"
+                  ><strong>Field</strong><small>表单字段</small></a
+                ><a href="studio-components/input.html"
+                  ><strong>Input</strong><small>输入框</small></a
+                ><a href="studio-components/select.html"
+                  ><strong>Select</strong><small>下拉选择</small></a
+                ><a href="studio-components/textarea.html"
+                  ><strong>Textarea</strong><small>多行文本</small></a
+                ><a href="studio-components/field-layout.html"
+                  ><strong>Field</strong><small>带提示的字段布局</small></a
+                ><a href="studio-components/studioselect.html"
+                  ><strong>StudioSelect</strong><small>选项选择器</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>数据筛选</h2>
+              <div class="library-links">
+                <a href="studio-components/listfilterbar.html"
+                  ><strong>ListFilterBar</strong><small>筛选栏</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>数据展示</h2>
+              <div class="library-links">
+                <a href="studio-components/treeview.html"
+                  ><strong>TreeView</strong><small>树视图</small></a
+                ><a href="studio-components/datatable.html"
+                  ><strong>DataTable</strong><small>数据表格</small></a
+                ><a href="studio-components/cardlist.html"
+                  ><strong>CardList</strong><small>卡片列表</small></a
+                ><a href="studio-components/tableresults.html"
+                  ><strong>TableResults</strong><small>表格结果区域</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>导航</h2>
+              <div class="library-links">
+                <a href="studio-components/pagination.html"
+                  ><strong>Pagination</strong><small>分页器</small></a
+                ><a href="studio-components/tabs.html"
+                  ><strong>Tabs</strong><small>标签页 · 切换同页内容</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>布局</h2>
+              <div class="library-links">
+                <a href="studio-components/grid.html"><strong>Grid</strong><small>栅格</small></a
+                ><a href="studio-components/griditem.html"
+                  ><strong>GridItem</strong><small>栅格子项</small></a
+                ><a href="studio-components/formlayout.html"
+                  ><strong>FormLayout</strong><small>表单布局</small></a
+                ><a href="studio-components/masterdetail.html"
+                  ><strong>MasterDetail</strong><small>主从布局</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>浮层</h2>
+              <div class="library-links">
+                <a href="studio-components/menu.html"
+                  ><strong>Menu</strong><small>下拉菜单</small></a
+                ><a href="studio-components/modal.html"
+                  ><strong>Dialog</strong><small>弹窗</small></a
+                ><a href="studio-components/drawer.html"
+                  ><strong>Drawer</strong><small>抽屉</small></a
+                ><a href="studio-components/tooltip.html"
+                  ><strong>Tooltip</strong><small>悬浮提示</small></a
+                ><a href="studio-components/native-modal.html"
+                  ><strong>Modal</strong><small>原生模态框</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>业务组件</h2>
+              <div class="library-links">
+                <a href="studio-components/field-picker.html"
+                  ><strong>FieldPicker</strong><small>字段选择器 · 单选与多选</small></a
+                ><a href="studio-components/expression-editor.html"
+                  ><strong>ExpressionEditor</strong><small>取值来源与表达式编辑</small></a
+                ><a href="studio-components/editor-view-switch.html"
+                  ><strong>EditorViewSwitch</strong><small>表单与 JSON 切换</small></a
+                ><a href="studio-components/json-editor.html"
+                  ><strong>JsonEditor</strong><small>JSON 原文与层级编辑</small></a
+                ><a href="studio-components/action-editor.html"
+                  ><strong>ActionEditor</strong><small>联动动作配置</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>物料与契约</h2>
+              <div class="library-links">
+                <a href="studio-components/material-detail-preview.html"
+                  ><strong>MaterialDetailPreview</strong><small>物料详情预览</small></a
+                ><a href="studio-components/record-identity.html"
+                  ><strong>RecordIdentity</strong><small>记录标识</small></a
+                ><a href="studio-components/contract-table.html"
+                  ><strong>ContractTable</strong><small>契约字段表</small></a
+                ><a href="studio-components/contract-panel.html"
+                  ><strong>ContractPanel</strong><small>契约面板</small></a
+                ><a href="studio-components/material-card.html"
+                  ><strong>MaterialCard</strong><small>物料卡片</small></a
+                ><a href="studio-components/material-description.html"
+                  ><strong>MaterialDescription</strong><small>物料说明</small></a
+                ><a href="studio-components/manifest-input.html"
+                  ><strong>ManifestInput</strong><small>物料常量输入</small></a
+                ><a href="studio-components/literal-value-list.html"
+                  ><strong>LiteralValueList</strong><small>值列表</small></a
+                ><a href="studio-components/literal-value-editor.html"
+                  ><strong>LiteralValueEditor</strong><small>固定值编辑</small></a
+                ><a href="studio-components/value-input.html"
+                  ><strong>ValueInput</strong><small>物料属性值</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>配置工具</h2>
+              <div class="library-links">
+                <a href="studio-components/json-source.html"
+                  ><strong>JsonSource</strong><small>配置工作稿</small></a
+                ><a href="studio-components/schema-navigation.html"
+                  ><strong>SchemaNavigation</strong><small>编辑离开确认</small></a
+                ><a href="studio-components/json-editor-view.html"
+                  ><strong>JsonEditorView</strong><small>共享历史的 JSON 编辑视图</small></a
+                ><a href="studio-components/config-inspection.html"
+                  ><strong>ConfigInspection</strong><small>配置检查与预览</small></a
+                ><a href="studio-components/preview-runtime.html"
+                  ><strong>PreviewRuntime</strong><small>运行时试填</small></a
+                ><a href="studio-components/diff-result.html"
+                  ><strong>DiffResult</strong><small>差异结果</small></a
+                ><a href="studio-components/config-diff.html"
+                  ><strong>ConfigDiff</strong><small>配置版本对比</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>字段与表达式</h2>
+              <div class="library-links">
+                <a href="studio-components/expression-verification-panel.html"
+                  ><strong>ExpressionVerificationPanel</strong><small>表达式验证</small></a
+                ><a href="studio-components/regex-input.html"
+                  ><strong>RegexInput</strong><small>正则输入</small></a
+                ><a href="studio-components/field-tree.html"
+                  ><strong>FieldTree</strong><small>字段树</small></a
+                ><a href="studio-components/field-picker-dialog.html"
+                  ><strong>FieldPickerDialog</strong><small>字段选择对话框</small></a
+                ><a href="studio-components/field-picker-control.html"
+                  ><strong>FieldPickerControl</strong><small>字段选择入口</small></a
+                ><a href="studio-components/layout-field-picker.html"
+                  ><strong>LayoutFieldPicker</strong><small>布局绑定字段选择</small></a
+                ><a href="studio-components/reaction-field-picker.html"
+                  ><strong>ReactionFieldPicker</strong><small>联动字段选择</small></a
+                ><a href="studio-components/reaction-scope-editor.html"
+                  ><strong>ReactionScopeEditor</strong><small>联动作用域</small></a
+                ><a href="studio-components/expression-display.html"
+                  ><strong>ExpressionDisplay</strong><small>表达式展示</small></a
+                ><a href="studio-components/function-help.html"
+                  ><strong>FunctionHelp</strong><small>函数说明</small></a
+                ><a href="studio-components/argument-help.html"
+                  ><strong>ArgumentHelp</strong><small>参数说明</small></a
+                ><a href="studio-components/layout-expression-dialog.html"
+                  ><strong>LayoutExpressionDialog</strong><small>布局表达式对话框</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>助手</h2>
+              <div class="library-links">
+                <a href="studio-components/agent-merge.html"
+                  ><strong>AgentMerge</strong><small>候选合并</small></a
+                ><a href="studio-components/agent-attempt.html"
+                  ><strong>AttemptHistory</strong><small>轮次进度</small></a
+                ><a href="studio-components/agent-panel.html"
+                  ><strong>AgentPanel</strong><small>助手对话面板</small></a
+                ><a href="studio-components/agent-reply.html"
+                  ><strong>AgentReply</strong><small>助手回复</small></a
+                ><a href="studio-components/agent-candidate-card.html"
+                  ><strong>AgentCandidateCard</strong><small>候选配置卡片</small></a
+                ><a href="studio-components/agent-issues.html"
+                  ><strong>AgentIssues</strong><small>需求缺口</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>Host 接入</h2>
+              <div class="library-links">
+                <a href="studio-components/requirements.html"
+                  ><strong>Requirements</strong><small>Host 能力需求</small></a
+                ><a href="studio-components/release-host-example.html"
+                  ><strong>ReleaseHostExample</strong><small>Host 接入示例</small></a
+                ><a href="studio-components/release-integration.html"
+                  ><strong>ReleaseIntegration</strong><small>发布接入说明</small></a
+                >
+              </div>
+            </section>
+            <section class="library-group">
+              <h2>管理操作</h2>
+              <div class="library-links">
+                <a href="studio-components/copy-form.html"
+                  ><strong>CopyForm</strong><small>复制表单</small></a
+                ><a href="studio-components/form-management.html"
+                  ><strong>FormManagement</strong><small>表单管理操作</small></a
+                ><a href="studio-components/operation-records.html"
+                  ><strong>OperationRecords</strong><small>操作记录</small></a
+                ><a href="studio-components/account-security.html"
+                  ><strong>AccountSecurity</strong><small>账号安全设置</small></a
+                >
+              </div>
+            </section>
+          </div>
+          <section class="section">
+            <h2>页面开发时怎么选</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>正在设计</th>
+                  <th>先看这些组件</th>
+                  <th>页面负责</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>管理列表</td>
+                  <td>
+                    <a href="studio-components/grid.html">栅格</a>、<a
+                      href="studio-components/listfilterbar.html"
+                      >筛选</a
+                    >、<a href="studio-components/datatable.html">表格</a>或<a
+                      href="studio-components/cardlist.html"
+                      >卡片列表</a
+                    >，按需组合<a href="studio-components/pagination.html">分页器</a>
+                  </td>
+                  <td>查询、权限、分页与返回位置</td>
+                </tr>
+                <tr>
+                  <td>设置和发布</td>
+                  <td>
+                    <a href="studio-components/form.html">字段与表单</a>、<a
+                      href="studio-components/modal.html"
+                      >弹窗</a
+                    >
+                  </td>
+                  <td>提交、保留输入与错误定位</td>
+                </tr>
+                <tr>
+                  <td>配置工作台</td>
+                  <td>
+                    <a href="studio-components/field-picker.html">字段</a>、<a
+                      href="studio-components/expression-editor.html"
+                      >表达式</a
+                    >、<a href="studio-components/action-editor.html">动作</a>
+                  </td>
+                  <td>作用域、预期类型、草稿和应用时机</td>
+                </tr>
+                <tr>
+                  <td>候选审阅</td>
+                  <td>
+                    <a href="studio-components/agent-panel.html">对话</a>、<a
+                      href="studio-components/config-diff.html"
+                      >差异</a
+                    >、<a href="studio-components/config-inspection.html">试填</a>
+                  </td>
+                  <td>接收候选、解决冲突与保存确认</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              新增组件时先记录真实调用方、输入与输出，再按本手册核对变体、状态、键盘操作和较窄桌面面板。新行为在对应条目集中评审。Renderer
+              内部及 Host 交付表单遵循各自契约。
+            </p>
+          </section>
+        </article>
+      </main>
+    </div>
+    <script>
+      const legacyPages = {
+        'api-button': 'button.html',
+        controls: 'button.html',
+        'api-form': 'form.html',
+        form: 'form.html',
+        'api-field': 'field.html',
+        'api-formlayout': 'formlayout.html',
+        'api-input': 'input.html',
+        'api-studioselect': 'studioselect.html',
+        select: 'select.html',
+        'api-textarea': 'textarea.html',
+        textarea: 'textarea.html',
+        'api-listfilterbar': 'listfilterbar.html',
+        filters: 'listfilterbar.html',
+        'api-datatable': 'datatable.html',
+        table: 'datatable.html',
+        'api-tableresults': 'tableresults.html',
+        'api-cardlist': 'cardlist.html',
+        'card-list': 'cardlist.html',
+        'api-pagination': 'pagination.html',
+        pagination: 'pagination.html',
+        'api-grid': 'grid.html',
+        grid: 'grid.html',
+        'api-griditem': 'griditem.html',
+        'api-modal': 'modal.html',
+        overlay: 'modal.html',
+        'api-drawer': 'drawer.html',
+        expression: 'expression-editor.html',
+        fields: 'field-picker.html',
+        value: 'expression-editor.html#value-source',
+        action: 'action-editor.html',
+        json: 'json-editor.html',
+        preview: 'config-inspection.html',
+        diff: 'config-diff.html',
+        agent: 'agent-panel.html',
+        tokens: 'tokens.html',
+        lists: 'listfilterbar.html',
+        panels: 'grid.html',
+      };
+      function openLegacyPage() {
+        const page = legacyPages[location.hash.slice(1)];
+        if (typeof page === 'string') location.replace('studio-components/' + page);
+      }
+      openLegacyPage();
+      addEventListener('hashchange', openLegacyPage);
+      const search = document.querySelector('#component-search');
+      const groups = [...document.querySelectorAll('#component-api .library-group')].map(
+        (group) => ({
+          group,
+          cards: [...group.querySelectorAll('.library-links > a')],
+        }),
+      );
+      search.addEventListener('input', () => {
+        const terms = search.value.trim().toLowerCase().split(/\s+/);
+        let hasResults = false;
+        for (const { group, cards } of groups) {
+          let hasMatches = false;
+          for (const card of cards) {
+            const matches = terms.every((term) => card.textContent.toLowerCase().includes(term));
+            card.style.display = matches ? '' : 'none';
+            hasMatches ||= matches;
+          }
+          group.style.display = hasMatches ? '' : 'none';
+          hasResults ||= hasMatches;
+        }
+        document.querySelector('#component-no-results').hidden = hasResults;
+      });
+    </script>
+    <script src="studio-components/assets/playground.js"></script>
+  </body>
+</html>

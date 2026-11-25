@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '../components/ui/controls';
+import { Button } from '@form-engine/studio-design-components/controls';
 import { SchemaNavigation, useSchemaNavigation } from './schema-navigation';
 import { ConstraintEditor } from './constraint-editor';
 import { ReactionEditor } from './reaction-editor';
@@ -27,6 +27,7 @@ type Props = {
   onChange: (text: string) => void;
   renderActions?: React.ComponentProps<typeof JsonEditorView>['renderActions'];
   focusPath?: { path: string; revision: number };
+  pickingReference?: boolean;
 };
 
 export function JsonSource(props: Props) {
@@ -46,12 +47,13 @@ function SourceViews({
   readOnly,
   onChange,
   focusPath,
+  pickingReference,
   renderActions,
 }: Props) {
   const history = useJsonHistory(text, readOnly ? undefined : onChange);
   const { beforeLeave, pendingOwner } = useSchemaNavigation();
   const [section, setSection] = useState<Module>(initialSection ?? 'schema');
-  const [mode, setMode] = useState<'schema' | 'json'>('schema');
+  const [mode, setMode] = useState<'schema' | 'json'>(focusPath ? 'json' : 'schema');
   const seenFocus = useRef(focusPath);
   const [focus, setFocus] = useState(focusPath);
   useEffect(() => {
@@ -143,6 +145,7 @@ function SourceViews({
               : section === 'reaction'
                 ? (commit) => (
                     <ReactionEditor
+                      pickingReference={pickingReference}
                       key={String(readOnly)}
                       readOnly={readOnly}
                       {...{ formPath, profile }}
@@ -161,6 +164,7 @@ function SourceViews({
                 : section === 'validation'
                   ? (commit) => (
                       <ConstraintEditor
+                        pickingReference={pickingReference}
                         key={String(readOnly)}
                         readOnly={readOnly}
                         {...{ formPath, profile, text }}

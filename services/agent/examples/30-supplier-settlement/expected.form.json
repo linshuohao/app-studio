@@ -1,0 +1,2334 @@
+{
+  "protocolVersion": "1.0",
+  "id": "settlement",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "periodCode": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "entity": {
+          "type": "string",
+          "enum": ["harbor", "central", "mall"]
+        },
+        "supplier": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["id", "label"],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["cny", "hkd"]
+        },
+        "statementDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["final", "partial"]
+        },
+        "partialReason": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 240
+        },
+        "statementRef": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 40
+        },
+        "acknowledged": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "invoices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "invoiceNo": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 40
+              },
+              "receiptNo": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 36
+              },
+              "issuedOn": {
+                "type": "string",
+                "format": "date"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["clear", "disputed"]
+              },
+              "faceMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000000
+              },
+              "appliedMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000000
+              },
+              "disputeNo": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 32
+              },
+              "disputeNote": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 200
+              },
+              "invoiceNote": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 160
+              },
+              "voucherId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "invoiceNo",
+              "receiptNo",
+              "issuedOn",
+              "status",
+              "faceMinor",
+              "appliedMinor",
+              "voucherId"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "const": "disputed"
+                    }
+                  },
+                  "required": ["status"]
+                },
+                "then": {
+                  "required": ["disputeNo", "disputeNote"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["disputeNo"]
+                      },
+                      {
+                        "required": ["disputeNote"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 50
+        },
+        "credits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "creditNo": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 36
+              },
+              "invoiceNo": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 40
+              },
+              "creditMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000000
+              },
+              "reason": {
+                "type": "string",
+                "enum": ["return", "pricing", "duplicate"]
+              },
+              "returnNo": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 36
+              },
+              "priceApproval": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 36
+              },
+              "accountingNote": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 180
+              },
+              "creditId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["creditNo", "invoiceNo", "creditMinor", "reason", "creditId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "reason": {
+                      "const": "return"
+                    }
+                  },
+                  "required": ["reason"]
+                },
+                "then": {
+                  "required": ["returnNo"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["returnNo"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "reason": {
+                      "const": "pricing"
+                    }
+                  },
+                  "required": ["reason"]
+                },
+                "then": {
+                  "required": ["priceApproval"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["priceApproval"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "reason": {
+                      "const": "duplicate"
+                    }
+                  },
+                  "required": ["reason"]
+                },
+                "then": {
+                  "required": ["accountingNote"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["accountingNote"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 30
+        }
+      },
+      "required": [
+        "periodCode",
+        "operator",
+        "entity",
+        "supplier",
+        "currency",
+        "statementDate",
+        "mode",
+        "statementRef",
+        "acknowledged",
+        "invoices",
+        "credits"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "partial"
+              }
+            },
+            "required": ["mode"]
+          },
+          "then": {
+            "required": ["partialReason"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["partialReason"]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "not": {
+        "required": ["supplier"],
+        "properties": {
+          "supplier": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "供应商月度对账与部分结算"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "对账单"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "结算期间"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/periodCode"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/periodCode"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "结算经办人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/operator"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/operator"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "采购主体"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/entity"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/entity"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "harbor",
+                        "label": "港区采购"
+                      },
+                      {
+                        "id": "central",
+                        "label": "总部采购"
+                      },
+                      {
+                        "id": "mall",
+                        "label": "门店采购"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/entity"
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "供应商目录"
+                  },
+                  "bind": "/supplier",
+                  "children": [
+                    {
+                      "material": "remote-select",
+                      "bind": "/supplier",
+                      "props": {
+                        "filterKey": {
+                          "$expr": {
+                            "ref": {
+                              "source": "data",
+                              "path": "/entity"
+                            }
+                          }
+                        }
+                      },
+                      "requests": {
+                        "search": {
+                          "type": "host.request",
+                          "request": "business.searchSuppliers"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "结算币种"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/currency"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/currency"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "cny",
+                        "label": "人民币"
+                      },
+                      {
+                        "id": "hkd",
+                        "label": "港币"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "对账单日期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/statementDate"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/statementDate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "本次交付方式"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/mode"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/mode"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "final",
+                        "label": "完整结算"
+                      },
+                      {
+                        "id": "partial",
+                        "label": "先结无争议金额"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/mode"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/mode"
+                            }
+                          },
+                          "partial"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "部分结算说明"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/partialReason"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/partialReason"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "供应商对账单编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/statementRef"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/statementRef"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "原始凭证"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/invoices"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "凭证"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "原始凭证编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/invoiceNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/invoiceNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "已验收单号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/receiptNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/receiptNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "凭证开具日"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/issuedOn",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/issuedOn",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "对账状态"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/status",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/status",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "clear",
+                              "label": "无争议"
+                            },
+                            {
+                              "id": "disputed",
+                              "label": "有争议"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "本次认领票面金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/faceMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/faceMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "本次申请入账金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/appliedMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/appliedMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/status",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/status",
+                                    "scope": "person"
+                                  }
+                                },
+                                "disputed"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "争议记录编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/disputeNo",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/disputeNo",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "争议说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/disputeNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/disputeNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "会计备注"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/invoiceNote",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/invoiceNote",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/invoices"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除凭证",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/invoices"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加凭证",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/invoices"
+                            }
+                          }
+                        ]
+                      },
+                      50
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addSettlementVoucher"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "冲销凭证"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/credits"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "冲销"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "冲销凭证编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/creditNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/creditNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "冲销目标凭证号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/invoiceNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/invoiceNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "冲销金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/creditMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/creditMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "冲销原因"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/reason",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/reason",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "return",
+                              "label": "已退货"
+                            },
+                            {
+                              "id": "pricing",
+                              "label": "价格更正"
+                            },
+                            {
+                              "id": "duplicate",
+                              "label": "原单重复记账"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                },
+                                "return"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "退货单编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/returnNo",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/returnNo",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                },
+                                "pricing"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "价格批准号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/priceApproval",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/priceApproval",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/reason",
+                                    "scope": "person"
+                                  }
+                                },
+                                "duplicate"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "会计说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/accountingNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/accountingNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/credits"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除冲销",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/credits"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加冲销",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/credits"
+                            }
+                          }
+                        ]
+                      },
+                      30
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addSettlementCredit"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "已核对结算明细与冲销依据"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/acknowledged"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "送财务复核"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitSupplierSettlement"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "claimed-not-over-face",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/appliedMinor",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/faceMinor",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/appliedMinor",
+          "scope": "person"
+        },
+        "code": "claimed-not-over-face",
+        "message": {
+          "text": "申请入账金额不得高于票面金额"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/appliedMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/faceMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/invoices"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "voucher-issued-before-statement",
+      "kind": "internal",
+      "assert": {
+        "op": "core.ne",
+        "args": [
+          {
+            "op": "date.inclusiveDays",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/issuedOn",
+                  "scope": "person"
+                }
+              },
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/statementDate"
+                }
+              }
+            ]
+          },
+          null
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/issuedOn",
+          "scope": "person"
+        },
+        "code": "voucher-issued-before-statement",
+        "message": {
+          "text": "凭证开具日不得晚于对账单日期"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/issuedOn",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/statementDate"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/invoices"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "final-settlement-no-dispute",
+      "kind": "internal",
+      "assert": {
+        "op": "core.not",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/status",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/status",
+                      "scope": "person"
+                    }
+                  },
+                  "disputed"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/status",
+          "scope": "person"
+        },
+        "code": "final-settlement-no-dispute",
+        "message": {
+          "text": "完整结算不得包含仍有争议的凭证"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/status",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/mode"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/mode"
+                    }
+                  },
+                  "final"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/invoices"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "ledger-settlement",
+      "kind": "external",
+      "validator": "business.validateSupplierSettlement",
+      "target": {
+        "source": "data",
+        "path": "/mode"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/entity"
+        },
+        {
+          "source": "data",
+          "path": "/supplier"
+        },
+        {
+          "source": "data",
+          "path": "/periodCode"
+        },
+        {
+          "source": "data",
+          "path": "/currency"
+        },
+        {
+          "source": "data",
+          "path": "/statementDate"
+        },
+        {
+          "source": "data",
+          "path": "/mode"
+        },
+        {
+          "source": "data",
+          "path": "/invoices"
+        },
+        {
+          "source": "data",
+          "path": "/credits"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-supplier",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/entity"
+        }
+      ],
+      "then": [
+        {
+          "op": "set",
+          "target": {
+            "source": "data",
+            "path": "/supplier"
+          },
+          "value": null
+        }
+      ],
+      "runOnActivate": false
+    },
+    {
+      "id": "clear-partial-partialReason",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/mode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/partialReason"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/partialReason"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/mode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/mode"
+                        }
+                      },
+                      "partial"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-dispute-disputeNo",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/status",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/disputeNo",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/disputeNo",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/status",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/status",
+                          "scope": "person"
+                        }
+                      },
+                      "disputed"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/invoices"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-dispute-disputeNote",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/status",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/disputeNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/disputeNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/status",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/status",
+                          "scope": "person"
+                        }
+                      },
+                      "disputed"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/invoices"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-return-for-credit-returnNo",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/reason",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/returnNo",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/returnNo",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      },
+                      "return"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/credits"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-pricing-for-credit-priceApproval",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/reason",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/priceApproval",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/priceApproval",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      },
+                      "pricing"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/credits"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-dup-for-credit-accountingNote",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/reason",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/accountingNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/accountingNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason",
+                          "scope": "person"
+                        }
+                      },
+                      "duplicate"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/credits"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "invoices": [],
+        "credits": [],
+        "acknowledged": false
+      },
+      "requests": {
+        "business.searchSuppliers": {
+          "input": {
+            "query": "编号或简称",
+            "filterKey": "当前主体编号"
+          },
+          "output": {
+            "items": [
+              {
+                "id": "选项编码",
+                "label": "显示内容"
+              }
+            ]
+          },
+          "behavior": "仅返回该主体中当前身份可见的有效供应商；按 latest 保留当前筛选结果。"
+        }
+      },
+      "validators": {
+        "business.validateSupplierSettlement": "验证主体、供应商、期间与币种、目录金额余额以及标准化凭证唯一性。核对冲销依据、关联和逐凭证合计。按模式得出正式及延期范围，部分结算至少需要一条合格的正式凭证。"
+      },
+      "events": {
+        "business.addSettlementVoucher": "分配 voucherId 并追加空凭证。",
+        "business.addSettlementCredit": "分配 creditId 并追加空冲销。",
+        "business.submitSupplierSettlement": "绑定同一快照生成正式及延期摘要、允许复核后按提交键幂等写入；写入事务内复核凭证余额和状态，失败保留工作值。"
+      },
+      "delivery": {
+        "supplierId": "/supplier/id",
+        "amounts": "正式净额 = 纳入的申请入账金额 − 纳入的冲销金额；延期两类清单独立，不计入净额。"
+      }
+    }
+  }
+}

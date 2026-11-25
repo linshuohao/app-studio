@@ -50,4 +50,22 @@ def platform_tools(base, token, reader):
             )
         )
 
-    return AgentToolDependencies(reader, query_capabilities, check_candidate)
+    async def check_schema(context, text, cases):
+        return CheckReceipt.model_validate(
+            await post(
+                "check-schema",
+                {
+                    "schema_text": text,
+                    "cases": cases,
+                    **(
+                        {"check_environment": context["check_environment"]}
+                        if context.get("check_environment")
+                        else {}
+                    ),
+                },
+            )
+        )
+
+    return AgentToolDependencies(
+        reader, query_capabilities, check_candidate, check_schema
+    )

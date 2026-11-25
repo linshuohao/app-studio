@@ -9,7 +9,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { Tooltip, TreeView } from '../ui';
+import { Tooltip, TreeView } from '@form-engine/studio-design-components';
 import './field-tree.css';
 
 export type FieldTreeNode = {

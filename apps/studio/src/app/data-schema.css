@@ -269,6 +269,11 @@ main:has([data-config-workspace]) .design-source > .json-component {
   display: flex;
   flex-direction: column;
 }
+@media (max-width: 480px), (max-height: 550px) {
+  main:has([data-config-workspace]) .design-source > .json-component:has(> .json-tree) {
+    overflow: visible;
+  }
+}
 .design-source .json-toolbar {
   flex: none;
 }

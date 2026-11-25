@@ -1,0 +1,1233 @@
+{
+  "protocolVersion": "1.0",
+  "id": "grant",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "school": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "programNo": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 30
+        },
+        "term": {
+          "type": "string",
+          "enum": ["spring", "autumn"]
+        },
+        "coordinator": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "contactEmail": {
+          "type": "string",
+          "minLength": 1,
+          "format": "email"
+        },
+        "budgetMinor": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 100000000
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "studentNo": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 30
+              },
+              "studentName": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 40
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["transport", "materials", "boarding"]
+              },
+              "requestedMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500000
+              },
+              "evidenceNo": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 32
+              },
+              "residenceCode": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 32
+              },
+              "appealReason": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 250
+              },
+              "applicationId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "studentNo",
+              "studentName",
+              "kind",
+              "requestedMinor",
+              "evidenceNo",
+              "applicationId"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "boarding"
+                    }
+                  },
+                  "required": ["kind"]
+                },
+                "then": {
+                  "required": ["residenceCode"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["residenceCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 25
+        }
+      },
+      "required": [
+        "school",
+        "programNo",
+        "term",
+        "coordinator",
+        "contactEmail",
+        "budgetMinor",
+        "confirmed",
+        "applications"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "学校学生资助批次申请"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "单据信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "学校名称"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/school"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/school"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "资助批次号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/programNo"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/programNo"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "申请学期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/term"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/term"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "spring",
+                        "label": "春季"
+                      },
+                      {
+                        "id": "autumn",
+                        "label": "秋季"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "项目联系人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/coordinator"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/coordinator"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "联系人邮箱"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/contactEmail"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/contactEmail"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "本批预算"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/budgetMinor"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/budgetMinor"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "checkbox",
+              "props": {
+                "label": "已核对申请资料并获得使用授权"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/confirmed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "学生申请明细"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/applications"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "学生申请"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "学籍编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/studentNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/studentNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "学生姓名"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/studentName",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/studentName",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "补助类别"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/kind",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/kind",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "transport",
+                              "label": "交通补助"
+                            },
+                            {
+                              "id": "materials",
+                              "label": "学习用品补助"
+                            },
+                            {
+                              "id": "boarding",
+                              "label": "住宿补助"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "申请金额"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/requestedMinor",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/requestedMinor",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "证明编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/evidenceNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/evidenceNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                },
+                                "boarding"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "住宿证明编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/residenceCode",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/residenceCode",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/requestedMinor",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.gt",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/requestedMinor",
+                                    "scope": "person"
+                                  }
+                                },
+                                200000
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "金额复核说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/appealReason",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/appealReason",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/applications"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除学生申请",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/applications"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加学生申请",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/applications"
+                            }
+                          }
+                        ]
+                      },
+                      25
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addGrantApplication"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "提交资助批次"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.sendGrantBatch"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "grant-cap-transport",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/requestedMinor",
+              "scope": "person"
+            }
+          },
+          60000
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/requestedMinor",
+          "scope": "person"
+        },
+        "code": "grant-cap-transport",
+        "message": {
+          "text": "该类资助不得超过 60000 分"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  },
+                  "transport"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/requestedMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "grant-cap-materials",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/requestedMinor",
+              "scope": "person"
+            }
+          },
+          100000
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/requestedMinor",
+          "scope": "person"
+        },
+        "code": "grant-cap-materials",
+        "message": {
+          "text": "该类资助不得超过 100000 分"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  },
+                  "materials"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/requestedMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "grant-cap-boarding",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/requestedMinor",
+              "scope": "person"
+            }
+          },
+          300000
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/requestedMinor",
+          "scope": "person"
+        },
+        "code": "grant-cap-boarding",
+        "message": {
+          "text": "该类资助不得超过 300000 分"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/kind",
+                      "scope": "person"
+                    }
+                  },
+                  "boarding"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/requestedMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "large-grant-explanation",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/appealReason",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/appealReason",
+          "scope": "person"
+        },
+        "code": "large-grant-explanation",
+        "message": {
+          "text": "大额申请须填复核说明"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/requestedMinor",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.gt",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/requestedMinor",
+                  "scope": "person"
+                }
+              },
+              200000
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "grant-batch-rules",
+      "kind": "external",
+      "validator": "business.validateGrantApplications",
+      "target": {
+        "source": "data",
+        "path": "/budgetMinor"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/budgetMinor"
+        },
+        {
+          "source": "data",
+          "path": "/applications"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-housing-residenceCode",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/kind",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/residenceCode",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/residenceCode",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      },
+                      "boarding"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-grant-appeal",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/requestedMinor",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/appealReason",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/appealReason",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/requestedMinor",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gt",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/requestedMinor",
+                          "scope": "person"
+                        }
+                      },
+                      200000
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/applications"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "applications": [],
+        "confirmed": false
+      },
+      "validators": {
+        "business.validateGrantApplications": "本地加总整批申请金额并比较预算，按标准化学籍编号加类别查重，定位预算或冲突行学籍号。"
+      },
+      "events": {
+        "business.addGrantApplication": "生成稳定 applicationId 并追加空行，最多 25 行。",
+        "business.sendGrantBatch": "完整校验同一快照后去空白并统一学籍编号大小写，投影当前适用资料和有序明细，按批次业务键及版本幂等提交。"
+      }
+    }
+  }
+}

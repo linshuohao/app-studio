@@ -1,5 +1,5 @@
 'use client';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 
 import { useEffect, useRef, useState } from 'react';
 import { JsonEditor } from '../components/json/json-editor';
@@ -24,7 +24,8 @@ import {
   ListFilterBar,
   Pagination,
   type Column,
-} from '../components/ui';
+} from '@form-engine/studio-design-components';
+import { assetReference, type AssetReference } from './agent-conversation';
 import { MaterialCard } from './material-card';
 import './function-directory.css';
 
@@ -74,7 +75,13 @@ export type Detail = {
 const materialPageSizes = [6, 9] as const;
 const functionPageSizes = [5, 10, 20] as const;
 
-export function AssetCatalog({ kind }: { kind: 'materials' | 'functions' }) {
+export function AssetCatalog({
+  kind,
+  onReference,
+}: {
+  kind: 'materials' | 'functions';
+  onReference?: (reference: AssetReference) => void;
+}) {
   const [rows, setRows] = useState<Summary[]>();
   const defaults = { query: '', category: '', implementation: '' };
   const [draftFilters, setDraftFilters] = useState(defaults);
@@ -107,7 +114,11 @@ export function AssetCatalog({ kind }: { kind: 'materials' | 'functions' }) {
       setDetailDialog(undefined);
       setSelected(
         id
-          ? { id, version: q.get('assetVersion') ?? '', artifact: { id: '', digest: '' } }
+          ? {
+              id,
+              version: q.get('assetVersion') ?? '',
+              artifact: { id: '', digest: q.get('assetDigest') ?? '' },
+            }
           : undefined,
       );
     };
@@ -162,7 +173,12 @@ export function AssetCatalog({ kind }: { kind: 'materials' | 'functions' }) {
       `/catalog/${kind}/${encodeURIComponent(selected.id)}${selected.version ? `?version=${encodeURIComponent(selected.version)}` : ''}`,
     ).then(
       (result) => {
-        if (active) setDetail(result);
+        if (!active) return;
+        if (selected.artifact.digest && selected.artifact.digest !== result.artifact.digest) {
+          setError('此引用的资产制品已不可用。');
+          return;
+        }
+        setDetail(result);
       },
       (reason) => {
         if (active) setError(failureMessage(reason));
@@ -474,6 +490,9 @@ export function AssetCatalog({ kind }: { kind: 'materials' | 'functions' }) {
             detailsAction
             selected={lastMaterial === 'material-' + row.id + ':' + row.version}
             onOpen={(trigger) => select(row, trigger)}
+            onReference={
+              onReference ? () => onReference(assetReference('material', row)) : undefined
+            }
           />
         )}
       />
@@ -534,6 +553,20 @@ export function AssetCatalog({ kind }: { kind: 'materials' | 'functions' }) {
       },
     ];
 
+    if (onReference)
+      columns.push({
+        key: 'reference',
+        title: '操作',
+        render: (row) => (
+          <Button
+            variant="text"
+            aria-label={'引用到 Agent：' + row.id}
+            onClick={() => onReference(assetReference('function', row))}
+          >
+            引用到 Agent
+          </Button>
+        ),
+      });
     return (
       <section className="function-directory" aria-label="纯函数目录结果" ref={functionResults}>
         <DataTable

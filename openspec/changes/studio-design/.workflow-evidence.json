@@ -1,0 +1,33 @@
+{
+  "fingerprint": "67089a7b6d7bd4712ef48f84db2668061b3cf7bcb059aa744ebd86424781127c",
+  "checks": [
+    [
+      "pnpm",
+      "docs:build"
+    ],
+    [
+      "pnpm",
+      "docs:check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_contracts.py",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/select_references.py",
+      "--check"
+    ],
+    [
+      "pnpm",
+      "boundaries"
+    ],
+    [
+      "env",
+      "STUDIO_TEST_BROWSER_CHANNEL=chrome",
+      "pnpm",
+      "handbook:check:tree"
+    ]
+  ]
+}

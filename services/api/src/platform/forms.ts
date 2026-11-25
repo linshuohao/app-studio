@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { type AccessContext, PlatformAccess } from './access.js';
 import { PlatformDatabase } from './database.js';
 const initialText = '{}\n';
-export const maxConfigTextBytes = 16 * 1024;
+export const maxConfigTextBytes = 64 * 1024;
 const versionIdPattern = /^[0-9a-f-]{36}$/;
 type FormRow = {
   form_id: string;
@@ -43,7 +43,9 @@ export function isUtf8ConfigText(value: unknown): value is string {
 
 export function configText(value: unknown): string {
   if (!isUtf8ConfigText(value) || Buffer.byteLength(value) > maxConfigTextBytes) {
-    throw new BadRequestException('Config must be UTF-8 text of at most 16 KiB');
+    throw new BadRequestException(
+      `Config must be UTF-8 text of at most ${maxConfigTextBytes / 1024} KiB`,
+    );
   }
   return value;
 }

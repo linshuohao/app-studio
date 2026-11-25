@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { closeWorkbenchDrawer, openSchemaDraft, schemaSource } from './data-schema-fixture';
+import {
+  chooseSchemaOption,
+  closeWorkbenchDrawer,
+  openSchemaDraft,
+  schemaSource,
+} from './data-schema-fixture';
 
 const original = String.raw`{"data":{"schema":{"type":"object","title":"投保资料","$defs":{"Person":{"type":"string","minLength":1},"Short":{"type":"string","maxLength":12}},"properties":{"trip":{"title":"行程类型","type":"string"},"passport":{"title":"护照号码","type":"string","minLength":6,"x-precision":9007199254740993},"invoice":{"title":"发票抬头","type":"string"},"tax":{"title":"税号","type":"string"},"contact":{"title":"联系人姓名","$ref":"#/$defs/Person","minLength":2}},"if":{"required":["trip"],"properties":{"trip":{"const":"境外"}}},"then":{"required":["passport"]},"dependentRequired":{"invoice":["tax"]}}},"views":{"x":-0}}`;
 
@@ -22,14 +27,15 @@ test('the single field drawer applies four sections as one change', async ({ pag
   await drawer.getByLabel('最短长度', { exact: true }).fill('8');
   await drawer.getByLabel('始终必填').check();
   await drawer.getByText('高级属性', { exact: true }).click();
-  await drawer.getByRole('combobox', { name: '已弃用', exact: true }).selectOption('false');
-  await drawer.getByRole('button', { name: '查看节点 JSON' }).click();
-  await expect(
-    page
-      .getByRole('dialog', { name: '节点 JSON · 当前输入' })
-      .getByLabel('当前节点 JSON', { exact: true }),
-  ).toHaveValue(/9007199254740993/);
-  await page.keyboard.press('Escape');
+  await chooseSchemaOption(
+    page,
+    drawer.getByRole('combobox', { name: '已弃用', exact: true }),
+    '否',
+  );
+  await drawer.getByRole('button', { name: 'JSON 编辑', exact: true }).click();
+  await expect(drawer.getByRole('textbox', { name: '字段配置 JSON', exact: true })).toHaveValue(
+    /9007199254740993/,
+  );
   await drawer.getByRole('button', { name: '应用到工作台' }).click();
   await expect(drawer).toHaveCount(0);
   const source = await schemaSource(page);
@@ -56,38 +62,40 @@ test('condition branches, dependency selectors, combinations and reference overr
   await page.getByRole('button', { name: '编辑所属对象' }).click();
   const owner = page.getByRole('dialog', { name: '字段配置 · 投保资料', exact: true });
   await owner.getByRole('button', { name: '编辑条件规则', exact: true }).click();
-  const condition = owner.getByRole('form', { name: '编辑条件规则' });
-  await condition.getByRole('textbox', { name: '匹配值', exact: true }).fill('境外旅行');
+  const condition = page.getByRole('dialog', { name: '编辑条件规则', exact: true });
+  await condition.getByRole('textbox', { name: /^匹配值/ }).fill('境外旅行');
   await condition.getByRole('button', { name: '添加否则分支' }).click();
-  const alternative = condition.getByRole('group', { name: '否则', exact: true });
-  await alternative
-    .getByRole('combobox', { name: '子模型类型', exact: true })
-    .selectOption('object');
+  const alternative = condition.getByRole('group', { name: '否则 else', exact: true });
+  await chooseSchemaOption(
+    page,
+    alternative.getByRole('combobox', { name: '子模型类型', exact: true }),
+    '对象',
+  );
   await alternative.getByLabel('子字段标识', { exact: true }).fill('tax');
   await alternative.getByRole('button', { name: '添加子字段标识' }).click();
   await alternative.getByLabel('此子字段必填').check();
   await alternative.getByLabel('最短长度', { exact: true }).fill('3');
-  await condition.getByRole('button', { name: '保存此项' }).click();
+  await condition.getByRole('button', { name: '保存规则' }).click();
 
   await owner.getByRole('button', { name: '编辑属性依赖', exact: true }).click();
-  const dependency = owner.getByRole('form', { name: '编辑属性依赖' });
+  const dependency = page.getByRole('dialog', { name: '编辑属性依赖', exact: true });
   await dependency.getByRole('button', { name: '选择依赖字段' }).click();
   const picker = page.getByRole('dialog', { name: '选择依赖字段' });
   await picker.getByRole('treeitem', { name: /护照号码/ }).click();
   await picker.getByRole('button', { name: '应用选择' }).click();
-  await dependency.getByRole('button', { name: '保存此项' }).click();
+  await dependency.getByRole('button', { name: '保存依赖', exact: true }).click();
 
-  await owner.getByLabel('添加规则或约束').selectOption('group');
-  await owner.getByLabel('组合方式').selectOption('allOf');
-  await owner.getByRole('button', { name: '新增组合分支' }).click();
-  const combination = owner.getByRole('form', { name: '新增组合分支' });
-  await combination
-    .getByRole('combobox', { name: '子模型类型', exact: true })
-    .selectOption('object');
+  await chooseSchemaOption(page, owner.getByLabel('添加规则或约束'), '新增 allOf 分支');
+  const combination = page.getByRole('dialog', { name: '新增组合分支' });
+  await chooseSchemaOption(
+    page,
+    combination.getByRole('combobox', { name: '子模型类型', exact: true }),
+    '对象',
+  );
   await combination.getByLabel('子字段标识', { exact: true }).fill('tax');
   await combination.getByRole('button', { name: '添加子字段标识' }).click();
   await combination.getByLabel('最短长度', { exact: true }).fill('2');
-  await combination.getByRole('button', { name: '保存此项' }).click();
+  await combination.getByRole('button', { name: '保存规则' }).click();
 
   await owner.getByRole('button', { name: '应用到工作台' }).click();
   await expect(
@@ -97,7 +105,11 @@ test('condition branches, dependency selectors, combinations and reference overr
   await page.getByRole('button', { name: '编辑 联系人姓名', exact: true }).click();
   const ref = page.getByRole('dialog', { name: '字段配置 · 联系人姓名', exact: true });
   await expect(ref.getByRole('region', { name: '校验属性', exact: true })).toBeHidden();
-  await ref.getByRole('combobox', { name: '引用目标' }).selectOption('#/$defs/Short');
+  await chooseSchemaOption(
+    page,
+    ref.getByRole('combobox', { name: '引用目标' }),
+    /Short · #\/\$defs\/Short/,
+  );
   await ref.getByRole('button', { name: /展开本字段覆盖/ }).click();
   await expect(ref.getByLabel('最短长度', { exact: true })).toHaveValue('2');
   await ref.getByRole('button', { name: '应用到工作台' }).click();
@@ -135,23 +147,33 @@ test('the integrated rule types persist through Studio save and reopen', async (
   await page.getByRole('button', { name: '编辑 投保资料', exact: true }).click();
   const owner = page.getByRole('dialog', { name: '字段配置 · 投保资料', exact: true });
   for (const key of ['anyOf', 'oneOf', 'not']) {
-    await owner.getByRole('button', { name: '添加 ' + key, exact: true }).click();
-    const card = owner.getByRole('form', { name: key === 'not' ? '新增取反' : '新增组合分支' });
-    await card
-      .getByRole('combobox', { name: '约束形式' })
-      .selectOption(key === 'not' ? 'false' : 'true');
-    await card.getByRole('button', { name: '保存此项' }).click();
+    await chooseSchemaOption(
+      page,
+      owner.getByLabel('添加规则或约束'),
+      key === 'not' ? /取反 · not/ : '新增 ' + key + ' 分支',
+    );
+    const card = page.getByRole('dialog', { name: key === 'not' ? '新增取反' : '新增组合分支' });
+    await chooseSchemaOption(
+      page,
+      card.getByRole('combobox', { name: '约束形式' }),
+      key === 'not' ? '拒绝所有值' : '允许任何值',
+    );
+    await card.getByRole('button', { name: '保存规则' }).click();
   }
-  await owner.getByRole('button', { name: '新增依赖模型', exact: true }).click();
+  await chooseSchemaOption(page, owner.getByLabel('添加规则或约束'), '新增依赖模型');
   const picker = page.getByRole('dialog', { name: '新增依赖模型', exact: true });
-  await picker.getByRole('treeitem', { name: /发票抬头/ }).click();
-  await picker.getByRole('button', { name: '应用选择' }).click();
-  const dependent = owner.getByRole('form', { name: '新增依赖模型', exact: true });
-  await dependent.getByRole('combobox', { name: '子模型类型', exact: true }).selectOption('object');
+  await picker.getByLabel('触发字段名').fill('invoice');
+  await picker.getByRole('button', { name: '继续配置约束' }).click();
+  const dependent = picker;
+  await chooseSchemaOption(
+    page,
+    dependent.getByRole('combobox', { name: '子模型类型', exact: true }),
+    '对象',
+  );
   await dependent.getByLabel('子字段标识', { exact: true }).fill('tax');
   await dependent.getByRole('button', { name: '添加子字段标识' }).click();
   await dependent.getByLabel('最短长度', { exact: true }).fill('3');
-  await dependent.getByRole('button', { name: '保存此项' }).click();
+  await dependent.getByRole('button', { name: '保存规则' }).click();
   await owner.getByRole('button', { name: '应用到工作台' }).click();
   const saving = page.waitForResponse(
     (response) => response.request().method() === 'POST' && response.url().endsWith('/versions'),

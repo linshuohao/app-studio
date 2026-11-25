@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, CardList, Input, ListFilterBar } from '../components/ui';
-import { Feedback } from '../components/ui/controls';
-import { Field } from '../components/ui/form-layout';
-import { StudioSelect } from '../components/ui/select';
+import { Button, CardList, Input, ListFilterBar } from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
+import { Field } from '@form-engine/studio-design-components/form-layout';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { platform, failureMessage } from './platform-api';
 import { Modal } from './modal';
 

@@ -121,6 +121,61 @@ def test_persist_public_reply_and_retry_after_service_restart(tmp_path):
         assert all(p.startswith("/internal/v1/conversations") for p in paths)
 
 
+def test_legacy_and_typed_references_stay_on_their_original_turn(tmp_path):
+    engine = database(tmp_path)
+    url = "/internal/v1/conversations/" + str(uuid4())
+    form = {
+        "formId": str(uuid4()),
+        "versionId": str(uuid4()),
+        "name": "Source",
+        "savedAt": "2026-11-25",
+        "text": '{"type":"string"}',
+    }
+    asset = {
+        "kind": "function",
+        "assetId": "example.fn",
+        "assetVersion": "1.0.0",
+        "artifactDigest": "sha256:example",
+        "name": "Function",
+        "text": '{"parameters":[]}',
+    }
+    legacy = {**message(), "references": [form]}
+    pointer = {
+        **form,
+        "pointer": "/data/schema/properties/name",
+        "objectLabel": "字段 · name",
+    }
+    mixed = {**message(1), "references": [pointer, asset]}
+    steps = [
+        decision("chat"),
+        tool_call("ChatReply", "first", message="First"),
+        decision("chat"),
+        tool_call("ChatReply", "second", message="Second"),
+    ]
+    with TestClient(app(engine, steps)) as client:
+        assert client.post(url + "/turns", headers=AUTH, json=legacy).status_code == 200
+        assert client.post(url + "/turns", headers=AUTH, json=mixed).status_code == 200
+    with TestClient(app(engine, [])) as client:
+        history = client.get(url, headers=AUTH).json()["turns"]
+        assert history[0]["references"] == [
+            {k: v for k, v in form.items() if k != "text"}
+        ]
+        assert history[1]["references"] == [
+            {k: v for k, v in ref.items() if k != "text"} for ref in [pointer, asset]
+        ]
+        assert client.post(url + "/turns", headers=AUTH, json=mixed).status_code == 200
+        changed = {
+            **mixed,
+            "references": [
+                {**pointer, "pointer": "/data/schema/properties/other"},
+                asset,
+            ],
+        }
+        assert (
+            client.post(url + "/turns", headers=AUTH, json=changed).status_code == 409
+        )
+
+
 def test_rename_changes_only_the_owned_conversation_title(tmp_path):
     engine = database(tmp_path)
     cid = str(uuid4())

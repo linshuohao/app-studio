@@ -1,5 +1,6 @@
 from dataclasses import replace
 
+from form_agent.agent.events import emit_compose_phase
 from form_agent.agent.state import TurnGraphState
 from form_agent.agent.tools.candidate_checks import compile_candidate
 from form_agent.agent.tools.dependencies import AgentToolDependencies
@@ -25,6 +26,7 @@ async def check(
         raise ValueError("No candidate submitted for check")
     checks.pending_candidate = None
     previous_rounds = repair_rounds_before_execution(len(state.get("repairs", [])))
+    await emit_compose_phase("compile", "started")
     await compile_candidate(
         text,
         state["request"].context,
@@ -33,6 +35,10 @@ async def check(
         max_checks + previous_rounds,
     )
     receipt = checks.receipts[candidate_digest(text)]
+    if receipt.success:
+        await emit_compose_phase("compile", "completed")
+    else:
+        await emit_compose_phase("compile", "failed", detail="整表编译未通过。")
     if state.get("check_only"):
         detail = (
             "当前工作稿已通过编译检查。"

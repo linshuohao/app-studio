@@ -1481,6 +1481,14 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 2026-11-24 旅险会话在重新进入后只显示空状态。用户确认将恢复范围从完成轮次扩展到已接收消息和轮内步骤，允许流式分批保存，并授权实施。详见[轮内恢复决策](decisions/ADR-FE-037-agent-turn-recovery.md)。
 
 
+2026-11-25 用户确认[随消息发送的表单引用](platform-studio.md#agent-form-references)采用固定版本及只读语义，并授权归档后交付首批输入与引用入口，以引用 A 生成 B 验收。
+
+同日用户确认[资产与页面对象引用](platform-studio.md#agent-asset-object-references)，扩展三条斜杠入口、资产目录和配置对象点选，沿用首批的随消息、固定版本和只读语义。
+
+## 2026-11-25：研发宪章、SDLC 与集中 AI 上下文 {#workflow-ai-context-confirmed}
+
+用户确认将现有研发能力连成 SDLC，归档项目研发宪章和文档 / Rules 维护方式。人读设计继续在现行主题与手册维护。AI 的日常条款、索引与 Skill 统一从 `.agents/` 加载，条款生成视图保留正文来源以供追溯。先用 Studio 公共组件与资产打包试点，再根据真实结果决定扩大门禁。根工作流说明面向人阅读，既有 A / B / C 权限和 OpenSpec 归档方式继续适用。见[宪章与 SDLC](workflows.md#engineering-charter)、[AI 执行上下文](workflows.md#workflow-ai-context)与[工程 Rules 维护](engineering.md#engineering-rule-maintenance)。
+
 ## 2026-11-22：首期错误事件采集与现场归属 {#platform-diagnostics-evolution}
 
 初次讨论提出以 PostgreSQL 查错误事件，并将允许集中上传的复现现场放入私有对象存储。用户收敛首期范围，完整现场留 Host，Platform 只接收脱敏事件。审阅采集链路、表结构、查询和保留方案后，用户确认受信 Host 转发、管理员查看、平台事件 30 天、Host 现场默认 7 天、上报最多重试 24 小时。见 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)和[现行专题](platform-studio.md#platform-diagnostic-events)。此次授权限于归档。

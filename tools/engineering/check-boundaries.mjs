@@ -9,6 +9,18 @@ export const allowed = {
   'pure-functions': ['protocol'],
   'renderer-react': ['runtime', 'protocol'],
   'materials-react': ['protocol', 'renderer-react'],
+  'studio-design-components': ['studio-design-tokens'],
+  'studio-design-tokens': [],
+  'studio-design-handbook': [
+    'compiler',
+    'materials-react',
+    'protocol',
+    'pure-functions',
+    'renderer-react',
+    'runtime',
+    'studio-design-components',
+    'studio-design-tokens',
+  ],
 };
 export function checkManifest(name, manifest) {
   for (const dependency of Object.keys({
@@ -29,8 +41,15 @@ export function checkManifest(name, manifest) {
   }
 }
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').at(-1))) {
-  for (const name of readdirSync('packages'))
-    checkManifest(name, JSON.parse(readFileSync(`packages/${name}/package.json`, 'utf8')));
+  const packagePaths = readdirSync('packages').flatMap((name) =>
+    name === 'studio-design'
+      ? ['components', 'tokens', 'handbook'].map((member) => `${name}/${member}`)
+      : [name],
+  );
+  for (const path of packagePaths) {
+    const manifest = JSON.parse(readFileSync(`packages/${path}/package.json`, 'utf8'));
+    checkManifest(manifest.name.replace('@form-engine/', ''), manifest);
+  }
   const result = spawnSync(
     'pnpm',
     [

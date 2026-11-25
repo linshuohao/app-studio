@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>组件交互预览</title>
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio.css" />
+    <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../../components/styles.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="assets/playground.css" />
+  </head>
+  <body>
+    <main id="playground"></main>
+    <script>
+      if (location.search === '?code') {
+        const bundle = document.createElement('script');
+        bundle.src = 'assets/playground.js';
+        document.body.append(bundle);
+      } else {
+        const main = document.querySelector('main');
+        for (const [region, url, title] of [
+          ['preview', 'assets/playground-runner.html?run', '交互预览'],
+          ['source', 'playground.html?code', '组件使用代码'],
+        ]) {
+          const section = document.createElement(region === 'source' ? 'details' : 'section');
+          if (region === 'source') {
+            const summary = document.createElement('summary');
+            summary.textContent = '组件使用代码 · JSX';
+            section.append(summary);
+          }
+          section.className = 'handbook-' + region;
+          const frame = document.createElement('iframe');
+          frame.className = 'component-playground';
+          frame.title = title;
+          if (region === 'preview') frame.setAttribute('sandbox', 'allow-scripts');
+          frame.src = url + location.hash;
+          section.append(frame);
+          main.append(section);
+        }
+      }
+    </script>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

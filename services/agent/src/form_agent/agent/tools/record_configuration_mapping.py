@@ -29,6 +29,8 @@ def bind_record_configuration_mapping(
                 "status": "incomplete_mapping",
                 "expected_requirement_ids": list[JsonValue](sorted(ids)),
             }
+        if any(not item.destinations for item in items):
+            return {"status": "mapping_destination_required"}
         if checks.attempted:
             return {"status": "mapping_locked_after_first_compiler_check"}
         checks.configuration_mapping = items

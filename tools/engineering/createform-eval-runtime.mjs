@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { checkDataSchema } from '@form-engine/compiler';
 import * as business from '@form-engine/pure-functions';
 import { createRuntime } from '@form-engine/runtime';
 import {
@@ -48,6 +49,16 @@ async function assertBehavior(prepared, assertion) {
 
 async function run() {
   if (request.operation === 'catalog') return capabilities(request.kind, request.query);
+  if (request.operation === 'check-schema') {
+    const check = checkDataSchema(JSON.parse(request.schema), {}, request.cases);
+    return {
+      check_id: randomUUID(),
+      check_environment: catalog.id,
+      candidate_digest: 'sha256:' + createHash('sha256').update(request.schema).digest('hex'),
+      success: check.valid,
+      diagnostics: check.diagnostics,
+    };
+  }
   const check = compileWebConfig(request.candidate, { catalog, target: webTarget(undefined) });
   if (request.operation === 'check') {
     return {

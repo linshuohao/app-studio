@@ -1,10 +1,12 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export async function closeWorkbenchDrawer(page: Page) {
-  const drawer = page.locator('dialog.workbench-drawer[open]');
+  const drawer = page.locator(
+    'dialog.workbench-drawer[open], [role="dialog"][data-studio-part="drawer"]',
+  );
   if (await drawer.count()) {
     await drawer
-      .locator(':scope > .toolbar')
+      .locator(':scope > .toolbar, :scope > .layout-drawer-header')
       .getByRole('button', { name: '关闭', exact: true })
       .click();
     await expect(drawer).toHaveCount(0);
@@ -40,4 +42,9 @@ export async function openSchemaDraft(page: Page, source: string) {
   await page.getByRole('button', { name: '创建并编辑', exact: true }).click();
   await (await schemaSource(page)).fill(source);
   await page.getByRole('button', { name: '字段', exact: true }).click();
+}
+
+export async function chooseSchemaOption(page: Page, trigger: Locator, name: string | RegExp) {
+  await trigger.click();
+  await page.getByRole('option', { name, exact: typeof name === 'string' }).click();
 }

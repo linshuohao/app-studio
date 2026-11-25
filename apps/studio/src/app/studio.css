@@ -1495,15 +1495,20 @@ button.material-card-open:focus-visible {
   margin: 10px 0 6px;
 }
 @media (max-width: 650px) {
-  .contract-columns .catalog-properties td,
-  .contract-columns .catalog-properties th {
+  .asset-api .contract-columns .catalog-properties {
+    table-layout: fixed;
+  }
+  .asset-api .contract-columns .catalog-properties td,
+  .asset-api .contract-columns .catalog-properties th,
+  .asset-api .contract-columns .catalog-properties td:first-child code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .asset-api .contract-columns .catalog-properties td,
+  .asset-api .contract-columns .catalog-properties th {
     padding: 8px 5px;
   }
-  .asset-api .contract-columns .catalog-properties td:first-child {
-    min-width: 64px;
-    max-width: 130px;
-  }
-  .contract-columns .catalog-properties td:nth-child(3) {
+  .asset-api .contract-columns .catalog-properties td:nth-child(3) {
     white-space: normal;
   }
   .contract-signature,
@@ -1704,6 +1709,13 @@ dialog.catalog-drawer {
 .insert-functions {
   display: grid;
   gap: 12px;
+}
+.insert-functions {
+  grid-template-columns: minmax(0, 1fr);
+}
+.insert-functions > button {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .catalog-drawer label {
   display: grid;

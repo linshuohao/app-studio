@@ -20,6 +20,38 @@ export interface ExpressionAnalysis {
   known?: { value: JsonValue };
 }
 
+// Pure functions can distinguish -0 and observe the enumeration order of
+// object arguments, so a digest that canonicalizes literals is insufficient.
+function expressionIdentity(expression: unknown): string {
+  if (Object.is(expression, -0)) return '-0';
+  if (expression === null || typeof expression !== 'object') return JSON.stringify(expression);
+  if (Array.isArray(expression)) return '[' + expression.map(expressionIdentity).join(',') + ']';
+  return (
+    '{' +
+    Object.entries(expression)
+      .map(([key, value]) => JSON.stringify(key) + ':' + expressionIdentity(value))
+      .join(',') +
+    '}'
+  );
+}
+
+function guardedNonNull(expression: Expression): Expression | undefined {
+  if (!expression || typeof expression !== 'object' || !('op' in expression)) return undefined;
+  const [left, right] = expression.args;
+  if (expression.op === 'core.ne' && expression.args.length === 2)
+    return right === null ? left : left === null ? right : undefined;
+  const check =
+    (expression.op === 'core.not' && expression.args.length === 1) ||
+    (expression.op === 'core.eq' && expression.args.length === 2 && right === false)
+      ? left
+      : undefined;
+  if (!check || typeof check !== 'object' || !('op' in check) || check.op !== 'core.eq')
+    return undefined;
+  const [value, comparison] = check.args;
+  if (check.args.length === 2)
+    return comparison === null ? value : value === null ? comparison : undefined;
+}
+
 /** 一次递归同时取得返回模型和可能读取；所有消费者复用，不执行任何纯函数。 */
 export class ExpressionAnalyzer {
   private readonly named = new Map<string, ExpressionAnalysis>();
@@ -88,7 +120,12 @@ export class ExpressionAnalyzer {
     for (const name of Object.keys(this.declarations))
       this.namedExpression(name, at('/expressions', name));
   }
-  analyze(expression: Expression, env: LexicalEnvironment, pointer: string): ExpressionAnalysis {
+  analyze(
+    expression: Expression,
+    env: LexicalEnvironment,
+    pointer: string,
+    nonNull?: ReadonlySet<string>,
+  ): ExpressionAnalysis {
     if (++this.operations > 20_000) {
       this.diagnostics.error(
         'EXPRESSION_BUDGET_EXCEEDED',
@@ -109,9 +146,34 @@ export class ExpressionAnalyzer {
       };
     }
     // 即使 core.if / and / or 在运行时短路，也要覆盖所有潜在参数读取。
-    const args = expression.args.map((arg, index) =>
-      this.analyze(arg, env, at(at(pointer, 'args'), index)),
-    );
+    const conjunction = expression.op === 'core.and' ? new Set(nonNull) : undefined;
+    const args = expression.args.map((arg, index) => {
+      const argPointer = at(at(pointer, 'args'), index);
+      const assumptions = conjunction ?? nonNull;
+      let argument = this.analyze(arg, env, argPointer, assumptions);
+      const schema = argument.node?.schema;
+      if (
+        assumptions?.size &&
+        schema &&
+        typeof schema === 'object' &&
+        Array.isArray(schema.type) &&
+        schema.type.includes('null') &&
+        assumptions.has(expressionIdentity(arg))
+      ) {
+        const types = schema.type.filter((type) => type !== 'null');
+        if (
+          types.length &&
+          types.every(
+            (type) =>
+              type === 'integer' || type === 'number' || type === 'boolean' || type === 'string',
+          )
+        )
+          argument = { ...argument, node: this.model({ type: types }, argPointer) };
+      }
+      const guarded = conjunction && guardedNonNull(arg);
+      if (conjunction && guarded != null) conjunction.add(expressionIdentity(guarded));
+      return argument;
+    });
     const reads = mergeWatch(...args.map((arg) => arg.reads));
     const manifest = this.catalog.pureFunction(expression.op, at(pointer, 'op'));
     if (!manifest) return { reads };
@@ -136,6 +198,21 @@ export class ExpressionAnalyzer {
       this.models.scan(schema);
       this.expect(arg, schema, at(at(pointer, 'args'), index), 'FUNCTION_ARGUMENT');
     });
+    // Runtime selects exactly one arm. A common type is guaranteed when
+    // both arms prove it, independent of which arm or reads are used.
+    if (expression.op === 'core.if' && args.length === 3 && manifest.returns === true) {
+      for (const type of ['boolean', 'string', 'integer', 'number', 'null'] as const) {
+        const result = this.model({ type }, at(pointer, 'branchType/' + type));
+        if (
+          args
+            .slice(1)
+            .every(
+              (arg) => arg.node && this.models.connection(arg.node, result).kind === 'compatible',
+            )
+        )
+          return { node: result, reads };
+      }
+    }
     const node = this.models.addRoot(
       manifest.returns,
       `https://form-engine.invalid/function/${encodeURIComponent(expression.op)}/returns`,

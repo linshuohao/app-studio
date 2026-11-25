@@ -250,6 +250,25 @@ test('narrow form and version lists restore their filter, scroll and focused row
   const versionResults = page.getByRole('region', { name: '版本列表' });
   const top = await versionResults.evaluate((node) => node.scrollTop);
   expect(top).toBeGreaterThan(0);
+  const rowPosition = await edit.evaluate((node) => {
+    const { x, y, width, height } = node.getBoundingClientRect();
+    const hit = document.elementFromPoint(x + width / 2, y + height / 2);
+    return {
+      top: y,
+      hit: hit?.className,
+      clickable: node.contains(hit),
+      regions: [
+        ...document.querySelectorAll(
+          '.studio-version-workspace, .studio-table-layout-panel, .studio-table-results, .studio-table-layout-footer',
+        ),
+      ].map((region) => ({
+        name: region.className,
+        y: region.getBoundingClientRect().top,
+        height: region.getBoundingClientRect().height,
+      })),
+    };
+  });
+  expect(rowPosition.clickable, JSON.stringify(rowPosition)).toBe(true);
   await chooseWorkingVersionAction(page, '编辑配置', lastVersion);
   await expect(page.getByRole('button', { name: '保存配置', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -502,6 +521,8 @@ for (const width of [1440, narrowDesktopWidth]) {
     expect(positions.root).toBe(width);
     expect(await Promise.all([filters.boundingBox(), count.boundingBox()])).toEqual(start);
 
+    await search.fill(name);
+    await search.press('Enter');
     await results.getByRole('button', { name: `打开 ${name}`, exact: true }).click();
     await chooseWorkingVersionAction(page, '发布');
     const release = page.getByRole('dialog', { name: '发布版本' });

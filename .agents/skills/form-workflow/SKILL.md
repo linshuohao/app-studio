@@ -7,27 +7,45 @@ description: "Use when working on 动态表单引擎 requirements, design, confi
 
 这是本项目唯一的工作流编排入口，采用 ai-co 的共同事实驱动循环：AI 在已授权范围内持续执行，人获得理解重要变化、判断取舍和验收所需的上下文。原 W1–W5 是任务类型与领域能力，不再是互相调用的五条编排链；深度审查是同一循环中的按需能力。
 
-## 恢复当前任务
+## 恢复任务并选择适用条款
 
-先核对用户最新目标、范围 / 非目标、验收和授权，读取根 `AGENTS.md`、`docs/README.md` 与相关权威主题。代码或文件任务检查准确 Git / Diff 基线、暂存 / 未暂存 / 未跟踪和已有改动，保护其他工作。只加载当前任务需要的材料，不把仓库中可查的事实变成人工问题。
+核对用户最新目标、范围、验收与授权。读取仓库 `.agents/context/generated/charter.md`。核对 Git 基线及已有里程碑，保护其他修改。复杂变更或会话恢复按需读 [项目载体与工具适配](references/project-adapter.md)。
 
-跨会话恢复、使用正式变更或外部方法时读 [项目载体与工具适配](references/project-adapter.md)。`docs/design/` 仍是唯一现行设计正文；摘要、文件存在、任务勾选、实现者说明或历史建议都不代表新的批准。
+实现和审查按影响选择具体领域条款。用以下命令查询，结果直接包含条款文本、命中原因、消费者、检查和活动 Change 交集：
 
-修改 Studio 页面、共享组件、主题、字体或可见交互时，先读 [Studio UI 契约](../../../docs/design/platform-studio.md#studio-ui-contract)的适用范围与[任务读取表](../../../docs/design/platform-studio.md#studio-ui-context)，再按任务读取相关子章节、复用组件并验证受影响状态。涉及 API、协议、数据库或 Runtime 的任务，仅在同时改动 Studio 界面时加载该契约。
+```bash
+.venv-docs/bin/python tools/docs/build_contracts.py select --path packages/studio-design/components/src/tree-view.tsx
+.venv-docs/bin/python tools/docs/build_contracts.py select --intent asset-packaging
+```
 
-开发或评审 Studio UI 时，先查 [Design Handbook](../../../prototypes/studio-design-handbook.html)、[基础组件入口](../../../apps/studio/src/components/ui/index.ts)和[组件选用规则](../../../docs/design/platform-studio.md#studio-ui-components)。颜色、字阶、间距及其他视觉样式使用已评审的 Design Token；遇到缺口，先说明用途和已有 Token 不适用的原因，评审后再增加。页面从项目基础组件库选取控件；缺少能力时提出场景和封装建议，先评审是否纳入。库内优先直接复用 Base UI，有缺口才组合。业务交互先查现有业务组件；已有组件优先复用，新增业务能力先讨论职责、输入输出与适用场景，再封装为业务组件。
+路径可重复传入。任务开始使用计划路径和必要意图；当实际 Diff 扩大时，再以本次真实归属查询。 只为计划或实际改动的行为传入路径；仅核对、回归或保留兼容的消费者照常取证，不把它们的路径拿去扩大规则加载。 仅核对跨模块消费者时，读取实际调用、类型和测试；消费者目录的局部 AGENTS 和框架参考只在本次需要修改该目录或审查该目录规范时主动加载。宿主已经提供的适用指令按其作用域遵守。工作区可明确归属当前任务时可用 `--worktree`。纯 UI 焦点、字段选择或样式任务只取对应 UI 条款；确实改变 Agent 提交语义时再加 `--intent studio-agent-submission`。完整意图与路径见 `.agents/context/generated/index.json`。查询工具不可用时按同一索引手动读匹配文件。未匹配项须按实际代码和任务事实识别缺口，不视为自动覆盖。
 
-新增 Studio 公共基础组件或业务组件时，按[组件手册交付规则](../../../docs/design/platform-studio.md#studio-ui-components)创建该组件自己的 Design Handbook 独立说明页，并加入手册目录。修改公共接口或交互时同步更新该页。交付前从目录打开独立页，核对接口、状态、键盘行为及可运行的真实组件示例；在使用方页面只链接组件说明。
+只读预检和交付可引用索引返回的适用条款。仅查询组件、主题 Token、物料或函数时，直接走下方对应入口，无需先选择其他领域条款。公共行为、设计维护或真实冲突按需打开对应正文。更新源条款后按 [维护方法](references/maintenance.md) 同步生成视图。
 
-Studio 页面需要用户选择表单数据字段时，优先使用业务组件 [FieldPicker](../../../apps/studio/src/components/field-picker/index.tsx)。绑定或写入目标用单选，选择多个字段用多选；传入字段树，已有 Data Schema 时可用 `fieldsFromSchema` 生成。调用方提供可见作用域与禁用原因，并在确认后使用返回的 `DataReference`；监听校验投影和写入规则由业务页面处理。迁移时按[字段选择器手册](../../../prototypes/studio-components/field-picker.html)核对回显、取消、禁用提示和焦点恢复。
+## 组件、Token、资产与编写参考
 
-Studio 统一使用 Lucide。设计稿、手册样例及页面只能选用基础组件库收录的图标；页面从公共入口导入 `Icon`，按 `IconName` 选择，`lucide-react` 的直接导入集中在基础组件库。设计与评审先查 [Design Icon](../../../prototypes/studio-design-handbook.html#design-icon)，按动作语义复用，页面通过基础组件库使用。缺少图标时提交场景、含义和已有图标的差异，经评审纳入后使用；不临时自绘 SVG、用字符或 emoji 替代，或绕过组件库另引图标。
+新增、修改或审查 Studio 页面、组件、Token 或 Handbook 时，按实际路径或 `studio-component`、`studio-tokens`、`studio-handbook` 意图选择条款。先加载返回的 `read_first`，统一入口为 [Studio Design 设计准则](../../../packages/studio-design/guidelines.md)，再按 [Design Handbook](../../../packages/studio-design/handbook/studio-design-handbook.html) 查目标页、实际组件导出或 Token 真源。新增公共组件、调整公共接口或交互时同批维护独立说明、目录和真实示例。修改 Token 用途时同步手册说明。用 Handbook 检查和实际 Studio 调用方验证。
 
-Studio 交互验收须在实际页面用键盘走通受影响路径：Tab / Shift+Tab 的焦点顺序与可见焦点、Enter / Space 激活，以及控件适用的方向键和 Escape。关闭弹窗、菜单或抽屉后验证焦点返回触发控件；从详情返回列表时核对原操作项、筛选和滚动位置。触发项已移除时验证焦点落在合理的后继控件。报告实际覆盖的路径及未验证项。
+```bash
+python3 tools/docs/studio_catalog.py lookup --kind component --query TreeView --limit 1
+python3 tools/docs/studio_catalog.py lookup --kind component --query JsonEditor --limit 1
+python3 tools/docs/studio_catalog.py lookup --kind token --query=--studio-primary --limit 1
+```
 
-修改 Studio 表单字段、弹窗或区域布局时，追加读取[表单与布局间距](../../../docs/design/platform-studio.md#studio-ui-spacing)，按职责复用字段与布局容器。
+物料与纯函数只按任务中的稳定 ID 读取现有资产目录，沿返回的 Manifest、README、实现和适用示例取证。未知 ID 先在相应包的 `src/manifests.ts` 或现有目录查找。修改资产签名、行为或制品时，再读 [资产规范](../../../docs/design/extension-integration.md#first-assets-organization) 和适用的工程条款。仅查资产语义时使用该资产查询。
 
-修改 Studio 页面外壳、导航、列表筛选、弹窗尺寸或响应式排布时，追加读取[页面、导航、筛选栏与弹窗布局](../../../docs/design/platform-studio.md#studio-ui-layout)。涉及字段或区域间距时，同时查阅对应间距规则。
+```bash
+node tools/engineering/catalog-docs.mjs --lookup text-input
+node tools/engineering/catalog-docs.mjs --lookup date.inclusiveDays
+```
+
+修改或预检代码时，按实际路径选择编写参考。TypeScript 文件与类型建模、Python 编写参考按文件匹配。框架规则按相关路径和当前意图叠加：派生状态用 `react-render`，并行请求用 `react-async`，Next 服务端与客户端边界用 `next-boundary`，Nest HTTP 用 `nest-http`，FastAPI HTTP 用 `fastapi-http`，Graph 重放用 `langgraph-state`，公开声明制品用 `ts-declarations`。
+
+```bash
+.venv-docs/bin/python tools/docs/select_references.py --path packages/studio-design/components/src/tree-view.tsx --intent react-render
+```
+
+工具直接返回命中的 `.agents/` 参考原文、范围与上游版本。 已纳入的生效框架规则用版本匹配的摘录完成预检；遇到摘录没覆盖的 API 行为，再沿实际依赖核查。可用 `.agents/context/references.yaml` 手工选取。上游参考服从现行项目 Contract、工具链和任务授权。记录实际查到的组件或 Token 与加载的参考 ID。
 
 ## 一个循环选择下一项必要工作
 

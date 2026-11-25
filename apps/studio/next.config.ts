@@ -27,6 +27,7 @@ const config: NextConfig = {
     '@form-engine/pure-functions',
     '@form-engine/renderer-react',
     '@form-engine/materials-react',
+    '@form-engine/studio-design-components',
   ],
   turbopack: {
     rules: {

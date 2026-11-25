@@ -7,14 +7,30 @@ import {
   ConflictException,
   NotFoundException,
   GatewayTimeoutException,
+  HttpException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { ReleaseBuild } from './release-build.js';
 import { webTarget, withTravelPreviewHost } from './web-check.js';
 export type UnderstandingItem = { kind: 'requirement' | 'question'; text: string };
+export type ComposePhase = {
+  stage: 'schema' | 'capabilities' | 'view' | 'validation' | 'reaction' | 'compile';
+  status: 'started' | 'completed' | 'retrying' | 'failed';
+  attempt?: number;
+  detail?: string;
+};
+export class AgentTurnFailure extends HttpException {
+  constructor(
+    readonly reason: string,
+    status: number,
+  ) {
+    super(reason, status);
+  }
+}
 export type TurnStream = {
   traceId: string;
   progress: (message: string) => void;
+  phase?: (value: ComposePhase) => void;
   text?: (delta: string) => void;
   resetText?: () => void;
   reset: () => void;
@@ -93,13 +109,22 @@ export async function conversationRequest<T>(
         else if (event.type === 'text_delta' && typeof event.delta === 'string')
           stream.text?.(event.delta);
         else if (event.type === 'progress') stream.progress(event.message);
-        else if (
+        else if (event.type === 'compose_phase') {
+          stream.phase?.({
+            stage: event.stage,
+            status: event.status,
+            attempt: event.attempt,
+            detail: event.detail,
+          });
+        } else if (
           event.type === 'understanding_item' &&
           ['requirement', 'question'].includes(event.kind) &&
           typeof event.text === 'string'
         )
           stream.item({ kind: event.kind, text: event.text });
         else if (event.type === 'result') return event.result;
+        else if (event.type === 'error' && typeof event.reason === 'string')
+          throw new AgentTurnFailure(event.reason, event.status);
         else if (event.status === 409) throw new ConflictException('会话已更新，请重新打开。');
         else if (event.status === 404) throw new NotFoundException();
         else if (event.status === 422) throw new BadRequestException();

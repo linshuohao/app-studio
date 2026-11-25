@@ -1,11 +1,23 @@
 'use client';
-import { DataTable, Icon, ListFilterBar, Menu, Pagination, type Column } from '../components/ui';
-import { IconButton, Button, Feedback, Input } from '../components/ui/controls';
-import { Field, FormLayout } from '../components/ui/form-layout';
+import {
+  DataTable,
+  Icon,
+  ListFilterBar,
+  Menu,
+  Pagination,
+  type Column,
+} from '@form-engine/studio-design-components';
+import {
+  IconButton,
+  Button,
+  Feedback,
+  Input,
+} from '@form-engine/studio-design-components/controls';
+import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
 import { useEffect, useId, useRef, useState } from 'react';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { FormEditor } from './form-editor';
-import type { ConversationLink } from './agent-conversation';
+import type { ConversationLink, FormReference } from './agent-conversation';
 import {
   platform,
   failureMessage,
@@ -44,6 +56,8 @@ export function WorkingVersions(props: {
   parkedSearch?: string;
   refreshRoute: () => void;
   onMetadata: (form: FormSummary) => void;
+  onReference: (reference: FormReference) => void;
+  pickingReference: boolean;
   onBack: () => void;
   onAccessLost: () => void;
   onRefreshAccess: () => Promise<void>;
@@ -101,6 +115,15 @@ export function WorkingVersions(props: {
     if (results) results.scrollTop = 0;
   }
 
+  function referenceVersion(version: Pick<VersionSummary, 'versionId' | 'savedAt' | 'name'>) {
+    props.onReference({
+      formId: form.formId,
+      name: form.name,
+      versionId: version.versionId,
+      versionName: version.name,
+      savedAt: version.savedAt,
+    });
+  }
   const locator = work ? 'work/' + work : snapshot ? 'versions/' + snapshot : '';
   const edit = props.canEdit && !form.archived;
   type ReturnView = {
@@ -337,6 +360,14 @@ export function WorkingVersions(props: {
         }}
         backLabel={origin ? '返回' + origin : '返回版本列表'}
         onBack={back}
+        pickingReference={props.pickingReference}
+        onObjectReference={props.onReference}
+        referencePointer={snapshot ? (query.get('object') ?? undefined) : undefined}
+        onReference={
+          props.canEdit && (snapshot || current.published) && current.version
+            ? () => referenceVersion(current.version!)
+            : undefined
+        }
       />
     );
   if (locator)
@@ -467,6 +498,11 @@ export function WorkingVersions(props: {
               <h1>{form.name}</h1>
             </div>
             <div className="action-row">
+              {props.canEdit && form.version && (
+                <Button variant="secondary" onClick={() => referenceVersion(form.version!)}>
+                  引用到 Agent
+                </Button>
+              )}
               {(edit || props.canManage) && (
                 <Menu.Root>
                   <Menu.Trigger id={manageFormId} disabled={busy || props.navigating}>
@@ -527,10 +563,18 @@ export function WorkingVersions(props: {
           </nav>
         </>
       )}
+      {props.pickingReference && (
+        <Feedback kind="status">打开配置版本后，可以点选字段、控件、校验规则或联动规则。</Feedback>
+      )}
       {releases ? (
         <ReleaseWorkspace
           path={path}
           releaseId={release ?? undefined}
+          onReference={
+            props.canEdit
+              ? (version) => props.onReference({ ...version, name: form.name, formId: form.formId })
+              : undefined
+          }
           releaseHref={(releaseId) =>
             studioUrl({
               form: form.formId,

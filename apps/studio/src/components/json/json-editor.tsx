@@ -1,7 +1,7 @@
 'use client';
 import { createPortal } from 'react-dom';
-import { Button } from '../ui/controls';
-import { StudioSelect } from '../ui/select';
+import { Button } from '@form-engine/studio-design-components/controls';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal } from '../../app/modal';
 import { compactJson, displayJson } from './format';

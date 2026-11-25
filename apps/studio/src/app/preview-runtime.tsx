@@ -1,6 +1,7 @@
 'use client';
 
 import { checkPassportDuplicates, travelPassportValidator } from './host/passport-validator';
+import { projectUnderwritingSubmission } from './host/underwriting-projection';
 import { travelEligibilityValidator } from './host/validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
@@ -74,6 +75,32 @@ export function PreviewRuntime({
       const show = (value: string) => {
         if (active) setMessage(value);
       };
+      const submit = (underwriting: boolean) => {
+        const runtime = instance;
+        if (!active || !runtime) return;
+        const attempt = ++submitAttempt;
+        show('正在模拟提交校验。');
+        void (async () => {
+          try {
+            const flush = await runtime.flush();
+            if (!active || attempt !== submitAttempt) return;
+            const proof = flush.status === 'settled' ? await runtime.validate() : null;
+            if (!active || attempt !== submitAttempt) return;
+            const valid = proof?.status === 'valid' && proof.snapshot === runtime.snapshot();
+            if (valid && underwriting) {
+              show(
+                projectUnderwritingSubmission(proof.snapshot)
+                  ? '模拟提交校验与投保数据投影通过，渠道核保待接入。'
+                  : '模拟投保数据投影未通过。',
+              );
+            } else {
+              show(valid ? '模拟提交校验通过。' : '模拟提交未通过校验。');
+            }
+          } catch {
+            if (attempt === submitAttempt) show('模拟提交未通过校验。');
+          }
+        })();
+      };
       const host: NonNullable<RuntimeOptions['host']> = {
         validators: {
           [travelPassportValidator]: checkPassportDuplicates,
@@ -81,27 +108,8 @@ export function PreviewRuntime({
         },
         events: {
           'travel.saveDraft': () => show('模拟保存草稿完成。'),
-          'travel.submit': () => {
-            const runtime = instance;
-            if (!active || !runtime) return;
-            const attempt = ++submitAttempt;
-            show('正在模拟提交校验。');
-            void (async () => {
-              try {
-                const flush = await runtime.flush();
-                if (!active || attempt !== submitAttempt) return;
-                const proof = flush.status === 'settled' ? await runtime.validate() : null;
-                if (!active || attempt !== submitAttempt) return;
-                show(
-                  proof?.status === 'valid' && proof.snapshot === runtime.snapshot()
-                    ? '模拟提交校验通过。'
-                    : '模拟提交未通过校验。',
-                );
-              } catch {
-                if (attempt === submitAttempt) show('模拟提交未通过校验。');
-              }
-            })();
-          },
+          'travel.submit': () => submit(false),
+          'travel.previewUnderwritingSubmit': () => submit(true),
         },
       };
       const requirements = prepared.hostRequirements;
@@ -134,6 +142,11 @@ export function PreviewRuntime({
                 : prepared.definition.id === 'family-travel'
                   ? goldenData()
                   : {},
+          context: {
+            today: new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(
+              new Date(),
+            ),
+          },
           host,
         });
         setSession({ prepared, runtime: instance });

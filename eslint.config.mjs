@@ -47,7 +47,14 @@ export default defineConfig([
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: ['@form-engine/*/src/**', '**/packages/*/src/**'] },
+        {
+          patterns: [
+            '@form-engine/*/src/**',
+            '**/packages/*/src/**',
+            '**/packages/studio-design/*/src/**',
+            '**/packages/studio-design/tokens/**',
+          ],
+        },
       ],
     },
   },

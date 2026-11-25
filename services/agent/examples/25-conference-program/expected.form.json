@@ -1,0 +1,2232 @@
+{
+  "protocolVersion": "1.0",
+  "id": "program",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "eventCode": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 28
+        },
+        "venueCode": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 24
+        },
+        "organizer": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "organizerEmail": {
+          "type": "string",
+          "minLength": 1,
+          "format": "email"
+        },
+        "firstDay": {
+          "type": "string",
+          "format": "date"
+        },
+        "lastDay": {
+          "type": "string",
+          "format": "date"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 3000
+        },
+        "entryMode": {
+          "type": "string",
+          "enum": ["list", "qr"]
+        },
+        "checkinDesk": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 20
+        },
+        "qrBatch": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "approved": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sessionTitle": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 80
+              },
+              "roomCode": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 20
+              },
+              "sessionDay": {
+                "type": "string",
+                "format": "date"
+              },
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1440
+              },
+              "seats": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3000
+              },
+              "speakerNo": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 24
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["talk", "workshop", "stream"]
+              },
+              "materials": {
+                "type": "string",
+                "minLength": 12,
+                "maxLength": 200
+              },
+              "streamChannel": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 24
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "sessionTitle",
+              "roomCode",
+              "sessionDay",
+              "startMinute",
+              "endMinute",
+              "seats",
+              "speakerNo",
+              "kind",
+              "sessionId"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "workshop"
+                    }
+                  },
+                  "required": ["kind"]
+                },
+                "then": {
+                  "required": ["materials"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["materials"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "stream"
+                    }
+                  },
+                  "required": ["kind"]
+                },
+                "then": {
+                  "required": ["streamChannel"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["streamChannel"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 40
+        },
+        "shifts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "staffNo": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 24
+              },
+              "team": {
+                "type": "string",
+                "enum": ["safety", "reception", "tech"]
+              },
+              "dutyDay": {
+                "type": "string",
+                "format": "date"
+              },
+              "startMinute": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1439
+              },
+              "endMinute": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1440
+              },
+              "dutyNote": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 160
+              },
+              "shiftId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["staffNo", "team", "dutyDay", "startMinute", "endMinute", "shiftId"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "eventCode",
+        "venueCode",
+        "organizer",
+        "organizerEmail",
+        "firstDay",
+        "lastDay",
+        "capacity",
+        "entryMode",
+        "approved",
+        "sessions",
+        "shifts"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "entryMode": {
+                "const": "list"
+              }
+            },
+            "required": ["entryMode"]
+          },
+          "then": {
+            "required": ["checkinDesk"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["checkinDesk"]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "entryMode": {
+                "const": "qr"
+              }
+            },
+            "required": ["entryMode"]
+          },
+          "then": {
+            "required": ["qrBatch"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["qrBatch"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "展会多会场议程与值岗确认"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "活动信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "活动项目号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/eventCode"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/eventCode"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "会场编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/venueCode"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/venueCode"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "现场统筹人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/organizer"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/organizer"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "统筹邮箱"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/organizerEmail"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/organizerEmail"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "date-range",
+              "props": {
+                "label": "保险期间",
+                "startLabel": "起保日",
+                "endLabel": "终保日"
+              },
+              "bindings": {
+                "start": {
+                  "source": "data",
+                  "path": "/firstDay"
+                },
+                "end": {
+                  "source": "data",
+                  "path": "/lastDay"
+                }
+              }
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "场馆核定人数"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/capacity"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/capacity"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "现场验票方式"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/entryMode"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/entryMode"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "list",
+                        "label": "名单核验"
+                      },
+                      {
+                        "id": "qr",
+                        "label": "二维码核验"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/entryMode"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/entryMode"
+                            }
+                          },
+                          "list"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "名单核验台编号"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/checkinDesk"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/checkinDesk"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/entryMode"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/entryMode"
+                            }
+                          },
+                          "qr"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "二维码批次号"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/qrBatch"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/qrBatch"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "会场议程"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/sessions"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "议程"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "议程标题"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/sessionTitle",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/sessionTitle",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "房间编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/roomCode",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/roomCode",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "议程日期"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/sessionDay",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/sessionDay",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "开始时刻"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/startMinute",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/startMinute",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "结束时刻"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/endMinute",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/endMinute",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "预计现场到场人数"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/seats",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/seats",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "主讲人编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/speakerNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/speakerNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "议程形式"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/kind",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/kind",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "talk",
+                              "label": "演讲"
+                            },
+                            {
+                              "id": "workshop",
+                              "label": "工作坊"
+                            },
+                            {
+                              "id": "stream",
+                              "label": "带直播的议程"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                },
+                                "workshop"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "工作坊分组与器材说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/materials",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/materials",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/kind",
+                                    "scope": "person"
+                                  }
+                                },
+                                "stream"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "直播频道编号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/streamChannel",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/streamChannel",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/sessions"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除议程",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/sessions"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加议程",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/sessions"
+                            }
+                          }
+                        ]
+                      },
+                      40
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addConferenceSession"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "值岗安排"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/shifts"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "值岗"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "工作人员编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/staffNo",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/staffNo",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "岗位类型"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/team",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/team",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "safety",
+                              "label": "现场协调"
+                            },
+                            {
+                              "id": "reception",
+                              "label": "签到接待"
+                            },
+                            {
+                              "id": "tech",
+                              "label": "技术支持"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "值岗日期"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/dutyDay",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/dutyDay",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "值岗开始时刻"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/startMinute",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/startMinute",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "值岗结束时刻"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/endMinute",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/endMinute",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "交接备注"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/dutyNote",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/dutyNote",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/shifts"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除值岗",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/shifts"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加值岗",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/shifts"
+                            }
+                          }
+                        ]
+                      },
+                      50
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addConferenceShift"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "确认与场馆和讲者核对后提交"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/approved"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "请求场馆确认"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.publishConferenceDraft"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "conference-days",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/firstDay"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/lastDay"
+            }
+          },
+          7
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/lastDay"
+        },
+        "code": "conference-days",
+        "message": {
+          "text": "结束日不得早于开始日，最多 7 个自然日。"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/firstDay"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/lastDay"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "session-minutes",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lt",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startMinute",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endMinute",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endMinute",
+          "scope": "person"
+        },
+        "code": "session-minutes",
+        "message": {
+          "text": "结束时刻须晚于开始时刻"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/startMinute",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/endMinute",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/sessions"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "shift-minutes",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lt",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startMinute",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endMinute",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endMinute",
+          "scope": "person"
+        },
+        "code": "shift-minutes",
+        "message": {
+          "text": "结束时刻须晚于开始时刻"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/startMinute",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/endMinute",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/shifts"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "session-in-event",
+      "kind": "internal",
+      "assert": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/firstDay"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/sessionDay",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          },
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/sessionDay",
+                      "scope": "person"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/lastDay"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/sessionDay",
+          "scope": "person"
+        },
+        "code": "session-in-event",
+        "message": {
+          "text": "日期须在活动期间内"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/firstDay"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/lastDay"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/sessionDay",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/sessions"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "shift-in-event",
+      "kind": "internal",
+      "assert": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/firstDay"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/dutyDay",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          },
+          {
+            "op": "core.ne",
+            "args": [
+              {
+                "op": "date.inclusiveDays",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/dutyDay",
+                      "scope": "person"
+                    }
+                  },
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/lastDay"
+                    }
+                  }
+                ]
+              },
+              null
+            ]
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/dutyDay",
+          "scope": "person"
+        },
+        "code": "shift-in-event",
+        "message": {
+          "text": "日期须在活动期间内"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/firstDay"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/lastDay"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/dutyDay",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/shifts"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "session-site-capacity",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/seats",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/capacity"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/seats",
+          "scope": "person"
+        },
+        "code": "session-site-capacity",
+        "message": {
+          "text": "本场人数不能超过场馆核定人数"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/seats",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/capacity"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/sessions"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "conference-multi-room",
+      "kind": "external",
+      "validator": "business.validateConferenceSchedule",
+      "target": {
+        "source": "data",
+        "path": "/venueCode"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/eventCode"
+        },
+        {
+          "source": "data",
+          "path": "/venueCode"
+        },
+        {
+          "source": "data",
+          "path": "/firstDay"
+        },
+        {
+          "source": "data",
+          "path": "/lastDay"
+        },
+        {
+          "source": "data",
+          "path": "/capacity"
+        },
+        {
+          "source": "data",
+          "path": "/sessions"
+        },
+        {
+          "source": "data",
+          "path": "/shifts"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-desk-checkinDesk",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/entryMode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/checkinDesk"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/checkinDesk"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/entryMode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/entryMode"
+                        }
+                      },
+                      "list"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-qr-qrBatch",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/entryMode"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/qrBatch"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/qrBatch"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/entryMode"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/entryMode"
+                        }
+                      },
+                      "qr"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-materials-materials",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/kind",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/materials",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/materials",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      },
+                      "workshop"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/sessions"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-channel-streamChannel",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/kind",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/streamChannel",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/streamChannel",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/kind",
+                          "scope": "person"
+                        }
+                      },
+                      "stream"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/sessions"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "sessions": [],
+        "shifts": [],
+        "approved": false
+      },
+      "validators": {
+        "business.validateConferenceSchedule": "基于同一快照校验房间、主讲人、房间容量、并发总容量、半开区间冲突、人员值岗冲突与协调岗连续覆盖，按稳定行 ID 返回错误。"
+      },
+      "events": {
+        "business.addConferenceSession": "生成 sessionId 并添加空议程。",
+        "business.addConferenceShift": "生成 shiftId 并添加空班次。",
+        "business.publishConferenceDraft": "校验通过后复核场馆资源，清除不适用字段，按日期和开始时间排序交付，按项目号与提交键幂等。"
+      }
+    }
+  }
+}

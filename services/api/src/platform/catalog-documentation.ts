@@ -190,6 +190,75 @@ export const catalogDocumentation: Record<string, { version: string; description
       }
     ]
   },
+  "checkbox-group": {
+    "version": "0.1.0",
+    "description": "# checkbox-group · 多选组\n\n适用于少量可同时勾选的选项。用 `field` 提供组标签与校验提示。\n\n- Props `options` 是 `{id, label}` 数组，选项 ID 须唯一。可配置 `disabled`。\n- Binding `value` 是去重的选项 ID 数组，取消最后一个选项写 `[]`。\n- Host 提供的未知选项显示不可用提示。切换已知选项时保留未知字符串 ID，避免候选项变化导致数据被静默删除。“清空多选”可明确将所有值清为 `[]`。\n",
+    "implementation": "React",
+    "source": "packages/materials-react/src/checkbox-group/README.md",
+    "examples": [
+      {
+        "source": "apps/playground/src/demos/interactions/definition.ts",
+        "value": {
+          "material": "checkbox-group",
+          "props": {
+            "options": [
+              {
+                "id": "email",
+                "label": "电子邮件"
+              },
+              {
+                "id": "sms",
+                "label": "短信"
+              }
+            ]
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/notifications"
+            }
+          }
+        }
+      }
+    ],
+    "title": "多选组",
+    "category": "输入",
+    "summary": "从一组可见选项中选择多项。",
+    "annotations": {
+      "/propsSchema/properties/options": "选项列表，每项包含唯一的 id 和显示 label。",
+      "/propsSchema/properties/options/items/properties/id": "选项的稳定 ID。",
+      "/propsSchema/properties/options/items/properties/label": "用户看到的选项文字。",
+      "/propsSchema/properties/disabled": "禁用组内全部选项。",
+      "/bindings/value": "已选的选项 ID 数组，清空为 []。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "options": [
+            {
+              "id": "email",
+              "label": "电子邮件"
+            },
+            {
+              "id": "sms",
+              "label": "短信"
+            }
+          ]
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": [
+            "email"
+          ]
+        }
+      }
+    ]
+  },
   "condition": {
     "version": "0.1.0",
     "description": "# condition · 条件呈现\n\nProps：visible:boolean 必填；Slot：default；无 Binding、Event 或 Request。\n\nvisible=false 不挂载内容；已写业务数据保留，业务规则不会随隐藏自动关闭。重新显示时读取 Runtime 当前值，不恢复旧输入缓存。\n\nManifest 是机器契约唯一来源，见 [manifest.ts](manifest.ts)；实现和 Props 类型见 [implementation.tsx](implementation.tsx)。调用 `createCondition(artifact)` 装配到 Renderer。静态契约从 `@form-engine/materials-react/manifests` 消费，样式显式导入 `@form-engine/materials-react/styles.css`。\n\n回归位于 `../../tests/condition/`。真实 Compiler / Runtime、Typed Template 与成员组合在 tests/dialog-editor/members.test.tsx；Playground `/demos/members` 用同一 Runtime 切换平铺与摘要弹层，浏览器另验证焦点、Scope 和窄屏。jsdom 的原生弹层桩不证明真实焦点 / inert 行为。\n\n物料只调用自身 Adapter；Slots 由 Renderer 构造，内部无另一份业务 Store。权威设计为 docs/design/extension-integration.md#first-assets-materials。\n",
@@ -294,9 +363,61 @@ export const catalogDocumentation: Record<string, { version: string; description
       }
     ]
   },
+  "date-picker": {
+    "version": "0.1.0",
+    "description": "# date-picker · 日期选择\n\n选择单个公历日期。用 `field` 为控件提供字段标签和校验提示。\n\n- Binding `value` 接受严格的 `YYYY-MM-DD` 公历日期字符串或 `null`；清空写 `null`。\n- 手输按 Enter 或失焦提交。无效格式、无效闰日和超界输入保留在本地并显示提示。日历选中即提交，关闭日历不产生额外写入。\n- `min` / `max` 是包含边界的可选日期，约束可选日期和手输提交。`disabled`、`readOnly` 阻止编辑，`placeholder` 默认为 `YYYY-MM-DD`。\n- 显示和提交公历日，不经过浏览器所在时区；Host 改值覆盖尚未提交的草稿。字段业务校验继续由表单配置负责。\n",
+    "implementation": "React",
+    "source": "packages/materials-react/src/date-picker/README.md",
+    "examples": [
+      {
+        "source": "apps/playground/src/demos/interactions/definition.ts",
+        "value": {
+          "material": "date-picker",
+          "props": {
+            "min": "1900-01-01",
+            "max": "2028-12-31"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/birthDate"
+            }
+          }
+        }
+      }
+    ],
+    "title": "日期选择",
+    "category": "输入",
+    "summary": "键入或从日历选择单个日期。",
+    "annotations": {
+      "/propsSchema/properties/min": "可选日期的下限，包含当天。",
+      "/propsSchema/properties/max": "可选日期的上限，包含当天。",
+      "/propsSchema/properties/readOnly": "只读展示当前日期。",
+      "/propsSchema/properties/disabled": "禁用日期输入。",
+      "/propsSchema/properties/placeholder": "空日期的输入提示。",
+      "/bindings/value": "严格 YYYY-MM-DD 公历日期，清空为 null。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "min": "1900-01-01",
+          "max": "2028-12-31"
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "1990-06-15"
+        }
+      }
+    ]
+  },
   "date-range": {
     "version": "0.1.0",
-    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。配置任一项时，开始日期使用浏览器原生日期控件；确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
+    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入或打开日历选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/date-range/README.md",
     "examples": [
@@ -1029,9 +1150,76 @@ export const catalogDocumentation: Record<string, { version: string; description
       }
     ]
   },
+  "radio-group": {
+    "version": "0.1.0",
+    "description": "# radio-group · 单选组\n\n适用于少量互斥选项。用 `field` 提供组标签与校验提示。\n\n- Props `options` 是 `{id, label}` 数组，选项 ID 须唯一。可配置 `disabled`。\n- Binding `value` 是一个选项 ID 或 `null`，未选显示为空。用户通过点击或方向键选择后写入 ID。\n- Host 的未知选项显示不可用提示，保留原值直到用户重新选择。\n",
+    "implementation": "React",
+    "source": "packages/materials-react/src/radio-group/README.md",
+    "examples": [
+      {
+        "source": "apps/playground/src/demos/interactions/definition.ts",
+        "value": {
+          "material": "radio-group",
+          "props": {
+            "options": [
+              {
+                "id": "email",
+                "label": "邮件"
+              },
+              {
+                "id": "phone",
+                "label": "电话"
+              }
+            ]
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/contactMethod"
+            }
+          }
+        }
+      }
+    ],
+    "title": "单选组",
+    "category": "输入",
+    "summary": "从一组可见选项中选择一项。",
+    "annotations": {
+      "/propsSchema/properties/options": "选项列表，每项包含唯一的 id 和显示 label。",
+      "/propsSchema/properties/options/items/properties/id": "选项的稳定 ID。",
+      "/propsSchema/properties/options/items/properties/label": "用户看到的选项文字。",
+      "/propsSchema/properties/disabled": "禁用组内全部选项。",
+      "/bindings/value": "选中的选项 ID，空态为 null。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "options": [
+            {
+              "id": "train",
+              "label": "高铁"
+            },
+            {
+              "id": "flight",
+              "label": "飞机"
+            }
+          ]
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "train"
+        }
+      }
+    ]
+  },
   "remote-select": {
     "version": "0.1.0",
-    "description": "# remote-select\n\nHost 搜索、显式选择的受控单选。`createRemoteSelect(artifact)` 使用 Host 制品身份。\n\n- Props：`placeholder?: string`，`disabled = false`，`clearable = true`，`filterKey?: string | null`（缺省按 null 交付）。\n- Binding `value`：完整 `{ id: string; label: string } | null`。没有 Events 或 Slots。\n- Request `search`：latest 策略；输入 `{ query: string; filterKey: string | null }`，输出 `{ items: Array<{ id: string; label: string }> }`。静态 Manifest 是机器契约；公开 `remoteSelectRequests` 提供 Host 类型推导。\n- 点击搜索或 Enter 才调用 Host；输入关键词和请求成功不改选中值。选择写完整对象，清空写 null。查询 / filterKey / disabled 改变，显式取消或卸载撤销当前交付、清空候选并拒绝迟到与排队旧结果。重试同一 query 也生成新资格。\n- 失败只显示友好提示，不泄露技术异常、不清选中值、不生成校验 Issue；discarded 回到空闲。空结果与失败有不同展示。仅复用 Adapter 已发布校验；完整校验不等待搜索。\n- Host 承接网络、防抖、缓存和重试。国家改变清空城市必须用 Definition Reaction 明确配置，物料不隐含业务联动。\n\n```ts\nconst view = {\n  material: 'remote-select',\n  props: { filterKey: { $expr: { ref: { source: 'data', path: '/travel/countryCode' } } } },\n  bindings: { value: { source: 'data', path: '/travel/city' } },\n  requests: { search: { type: 'host.request', request: 'travel.searchCities' } },\n};\n// import { defineHostRequests } from '@form-engine/renderer-react';\n// import { remoteSelectRequests } from '@form-engine/materials-react';\nconst requests = defineHostRequests(\n  { 'travel.searchCities': remoteSelectRequests.search },\n  { 'travel.searchCities': async ({ query, filterKey }, { signal }) =>\n      cityService.search({ query, country: filterKey, signal }) },\n);\n```\n\n行为、乱序、卸载及 Host 类型正反例见 `tests/remote-select/`；实际浏览器使用可控 Host 验收。\n",
+    "description": "# remote-select\n\nHost 搜索、显式选择的受控单选。`createRemoteSelect(artifact)` 使用 Host 制品身份。\n\n- Props：`placeholder?: string`，`disabled = false`，`clearable = true`，`filterKey?: string | null`（缺省按 null 交付）。\n- Binding `value`：完整 `{ id: string; label: string } | null`。没有 Events 或 Slots。\n- Request `search`：latest 策略；输入 `{ query: string; filterKey: string | null }`，输出 `{ items: Array<{ id: string; label: string }> }`。静态 Manifest 是机器契约；公开 `remoteSelectRequests` 提供 Host 类型推导。\n- 点击搜索或 Enter 才调用 Host；输入关键词和请求成功不改选中值。候选和当前选择都展示选项的 `label`，选择将完整的 `{ id, label }` 写入 value 绑定，清空写 null。查询 / filterKey / disabled 改变，显式取消或卸载撤销当前交付、清空候选并拒绝迟到与排队旧结果。重试同一 query 也生成新资格。\n- 失败只显示友好提示，不泄露技术异常、不清选中值、不生成校验 Issue；discarded 回到空闲。空结果与失败有不同展示。仅复用 Adapter 已发布校验；完整校验不等待搜索。\n- Host 承接网络、防抖、缓存和重试。国家改变清空城市必须用 Definition Reaction 明确配置，物料不隐含业务联动。\n\n```ts\nconst country = { ref: { source: 'data', path: '/travel/countryCode' } };\nconst view = {\n  material: 'condition',\n  props: { visible: { $expr: { op: 'core.exists', args: [country] } } },\n  children: [{\n    material: 'remote-select',\n    props: { filterKey: { $expr: country } },\n    bindings: { value: { source: 'data', path: '/travel/city' } },\n    requests: { search: { type: 'host.request', request: 'travel.searchCities' } },\n  }],\n};\n// import { defineHostRequests } from '@form-engine/renderer-react';\n// import { remoteSelectRequests } from '@form-engine/materials-react';\nconst requests = defineHostRequests(\n  { 'travel.searchCities': remoteSelectRequests.search },\n  { 'travel.searchCities': async ({ query, filterKey }, { signal }) =>\n      cityService.search({ query, country: filterKey, signal }) },\n);\n```\n\n国家可以在初始数据中缺省。示例通过条件容器等到国家存在再挂载选择器，避免动态 `filterKey` 在首次渲染时读取缺失值。\n\n行为、乱序、卸载及 Host 类型正反例见 `tests/remote-select/`；实际浏览器使用可控 Host 验收。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/remote-select/README.md",
     "examples": [
@@ -1932,6 +2120,59 @@ export const catalogDocumentation: Record<string, { version: string; description
         "description": "这里展示各绑定名对应的实际数据，不是配置中的绑定路径。",
         "value": {
           "value": "林小满"
+        }
+      }
+    ]
+  },
+  "textarea": {
+    "version": "0.1.0",
+    "description": "# textarea · 多行文本\n\n适用于备注、地址补充和情况说明。用 `field` 提供标签与校验提示。\n\n- Binding `value` 为字符串或 `null`。编辑保留换行和空白，清空写空字符串。\n- `rows` 默认 3，可配置正整数。支持 `maxLength`、`placeholder`、`disabled`、`readOnly`。\n- 沿用 `text-input` 的输入法提交策略，组合输入结束后提交，Host 改值覆盖旧草稿。\n",
+    "implementation": "React",
+    "source": "packages/materials-react/src/textarea/README.md",
+    "examples": [
+      {
+        "source": "apps/playground/src/demos/interactions/definition.ts",
+        "value": {
+          "material": "textarea",
+          "props": {
+            "rows": 3,
+            "maxLength": 200,
+            "placeholder": "请输入备注"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/notes"
+            }
+          }
+        }
+      }
+    ],
+    "title": "多行文本",
+    "category": "输入",
+    "summary": "输入备注和其他多行文本。",
+    "annotations": {
+      "/propsSchema/properties/rows": "可见行数，默认 3。",
+      "/propsSchema/properties/maxLength": "最大文本长度。",
+      "/propsSchema/properties/readOnly": "只读展示当前文本。",
+      "/propsSchema/properties/disabled": "禁用文本输入。",
+      "/propsSchema/properties/placeholder": "空文本的输入提示。",
+      "/bindings/value": "保留换行与空白，清空写空字符串。"
+    },
+    "valueExamples": [
+      {
+        "title": "Props 示例",
+        "description": "物料属性的实际值。",
+        "value": {
+          "rows": 3,
+          "maxLength": 200
+        }
+      },
+      {
+        "title": "绑定值示例",
+        "description": "控件绑定的实际工作值。",
+        "value": {
+          "value": "第一行\n第二行"
         }
       }
     ]

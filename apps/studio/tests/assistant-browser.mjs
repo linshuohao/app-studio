@@ -49,7 +49,11 @@ export async function turnResponse(response) {
   assert(!result.error, result.error);
   return result.value;
 }
-export async function clickTurn(page, label = '发送') {
+export async function clickTurn(
+  page,
+  label = '发送',
+  submit = () => page.getByRole('button', { name: label, exact: true }).click(),
+) {
   await captureAssistantTurns(page);
   const [response] = await Promise.all([
     page.waitForResponse(
@@ -59,7 +63,7 @@ export async function clickTurn(page, label = '发送') {
         r.request().method() === 'POST',
       { timeout: 620000 },
     ),
-    page.getByRole('button', { name: label, exact: true }).click(),
+    submit(),
   ]);
   const payload = response.request().postDataJSON();
   assert(!('history' in payload) && !('previous_failure' in payload));

@@ -1,0 +1,32 @@
+{
+  "name": "@form-engine/studio-design-components",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./styles.css",
+    "./controls": "./src/controls.tsx",
+    "./editor-view-switch": "./src/editor-view-switch.tsx",
+    "./form-layout": "./src/form-layout.tsx",
+    "./list-layout": "./src/list-layout.tsx",
+    "./menu": "./src/menu.tsx",
+    "./select": "./src/select.tsx",
+    "./tabs": "./src/tabs.tsx",
+    "./icon": "./src/icon.tsx",
+    "./primitives": "./src/primitives.tsx"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.9.0",
+    "@form-engine/studio-design-tokens": "workspace:*",
+    "lucide-react": "1.59.0"
+  },
+  "peerDependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}

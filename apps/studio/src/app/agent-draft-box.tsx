@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Modal } from './modal';
-import { Button, DataTable, type Column } from '../components/ui';
-import { Feedback } from '../components/ui/controls';
+import { Button, DataTable, type Column } from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
 import { failureMessage, platform } from './platform-api';
 
 type DraftEntry = {

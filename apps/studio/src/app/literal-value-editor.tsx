@@ -1,7 +1,7 @@
 'use client';
 
-import { Input } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Input } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { SchemaJsonValue } from './schema-json-value';
 
 const literalLabels = {

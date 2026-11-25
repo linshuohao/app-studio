@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Field 表单字段 · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../../components/styles.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+    <link rel="stylesheet" href="../studio-technical-samples.css" />
+  </head>
+  <body class="studio-content">
+    <div class="shell">
+      <aside>
+        <header><span class="mark" aria-hidden="true">S</span>Form Studio</header>
+        <nav aria-label="组件目录">
+          <a href="../studio-design-handbook.html">组件总览</a><a href="tokens.html">Design Token</a
+          ><a href="../studio-design-handbook.html#design-icon">Design Icon · 图标</a><b>通用</b
+          ><a href="button.html">Button · 按钮</a><a href="icon.html">Icon · 图标</a
+          ><a href="icon-button.html">IconButton · 图标按钮</a
+          ><a href="feedback.html">Feedback · 状态反馈</a><b>表单</b
+          ><a href="form.html">Form · 表单</a
+          ><a aria-current="page" href="field.html">Field · 表单字段</a
+          ><a href="input.html">Input · 输入框</a><a href="select.html">Select · 下拉选择</a
+          ><a href="textarea.html">Textarea · 多行文本</a
+          ><a href="field-layout.html">Field · 带提示的字段布局</a
+          ><a href="studioselect.html">StudioSelect · 选项选择器</a><b>数据筛选</b
+          ><a href="listfilterbar.html">ListFilterBar · 筛选栏</a><b>数据展示</b
+          ><a href="treeview.html">TreeView · 树视图</a
+          ><a href="datatable.html">DataTable · 数据表格</a
+          ><a href="cardlist.html">CardList · 卡片列表</a
+          ><a href="tableresults.html">TableResults · 表格结果区域</a><b>导航</b
+          ><a href="pagination.html">Pagination · 分页器</a
+          ><a href="tabs.html">Tabs · 标签页 · 切换同页内容</a><b>布局</b
+          ><a href="grid.html">Grid · 栅格</a><a href="griditem.html">GridItem · 栅格子项</a
+          ><a href="formlayout.html">FormLayout · 表单布局</a
+          ><a href="masterdetail.html">MasterDetail · 主从布局</a><b>浮层</b
+          ><a href="menu.html">Menu · 下拉菜单</a><a href="modal.html">Dialog · 弹窗</a
+          ><a href="drawer.html">Drawer · 抽屉</a><a href="tooltip.html">Tooltip · 悬浮提示</a
+          ><a href="native-modal.html">Modal · 原生模态框</a><b>业务组件</b
+          ><a href="field-picker.html">FieldPicker · 字段选择器 · 单选与多选</a
+          ><a href="expression-editor.html">ExpressionEditor · 取值来源与表达式编辑</a
+          ><a href="json-editor.html">JsonEditor · JSON 原文与层级编辑</a
+          ><a href="action-editor.html">ActionEditor · 联动动作配置</a><b>物料与契约</b
+          ><a href="material-detail-preview.html">MaterialDetailPreview · 物料详情预览</a
+          ><a href="record-identity.html">RecordIdentity · 记录标识</a
+          ><a href="contract-table.html">ContractTable · 契约字段表</a
+          ><a href="contract-panel.html">ContractPanel · 契约面板</a
+          ><a href="material-card.html">MaterialCard · 物料卡片</a
+          ><a href="material-description.html">MaterialDescription · 物料说明</a
+          ><a href="manifest-input.html">ManifestInput · 物料常量输入</a
+          ><a href="value-input.html">ValueInput · 物料属性值</a><b>配置工具</b
+          ><a href="json-source.html">JsonSource · 配置工作稿</a
+          ><a href="schema-navigation.html">SchemaNavigation · 编辑离开确认</a
+          ><a href="json-editor-view.html">JsonEditorView · 共享历史的 JSON 编辑视图</a
+          ><a href="config-inspection.html">ConfigInspection · 配置检查与预览</a
+          ><a href="preview-runtime.html">PreviewRuntime · 运行时试填</a
+          ><a href="diff-result.html">DiffResult · 差异结果</a
+          ><a href="config-diff.html">ConfigDiff · 配置版本对比</a><b>字段与表达式</b
+          ><a href="expression-verification-panel.html">ExpressionVerificationPanel · 表达式验证</a
+          ><a href="regex-input.html">RegexInput · 正则输入</a
+          ><a href="field-tree.html">FieldTree · 字段树</a
+          ><a href="field-picker-dialog.html">FieldPickerDialog · 字段选择对话框</a
+          ><a href="field-picker-control.html">FieldPickerControl · 字段选择入口</a
+          ><a href="layout-field-picker.html">LayoutFieldPicker · 布局绑定字段选择</a
+          ><a href="reaction-field-picker.html">ReactionFieldPicker · 联动字段选择</a
+          ><a href="reaction-scope-editor.html">ReactionScopeEditor · 联动作用域</a
+          ><a href="expression-display.html">ExpressionDisplay · 表达式摘要</a
+          ><a href="expression-definition.html">ExpressionDefinition · 表达式定义</a
+          ><a href="function-help.html">FunctionHelp · 函数说明</a
+          ><a href="argument-help.html">ArgumentHelp · 参数说明</a
+          ><a href="layout-expression-dialog.html">LayoutExpressionDialog · 布局表达式对话框</a
+          ><b>助手</b><a href="agent-merge.html">AgentMerge · 候选合并</a
+          ><a href="agent-panel.html">AgentPanel · 助手对话面板</a
+          ><a href="agent-reply.html">AgentReply · 助手回复</a
+          ><a href="agent-candidate-card.html">AgentCandidateCard · 候选配置卡片</a
+          ><a href="agent-issues.html">AgentIssues · 需求缺口</a><b>Host 接入</b
+          ><a href="requirements.html">Requirements · Host 能力需求</a
+          ><a href="release-host-example.html">ReleaseHostExample · Host 接入示例</a
+          ><a href="release-integration.html">ReleaseIntegration · 发布接入说明</a><b>管理操作</b
+          ><a href="copy-form.html">CopyForm · 复制表单</a
+          ><a href="form-management.html">FormManagement · 表单管理操作</a
+          ><a href="operation-records.html">OperationRecords · 操作记录</a
+          ><a href="account-security.html">AccountSecurity · 账号安全设置</a>
+        </nav>
+      </aside>
+      <main id="studio-main">
+        <article data-studio-ui>
+          <header class="hero">
+            <small>组件说明</small>
+            <h1>Field 表单字段</h1>
+            <p>
+              将标签、输入控件和提示直接放入 Field.Root。Label、Description 和 Error
+              与可聚焦控件自动关联。
+            </p>
+          </header>
+          <div class="page-contents">
+            <a href="#appearance">交互预览</a><a href="#usage">用法</a><a href="#api">接口</a>
+          </div>
+          <section class="doc-section" id="appearance">
+            <h2 id="demo">交互预览</h2>
+            <section class="handbook-preview">
+              <iframe
+                class="component-playground"
+                title="Field 表单字段 · 交互预览"
+                sandbox="allow-scripts"
+                loading="lazy"
+                src="assets/playground-runner.html?run#field"
+              ></iframe
+              ><a class="playground-link" href="playground.html#field">单独打开预览</a>
+            </section>
+            <details class="handbook-source">
+              <summary>组件使用代码 · JSX</summary>
+              <iframe
+                class="component-playground"
+                title="Field 表单字段 · JSX 使用代码"
+                loading="lazy"
+                src="playground.html?code#field"
+              ></iframe>
+            </details>
+          </section>
+          <section class="doc-section" id="usage">
+            <h2>用法</h2>
+            <pre class="doc-code"><code>&lt;Field.Root name=&quot;title&quot;&gt;
+  &lt;Field.Label&gt;名称&lt;/Field.Label&gt;
+  &lt;Input required /&gt;
+  &lt;Field.Description&gt;填写表单名称。&lt;/Field.Description&gt;
+  &lt;Field.Error match=&quot;valueMissing&quot;&gt;请输入名称&lt;/Field.Error&gt;
+&lt;/Field.Root&gt;</code></pre>
+          </section>
+          <section class="doc-section doc-api" id="api">
+            <h2>组件接口</h2>
+            <table class="prop-types">
+              <thead>
+                <tr>
+                  <th>属性</th>
+                  <th>类型</th>
+                  <th>取值、默认与用法</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>name?</code></th>
+                  <td><code>string</code></td>
+                  <td>表单字段名。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>disabled? / required?</code></th>
+                  <td><code>boolean</code></td>
+                  <td>默认 false；分别控制交互和原生必填约束。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>validationMode?</code></th>
+                  <td>
+                    <code>&quot;onSubmit&quot; | &quot;onBlur&quot; | &quot;onChange&quot;</code>
+                  </td>
+                  <td>字段设置优先于 Form 的设置。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>validate?</code></th>
+                  <td>
+                    <code
+                      >(value: unknown, values: Form.Values) =&gt; Result |
+                      Promise&lt;Result&gt;</code
+                    >
+                  </td>
+                  <td>
+                    Result 为 string | string[] | null | void。返回消息表示无效，返回 null
+                    或不返回表示通过；异步校验不会阻止表单提交。
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>invalid? / touched? / dirty?</code></th>
+                  <td><code>boolean</code></td>
+                  <td>可由外部传入无效、已触碰、已修改状态。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>actionsRef?</code></th>
+                  <td><code>React.RefObject&lt;{ validate: () =&gt; void } | null&gt;</code></td>
+                  <td>校验当前字段。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>Field.Error.match?</code></th>
+                  <td><code>boolean | keyof ValidityState</code></td>
+                  <td>
+                    例如 &quot;valueMissing&quot; 对应必填项缺失；true 用于由外部决定展示时机。
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <details>
+              <summary>Root · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>name</code></td>
+                    <td><code>string</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>actionsRef</code></td>
+                    <td><code>React.RefObject&lt;Field.Root.Actions | null&gt;</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>dirty</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>touched</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>disabled</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>false</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>invalid</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>validate</code></td>
+                    <td>
+                      <code
+                        >((value: unknown, formValues: Form.Values) =&gt; string | void | string[] |
+                        Promise&lt;string | void | string[] | null&gt; | null)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>validationMode</code></td>
+                    <td><code>Form.ValidationMode</code></td>
+                    <td><code>&#x27;onSubmit&#x27;</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>validationDebounceTime</code></td>
+                    <td><code>number</code></td>
+                    <td><code>0</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Field.Root.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Field.Root.State) =&gt; React.CSSProperties
+                        | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Field.Root.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Label · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>nativeLabel</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>true</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Field.Label.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Field.Label.State) =&gt; React.CSSProperties
+                        | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Field.Label.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Description · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code
+                        >string | ((state: Field.Description.State) =&gt; string | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Field.Description.State) =&gt;
+                        React.CSSProperties | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Field.Description.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Error · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>match</code></td>
+                    <td>
+                      <code
+                        >boolean | &#x27;valid&#x27; | &#x27;badInput&#x27; |
+                        &#x27;customError&#x27; | &#x27;patternMismatch&#x27; |
+                        &#x27;rangeOverflow&#x27; | &#x27;rangeUnderflow&#x27; |
+                        &#x27;stepMismatch&#x27; | &#x27;tooLong&#x27; | &#x27;tooShort&#x27; |
+                        &#x27;typeMismatch&#x27; | &#x27;valueMissing&#x27;</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Field.Error.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Field.Error.State) =&gt; React.CSSProperties
+                        | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Field.Error.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Control · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>defaultValue</code></td>
+                    <td><code>string | number | string[]</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>onValueChange</code></td>
+                    <td>
+                      <code
+                        >((value: string, eventDetails: Field.Control.ChangeEventDetails) =&gt;
+                        void)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Field.Control.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Field.Control.State) =&gt;
+                        React.CSSProperties | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Field.Control.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <p><a href="https://base-ui.com/react/components/field">完整部件说明与示例</a></p>
+            <dl>
+              <dt>Props · 输入</dt>
+              <dd>
+                <div>
+                  <code>Field.Root.Props · name · disabled · validate</code
+                  ><span>字段名称、校验及禁用状态由 Root 提供。</span>
+                </div>
+              </dd>
+              <dt>Actions · 行为</dt>
+              <dd>
+                <div>
+                  <code>actionsRef.current.validate()</code
+                  ><span>触发字段级校验；具体输入事件由子控件提供。</span>
+                </div>
+              </dd>
+              <dt>Slots · 组合</dt>
+              <dd>
+                <div>
+                  <code>Field.Label · Input / Field.Control · Field.Description · Field.Error</code
+                  ><span>每个字段放一个主控件，可按需添加帮助和错误说明。</span>
+                </div>
+              </dd>
+            </dl>
+          </section>
+        </article>
+      </main>
+    </div>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

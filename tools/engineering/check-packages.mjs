@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import {
+  copyFileSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
+import { inventory } from './assets/catalog.mjs';
 const scratch = mkdtempSync(join(tmpdir(), 'form-engine-consumer-'));
+const enginePackages = readdirSync('packages').filter((name) => name !== 'studio-design');
 // Native pnpm distributions may not read npm_config_* rc variables themselves.
 // Forward an explicitly selected existing cache through the public CLI option.
 const run = (args, cwd = process.cwd()) =>
@@ -18,7 +27,18 @@ const run = (args, cwd = process.cwd()) =>
     { cwd, stdio: 'inherit' },
   );
 try {
-  for (const name of readdirSync('packages'))
+  const assets = await inventory(process.cwd());
+  const expected = Object.fromEntries(
+    ['material', 'function'].map((kind) => [
+      kind,
+      Object.fromEntries(
+        assets
+          .filter((asset) => asset.kind === kind)
+          .map((asset) => [`${asset.symbol}Manifest`, asset.id]),
+      ),
+    ]),
+  );
+  for (const name of enginePackages)
     run(['--dir', `packages/${name}`, 'pack', '--pack-destination', scratch]);
   run(['init', '--bare', '--init-type', 'module', '--no-init-package-manager'], scratch);
   // Satisfy the React packages' declared peers without introducing demonstration components.
@@ -31,7 +51,7 @@ try {
   const archives = readdirSync(scratch)
     .filter((name) => name.endsWith('.tgz'))
     .map((name) => join(scratch, name));
-  const overrides = readdirSync('packages').map((name) => {
+  const overrides = enginePackages.map((name) => {
     const manifest = JSON.parse(readFileSync(`packages/${name}/package.json`, 'utf8'));
     const tarball = archives.find((path) =>
       path.endsWith(`form-engine-${name}-${manifest.version}.tgz`),
@@ -41,30 +61,34 @@ try {
   });
   writeFileSync(join(scratch, 'pnpm-workspace.yaml'), `overrides:\n${overrides.join('\n')}\n`);
   run(['add', '--offline', ...archives, `react@${react}`, `react-dom@${reactDom}`], scratch);
+  copyFileSync(
+    new URL('./assets/packed-asset-exports.mjs', import.meta.url),
+    join(scratch, 'packed-asset-exports.mjs'),
+  );
   writeFileSync(
     join(scratch, 'verify-manifests.mjs'),
     `
     import assert from 'node:assert/strict';
     import { registerHooks } from 'node:module';
     import { readFileSync } from 'node:fs';
+    import { verifyManifestExports } from './packed-asset-exports.mjs';
     registerHooks({ resolve(specifier, context, next) {
       if (/^(react(?:-dom)?(?:\\/|$)|@form-engine\\/(renderer-react|runtime)(?:\\/|$))/.test(specifier))
         throw Error('Static contracts loaded UI or Runtime: ' + specifier);
       return next(specifier, context);
     } });
-    await import('@form-engine/materials-react/manifests');
     const functions = await import('@form-engine/pure-functions/manifests');
     assert.equal(functions.textIsNonBlankManifest.id, 'text.isNonBlank');
-    assert.equal(Object.values(functions).length, 8);
+    verifyManifestExports('pure-functions', functions, ${JSON.stringify(expected.function)});
     assert.equal(functions.dateAgeInYearsManifest.id, 'date.ageInYears');
     assert.equal(functions.travelPersonPremiumManifest.parameters[0].schema, true);
     assert.equal(functions.dateInclusiveDaysManifest.returns.type.includes('null'), true);
     const materials = await import('@form-engine/materials-react/manifests');
-    assert.equal(Object.values(materials).length, 15);
+    verifyManifestExports('materials-react', materials, ${JSON.stringify(expected.material)});
     assert.equal(materials.arrayEditorManifest.id, 'array-editor');
     assert.equal(materials.textInputManifest.bindings.value.schema.type[0], 'string');
     assert.doesNotMatch(readFileSync(new URL(import.meta.resolve('@form-engine/materials-react/manifests')), 'utf8'), /use client/);
-    console.log('Static manifest consumers: no UI, Runtime, or client directive.');
+    console.log('Static manifest consumers: ${Object.keys(expected.material).length} materials and ${Object.keys(expected.function).length} functions match the registry without loading UI or Runtime.');
   `,
   );
   execFileSync('node', ['verify-manifests.mjs'], { cwd: scratch, stdio: 'inherit' });
@@ -261,7 +285,7 @@ export { command, definition, manifest, invalid, compilerResult, diagnostics, ch
     ],
     { cwd: scratch, stdio: 'inherit' },
   );
-  for (const name of readdirSync('packages')) {
+  for (const name of enginePackages) {
     const pkg = JSON.parse(readFileSync(`packages/${name}/package.json`, 'utf8'));
     assert(pkg.exports['.'].types && pkg.exports['.'].import);
   }

@@ -1,5 +1,17 @@
-import { expect, test } from '@playwright/test';
-import { openSchemaDraft, schemaSource } from './data-schema-fixture';
+import { expect, test, type Page } from '@playwright/test';
+import { chooseSchemaOption, openSchemaDraft, schemaSource } from './data-schema-fixture';
+
+const saveRule = (page: Page) =>
+  page.getByRole('button', { name: '保存规则', exact: true }).click();
+const applyOwner = (page: Page) =>
+  page.getByRole('button', { name: '应用到工作台', exact: true }).click();
+
+async function chooseFields(page: Page, title: string, paths: RegExp[]) {
+  await page.getByRole('button', { name: title, exact: true }).click();
+  const picker = page.getByRole('dialog', { name: title, exact: true });
+  for (const path of paths) await picker.getByRole('treeitem', { name: path }).click();
+  await picker.getByRole('button', { name: '应用选择', exact: true }).click();
+}
 
 test('edits the declaring condition from a field, preserves untouched tokens and undoes branch changes', async ({
   page,
@@ -8,52 +20,66 @@ test('edits the declaring condition from a field, preserves untouched tokens and
   await openSchemaDraft(page, source);
   const field = page.locator('[data-schema-path="/data/schema/properties/passport"]');
   await field.click();
-  const flow = page.getByRole('region', {
+  const related = page.getByRole('region', {
     name: '来自所属对象的条件规则 / 全部满足 1',
     exact: true,
   });
-  await expect(flow).toContainText('abroad');
-  await flow.getByRole('button', { name: '编辑当', exact: true }).click();
-  await flow.getByLabel('匹配值', { exact: true }).fill('overseas');
-  await flow.getByRole('button', { name: '编辑成立时', exact: true }).click();
-  const guard = page.getByRole('dialog', { name: '当前修改尚未应用' });
-  await guard.getByRole('button', { name: '留在此处' }).click();
-  await expect(flow.getByLabel('匹配值', { exact: true })).toHaveValue('overseas');
-  await flow.getByRole('button', { name: '保存此项' }).click();
-  await expect(field).toHaveAttribute('aria-pressed', 'true');
-  const modified = source.replace('"abroad"', '"overseas"');
-  await expect(await schemaSource(page)).toHaveValue(modified);
+  await expect(related).toContainText('abroad');
+  await related.getByRole('button', { name: '编辑所属对象', exact: true }).click();
+  const owner = page.getByRole('dialog', { name: '字段配置 · 根模型', exact: true });
+  const branch = owner.getByRole('region', { name: '分支条件规则', exact: true });
+  const edit = branch.getByRole('button', { name: '编辑条件规则', exact: true });
+  await edit.click();
+  const rule = page.getByRole('dialog', { name: '编辑条件规则', exact: true });
+  await rule.getByRole('button', { name: 'JSON 编辑', exact: true }).click();
+  const condition = rule.getByRole('textbox', { name: '编辑条件规则 JSON', exact: true });
+  const originalRule = await condition.inputValue();
+  await condition.fill(originalRule.replace('"abroad"', '"overseas"'));
+  await saveRule(page);
+  await applyOwner(page);
+  await expect(related).toContainText('overseas');
+  const modified = await (await schemaSource(page)).inputValue();
+  expect(modified).toContain('"overseas"');
+  expect(modified).toContain(String.raw`"x-note":"\u0041"`);
+  expect(modified).toContain('9007199254740993');
+  expect(modified).toContain('"views":{"x":-0}');
 
   await page.getByRole('button', { name: '字段', exact: true }).click();
   await field.click();
-  await flow.getByRole('button', { name: '新增否则', exact: true }).click();
-  let form = flow.getByRole('form', { name: '新增否则' });
-  await form.getByLabel('新增约束类型').selectOption('required');
-  await form.getByRole('button', { name: '添加一项' }).click();
-  await form.getByLabel('必填字段', { exact: true }).fill('trip');
-  await form.getByRole('button', { name: '添加必填字段' }).click();
-  await form.getByRole('button', { name: '保存此项' }).click();
-  await flow.getByRole('button', { name: '编辑否则' }).click();
-  form = flow.getByRole('form', { name: '编辑否则' });
-  await form.getByLabel('必填字段名').fill('passport');
-  await form.getByRole('button', { name: '取消' }).click();
-  await expect(flow.locator('.schema-rule-branch').last()).toContainText('必须填写 trip');
-  await flow.getByRole('button', { name: '编辑否则' }).click();
-  await form.getByLabel('必填字段名').fill('passport');
-  await form.getByRole('button', { name: '保存此项' }).click();
-  await expect(flow.locator('.schema-rule-branch').last()).toContainText('必须填写 passport');
-  await flow.getByRole('button', { name: '删除否则' }).click();
-  await flow
-    .getByRole('form', { name: '删除否则' })
-    .getByRole('button', { name: '保存此项' })
+  await related.getByRole('button', { name: '编辑所属对象', exact: true }).click();
+  await edit.click();
+  await rule.getByRole('button', { name: '添加否则分支', exact: true }).click();
+  await chooseFields(page, '选择必填字段', [/trip/]);
+  await saveRule(page);
+  await expect(branch.locator('.schema-rule-branch').last()).toContainText('必须填写 trip');
+  await edit.click();
+  const alternate = rule.getByRole('group', { name: '否则 else', exact: true });
+  await alternate.getByText(/^必填字段/).click();
+  await chooseFields(page, '选择必填字段', [/trip/, /passport/]);
+  await rule
+    .locator(':scope > .toolbar')
+    .getByRole('button', { name: '取消', exact: true })
     .click();
+  await expect(branch.locator('.schema-rule-branch').last()).toContainText('必须填写 trip');
+  await edit.click();
+  await alternate.getByText(/^必填字段/).click();
+  await chooseFields(page, '选择必填字段', [/trip/, /passport/]);
+  await saveRule(page);
+  await applyOwner(page);
+  const withElse = await (await schemaSource(page)).inputValue();
+  expect(JSON.parse(withElse).data.schema.allOf[0].else).toEqual({ required: ['passport'] });
+
+  await page.getByRole('button', { name: '字段', exact: true }).click();
+  await field.click();
+  await related.getByRole('button', { name: '编辑所属对象', exact: true }).click();
+  await edit.click();
+  await rule.getByRole('button', { name: '移除否则分支', exact: true }).click();
+  await saveRule(page);
+  await applyOwner(page);
   const raw = await schemaSource(page);
-  await expect(raw).toHaveValue(modified);
+  expect(JSON.parse(await raw.inputValue()).data.schema.allOf[0].else).toBeUndefined();
   await page.getByRole('button', { name: '撤销', exact: true }).click();
-  const result = await raw.inputValue();
-  expect(JSON.parse(result).data.schema.allOf[0].else).toEqual({ required: ['passport'] });
-  expect(result).toContain('9007199254740993');
-  expect(result).toContain(String.raw`"x-note":"\u0041"`);
+  await expect(raw).toHaveValue(withElse);
 });
 
 test('creates a combination and changes and removes property dependencies inside their card', async ({
@@ -65,58 +91,44 @@ test('creates a combination and changes and removes property dependencies inside
   );
   await page.locator('[data-schema-path="/data/schema"]').click();
   const rules = page.getByRole('region', { name: '条件与约束', exact: true });
-  const add = rules.getByLabel('添加规则或约束');
-  await add.selectOption('entry');
-  await rules.getByLabel('字段名或属性名模式').fill('country');
-  await add.selectOption('group');
-  const guard = page.getByRole('dialog', { name: '当前修改尚未应用' });
-  await guard.getByRole('button', { name: '留在此处' }).click();
-  await expect(rules.getByLabel('字段名或属性名模式')).toHaveValue('country');
-  await add.selectOption('condition');
-  await guard.getByRole('button', { name: '放弃修改并继续' }).click();
-  await rules
-    .getByRole('form', { name: '新增条件规则' })
-    .getByRole('button', { name: '取消', exact: true })
-    .click();
-  await expect(rules.getByLabel('组合方式')).toHaveCount(0);
-  await add.selectOption('condition');
-  const condition = rules.getByRole('form', { name: '新增条件规则' });
+  const add = rules.getByRole('combobox', { name: '添加规则或约束' });
+  await chooseSchemaOption(page, add, '新增属性名模式约束');
+  const pattern = page.getByRole('dialog', { name: '新增属性名模式约束', exact: true });
+  await pattern.getByLabel('属性名模式').fill('country');
+  await pattern.getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(pattern).toHaveCount(0);
+
+  await chooseSchemaOption(page, add, '条件规则');
+  const condition = page.getByRole('dialog', { name: '新增条件规则', exact: true });
   await expect(condition).toBeVisible();
   await condition.getByRole('button', { name: '取消', exact: true }).click();
-  await add.selectOption('model');
-  await expect(rules.getByRole('combobox', { name: '约束类型', exact: true })).toBeVisible();
-  await rules.getByRole('button', { name: '取消', exact: true }).click();
-  await expect(rules.getByRole('combobox', { name: '约束类型', exact: true })).toHaveCount(0);
-  await add.selectOption('group');
-  await expect(rules.getByLabel('映射类型')).toHaveCount(0);
-  await rules.getByLabel('组合方式').selectOption('anyOf');
-  await rules.getByRole('button', { name: '新增组合分支' }).click();
-  let form = rules.getByRole('form', { name: '新增组合分支' });
-  await form.getByLabel('约束形式').selectOption('false');
-  await form.getByRole('button', { name: '保存此项' }).click();
-  await expect(rules.getByRole('region', { name: '至少满足一项 · 分支 1' })).toContainText(
+  await chooseSchemaOption(page, add, '新增 anyOf 分支');
+  const combination = page.getByRole('dialog', { name: '新增组合分支', exact: true });
+  await chooseSchemaOption(page, combination.getByLabel('约束形式'), '拒绝所有值');
+  await saveRule(page);
+  await expect(rules.getByRole('region', { name: '至少满足一项 · anyOf · 分支 1' })).toContainText(
     '拒绝所有值',
   );
-  await rules.getByLabel('添加规则或约束').selectOption('dependency');
-  form = rules.getByRole('form', { name: '新增属性依赖' });
-  await form.getByLabel('当属性出现').fill('trip');
-  await form.getByLabel('需要的字段（每行一个）').fill('passport');
-  await form.getByRole('button', { name: '保存此项' }).click();
+
+  await chooseSchemaOption(page, add, '属性依赖');
+  await chooseFields(page, '选择触发字段', [/trip/]);
+  await chooseFields(page, '选择依赖字段', [/passport/]);
+  await page.getByRole('button', { name: '保存依赖', exact: true }).click();
   await rules.getByRole('button', { name: '编辑属性依赖' }).click();
-  form = rules.getByRole('form', { name: '编辑属性依赖' });
-  await form.getByLabel('当属性出现').fill('passport');
-  await form.getByLabel('需要的字段（每行一个）').fill('trip');
-  await form.getByRole('button', { name: '保存此项' }).click();
+  await chooseFields(page, '选择触发字段', [/passport/]);
+  await chooseFields(page, '选择依赖字段', [/passport/, /trip/]);
+  await page.getByRole('button', { name: '保存依赖', exact: true }).click();
   await expect(rules).toContainText('当 passport 出现时，需要 trip');
   await rules.getByRole('button', { name: '删除属性依赖' }).click();
   await rules
     .getByRole('form', { name: '删除属性依赖' })
     .getByRole('button', { name: '保存此项' })
     .click();
-  expect(JSON.parse(await (await schemaSource(page)).inputValue()).data.schema).toMatchObject({
-    anyOf: [false],
-    dependentRequired: {},
-  });
+  await applyOwner(page);
+  const schema = JSON.parse(await (await schemaSource(page)).inputValue()).data.schema;
+  expect(schema).toMatchObject({ anyOf: [false], dependentRequired: {} });
+  expect(schema).not.toHaveProperty('if');
+  expect(schema).not.toHaveProperty('patternProperties');
 });
 
 test('adds, edits and removes prefix, pattern and dependency schemas on the selected owner', async ({
@@ -128,35 +140,30 @@ test('adds, edits and removes prefix, pattern and dependency schemas on the sele
   );
   await page.locator('[data-schema-path="/data/schema/properties/owner"]').click();
   const rules = page.getByRole('region', { name: '条件与约束', exact: true });
-  for (const [keyword, key, title] of [
-    ['prefixItems', '', '前缀元素 · 分支 1'],
-    ['patternProperties', '^x/', '模式属性 · ^x/'],
-    ['dependentSchemas', 'plan~id', '依赖模型 · plan~id'],
+  for (const [option, key, title] of [
+    ['新增 prefixItems 分支', '', '前缀元素 · prefixItems · 分支 1'],
+    ['新增属性名模式约束', '^x/', '模式属性 · ^x/'],
+    ['新增依赖模型', 'plan~id', '依赖模型 · plan~id'],
   ]) {
-    if (keyword === 'prefixItems') {
-      await rules.getByLabel('添加规则或约束').selectOption('group');
-      await rules.getByLabel('组合方式').selectOption(keyword);
-      await rules.getByRole('button', { name: '新增组合分支' }).click();
-    } else {
-      await rules.getByLabel('添加规则或约束').selectOption('entry');
-      await rules.getByLabel('映射类型').selectOption(keyword);
-      await rules.getByLabel('字段名或属性名模式').fill(key);
-      await rules.getByRole('button', { name: '新增映射约束' }).click();
+    await chooseSchemaOption(page, rules.getByRole('combobox', { name: '添加规则或约束' }), option);
+    if (key) {
+      const dialog = page.getByRole('dialog', { name: option, exact: true });
+      await dialog.getByLabel(option === '新增依赖模型' ? '触发字段名' : '属性名模式').fill(key);
+      await dialog.getByRole('button', { name: '继续配置约束' }).click();
     }
-    let form = rules.getByRole('form');
-    await form.getByLabel('约束形式').selectOption('false');
-    await form.getByRole('button', { name: '保存此项' }).click();
+    await chooseSchemaOption(page, page.getByRole('combobox', { name: '约束形式' }), '拒绝所有值');
+    await saveRule(page);
     const card = rules.getByRole('region', { name: title, exact: true });
     await expect(card).toContainText('拒绝所有值');
-    await card.getByRole('button', { name: '编辑' + title }).click();
-    form = card.getByRole('form');
-    await form.getByLabel('约束形式').selectOption('true');
-    await form.getByRole('button', { name: '保存此项' }).click();
+    await card.getByRole('button', { name: '编辑' + title, exact: true }).click();
+    await chooseSchemaOption(page, page.getByRole('combobox', { name: '约束形式' }), '允许任何值');
+    await saveRule(page);
     await expect(card).toContainText('允许任何值');
-    await card.getByRole('button', { name: '删除' + title }).click();
+    await card.getByRole('button', { name: '删除' + title, exact: true }).click();
     await card.getByRole('form').getByRole('button', { name: '保存此项' }).click();
     await expect(card).toHaveCount(0);
   }
+  await applyOwner(page);
   const raw = await (await schemaSource(page)).inputValue();
   expect(raw).toContain('"x-kept":9007199254740993');
   expect(JSON.parse(raw).data.schema.properties.owner).toMatchObject({
@@ -174,11 +181,18 @@ test('protects schema pointers when deleting an earlier tuple item or replacing 
   await openSchemaDraft(page, source);
   await page.locator('[data-schema-path="/data/schema"]').click();
   const rules = page.getByRole('region', { name: '条件与约束', exact: true });
-  await rules.getByRole('button', { name: '删除前缀元素 · 分支 1', exact: true }).click();
+  await rules
+    .getByRole('button', { name: '删除前缀元素 · prefixItems · 分支 1', exact: true })
+    .click();
   await expect(rules.getByRole('alert')).toContainText('JSON');
-  await rules.getByRole('button', { name: '编辑全部满足 · 分支 1', exact: true }).click();
-  await rules.getByLabel('约束形式').first().selectOption('false');
-  await expect(rules.getByRole('alert')).toContainText('JSON');
-  await rules.getByRole('button', { name: '取消', exact: true }).click();
+  await rules.getByRole('button', { name: '编辑全部满足 · allOf · 分支 1', exact: true }).click();
+  const rule = page.getByRole('dialog', { name: '编辑全部满足 · allOf · 分支 1', exact: true });
+  await chooseSchemaOption(
+    page,
+    rule.getByRole('combobox', { name: '约束形式', exact: true }),
+    '拒绝所有值',
+  );
+  await expect(rule.getByRole('alert')).toContainText('JSON');
+  await rule.getByRole('button', { name: '取消', exact: true }).click();
   await expect(await schemaSource(page)).toHaveValue(source);
 });

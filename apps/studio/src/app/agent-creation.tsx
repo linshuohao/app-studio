@@ -1,28 +1,43 @@
 'use client';
-import { AttemptHistory, useRunningConversation } from './agent-attempt';
+import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
 import { AgentIssues } from './agent-issues';
 import { AgentInteractionCard, AgentTurnProgress } from './agent-interaction';
 import { studioUrl, writeLocation } from './studio-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
-import { Button, Feedback, IconButton, Input } from '../components/ui/controls';
+import {
+  Button,
+  Feedback,
+  IconButton,
+  Input,
+} from '@form-engine/studio-design-components/controls';
 import { Modal } from './modal';
 import { semanticModel } from './semantic-model';
 import { JsonSource } from './json-source';
 import {
   renameConversation,
   assistantText,
+  addReference,
+  referenceId,
+  referenceRequest,
+  type MessageReference,
   type AssistantConversation,
   type ConversationLink,
   type FormDraft,
   type PanelPosition,
   type TurnResponse,
 } from './agent-conversation';
-import { AgentReply } from './agent-reply';
-import { AgentPanel, ConversationTitle } from './agent-panel';
+import { AgentMessage, AgentReply } from './agent-reply';
+import { AgentPanel, AgentUserMessage, ConversationTitle } from './agent-panel';
 import { AgentDockButton } from './agent-dock-button';
 import { AgentMerge } from './agent-merge';
-import { type UnderstandingItem, failureMessage, platform, PlatformError } from './platform-api';
+import {
+  type ComposePhase,
+  type UnderstandingItem,
+  failureMessage,
+  platform,
+  PlatformError,
+} from './platform-api';
 import { installedWebCapabilities } from './web-capabilities';
 import { PreviewRuntime } from './preview-runtime';
 import './agent-creation.css';
@@ -56,6 +71,9 @@ export function AgentCreation({
   onPanelPosition,
   onDockPosition,
   onPanelOpenChange,
+  references,
+  updateReferences,
+  referenceFocus,
 }: {
   resumeId?: string;
   draftId?: string;
@@ -73,6 +91,9 @@ export function AgentCreation({
   onPanelPosition?: (position: PanelPosition) => void;
   onDockPosition?: (position: PanelPosition) => void;
   onPanelOpenChange: (open: boolean) => void;
+  references: MessageReference[];
+  updateReferences: (change: (items: MessageReference[]) => MessageReference[]) => void;
+  referenceFocus: number;
   saved: (formId: string, workId: string, conversation?: ConversationLink) => void;
 }) {
   const panelPosition = useRef<PanelPosition | undefined>(initialPanelPosition);
@@ -109,9 +130,12 @@ export function AgentCreation({
     [confirmed, setConfirmed] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sent, setSent] = useState('');
+  const submitting = useRef(false);
   const [sendFailure, setSendFailure] = useState<{
     input: string;
     originalComposer: boolean;
+    references: MessageReference[];
+    persisted?: boolean;
     description: string;
     retryable: boolean;
   }>();
@@ -267,23 +291,33 @@ export function AgentCreation({
   const unfinished = session?.attempts?.filter((a) => a.status !== 'done') ?? [];
   const loadingHistory = !!resumeId && session?.id !== resumeId;
   const activeAttempt = unfinished.some((a) => a.status === 'running' || a.resumable);
-  useRunningConversation(
-    session,
-    '',
-    setSession,
-    !sent && (!busy || busy === '正在继续处理'),
-    busy === '正在继续处理',
-  );
+  useRunningConversation(session, '', setSession, !sent && !busy);
   function resumeTurn(turnId: string) {
     void perform('正在继续处理', async () => {
-      const next = await platform<TurnResponse>(path + '/turns/' + turnId + '/resume', {});
-      setSession(next.conversation);
-      onConversationChange?.(next.conversation);
-      if (next.draft) {
-        setResource(next.draft);
-        if (!resource) setDraft(workingCopy(next.draft));
+      setPhases([]);
+      setResumingTurn(turnId);
+      try {
+        const next = await platform<TurnResponse>(path + '/turns/' + turnId + '/resume', {
+          progress: setOperation,
+          phase: recordPhase,
+        });
+        setSession(next.conversation);
+        onConversationChange?.(next.conversation);
+        if (next.draft) {
+          setResource(next.draft);
+          if (!resource) setDraft(workingCopy(next.draft));
+        }
+        setSendFailure(undefined);
+      } catch (error) {
+        const persisted = await platform<AssistantConversation>(path).catch(() => undefined);
+        if (persisted) {
+          setSession(persisted);
+          onConversationChange?.(persisted);
+        }
+        throw error;
+      } finally {
+        setResumingTurn(undefined);
       }
-      setSendFailure(undefined);
     });
   }
   const revision = session?.revision ?? 0;
@@ -324,6 +358,11 @@ export function AgentCreation({
     setPreview(undefined);
   }
   const [items, setItems] = useState<UnderstandingItem[]>([]);
+  const [phases, setPhases] = useState<ComposePhase[]>([]);
+  const [resumingTurn, setResumingTurn] = useState<string>();
+  function recordPhase(event: ComposePhase) {
+    setPhases((previous) => [...previous, event]);
+  }
   const retry = useRef<{ id: string; input: string } | null>(null);
   function receive() {
     if (!pendingDelivery) return;
@@ -339,12 +378,23 @@ export function AgentCreation({
       setPendingDelivery(undefined);
     });
   }
-  async function send(value = message, fromComposer = true) {
+  async function send(value = message, fromComposer = true, attachments = references) {
     const input = value.trim();
-    if (!input || busy || pending || activeAttempt || loadingHistory) return false;
+    if (!input || submitting.current || busy || pending || activeAttempt || loadingHistory)
+      return false;
+    submitting.current = true;
+    const clearSubmittedReferences = () => {
+      if (attachments.length)
+        updateReferences((current) =>
+          current.filter(
+            (item) => !attachments.some((sent) => referenceId(sent) === referenceId(item)),
+          ),
+        );
+    };
     setReplyText('');
     setSendFailure(undefined);
     setItems([]);
+    setPhases([]);
     setSent(input);
     if (fromComposer) setMessage('');
     let accepted = false;
@@ -354,6 +404,9 @@ export function AgentCreation({
         const payload = {
           revision,
           message: input,
+          ...(attachments.length && {
+            references: attachments.map(referenceRequest),
+          }),
           ...(attached && {
             draftId: attached.id,
             draftRevision: attached.revision,
@@ -367,6 +420,7 @@ export function AgentCreation({
         if (presentation === 'page') writeLocation({ page: 'agent', conversation: id }, true);
         const next = await platform<TurnResponse>(path + '/turns', {
           progress: setOperation,
+          phase: recordPhase,
           text: setReplyText,
           reset: () => {
             setItems([]);
@@ -379,6 +433,7 @@ export function AgentCreation({
           throw Error('会话与本轮结果不一致。');
         retry.current = null;
         accepted = true;
+        clearSubmittedReferences();
         setSession(next.conversation);
         onConversationChange?.(next.conversation);
         if (next.draft) {
@@ -397,17 +452,23 @@ export function AgentCreation({
           setSession(persisted);
           onConversationChange?.(persisted);
         }
-        if (fromComposer && !persisted?.attempts?.some((a) => a.turnId === retry.current?.id))
-          setMessage(input);
+        const persistedTurn =
+          persisted?.attempts?.some((a) => a.turnId === retry.current?.id) ||
+          persisted?.turns.some((t) => t.turnId === retry.current?.id);
+        if (persistedTurn) clearSubmittedReferences();
+        else if (fromComposer) setMessage(input);
         const retryable = !(e instanceof PlatformError) || e.status >= 500;
         setSendFailure({
           input,
           originalComposer: fromComposer,
+          references: attachments,
+          persisted: persistedTurn,
           description: e instanceof PlatformError && e.detail ? e.detail : failureMessage(e),
           retryable,
         });
       } finally {
         setSent('');
+        submitting.current = false;
       }
     });
     return accepted;
@@ -742,6 +803,12 @@ export function AgentCreation({
             label="发送消息"
             message={message}
             onMessage={setMessage}
+            references={references}
+            referenceFocus={referenceFocus}
+            onReference={(reference) => updateReferences((items) => addReference(items, reference))}
+            onRemoveReference={(versionId) =>
+              updateReferences((items) => items.filter((item) => referenceId(item) !== versionId))
+            }
             onSend={() => void send()}
             disabled={!!busy}
             sendDisabled={!!busy || pending || activeAttempt || loadingHistory}
@@ -775,40 +842,46 @@ export function AgentCreation({
             {missingDraft && <p>此草稿已删除。</p>}
             {session?.turns.map((t) => (
               <section key={t.turnId}>
-                <div data-speaker="user">
-                  <b>你</b>
-                  <AgentReply text={t.message} />
-                </div>
+                <AgentUserMessage text={t.message} references={t.references} />
                 {session?.attempts
                   ?.filter((a) => a.turnId === t.turnId && a.status === 'done')
                   .map((a) => (
                     <AttemptHistory key={a.turnId} attempt={a} disabled />
                   ))}
                 {t.result.kind === 'clarification' ? (
-                  <AgentInteractionCard title="待你补充" tone="info">
-                    <AgentReply text={assistantText(t.result)} />
-                  </AgentInteractionCard>
+                  <AgentMessage text={assistantText(t.result)}>
+                    <AgentInteractionCard title="待你补充" tone="info">
+                      <AgentReply text={assistantText(t.result)} />
+                    </AgentInteractionCard>
+                  </AgentMessage>
                 ) : t.result.kind === 'requirements_unmet' || t.result.kind === 'blocked' ? (
-                  <AgentInteractionCard
-                    title={t.result.kind === 'blocked' ? '任务阻塞' : '补充材料'}
-                    tone="warning"
-                    links={
-                      t === outstanding && draftLink
-                        ? [{ href: draftLink, label: '打开关联工作稿', newTab: true }]
-                        : undefined
-                    }
-                  >
-                    <AgentReply text={assistantText(t.result)} />
-                    {t.result.issues && t.result.verification && (
-                      <AgentIssues issues={t.result.issues} verification={t.result.verification} />
-                    )}
-                  </AgentInteractionCard>
+                  <AgentMessage text={assistantText(t.result)}>
+                    <AgentInteractionCard
+                      title={t.result.kind === 'blocked' ? '任务阻塞' : '补充材料'}
+                      tone="warning"
+                      links={
+                        t === outstanding && draftLink
+                          ? [{ href: draftLink, label: '打开关联工作稿', newTab: true }]
+                          : undefined
+                      }
+                    >
+                      <AgentReply text={assistantText(t.result)} />
+                      {t.result.issues && t.result.verification && (
+                        <AgentIssues
+                          issues={t.result.issues}
+                          verification={t.result.verification}
+                        />
+                      )}
+                    </AgentInteractionCard>
+                  </AgentMessage>
                 ) : (
                   <>
-                    <div data-speaker="assistant">
-                      <b>表单助手{t.result.kind === 'clarification' ? ' · 待你补充' : ''}</b>
-                      <AgentReply text={assistantText(t.result)} />
-                    </div>
+                    <AgentMessage text={assistantText(t.result)}>
+                      <div data-speaker="assistant">
+                        <b>表单助手</b>
+                        <AgentReply text={assistantText(t.result)} />
+                      </div>
+                    </AgentMessage>
                     {t.result.issues && t.result.verification && (
                       <AgentIssues issues={t.result.issues} verification={t.result.verification} />
                     )}
@@ -835,6 +908,7 @@ export function AgentCreation({
                   key={attempt.turnId}
                   attempt={attempt}
                   disabled={!!busy || pending}
+                  livePhases={resumingTurn === attempt.turnId ? phases : undefined}
                   resume={() => resumeTurn(attempt.turnId)}
                 />
               ))}
@@ -847,12 +921,7 @@ export function AgentCreation({
                 对比并应用
               </Button>
             )}
-            {sent && (
-              <section data-speaker="user">
-                <b>你</b>
-                <AgentReply text={sent} />
-              </section>
-            )}
+            {sent && <AgentUserMessage text={sent} />}
             {sendFailure && !unfinished.length && (
               <AgentInteractionCard title="本轮发送失败">
                 <Feedback kind="error">{sendFailure.description}</Feedback>
@@ -860,7 +929,15 @@ export function AgentCreation({
                   <Button
                     variant="secondary"
                     disabled={!!busy || pending}
-                    onClick={() => void send(sendFailure.input, sendFailure.originalComposer)}
+                    onClick={() => {
+                      if (sendFailure.originalComposer && !sendFailure.persisted) void send();
+                      else
+                        void send(
+                          sendFailure.input,
+                          sendFailure.originalComposer,
+                          sendFailure.references,
+                        );
+                    }}
                   >
                     重试本轮
                   </Button>
@@ -872,6 +949,7 @@ export function AgentCreation({
               text={sent ? replyText : ''}
               items={sent ? items : []}
             />
+            {!!sent && <ComposeProgress events={phases} />}
           </AgentPanel>
         </div>
       )}

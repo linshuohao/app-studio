@@ -4,9 +4,9 @@ import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { failureMessage, platform } from './platform-api';
 import { Modal } from './modal';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { PreviewRuntime } from './preview-runtime';
-import { Button } from '../components/ui/controls';
+import { Button } from '@form-engine/studio-design-components/controls';
 
 type CheckResult = {
   success: boolean;

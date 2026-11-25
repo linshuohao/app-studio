@@ -1,3 +1,5 @@
+import { checkDataSchema } from '@form-engine/compiler';
+import type { DataSchemaCase } from '@form-engine/compiler';
 import {
   BadRequestException,
   Body,
@@ -47,6 +49,14 @@ export class CreateFormController {
     if (body.kind === 'host')
       return {
         ...catalog.host,
+        context: { today: { type: 'string', format: 'date', timeZone: 'Asia/Shanghai' } },
+        eventUsage: {
+          'travel.previewUnderwritingSubmit': {
+            previewOnly: true,
+            description:
+              'Host flushes and fully validates the current working snapshot, then trims applicant.email and projects one shared identity to applicant and insureds[0]. No payload is needed. The six canonical working keys are name, surname, givenName, birthDate, passportNumber and passportExpiry. Only applicant owns the editable self fields; insureds[0] has relationship self. Other members store the same six identity keys on their rows. The event does not contact the channel or issue a production submission.',
+          },
+        },
         validatorUsage: {
           'travel.checkPassportDuplicates': {
             scope: 'root',
@@ -75,11 +85,62 @@ export class CreateFormController {
     if (!matches.length) return ids;
     return matches.map((id) => {
       const manifest = entries[id]!.manifest;
-      const doc = body.kind === 'pure_function' ? catalogDocumentation[id] : undefined;
+      const doc = catalogDocumentation[id];
       return doc?.version === manifest.version
         ? { ...manifest, description: doc.description }
         : manifest;
     });
+  }
+
+  @Post('internal/agent-tools/check-schema')
+  @HttpCode(200)
+  checkSchema(
+    @Headers('x-agent-service-token') token: string,
+    @Body() body: { schema_text: string; cases: DataSchemaCase[]; check_environment?: string },
+  ) {
+    requireAgent(token);
+    const text = body?.schema_text;
+    if (!isUtf8ConfigText(text)) throw new BadRequestException('Schema must be UTF-8 text');
+    const cases = body.cases;
+    if (
+      !Array.isArray(cases) ||
+      cases.length > 16 ||
+      cases.some(
+        (item) =>
+          !item ||
+          typeof item.name !== 'string' ||
+          item.name.length > 100 ||
+          typeof item.valid !== 'boolean' ||
+          !Object.hasOwn(item, 'data'),
+      )
+    )
+      throw new BadRequestException('Invalid Data Schema cases');
+    const environment = this.requireEnvironment(body.check_environment);
+    const receipt = {
+      check_id: randomUUID(),
+      check_environment: environment,
+      candidate_digest: 'sha256:' + createHash('sha256').update(text).digest('hex'),
+    };
+    if (Buffer.byteLength(text) > maxConfigTextBytes)
+      return {
+        ...receipt,
+        success: false,
+        diagnostics: [
+          {
+            code: 'CONFIG_TEXT_TOO_LARGE',
+            sourcePointer: '/data/schema',
+            message: `Schema exceeds the UTF-8 limit of ${maxConfigTextBytes} bytes.`,
+          },
+        ],
+      };
+    let schema: unknown;
+    try {
+      schema = JSON.parse(text);
+    } catch {
+      schema = undefined;
+    }
+    const checked = checkDataSchema(schema, previewInputs(this.builds).schemaResources, cases);
+    return { ...receipt, success: checked.valid, diagnostics: checked.diagnostics };
   }
 
   @Post('internal/agent-tools/check')

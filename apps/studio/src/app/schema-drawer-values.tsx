@@ -1,6 +1,6 @@
 'use client';
 
-import { Select } from '../components/ui';
+import { Select } from '@form-engine/studio-design-components';
 
 export const schemaTypes = [
   ['string', '文本'],

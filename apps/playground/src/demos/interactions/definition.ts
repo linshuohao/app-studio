@@ -1,4 +1,4 @@
-import type { FormDefinition, ViewNode } from '@form-engine/protocol/definition';
+import type { FormDefinition, MaterialNode, ViewNode } from '@form-engine/protocol/definition';
 export const ref = (path: string) => ({ source: 'data' as const, path });
 const remote: ViewNode = {
   material: 'field',
@@ -15,6 +15,20 @@ const remote: ViewNode = {
     ],
   },
 };
+function inputField(
+  label: string,
+  path: string,
+  control: Omit<MaterialNode, 'bindings'>,
+): ViewNode {
+  const bindings = { value: ref(path) };
+  return {
+    material: 'field',
+    props: { label },
+    bindings,
+    slots: { default: [{ ...control, bindings }] },
+  };
+}
+
 export const interactionDefinition: FormDefinition = {
   protocolVersion: 'verification',
   id: 'material-interactions',
@@ -43,6 +57,10 @@ export const interactionDefinition: FormDefinition = {
           properties: { end: { type: ['string', 'null'] } },
         },
         showRemote: { type: 'boolean' },
+        birthDate: { type: ['string', 'null'] },
+        notes: { type: 'string' },
+        contactMethod: { type: ['string', 'null'] },
+        notifications: { type: 'array', items: { type: 'string' } },
       },
     },
   },
@@ -64,6 +82,32 @@ export const interactionDefinition: FormDefinition = {
             props: { label: '出行日期' },
             bindings: { start: ref('/start'), end: ref('/endState/end') },
           },
+          inputField('出生日期', '/birthDate', {
+            material: 'date-picker',
+            props: { min: '1900-01-01', max: '2028-12-31' },
+          }),
+          inputField('备注', '/notes', {
+            material: 'textarea',
+            props: { rows: 3, maxLength: 200, placeholder: '请输入备注' },
+          }),
+          inputField('首选联系方式', '/contactMethod', {
+            material: 'radio-group',
+            props: {
+              options: [
+                { id: 'email', label: '邮件' },
+                { id: 'phone', label: '电话' },
+              ],
+            },
+          }),
+          inputField('通知渠道', '/notifications', {
+            material: 'checkbox-group',
+            props: {
+              options: [
+                { id: 'email', label: '电子邮件' },
+                { id: 'sms', label: '短信' },
+              ],
+            },
+          }),
           {
             material: 'section',
             props: { title: '日期失败测试' },

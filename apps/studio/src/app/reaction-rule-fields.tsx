@@ -1,5 +1,5 @@
 import { JsonEditor } from '../components/json/json-editor';
-import { Button, Input } from '../components/ui';
+import { Button, Input } from '@form-engine/studio-design-components';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactionWatch, ScopeBinder } from '@form-engine/protocol/definition';
 import { ExpressionDisplay } from './expression-display';

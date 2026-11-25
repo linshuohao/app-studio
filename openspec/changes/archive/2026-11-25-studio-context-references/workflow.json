@@ -1,0 +1,24 @@
+{
+  "authority": ["docs/design/workflows.md", "docs/design/platform-studio.md"],
+  "scope": [
+    "WORKFLOW.md",
+    "docs/README.md",
+    ".agents/context",
+    ".agents/skills/form-workflow/SKILL.md",
+    "tools/docs/studio_catalog.py",
+    "tools/docs/select_references.py",
+    "tools/docs/studio_catalog_test.py",
+    "tools/docs/references_test.py",
+    "apps/studio/src/app/studio-ui.css",
+    "apps/studio/src/components",
+    "prototypes/studio-design-handbook.html",
+    "prototypes/studio-components"
+  ],
+  "checks": [
+    [".venv-docs/bin/python", "-m", "unittest", "discover", "-s", "tools/docs", "-p", "*_test.py"],
+    [".venv-docs/bin/python", "tools/docs/studio_catalog.py", "build", "--check"],
+    [".venv-docs/bin/python", "tools/docs/select_references.py", "--check"],
+    [".venv-docs/bin/python", "tools/docs/build_contracts.py", "--check"],
+    [".venv-docs/bin/python", "tools/docs/build_docs.py", "--check"]
+  ]
+}

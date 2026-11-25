@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Icon } from '../components/ui';
+import { Icon } from '@form-engine/studio-design-components';
 import type { PanelPosition } from './agent-conversation';
 
 export function AgentDockButton({

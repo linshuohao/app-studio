@@ -1,0 +1,70 @@
+{
+  "protocolVersion": "1.0",
+  "id": "enum-values",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "countryCode": {
+          "type": "string",
+          "enum": ["CN", "JP"]
+        }
+      },
+      "required": ["contactName", "countryCode"]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "旅险目的地登记"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "联系人姓名"
+          },
+          "bind": "/contactName",
+          "children": [
+            {
+              "material": "text-input",
+              "bind": "/contactName"
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "目的地国家"
+          },
+          "bind": "/countryCode",
+          "children": [
+            {
+              "material": "select",
+              "bind": "/countryCode",
+              "props": {
+                "options": [
+                  {
+                    "id": "CN",
+                    "label": "中国"
+                  },
+                  {
+                    "id": "JP",
+                    "label": "日本"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

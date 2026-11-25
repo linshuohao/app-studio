@@ -126,6 +126,10 @@ uv run --locked --project services/agent --extra observability \
 
 首次试跑可用 `--repeat 1 --case contact-length`。做正式对比时保留完整报告的 `dataset_digest`、`scorer` 和 `capture_version`，用相同口径对齐两次运行。运行未通过时报告仍写盘，退出码为 1。
 
+用 `--compose legacy` 和 `--compose staged` 在同一工作区切换创作路径。需求理解、模型、目录、Compiler、Runtime 和评分保持同一版本。离线运行支持 `--jobs`，比较时保持并发设置一致。报告的 `model_usage` 累计每次模型调用的输入、输出与缓存输入 token，并记录实际回报用量的调用数。缺少用量的调用按未知处理，比较完整用量时检查 `complete`。
+
+Studio 全流程浏览器验收可用 `pnpm --filter @form-engine/studio exec node tests/run-agent-ownership.mjs --live --create-form`。运行器创建独立 Platform 和 Agent 测试数据库，使用当前本机模型和预览 Host。可用 `CREATE_FORM_ACCEPTANCE_OUTPUT` 写出独立验收报告。
+
 Runner 在线和离线都会在报告旁写 `.events.jsonl`。逐条记录 Graph 框架事件、评测输入和结果，以及本地 Compiler / Runtime 子进程的请求、输出、错误输出和耗时。进程输出的原始字节以 Base64 保存；其余结构化回调参数保留为 JSON。在线文件的 `trace_id` 可关联到 Langfuse，`case_id` 和 `trial` 可关联到报告。
 
 想先验收评测器和看板，可以把参数换为 `--mode reference` 和 `--mode reference-broken`，各用不同运行名与输出文件，重复次数相同。这两种模式执行真实 Compiler 与 Runtime，不调用模型。后者故意移除「换国家清空城市备注」联动，预期返回非零退出码，并报告 Compiler 通过、Runtime 失败。`--offline` 仅输出 JSON，不连接 Langfuse。`--case` 可重复指定用例 ID。
@@ -137,7 +141,7 @@ Runner 在线和离线都会在报告旁写 `.events.jsonl`。逐条记录 Graph
 | Agent 能力和效率 | 在 **Experiments** 看 `route_valid`、`compiler_executed`、首次与最终编译通过、重编次数、修复次数、`agent_ms` 和 `elapsed_ms`。在关联 **Tracing** 中查看 generation 的实际用量与节点耗时。 |
 | 基线与候选比较 | 在 **Experiments** 选择同一评测集的两次运行，点 **Compare**。先看回归用例，再比较用量与耗时。首次和最终编译通过数只包含已编译用例，另看 `compiler_executed` 核实覆盖。参考配置实验用于验证评分，Agent 实验用于比较模型与流程。 |
 
-首批用例见 [评测集](evaluation/cases.json)。覆盖字段边界、枚举、澄清续办、联动和远程城市的工作值与 Host 请求契约。澄清相关性首期采用显式关键词断言。远程请求的浏览器交互、复杂旅险成员 Scope 和真实 Host 后端另有验收范围。效率目前展示实际分布，阈值以多次 Agent 基线记录为依据。
+完整示例目录见 [CreateForm PRD 示例](examples/README.md)。自动评测用例见 [评测集](evaluation/cases.json)。覆盖字段边界、枚举、澄清续办、联动和远程城市的工作值与 Host 请求契约。澄清相关性首期采用显式关键词断言。远程请求的浏览器交互、复杂旅险成员 Scope 和真实 Host 后端另有验收范围。效率目前展示实际分布，阈值以多次 Agent 基线记录为依据。
 
 如果开发进程没有继承 Codex CLI 路径，在 Agent 的本地 `.env.local` 设置 `CODEX_CLI_DIR` 为包含 `codex` 的目录。开发工厂在启动时将该目录放到 Agent 的 `PATH` 前面。修改配置后重启 Agent。
 

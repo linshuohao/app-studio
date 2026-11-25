@@ -12,7 +12,10 @@ from test_execution_replay import RestartJournal
 from form_agent.agent.graph import build_turn_graph
 from form_agent.agent.tools.dependencies import AgentToolDependencies
 from form_agent.api.events import stream_graph_events
-from form_agent.business.form_authoring.contracts import CheckReceipt, TurnInput
+from form_agent.business.form_authoring.contracts import (
+    CheckReceipt,
+    TurnInput,
+)
 from form_agent.execution.journal import execution_scope
 from form_agent.integrations.compiler import candidate_digest
 from form_agent.integrations.models import codex_usage

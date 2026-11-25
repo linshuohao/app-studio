@@ -1,8 +1,9 @@
 """Deliver the requirement decision or the checked candidate."""
 
-from form_agent.agent.authoring_state import (
-    CheckEvidence,
-)
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from form_agent.agent.authoring_state import CheckEvidence
 from form_agent.business.form_authoring.contracts import (
     Answer,
     Blocked,

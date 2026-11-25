@@ -47,6 +47,7 @@ export default {
       exportsFields: ['exports'],
       conditionNames: ['import', 'types', 'default'],
     },
-    exclude: '\\.(test|spec)\\.',
+    // Handbook examples exercise application source. This graph covers runtime packages.
+    exclude: '(?:\\.(test|spec)\\.|^packages/studio-design/handbook/)',
   },
 };

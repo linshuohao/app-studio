@@ -1,203 +1,185 @@
-// Opt-in live acceptance. Run against an isolated Studio/API with local login enabled.
-import { chromium, expect } from '@playwright/test';
+// Live acceptance against the isolated Studio, Platform and Agent.
 import assert from 'node:assert/strict';
-import { clickTurn as submit } from './assistant-browser.mjs';
 import { createHash } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { chromium, expect } from '@playwright/test';
+import { clickTurn } from './assistant-browser.mjs';
+
 const origin = new URL(process.env.CREATE_FORM_STUDIO_URL ?? 'http://127.0.0.1:3200');
 assert(['localhost', '127.0.0.1'].includes(origin.hostname));
+const prd = await readFile(
+  new URL('../../../services/agent/examples/08-city-search-object/complete.md', import.meta.url),
+  'utf8',
+);
 const browser = await chromium.launch({
   channel: process.env.STUDIO_TEST_BROWSER_CHANNEL || 'chrome',
 });
+
+function cityField(value, label) {
+  if (!value || typeof value !== 'object') return;
+  const owner = value.material === 'field' ? value.props?.label : label;
+  if (value.material === 'remote-select')
+    return { node: value, label: owner ?? value.props?.label };
+  return Object.values(value)
+    .map((child) => cityField(child, owner))
+    .find(Boolean);
+}
+
+const context = await browser.newContext({ baseURL: origin.origin });
+let page = await context.newPage();
+context.setDefaultTimeout(30000);
+function watchErrors(target) {
+  target.on('pageerror', (error) => console.error('Studio error:', error.message));
+  target.on('console', (message) => {
+    if (message.type() === 'error' || message.type() === 'warning')
+      console.error('Studio console:', message.text());
+  });
+}
+watchErrors(page);
+
 try {
-  const page = await browser.newPage({ baseURL: origin.origin });
-  page.on('pageerror', (e) => console.error('Studio error:', e.message));
-  page.setDefaultTimeout(30000);
-  const responses = (suffix) =>
-    page
-      .waitForResponse(
-        (r) =>
-          r.url().includes('/form-drafts/') &&
-          !r.url().includes('/editor/') &&
-          r.url().endsWith(suffix) &&
-          r.request().method() === 'POST',
-        { timeout: 620000 },
-      )
-      .then(async (r) => {
-        const data = r.headers()['content-type']?.includes('application/x-ndjson')
-          ? JSON.parse((await r.text()).trimEnd().split('\n').at(-1)).result
-          : await r.json();
-        assert(r.ok(), JSON.stringify(data));
-        return data;
-      });
-  async function clickTurn(label) {
-    return submit(page, label);
-  }
+  const modelStarted = performance.now();
   await page.goto('/');
   await page.getByRole('button', { name: '以本地开发账号登录' }).click();
-  await page.getByRole('button', { name: '表单助手', exact: true }).click();
   await page
-    .getByLabel('发送消息')
-    .fill(
-      '旅险表单：国家可选中国（CN）或日本（JP）。按所选国家搜索城市，列表显示城市名称。城市提交值是只存编码还是保存整个选项，需要产品确认。更换国家后清空原城市。城市搜索能力的输入和返回签名待从目标目录核对。',
-    );
-  const started = performance.now();
-  const first = await clickTurn('发送');
-  const clarified = performance.now();
-  assert.equal(first.conversation.turns.at(-1).result.kind, 'clarification');
-  const requests = [];
-  const record = (r) => requests.push(r.method() + ' ' + new URL(r.url()).pathname);
-  page.on('request', record);
-  await page.getByRole('button', { name: '返回表单列表' }).click();
-  await page.getByRole('button', { name: '助手会话' }).click();
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: first.conversation.title })
-    .getByRole('button', { name: '继续对话' })
+    .getByRole('navigation', { name: '主导航' })
+    .getByRole('button', { name: 'Agent', exact: true })
     .click();
-  await expect(
-    page.getByText(first.conversation.turns.at(-1).result.questions[0], { exact: false }).first(),
-  ).toBeVisible();
-  page.off('request', record);
-  assert(!requests.some((r) => r.endsWith('/turns')));
-  const resumed = performance.now();
-  await page.getByLabel('发送消息').fill('城市只存编码');
-  const second = await clickTurn('发送');
-  assert.equal(second.conversation.id, first.conversation.id);
-  console.log(
-    'resume measurement',
-    JSON.stringify({
-      id: first.conversation.id,
-      firstMs: clarified - started,
-      resumeMs: resumed - clarified,
-      secondMs: performance.now() - resumed,
-      requests,
-      result: second.conversation.turns.at(-1).result.kind,
-    }),
-  );
-  const secondMs = performance.now() - resumed;
-  const original = second.conversation.turns.at(-1).result;
+  await page.getByLabel('发送消息', { exact: true }).fill(prd.trim());
+  const created = await clickTurn(page);
+  const original = created.conversation.turns.at(-1).result;
   assert.equal(original.kind, 'proposal', original.reason ?? original.message);
-  if (process.env.CREATE_FORM_TRIAL_ONLY && process.env.CREATE_FORM_ACCEPTANCE_OUTPUT)
-    await writeFile(
-      process.env.CREATE_FORM_ACCEPTANCE_OUTPUT,
-      JSON.stringify(
-        {
-          session: second.conversation.id,
-          firstMs: clarified - started,
-          resumeMs: resumed - clarified,
-          secondMs,
-          candidate: original,
-          trial: 'pending',
-        },
-        null,
-        2,
-      ),
-    );
-  if (process.env.CREATE_FORM_RESUME_ONLY) {
-    await browser.close();
-    process.exit(0);
-  }
-  await expect(page.getByLabel('版本名称')).toHaveValue('Agent 初稿 V1');
+  const draft = created.draft;
+  const firstCity = cityField(JSON.parse(draft.candidateText).views);
+  assert(firstCity?.label, 'Remote select must be labelled in the view.');
+  assert.equal(
+    draft.candidateDigest,
+    'sha256:' + createHash('sha256').update(draft.candidateText).digest('hex'),
+  );
+  const generationMs = performance.now() - modelStarted;
+  console.log('从 PRD 生成草稿', JSON.stringify({ generationMs, digest: draft.candidateDigest }));
+
+  const [draftPage] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByRole('link').filter({ hasText: draft.name }).click(),
+  ]);
+  page = draftPage;
+  watchErrors(page);
+  await expect(page.getByLabel('版本名称')).not.toHaveValue('');
   await page.getByLabel('版本名称').fill('旅险验收初稿');
   await page.getByRole('button', { name: '返回表单列表' }).click();
-  await page.getByRole('button', { name: '表单助手', exact: true }).click();
-  await expect(page.getByLabel('发送消息')).toHaveValue('');
-  await page.getByRole('button', { name: '返回表单列表' }).click();
-  await page.getByRole('button', { name: '助手会话' }).click();
+  await page.getByRole('main').getByRole('button', { name: '表单草稿', exact: true }).click();
   await page
-    .getByRole('listitem')
-    .filter({ hasText: second.conversation.title })
-    .getByRole('button', { name: '继续对话' })
+    .getByRole('dialog', { name: '表单草稿', exact: true })
+    .getByRole('row')
+    .filter({ hasText: draft.name })
+    .getByRole('button', { name: '打开草稿', exact: true })
     .click();
   await expect(page.getByLabel('版本名称')).toHaveValue('旅险验收初稿');
-  async function preview() {
-    const [p] = await Promise.all([
-      responses('/preview'),
-      page.getByRole('button', { name: '预览试填' }).click(),
+  await page.getByRole('button', { name: '选择近期 Agent 聊天', exact: true }).click();
+  await page
+    .getByRole('region', { name: '近期聊天' })
+    .getByRole('button')
+    .filter({ hasText: created.conversation.title })
+    .click();
+  await expect(page.getByRole('log', { name: '对话记录' })).toContainText(
+    '另外提供选填的目的地城市',
+  );
+
+  async function responseFor(action, click) {
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (r) =>
+          new URL(r.url()).pathname.endsWith('/form-drafts/' + draft.id + '/' + action) &&
+          r.request().method() === 'POST',
+      ),
+      click(),
     ]);
-    return p;
+    assert(response.ok(), await response.text());
+    return response.json();
+  }
+  async function preview() {
+    return responseFor('preview', () =>
+      page.getByRole('button', { name: '预览试填', exact: true }).click(),
+    );
   }
   async function fill() {
     const area = page.getByRole('region', { name: '候选预览' });
     const country = area.getByRole('combobox');
+    await expect(country).toBeVisible();
+    await expect(area.getByText('此处暂时不可用')).toHaveCount(0);
     async function selectCountry(name) {
-      const option = country.getByRole('option', { name });
-      await country.selectOption(await option.getAttribute('value'));
+      await country.selectOption(await country.getByRole('option', { name }).getAttribute('value'));
+    }
+    async function searchAndSelect(query, label) {
+      await area.getByRole('searchbox').fill(query);
+      await area.getByRole('button', { name: '搜索', exact: true }).click();
+      await area.getByRole('button', { name: label, exact: true }).click();
+      await expect(area.getByText('当前选择：' + label)).toBeVisible();
     }
     await selectCountry(/中国/);
-    await area.getByRole('searchbox').fill('上海');
-    await area.getByRole('button', { name: '搜索', exact: true }).click();
-    await area.getByRole('button', { name: '上海市（模拟）' }).click();
-    await expect(area.getByText('当前选择：上海市（模拟）')).toBeVisible();
+    await searchAndSelect('上海', '上海市（模拟）');
     await selectCountry(/日本/);
     await expect(area.getByText('当前选择：未选择')).toBeVisible();
-    await area.getByRole('searchbox').fill('东京');
-    await area.getByRole('button', { name: '搜索', exact: true }).click();
-    await area.getByRole('button', { name: '东京市（模拟）' }).click();
-    await expect(area.getByText('当前选择：东京市（模拟）')).toBeVisible();
+    await searchAndSelect('东京', '东京市（模拟）');
+    await expect(area.getByText('此处暂时不可用')).toHaveCount(0);
   }
-  assert.equal((await preview()).digest, second.draft.candidateDigest);
+  assert.equal((await preview()).digest, draft.candidateDigest);
   await fill();
   await page.getByRole('button', { name: '确认此版试填结果' }).click();
-  if (process.env.CREATE_FORM_TRIAL_ONLY) {
-    if (process.env.CREATE_FORM_ACCEPTANCE_OUTPUT)
-      await writeFile(
-        process.env.CREATE_FORM_ACCEPTANCE_OUTPUT,
-        JSON.stringify(
-          {
-            session: second.conversation.id,
-            firstMs: clarified - started,
-            resumeMs: resumed - clarified,
-            secondMs,
-            candidate: original,
-            trial: '上海 → 更换国家清空 → 东京',
-          },
-          null,
-          2,
-        ),
-      );
-    await browser.close();
-    process.exit(0);
-  }
-  await page
-    .getByLabel('发送消息')
-    .fill(
-      '请在刚才试填的原候选上，把城市搜索框的 placeholder 改为“搜索目的地城市”，保留原业务规则。',
-    );
+  console.log('草稿重新打开并完成首次试填');
+
   await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
   await page.getByRole('button', { name: '文本查看 / 修复' }).click();
-  const raw = page.getByRole('textbox', { name: '配置原文' });
+  const raw = page.getByRole('textbox', { name: '配置原文', exact: true });
   const working = JSON.parse(await raw.inputValue());
-  function cityNode(value) {
-    if (!value || typeof value !== 'object') return;
-    if (value.material === 'remote-select') return value;
-    return Object.values(value).map(cityNode).find(Boolean);
-  }
-  const remote = cityNode(working.views);
-  assert(remote);
-  (remote.props ??= {}).placeholder = '请输入抵达城市';
+  cityField(working.views).node.props ??= {};
+  cityField(working.views).node.props.placeholder = '请输入抵达城市';
   working.data.schema.description = '旅险工作稿手工说明';
-  const revisedPromise = clickTurn('发送');
-  await page.waitForRequest((r) => r.url().endsWith('/turns') && r.method() === 'POST');
-  await raw.fill(JSON.stringify(working));
+
+  const composer = page.getByLabel('发送消息', { exact: true });
+  if (!(await composer.isVisible()))
+    await page.getByRole('button', { name: '展开 Agent 聊天', exact: true }).click();
+  await composer.fill('请把' + firstCity.label + '搜索框的提示文字改为“搜索目的地城市”。');
+  let release;
+  const checkpoint = new Promise((resolve) => {
+    release = resolve;
+  });
+  let captured;
+  const submitted = new Promise((resolve) => {
+    captured = resolve;
+  });
+  await page.route('**/turns', async (route) => {
+    captured();
+    await checkpoint;
+    await route.continue();
+  });
+  const revisedPromise = clickTurn(page, '发送', () => composer.press('Enter'));
+  try {
+    await Promise.race([submitted, revisedPromise.then(() => assert.fail('未捕获修改轮次请求'))]);
+    await raw.fill(JSON.stringify(working));
+  } finally {
+    release();
+  }
   const revised = await revisedPromise;
+  await page.unroute('**/turns');
   const latest = revised.conversation.turns.at(-1).result;
-  assert.equal(latest.kind, 'proposal');
+  assert.equal(latest.kind, 'proposal', latest.reason ?? latest.message);
+  assert.equal(
+    cityField(JSON.parse(revised.draft.candidateText).views).node.props.placeholder,
+    '搜索目的地城市',
+  );
+
   await page.getByRole('button', { name: '对比并应用' }).click();
   const merge = page.getByRole('dialog', { name: '对比候选与当前工作稿' });
   await expect(merge.getByRole('button', { name: '应用到当前工作稿' })).toBeDisabled();
-  for (const choice of await merge.getByLabel('保留手工值').all()) await choice.check();
+  const manualChoices = await merge.getByLabel('保留手工值').all();
+  assert(manualChoices.length > 0, 'Expected a conflict on the edited placeholder.');
+  for (const choice of manualChoices) await choice.check();
   await merge.getByRole('button', { name: '应用到当前工作稿' }).click();
-  await page.reload();
-  await page.getByRole('button', { name: '助手会话' }).click();
-  await page
-    .getByRole('dialog', { name: '助手会话' })
-    .getByRole('button', { name: '继续对话' })
-    .first()
-    .click();
+
   await page.getByRole('button', { name: '检查配置', exact: true }).click();
-  const inspection = page.getByRole('dialog', { name: '配置检查' });
+  const inspection = page.getByRole('region', { name: '配置检查结果' });
   await expect(inspection.getByText('当前工作稿检查通过')).toBeVisible();
   await inspection.getByRole('button', { name: '关闭' }).click();
   const checked = await preview();
@@ -209,26 +191,27 @@ try {
   await page.getByRole('button', { name: '确认此版试填结果' }).click();
   await page.getByRole('button', { name: '编辑表单名称' }).click();
   await page.getByLabel('表单名称', { exact: true }).fill('旅险城市 · 浏览器验收');
-  const [saved] = await Promise.all([
-    responses('/save'),
-    page.getByRole('button', { name: '保存配置' }).click(),
-  ]);
-  const res = await page.request.get(
+  const saved = await responseFor('save', () =>
+    page.getByRole('button', { name: '保存配置', exact: true }).click(),
+  );
+  await expect(page).toHaveURL(/work=/);
+  const response = await page.request.get(
     '/api/platform/forms/' + saved.formId + '/versions/' + saved.versionId,
   );
-  assert(res.ok());
-  const version = await res.json();
+  assert(response.ok());
+  const version = await response.json();
   assert.equal(version.name, '旅险验收初稿');
   const drafts = await page.request.get('/api/platform/form-drafts');
   assert(drafts.ok());
-  assert(!(await drafts.json()).some((row) => row.id === second.draft.id));
+  assert(!(await drafts.json()).some((row) => row.id === draft.id));
   assert.equal(JSON.parse(version.text).data.schema.description, '旅险工作稿手工说明');
-  assert.equal(cityNode(JSON.parse(version.text).views).props.placeholder, '请输入抵达城市');
+  assert.equal(cityField(JSON.parse(version.text).views).node.props.placeholder, '请输入抵达城市');
   const hash = 'sha256:' + createHash('sha256').update(version.text).digest('hex');
   assert.equal(hash, checked.digest);
   const proof = {
     sessionId: revised.conversation.id,
-    originalDigest: second.draft.candidateDigest,
+    generationMs,
+    originalDigest: draft.candidateDigest,
     previewDigest: checked.digest,
     savedDigest: hash,
     ...saved,
@@ -236,11 +219,16 @@ try {
   console.log(JSON.stringify(proof));
   if (process.env.CREATE_FORM_ACCEPTANCE_OUTPUT)
     await writeFile(process.env.CREATE_FORM_ACCEPTANCE_OUTPUT, JSON.stringify(proof, null, 2));
-} catch (e) {
+} catch (error) {
   console.error(
-    (await browser.contexts()[0]?.pages()[0]?.locator('main').innerText())?.slice(-1600),
+    (
+      await page
+        .locator('body')
+        .innerText({ timeout: 1000 })
+        .catch(() => '')
+    )?.slice(-1800),
   );
-  throw e;
+  throw error;
 } finally {
   await browser.close();
 }

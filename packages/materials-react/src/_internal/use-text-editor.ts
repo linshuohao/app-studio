@@ -39,7 +39,7 @@ export function useTextEditor(
   return {
     value: draft && Object.is(draft.base, value) ? draft.text : displayInput(value),
     error: feedback.error,
-    onChange: (event: ChangeEvent<HTMLInputElement>) => {
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const text = event.currentTarget.value;
       if (disabled) return;
       if (skip.current === text) {
@@ -54,7 +54,7 @@ export function useTextEditor(
     onCompositionStart: () => {
       if (!disabled) composing.current = { base: value, cancelled: false };
     },
-    onCompositionEnd: (event: CompositionEvent<HTMLInputElement>) => {
+    onCompositionEnd: (event: CompositionEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const active = composing.current;
       composing.current = null;
       const text = event.currentTarget.value;

@@ -20,7 +20,7 @@ def cached_tools(tools: AgentToolDependencies) -> AgentToolDependencies:
             results[key] = await tools.query_capabilities(context, kind, term)
         return results[key]
 
-    return AgentToolDependencies(read, query, tools.check_candidate)
+    return AgentToolDependencies(read, query, tools.check_candidate, tools.check_schema)
 
 
 def turn_tools(state: TurnGraphState) -> AgentToolDependencies:

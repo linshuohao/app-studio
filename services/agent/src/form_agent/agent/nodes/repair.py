@@ -9,6 +9,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from form_agent.agent.authoring_state import FormAuthoringState, RepairRound
+from form_agent.agent.events import emit_compose_phase
+from form_agent.agent.nodes.compose.staged import repair_staged
 from form_agent.agent.prompts.repair import BINDING_GUIDE, INSTRUCTIONS
 from form_agent.agent.state import TurnGraphState
 from form_agent.agent.tools.candidate_checks import (
@@ -92,6 +94,20 @@ async def repair(
         return {
             "composition": replace(composition, failed_digest=None, draft=stopped())
         }
+    await emit_compose_phase(
+        "compile",
+        "retrying",
+        attempt=rounds_used + 2,
+        detail="正在根据编译诊断修复候选。",
+    )
+
+    if (
+        state.get("placeholder_edit") is None
+        and reading.standard is not None
+        and composition.binding_evidence is not None
+        and composition.binding_evidence.schema_check is not None
+    ):
+        return await repair_staged(state, model, tools)
 
     manual = state.get("repair_manual")
     if manual is None:

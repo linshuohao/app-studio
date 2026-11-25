@@ -55,6 +55,7 @@ CURRENT_TOPICS = {
     "l4-renderer.md": "DESIGN-L4 / 迁移原 Renderer 边界，完整模块设计待讨论",
     "extension-integration.md": "DESIGN-INTEGRATION / 迁移原 Material / Host 完整说明",
     "platform-studio.md": "DESIGN-PLATFORM-STUDIO / 既有工具方向与未设计范围，非新系统方案",
+    "platform-agent-compose.md": "DESIGN-PLATFORM-AGENT-COMPOSE / Compose 实施草案，Schema 定版与模块检查待评审",
     "design-history.md": "HISTORY-DESIGN / 从正文迁移的决策推导与来源总账",
     "design-review.md": "REVIEW-FE-001 / 迁移的约束与冲突证据",
     "l3-data-scope.md": "DESIGN-L3-DATA / 逐 Command 数据、快照、Scope 与完整行为验收迁移",

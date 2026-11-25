@@ -11,6 +11,7 @@ for (const task of [
   'test',
   'test:integration',
   'packages:check',
+  'docs:build',
   'docs:check',
 ]) {
   console.log(`Checking ${task}`);

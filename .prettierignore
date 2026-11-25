@@ -21,9 +21,8 @@ packages/protocol/schemas
 # Catalog documentation is emitted deterministically and checked by catalog:check.
 services/api/src/platform/catalog-documentation.ts
 
-# Built assets consumed by the standalone Studio handbook pages.
-prototypes/studio-components/assets/
-prototypes/action-editor-draft.html
+# Authored Handbook pages preserve their HTML layout and inline examples.
+packages/studio-design/handbook/**/*.html
 
 # Immutable historical records and machine-generated verification receipts.
 openspec/changes/archive

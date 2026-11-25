@@ -39,6 +39,7 @@ from form_agent.business.conversations.model import (
     public_result,
     stable_id,
 )
+from form_agent.business.conversations.references import FormReference
 from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
 from form_agent.integrations.protocol_store import DRIVER, connection_args
 
@@ -190,6 +191,22 @@ class TurnJournal:
 
     async def event(self, event):
         await self.write(lambda: self.append("public", None, event))
+
+    async def interrupt(self, reason):
+        def save():
+            changed = self.conn.execute(
+                update(turns)
+                .where(
+                    turns.c.conversation_id == self.cid,
+                    turns.c.turn_id == self.tid,
+                    turns.c.status == "running",
+                )
+                .values(status="failed")
+            )
+            if changed.rowcount:
+                self.append("public", None, {"type": "interruption", "reason": reason})
+
+        await self.write(save)
 
 
 deleted_ids = Table(
@@ -357,6 +374,7 @@ class ConversationStore:
         cid = row["id"]
         detail = view(row, history_for(conn, cid, row["revision"]))
         events = {}
+        interruptions = {}
         for tid, event in conn.execute(
             select(journal_entries.c.turn_id, journal_entries.c.payload)
             .where(
@@ -365,7 +383,10 @@ class ConversationStore:
             )
             .order_by(journal_entries.c.id)
         ):
-            events.setdefault(tid, []).append(event)
+            if event["type"] == "interruption":
+                interruptions[tid] = event["reason"]
+            else:
+                events.setdefault(tid, []).append(event)
         attempts = []
         for tid, req, status in conn.execute(
             select(turns.c.turn_id, turns.c.request, turns.c.status)
@@ -389,14 +410,30 @@ class ConversationStore:
                 ).scalar_one()
                 if idle:
                     status = "interrupted"
+            interrupted = status in ("interrupted", "failed")
+            reason = (
+                interruptions.get(tid, "执行进程已结束，未留下具体原因。")
+                if status == "failed"
+                else "执行进程已停止，未留下结束记录。"
+            )
             attempts.append(
                 {
                     "turnId": tid,
                     **{k: req[k] for k in ("draftId", "draftRevision") if k in req},
                     "message": req.get("message", ""),
-                    "status": "interrupted" if status == "failed" else status,
-                    "resumable": status in ("interrupted", "failed")
-                    and req.get("revision") == row["revision"],
+                    **(
+                        {
+                            "references": [
+                                {k: v for k, v in item.items() if k != "text"}
+                                for item in req["references"]
+                            ]
+                        }
+                        if req.get("references")
+                        else {}
+                    ),
+                    "status": "interrupted" if interrupted else status,
+                    "resumable": interrupted and req.get("revision") == row["revision"],
+                    **({"interruptionReason": reason} if interrupted else {}),
                     "events": events.get(tid, []),
                 }
             )
@@ -507,6 +544,8 @@ class ConversationStore:
     ) -> dict[str, Any]:
         tid = str(message.turnId)
         request = message.model_dump(mode="json", exclude_none=True)
+        if not message.references:
+            request.pop("references")
         signature = fingerprint(
             [
                 message.revision,
@@ -515,8 +554,32 @@ class ConversationStore:
                 message.context.workId,
                 message.requestFingerprint
                 or {
-                    k: request.get(k)
-                    for k in ("workingText", "draftId", "draftRevision", "document")
+                    **{
+                        k: request.get(k)
+                        for k in ("workingText", "draftId", "draftRevision", "document")
+                    },
+                    **(
+                        {
+                            "references": [
+                                ref.versionId
+                                if isinstance(ref, FormReference)
+                                and ref.pointer is None
+                                else ref.model_dump(
+                                    exclude={
+                                        "text",
+                                        "name",
+                                        "versionName",
+                                        "savedAt",
+                                        "objectLabel",
+                                    },
+                                    exclude_none=True,
+                                )
+                                for ref in message.references
+                            ]
+                        }
+                        if message.references
+                        else {}
+                    ),
                 },
             ]
         )
@@ -641,6 +704,10 @@ class ConversationStore:
             "message": message.message,
             "result": public_result(result),
         }
+        if message.references:
+            public["references"] = [
+                reference.public() for reference in message.references
+            ]
         delivery = None
         if result["kind"] == "proposal":
             draft = (

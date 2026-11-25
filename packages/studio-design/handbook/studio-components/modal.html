@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dialog 弹窗 · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../../components/styles.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio-ui.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+    <link rel="stylesheet" href="../studio-technical-samples.css" />
+  </head>
+  <body class="studio-content">
+    <div class="shell">
+      <aside>
+        <header><span class="mark" aria-hidden="true">S</span>Form Studio</header>
+        <nav aria-label="组件目录">
+          <a href="../studio-design-handbook.html">组件总览</a><a href="tokens.html">Design Token</a
+          ><a href="../studio-design-handbook.html#design-icon">Design Icon · 图标</a><b>通用</b
+          ><a href="button.html">Button · 按钮</a><a href="icon.html">Icon · 图标</a
+          ><a href="icon-button.html">IconButton · 图标按钮</a
+          ><a href="feedback.html">Feedback · 状态反馈</a><b>表单</b
+          ><a href="form.html">Form · 表单</a><a href="field.html">Field · 表单字段</a
+          ><a href="input.html">Input · 输入框</a><a href="select.html">Select · 下拉选择</a
+          ><a href="textarea.html">Textarea · 多行文本</a
+          ><a href="field-layout.html">Field · 带提示的字段布局</a
+          ><a href="studioselect.html">StudioSelect · 选项选择器</a><b>数据筛选</b
+          ><a href="listfilterbar.html">ListFilterBar · 筛选栏</a><b>数据展示</b
+          ><a href="treeview.html">TreeView · 树视图</a
+          ><a href="datatable.html">DataTable · 数据表格</a
+          ><a href="cardlist.html">CardList · 卡片列表</a
+          ><a href="tableresults.html">TableResults · 表格结果区域</a><b>导航</b
+          ><a href="pagination.html">Pagination · 分页器</a
+          ><a href="tabs.html">Tabs · 标签页 · 切换同页内容</a><b>布局</b
+          ><a href="grid.html">Grid · 栅格</a><a href="griditem.html">GridItem · 栅格子项</a
+          ><a href="formlayout.html">FormLayout · 表单布局</a
+          ><a href="masterdetail.html">MasterDetail · 主从布局</a><b>浮层</b
+          ><a href="menu.html">Menu · 下拉菜单</a
+          ><a aria-current="page" href="modal.html">Dialog · 弹窗</a
+          ><a href="drawer.html">Drawer · 抽屉</a><a href="tooltip.html">Tooltip · 悬浮提示</a
+          ><a href="native-modal.html">Modal · 原生模态框</a><b>业务组件</b
+          ><a href="field-picker.html">FieldPicker · 字段选择器 · 单选与多选</a
+          ><a href="expression-editor.html">ExpressionEditor · 取值来源与表达式编辑</a
+          ><a href="json-editor.html">JsonEditor · JSON 原文与层级编辑</a
+          ><a href="action-editor.html">ActionEditor · 联动动作配置</a><b>物料与契约</b
+          ><a href="material-detail-preview.html">MaterialDetailPreview · 物料详情预览</a
+          ><a href="record-identity.html">RecordIdentity · 记录标识</a
+          ><a href="contract-table.html">ContractTable · 契约字段表</a
+          ><a href="contract-panel.html">ContractPanel · 契约面板</a
+          ><a href="material-card.html">MaterialCard · 物料卡片</a
+          ><a href="material-description.html">MaterialDescription · 物料说明</a
+          ><a href="manifest-input.html">ManifestInput · 物料常量输入</a
+          ><a href="value-input.html">ValueInput · 物料属性值</a><b>配置工具</b
+          ><a href="json-source.html">JsonSource · 配置工作稿</a
+          ><a href="schema-navigation.html">SchemaNavigation · 编辑离开确认</a
+          ><a href="json-editor-view.html">JsonEditorView · 共享历史的 JSON 编辑视图</a
+          ><a href="config-inspection.html">ConfigInspection · 配置检查与预览</a
+          ><a href="preview-runtime.html">PreviewRuntime · 运行时试填</a
+          ><a href="diff-result.html">DiffResult · 差异结果</a
+          ><a href="config-diff.html">ConfigDiff · 配置版本对比</a><b>字段与表达式</b
+          ><a href="expression-verification-panel.html">ExpressionVerificationPanel · 表达式验证</a
+          ><a href="regex-input.html">RegexInput · 正则输入</a
+          ><a href="field-tree.html">FieldTree · 字段树</a
+          ><a href="field-picker-dialog.html">FieldPickerDialog · 字段选择对话框</a
+          ><a href="field-picker-control.html">FieldPickerControl · 字段选择入口</a
+          ><a href="layout-field-picker.html">LayoutFieldPicker · 布局绑定字段选择</a
+          ><a href="reaction-field-picker.html">ReactionFieldPicker · 联动字段选择</a
+          ><a href="reaction-scope-editor.html">ReactionScopeEditor · 联动作用域</a
+          ><a href="expression-display.html">ExpressionDisplay · 表达式摘要</a
+          ><a href="expression-definition.html">ExpressionDefinition · 表达式定义</a
+          ><a href="function-help.html">FunctionHelp · 函数说明</a
+          ><a href="argument-help.html">ArgumentHelp · 参数说明</a
+          ><a href="layout-expression-dialog.html">LayoutExpressionDialog · 布局表达式对话框</a
+          ><b>助手</b><a href="agent-merge.html">AgentMerge · 候选合并</a
+          ><a href="agent-panel.html">AgentPanel · 助手对话面板</a
+          ><a href="agent-reply.html">AgentReply · 助手回复</a
+          ><a href="agent-candidate-card.html">AgentCandidateCard · 候选配置卡片</a
+          ><a href="agent-issues.html">AgentIssues · 需求缺口</a><b>Host 接入</b
+          ><a href="requirements.html">Requirements · Host 能力需求</a
+          ><a href="release-host-example.html">ReleaseHostExample · Host 接入示例</a
+          ><a href="release-integration.html">ReleaseIntegration · 发布接入说明</a><b>管理操作</b
+          ><a href="copy-form.html">CopyForm · 复制表单</a
+          ><a href="form-management.html">FormManagement · 表单管理操作</a
+          ><a href="operation-records.html">OperationRecords · 操作记录</a
+          ><a href="account-security.html">AccountSecurity · 账号安全设置</a>
+        </nav>
+      </aside>
+      <main id="studio-main">
+        <article data-studio-ui>
+          <header class="hero">
+            <small>组件说明</small>
+            <h1>Dialog 弹窗</h1>
+            <p>使用弹窗处理需要集中完成的任务，例如检查配置或确认发布。</p>
+          </header>
+          <div class="page-contents">
+            <a href="#appearance">交互预览</a><a href="#usage">用法</a><a href="#api">接口</a>
+          </div>
+          <section class="doc-section" id="appearance">
+            <h2 id="demo">交互预览</h2>
+            <section class="handbook-preview">
+              <iframe
+                class="component-playground"
+                title="Dialog 弹窗 · 交互预览"
+                sandbox="allow-scripts"
+                loading="lazy"
+                src="assets/playground-runner.html?run#modal"
+              ></iframe
+              ><a class="playground-link" href="playground.html#modal">单独打开预览</a>
+            </section>
+            <details class="handbook-source">
+              <summary>组件使用代码 · JSX</summary>
+              <iframe
+                class="component-playground"
+                title="Dialog 弹窗 · JSX 使用代码"
+                loading="lazy"
+                src="playground.html?code#modal"
+              ></iframe>
+            </details>
+          </section>
+          <section class="doc-section" id="usage">
+            <h2>用法</h2>
+            <pre class="doc-code"><code>&lt;Dialog.Root open={open} onOpenChange={setOpen}&gt;
+  &lt;Dialog.Trigger&gt;打开&lt;/Dialog.Trigger&gt;
+  &lt;Dialog.Portal&gt;&lt;Dialog.Backdrop /&gt;
+    &lt;Dialog.Popup&gt;&lt;Dialog.Title&gt;选择物料&lt;/Dialog.Title&gt;{content}&lt;Dialog.Close&gt;关闭&lt;/Dialog.Close&gt;&lt;/Dialog.Popup&gt;
+  &lt;/Dialog.Portal&gt;
+&lt;/Dialog.Root&gt;</code></pre>
+          </section>
+          <section class="doc-section doc-api" id="api">
+            <h2>组件接口</h2>
+            <table class="prop-types">
+              <thead>
+                <tr>
+                  <th>属性</th>
+                  <th>类型</th>
+                  <th>取值、默认与用法</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>open? / defaultOpen?</code></th>
+                  <td><code>boolean</code></td>
+                  <td>受控打开状态或非受控初值；初始默认关闭。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>modal?</code></th>
+                  <td><code>boolean | &quot;trap-focus&quot;</code></td>
+                  <td>
+                    默认 true；false 允许与外部交互，&quot;trap-focus&quot;
+                    限制焦点但允许外部指针交互。
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>disablePointerDismissal?</code></th>
+                  <td><code>boolean</code></td>
+                  <td>默认 false；为 true 时点击外部不触发关闭。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>onOpenChange?</code></th>
+                  <td>
+                    <code>(open: boolean, details: Dialog.Root.ChangeEventDetails) =&gt; void</code>
+                  </td>
+                  <td>details 提供 reason、原生 event 和 cancel()，可区分 Esc、按钮和外部点击。</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>onOpenChangeComplete?</code></th>
+                  <td><code>(open: boolean) =&gt; void</code></td>
+                  <td>打开或关闭过渡完成时通知。</td>
+                </tr>
+              </tbody>
+            </table>
+            <details>
+              <summary>Root · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>defaultOpen</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>false</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>open</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>onOpenChange</code></td>
+                    <td>
+                      <code
+                        >((open: boolean, eventDetails: Dialog.Root.ChangeEventDetails) =&gt;
+                        void)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>actionsRef</code></td>
+                    <td><code>React.RefObject&lt;Dialog.Root.Actions | null&gt;</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>defaultTriggerId</code></td>
+                    <td><code>string | null</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>disablePointerDismissal</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>false</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>handle</code></td>
+                    <td><code>Dialog.Handle&lt;Payload&gt;</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>modal</code></td>
+                    <td><code>boolean | &#x27;trap-focus&#x27;</code></td>
+                    <td><code>true</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>onOpenChangeComplete</code></td>
+                    <td><code>((open: boolean) =&gt; void)</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>triggerId</code></td>
+                    <td><code>string | null</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>children</code></td>
+                    <td>
+                      <code>React.ReactNode | PayloadChildRenderFunction&lt;Payload&gt;</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Popup · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>initialFocus</code></td>
+                    <td>
+                      <code
+                        >boolean | React.RefObject&lt;HTMLElement | null&gt; | ((openType:
+                        InteractionType) =&gt; boolean | void | HTMLElement | null)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>finalFocus</code></td>
+                    <td>
+                      <code
+                        >boolean | React.RefObject&lt;HTMLElement | null&gt; | ((closeType:
+                        InteractionType) =&gt; boolean | void | HTMLElement | null)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Dialog.Popup.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Dialog.Popup.State) =&gt;
+                        React.CSSProperties | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Dialog.Popup.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Trigger · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>handle</code></td>
+                    <td><code>Dialog.Handle&lt;Payload&gt;</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>nativeButton</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>true</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>payload</code></td>
+                    <td><code>Payload</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>id</code></td>
+                    <td><code>string</code></td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Dialog.Trigger.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Dialog.Trigger.State) =&gt;
+                        React.CSSProperties | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Dialog.Trigger.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <details>
+              <summary>Close · 属性签名与默认值</summary>
+              <table class="prop-types">
+                <thead>
+                  <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>默认值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>nativeButton</code></td>
+                    <td><code>boolean</code></td>
+                    <td><code>true</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>className</code></td>
+                    <td>
+                      <code>string | ((state: Dialog.Close.State) =&gt; string | undefined)</code>
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>style</code></td>
+                    <td>
+                      <code
+                        >React.CSSProperties | ((state: Dialog.Close.State) =&gt;
+                        React.CSSProperties | undefined)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>render</code></td>
+                    <td>
+                      <code
+                        >ReactElement | ((props: HTMLProps, state: Dialog.Close.State) =&gt;
+                        ReactElement)</code
+                      >
+                    </td>
+                    <td><code>-</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+            <p><a href="https://base-ui.com/react/components/dialog">完整部件说明与示例</a></p>
+            <dl>
+              <dt>Props · 输入</dt>
+              <dd>
+                <div>
+                  <code>open / defaultOpen · modal</code><span>沿用 Root 状态与模态行为。</span>
+                </div>
+              </dd>
+              <dt>Actions · 行为</dt>
+              <dd>
+                <div>
+                  <code>onOpenChange(open, eventDetails) · onOpenChangeComplete(open)</code
+                  ><span>打开或关闭时通知页面；过渡完成后触发完成回调。</span>
+                </div>
+              </dd>
+              <dt>Slots · 组合</dt>
+              <dd>
+                <div>
+                  <code>Trigger · Portal · Backdrop · Popup · Title · Close</code
+                  ><span>正文和操作区由页面组合并应用 Studio 样式。</span>
+                </div>
+              </dd>
+            </dl>
+          </section>
+        </article>
+      </main>
+    </div>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

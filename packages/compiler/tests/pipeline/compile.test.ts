@@ -535,3 +535,34 @@ it('accepts a conditional numeric refinement and rejects an unexecutable data sc
     expect.objectContaining({ code: 'DATA_SCHEMA_INVALID', sourcePointer: '/data/schema' }),
   );
 });
+
+it('checks independently supplied cases with conditional schema and fixed resources', () => {
+  const schema = {
+    type: 'object',
+    properties: { insureds: { type: 'array', items: { $ref: 'https://example.test/member' } } },
+  };
+  const resources = {
+    'https://example.test/member': {
+      type: 'object',
+      properties: { age: { type: 'integer' }, guardian: { type: 'string' } },
+      required: ['age'],
+      if: { properties: { age: { maximum: 17 } }, required: ['age'] },
+      then: { required: ['guardian'] },
+    },
+  };
+  const cases = [
+    { name: 'adult', data: { insureds: [{ age: 18 }] }, valid: true },
+    { name: 'minor', data: { insureds: [{ age: 18 }, { age: 17 }] }, valid: false },
+  ];
+  expect(compiler.checkDataSchema(schema, resources, cases)).toEqual({
+    valid: true,
+    diagnostics: [],
+  });
+  expect(
+    compiler.checkDataSchema(schema, resources, [{ ...cases[1]!, valid: true }]),
+  ).toMatchObject({
+    valid: false,
+    diagnostics: [expect.objectContaining({ code: 'DATA_SCHEMA_CASE_MISMATCH' })],
+  });
+  expect(compiler.checkDataSchema(schema, {}, cases).valid).toBe(false);
+});

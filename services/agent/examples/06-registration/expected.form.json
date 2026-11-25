@@ -1,0 +1,122 @@
+{
+  "protocolVersion": "1.0",
+  "id": "registration",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "tripType": {
+          "type": "string",
+          "enum": ["domestic", "international"]
+        },
+        "travelerCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      },
+      "required": ["contactName", "tripType", "travelerCount"],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "旅险意向登记"
+      },
+      "children": [
+        {
+          "material": "field",
+          "props": {
+            "label": "联系人姓名"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/contactName"
+            }
+          },
+          "children": [
+            {
+              "material": "text-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/contactName"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "旅行类型"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/tripType"
+            }
+          },
+          "children": [
+            {
+              "material": "select",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/tripType"
+                }
+              },
+              "props": {
+                "options": [
+                  {
+                    "id": "domestic",
+                    "label": "境内"
+                  },
+                  {
+                    "id": "international",
+                    "label": "境外"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "material": "field",
+          "props": {
+            "label": "出行人数"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/travelerCount"
+            }
+          },
+          "children": [
+            {
+              "material": "number-input",
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/travelerCount"
+                }
+              },
+              "props": {
+                "inputMode": "numeric"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

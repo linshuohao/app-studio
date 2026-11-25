@@ -3,8 +3,8 @@
 import { Modal } from './modal';
 import { JsonEditor } from '../components/json/json-editor';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Input } from '../components/ui/controls';
-import { StudioSelect } from '../components/ui/select';
+import { Button, Input } from '@form-engine/studio-design-components/controls';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import type { JsonSchema } from '@form-engine/protocol/capability';
 import type { FunctionDocumentation } from './function-catalog';
 import type { ReactionExpressionContext } from './reaction-expression-model';
@@ -466,7 +466,16 @@ export function ExpressionVerificationPanel({
     </aside>
   );
   return dialog ? (
-    <Modal {...dialog} size="wide" className="expression-verification-dialog" actions={runButton}>
+    <Modal
+      {...dialog}
+      size="wide"
+      className={
+        focus
+          ? 'expression-verification-dialog expression-verification-conditions'
+          : 'expression-verification-dialog'
+      }
+      actions={runButton}
+    >
       {body}
     </Modal>
   ) : (

@@ -226,6 +226,17 @@
   overflow: auto;
   resize: none;
 }
+.expression-verification-conditions .expression-sidebar {
+  display: grid;
+  align-content: start;
+  overflow-y: auto;
+}
+.expression-verification-conditions .expression-sidebar > section {
+  display: grid;
+}
+.expression-verification-conditions .json-component > :is(textarea, .json-tree) {
+  min-height: 4rem;
+}
 
 .expression-sidebar output {
   display: block;

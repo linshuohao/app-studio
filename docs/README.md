@@ -62,6 +62,32 @@ Agent 的[六类职责、共享 Harness 与三层 Loop](design/platform-studio.m
 9. **构建并验证。**执行下方统一构建与 `--check`，协议样例变更另跑验证。检查结构、引用、导航 / 搜索、受影响页面、ADR 跳转、治理与状态 / Roadmap 同步；涉及呈现时检查代码块、表格和 Mermaid 的实际渲染。内容问题回改 Markdown，渲染问题修构建 / 阅读组件。构建无法执行时报告原因；结构校验不能代替浏览器渲染验证，未执行检查须明确列出。
 10. **审查增量并报告。**检查 Git Diff，同时核对暂存 / 未暂存和未跟踪文件；已有工作使用修改前快照区分本轮增量，无 Git 时使用等效文件差异。确认无无关改动、技术内容丢失、意外语义变化、稳定 ID 改动、遗漏关联模块或候选提升为定论，确认 Markdown 与派生物同步。区分设计意图、源码事实、实际构建 / 渲染结果与分析推断，报告结果适用的基线；维护程序通过不代表业务契约已经实现或验证。
 
+### 人读文档、AI Contract 与 Rules 同步 {#maintain-ai-context}
+
+现行正文承载设计理由、图、例子与生效条款。项目 AI 上下文统一在 `.agents/` 加载，生成物追溯到现行正文的条款。规则实现和测试由实际拥有的工程模块维护。完整流程看 [SDLC](design/workflows.md#workflow-sdlc) 与 [Rules 维护规范](design/engineering.md#engineering-rule-maintenance)。
+
+| 发生变化 | 同批处理 |
+| --- | --- |
+| 说明、图或例子 | 修改原 Markdown 或样本源，保留稳定锚点，生成阅读页。协议输入变化另跑协议样例验证 |
+| 已确认行为或架构 | 更新现行主题及 `contract` 源块，必要时更新 ADR、治理、术语与来源；同步实际消费者、检查及 AI 生成视图 |
+| 规则执行与适用范围 | 更新所属规则配置、脚本或测试，核对源条款、路由及检查绑定；包含正例、反例与存量处理 |
+| 加载路径或任务意图 | 更新 `.agents/context/routes.yaml`，检查生成索引与实际命中，核对 Skill 和局部入口 |
+| 宪章或流程卡点 | 更新原章节、短宪章、Skill、受影响模板和实际门禁，报告启用范围 |
+| 并行 Change 或已验收输入变化 | 在原任务更新范围，重新打开受影响任务并复验；保留仍适用的结果 |
+
+`contract` 块使用稳定 ID、显式状态、适用说明和简短要求。已确认的语义变更更新原条款并保留身份，替代与撤销按已有决策追溯。候选仍按讨论流程处理；任何正文的文档级状态都不能给其中的候选条款授予生效状态。生成产物的差异由源条款、路由或生成器解释。
+
+```bash
+.venv-docs/bin/python tools/docs/build_contracts.py
+.venv-docs/bin/python tools/docs/build_contracts.py --check
+```
+
+归档前同时做阅读页检查和适用的 Contract 检查。对检查覆盖不到的语义差异，由审查者给出明确判断。把迁移对象、规则变化和复验证据归入既有 PR 或 Change。
+
+Studio 页面、组件、Token 与 Handbook 的新增、修改或审查统一读取 [Studio Design 设计准则](../packages/studio-design/guidelines.md)。组件与 Token 实时查询 [Design Handbook](../packages/studio-design/handbook/studio-design-handbook.html) 和源码。新增公共组件或改变接口、交互时，同批更新对应 Handbook 页和真实示例。Token 值变化直接更新主题 CSS；用途变化时更新手册。物料和纯函数维护各自的 Manifest、README、目录元数据及真实例子，沿用现有目录构建和校验。参见 [Studio 实施验证](design/platform-studio.md#studio-ui-context) 和 [资产目录](design/extension-integration.md#first-assets-organization)。
+
+语言及框架参考在 `.agents/context/references.yaml` 按路径、后缀与任务意图选择。更新上游参考时比对当前依赖版本，保留原文摘录、具体版本、来源与许可，再使用 `tools/docs/select_references.py --check` 校验。
+
 收尾报告简洁列出以下项目，无变化标“无变化”，不强制创建报告文件：
 
 - **讨论结论：**已确认新增、修改 / 替代、仅澄清、候选与待决策。
@@ -106,7 +132,7 @@ L1 阅读入口在 `design/l1/README.md` 维护，编号 Markdown 各自生成�
 
 打开 [架构首页](http://127.0.0.1:8765/docs/reading/architecture.html)。默认只监听本机 127.0.0.1；端口被占用可用 `--port 8766`，需要启动前重建可加 `--build`，Ctrl+C 停止。验收使用本地 HTTP；直接 file:// 是否允许本地脚本取决于浏览器策略，不作为已验证的跨浏览器承诺。搜索使用本地经典脚本索引，不依赖 fetch、后端或外部 CDN。
 
-输出继续集中在 `docs/reading/`，验证图鉴在 `docs/validation/index.html`、历史入口在 `docs/history/index.html`。这些明确的既有输出位置复用共享模板；没有第二套 viewer/dist 或重复正文。静态图、Mermaid、代码高亮、宽表格、打印、浅 / 深色与窄屏导航均由共享外壳处理。
+阅读页、验证图鉴、历史入口、索引、构建报告和来源清单在本地或 CI 生成，Git 保留 Markdown、验证输入、原始历史与阅读器静态资源。新检出先生成再检查，`pnpm check` 会执行这两步。生成位置继续沿用 `docs/reading/`、`docs/validation/index.html` 和 `docs/history/index.html`。静态图、Mermaid、代码高亮、宽表格、打印、浅 / 深色与窄屏导航均由共享外壳处理。
 
 顶部搜索支持全文 / 标题 / ID / 关键词，并按文档类型、模块和声明状态过滤；结果包含所属文档、层级、片段和章节链接。搜索覆盖已编目的 Markdown 及其当前章节，包含 ADR、治理、术语和历史推导索引；不声称全文搜索 ZIP 或旧 HTML 的全部原文。搜索默认只检索当前设计，可显式切换到 ADR、历史或全部。Ctrl / ⌘ K 打开搜索。继续设计页末的可选工具按种类、模块、严重程度、前置决策阻塞和状态筛选，并提供两个模块的状态对照；筛选写入 URL，可保存具体问题视图。正文始终完整展示，可选工具位于页末。
 

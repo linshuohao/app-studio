@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Button, Icon } from '../components/ui';
-import { Feedback } from '../components/ui/controls';
+import { Button, Icon } from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
 import { failureMessage, platform } from './platform-api';
 
 import type { ConversationSummary } from './agent-conversation';

@@ -163,6 +163,7 @@ test('pages the pure function table and restores its place after viewing details
     '说明',
     '版本',
     '技术',
+    '操作',
   ]);
   await expect(functions.locator('tbody tr')).toHaveCount(5);
   await pagination.getByRole('button', { name: '下一页' }).click();
@@ -178,7 +179,10 @@ test('pages the pure function table and restores its place after viewing details
 
   await pagination.getByRole('combobox').click();
   await page.getByRole('option', { name: '20', exact: true }).click();
-  await expect(functions.locator('tbody tr')).toHaveCount(20);
+  const catalog = await page.request.get('/api/platform/catalog/functions');
+  expect(catalog.ok()).toBeTruthy();
+  const installedFunctions = await catalog.json();
+  await expect(functions.locator('tbody tr')).toHaveCount(Math.min(20, installedFunctions.length));
   await expect(pagination.locator('output')).toContainText('第 1 /');
   await page.setViewportSize({ width: 850, height: 800 });
   await expect

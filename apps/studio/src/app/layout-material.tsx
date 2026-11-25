@@ -15,8 +15,8 @@ import type { DataReference } from '@form-engine/protocol/definition';
 import type { JsonNode } from '../components/json/model';
 import type { Schema } from '../components/catalog/contract-reference';
 import type { Summary, Detail } from './asset-catalog';
-import { Button, CardList, Field, Icon, Input } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Button, CardList, Field, Icon, Input } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { MaterialCard } from './material-card';
 import { Modal } from './modal';
 import { failureMessage, platform } from './platform-api';
@@ -806,79 +806,81 @@ function CompactProperty({
     }
   }
   return (
-    <Field.Root
-      className="layout-compact-property"
-      data-full-width={name === 'placeholder' || undefined}
-      invalid={invalid}
-    >
-      <div className="layout-compact-heading">
-        {expressionNode ? <span>{title}</span> : <Field.Label htmlFor={id}>{title}</Field.Label>}
-        <Button
-          ref={trigger}
-          variant="text"
-          aria-label={'配置' + title + '的取值'}
-          disabled={invalid}
-          onClick={() =>
-            setExpression(expressionNode ? model.raw(expressionNode) : valueAsExpression(value))
-          }
-        >
-          {expressionNode ? '编辑表达式' : '配置取值'}
-        </Button>
-      </div>
-      {expressionNode ? (
-        <p className="layout-expression-summary">
-          <Icon name="FunctionSquare" />
-          {summary === undefined ? (
-            '待修复的表达式'
-          ) : (
-            <ExpressionDisplay
-              expr={summary}
-              variant="compact"
-              fields={fields.map((item) => ({ ...item, depth: 0 }))}
-              manifests={[]}
-            />
-          )}
-        </p>
-      ) : Array.isArray(shape.enum) ? (
-        <StudioSelect id={id} aria-label={title} value={value} onValueChange={set}>
-          {shape.enum.map((choice) => (
-            <option key={JSON.stringify(choice)} value={JSON.stringify(choice)}>
-              {choice === 'text' ? '文本键盘' : choice === 'tel' ? '电话键盘' : String(choice)}
-            </option>
-          ))}
-        </StudioSelect>
-      ) : shape.type === 'boolean' ? (
-        <label className="layout-compact-checkbox">
-          <Field.Control
-            id={id}
-            type="checkbox"
-            aria-label={title}
-            checked={parsed === true}
-            onChange={(event) => set(String(event.target.checked))}
-          />
-          {name === 'disabled' ? '禁止输入和修改' : '允许查看，禁止修改'}
-        </label>
-      ) : (
-        <Input
-          id={id}
-          aria-label={title}
-          type={numeric ? 'number' : 'text'}
-          min={numeric ? (shape.minimum as number | undefined) : undefined}
-          step={numeric ? (shape.type === 'integer' ? 1 : 'any') : undefined}
-          placeholder={numeric ? '不限制' : '未设置'}
-          value={invalid ? invalidNumber : unset && numeric ? '' : String(parsed ?? '')}
-          onChange={(event) => {
-            const input = event.currentTarget;
-            if (numeric && (!input.value || !input.validity.valid)) {
-              setInvalidNumber(input.value);
-              return;
+    <>
+      <Field.Root
+        className="layout-compact-property"
+        data-full-width={name === 'placeholder' || undefined}
+        invalid={invalid}
+      >
+        <div className="layout-compact-heading">
+          {expressionNode ? <span>{title}</span> : <Field.Label htmlFor={id}>{title}</Field.Label>}
+          <Button
+            ref={trigger}
+            variant="text"
+            aria-label={'配置' + title + '的取值'}
+            disabled={invalid}
+            onClick={() =>
+              setExpression(expressionNode ? model.raw(expressionNode) : valueAsExpression(value))
             }
-            setInvalidNumber(undefined);
-            set(numeric ? JSON.stringify(input.valueAsNumber) : JSON.stringify(input.value));
-          }}
-        />
-      )}
-      {invalid && <Field.Error match>请输入大于或等于 0 的整数。</Field.Error>}
+          >
+            {expressionNode ? '编辑表达式' : '配置取值'}
+          </Button>
+        </div>
+        {expressionNode ? (
+          <p className="layout-expression-summary">
+            <Icon name="FunctionSquare" />
+            {summary === undefined ? (
+              '待修复的表达式'
+            ) : (
+              <ExpressionDisplay
+                expr={summary}
+                variant="compact"
+                fields={fields.map((item) => ({ ...item, depth: 0 }))}
+                manifests={[]}
+              />
+            )}
+          </p>
+        ) : Array.isArray(shape.enum) ? (
+          <StudioSelect id={id} aria-label={title} value={value} onValueChange={set}>
+            {shape.enum.map((choice) => (
+              <option key={JSON.stringify(choice)} value={JSON.stringify(choice)}>
+                {choice === 'text' ? '文本键盘' : choice === 'tel' ? '电话键盘' : String(choice)}
+              </option>
+            ))}
+          </StudioSelect>
+        ) : shape.type === 'boolean' ? (
+          <label className="layout-compact-checkbox">
+            <Field.Control
+              id={id}
+              type="checkbox"
+              aria-label={title}
+              checked={parsed === true}
+              onChange={(event) => set(String(event.target.checked))}
+            />
+            {name === 'disabled' ? '禁止输入和修改' : '允许查看，禁止修改'}
+          </label>
+        ) : (
+          <Input
+            id={id}
+            aria-label={title}
+            type={numeric ? 'number' : 'text'}
+            min={numeric ? (shape.minimum as number | undefined) : undefined}
+            step={numeric ? (shape.type === 'integer' ? 1 : 'any') : undefined}
+            placeholder={numeric ? '不限制' : '未设置'}
+            value={invalid ? invalidNumber : unset && numeric ? '' : String(parsed ?? '')}
+            onChange={(event) => {
+              const input = event.currentTarget;
+              if (numeric && (!input.value || !input.validity.valid)) {
+                setInvalidNumber(input.value);
+                return;
+              }
+              setInvalidNumber(undefined);
+              set(numeric ? JSON.stringify(input.valueAsNumber) : JSON.stringify(input.value));
+            }}
+          />
+        )}
+        {invalid && <Field.Error match>请输入大于或等于 0 的整数。</Field.Error>}
+      </Field.Root>
       {expression !== undefined && (
         <LayoutExpressionDialog
           title={title + '的取值'}
@@ -898,7 +900,7 @@ function CompactProperty({
           action="应用取值"
         />
       )}
-    </Field.Root>
+    </>
   );
 }
 

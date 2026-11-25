@@ -1,12 +1,13 @@
-import { type Page as SourcePage } from '@playwright/test';
-async function textMode(page: SourcePage) {
-  if (!(await page.getByRole('textbox', { name: '配置原文', exact: true }).isVisible()))
-    await page.getByRole('button', { name: /^(文本查看 \/ 修复|格式化文本)$/ }).click();
-}
-
 import { createHash } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
+import { chooseWorkingVersionAction } from './working-version-menu';
+import {
+  chooseWorkingPublication,
+  createWorkingVersion,
+  saveWorkingConfig,
+  workingVersionRow,
+} from './working-version-fixture';
 
 test('publishes two versions and opens the exact releases in an unauthenticated Host', async ({
   page,
@@ -25,83 +26,72 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('button', { name: '新建表单' }).click();
   await page.getByLabel('表单名称').fill('在线发布差旅');
-  const historyLoaded = page.waitForResponse(
-    (response) => response.url().endsWith('/versions') && response.request().method() === 'GET',
-  );
   await page.getByRole('button', { name: '创建表单' }).click();
-  await historyLoaded;
-  const editor = page.getByLabel('配置原文');
-  const definition = { ...travelDefinition, views: { desktop: travelDefinition.views.desktop } };
-  const raw = JSON.stringify(definition);
-  let committed!: () => void;
-  let releaseResponse!: () => void;
-  const saved = new Promise<void>((resolve) => {
-    committed = resolve;
+  await createWorkingVersion(page, '差旅首版');
+  const formId = new URL(page.url()).searchParams.get('form');
+  const origin = new URL(page.url()).origin;
+  const raw = JSON.stringify({
+    ...travelDefinition,
+    views: { desktop: travelDefinition.views.desktop },
   });
-  const held = new Promise<void>((resolve) => {
-    releaseResponse = resolve;
-  });
-  const publishRequests: string[] = [];
+  const firstVersion = await saveWorkingConfig(page, raw);
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  const publishRequests: { versionId: string; key: string }[] = [];
   page.on('request', (request) => {
     if (request.method() === 'POST' && request.url().endsWith('/releases'))
-      publishRequests.push(request.postDataJSON().versionId as string);
+      publishRequests.push({
+        versionId: request.postDataJSON().versionId,
+        key: request.headers()['idempotency-key'],
+      });
   });
-  await page.route(
-    '**/api/platform/forms/*/versions',
-    async (route) => {
-      const response = await route.fetch();
-      expect(response.status()).toBe(201);
-      committed();
-      await held;
-      await route.abort();
-    },
-    { times: 1 },
-  );
-  await textMode(page);
-  await editor.fill(raw);
-  await page.getByRole('button', { name: '保存并发布' }).click();
-  await page.getByRole('button', { name: '确认发布' }).click();
-  await saved;
+  const firstPublish = await chooseWorkingPublication(page, '差旅首版');
+  await firstPublish.getByRole('button', { name: '确认发布' }).click();
+  const firstRow = workingVersionRow(page, '差旅首版');
+  await expect(firstRow.getByText(/已发布/)).toBeVisible();
+  await chooseWorkingVersionAction(page, '查看本次发布', firstRow);
+  const hostLink = page.getByRole('link', { name: '在示例 Host 中打开' });
+  await expect(hostLink).toBeVisible();
+  const first = await hostLink.getAttribute('href');
+  expect(publishRequests.map((r) => r.versionId)).toEqual([firstVersion]);
+  await page.getByRole('button', { name: '返回版本列表', exact: true }).click();
+  await chooseWorkingVersionAction(page, '基于此版创建新版', firstRow);
+  await page.getByLabel('版本名称', { exact: true }).fill('差旅第二版');
+  await page.getByRole('button', { name: '创建并编辑', exact: true }).click();
   const next = raw.replace('家庭短期出行投保录入单', '新版家庭出行');
-  await textMode(page);
-  await editor.fill(next);
-  expect(publishRequests).toEqual([]);
-  releaseResponse();
-  await expect(page.getByText('保存结果待确认')).toBeVisible();
-  expect(publishRequests).toEqual([]);
-  await page.getByRole('button', { name: '重试本次保存' }).click();
-  const links = page.getByRole('link', { name: '打开 Host', exact: true });
-  await expect(links).toHaveCount(1);
-  const first = await links.first().getAttribute('href');
-  expect(publishRequests).toHaveLength(1);
-  await textMode(page);
-  await expect(editor).toHaveValue(next);
-  await expect(page.getByText('有未保存的更改')).toBeVisible();
+  const secondVersion = await saveWorkingConfig(page, next);
+  await page.getByRole('button', { name: '返回版本列表' }).click();
   await page.route(
     '**/api/platform/forms/*/releases',
     async (route) => {
-      const response = await route.fetch();
-      expect(response.status()).toBe(201);
+      expect((await route.fetch()).status()).toBe(201);
       await route.abort();
     },
     { times: 1 },
   );
-  await page.getByRole('button', { name: '保存并发布' }).click();
-  await page.getByRole('button', { name: '确认发布' }).click();
-  const retryRelease = page.getByRole('button', { name: '重试本次发布' });
-  await expect(retryRelease).toBeEnabled();
-  await expect(links).toHaveCount(0);
-  await page.getByRole('button', { name: '管理表单', exact: true }).click();
-  page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: '归档表单', exact: true }).click();
-  await page.getByRole('button', { name: '关闭', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '在线发布差旅（已归档）' })).toBeVisible();
-  await retryRelease.click();
-  await expect(links).toHaveCount(1);
-  const second = await links.first().getAttribute('href');
-  await page.getByRole('button', { name: '发布记录', exact: true }).click();
-  await page.getByRole('button', { name: 'Host 接入', exact: true }).click();
-  await page.getByText('请求 · travel.searchCities', { exact: true }).click();
+  const secondPublish = await chooseWorkingPublication(page, '差旅第二版');
+  const confirm = secondPublish.getByRole('button', { name: '确认发布' });
+  await confirm.click();
+  await expect(secondPublish.getByRole('alert')).toBeVisible();
+  await expect(confirm).toBeEnabled();
+  const archived = await page.request.post(`/api/platform/forms/${formId}/archive`, {
+    headers: { Origin: origin },
+  });
+  expect(archived.ok()).toBeTruthy();
+  await confirm.click();
+  const secondRow = workingVersionRow(page, '差旅第二版');
+  await expect(secondRow.getByText(/已发布/)).toBeVisible();
+  expect(publishRequests.map((r) => r.versionId)).toEqual([
+    firstVersion,
+    secondVersion,
+    secondVersion,
+  ]);
+  expect(publishRequests[2].key).toBe(publishRequests[1].key);
+  await chooseWorkingVersionAction(page, '查看本次发布', secondRow);
+  await expect(hostLink).toBeVisible();
+  const second = await hostLink.getAttribute('href');
+  expect(second).not.toBe(first);
+  await page.getByRole('tab', { name: '所需宿主能力', exact: true }).click();
+  await page.getByRole('button', { name: '查看契约 travel.searchCities', exact: true }).click();
   await expect(
     page.getByText('搜索框输入的关键词，如“杭州”。物料内部维护，无需配置绑定。'),
   ).toBeVisible();

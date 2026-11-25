@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Icon, Input, Menu } from '../components/ui';
-import { Feedback } from '../components/ui/controls';
+import { Button, Icon, Input, Menu } from '@form-engine/studio-design-components';
+import { Feedback } from '@form-engine/studio-design-components/controls';
 import { renameConversation, type ConversationSummary } from './agent-conversation';
 import { Modal } from './modal';
 import { failureMessage, platform } from './platform-api';

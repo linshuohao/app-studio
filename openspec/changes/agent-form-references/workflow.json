@@ -1,0 +1,82 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md",
+    "docs/design/decisions/ADR-FE-038-agent-form-references.md"
+  ],
+  "scope": [
+    "apps/studio/src/app/agent-attempt.tsx",
+    "apps/studio/src/app/agent-conversation.ts",
+    "apps/studio/src/app/agent-creation.tsx",
+    "apps/studio/src/app/agent-panel.css",
+    "apps/studio/src/app/agent-panel.tsx",
+    "apps/studio/src/app/form-editor.tsx",
+    "apps/studio/src/app/page.tsx",
+    "apps/studio/src/app/release-workspace.tsx",
+    "apps/studio/src/app/working-versions.tsx",
+    "apps/studio/tests/run-agent-ownership.mjs",
+    "apps/studio/tests/verify-form-references.mjs",
+    "services/api/src/platform/agent-conversations.controller.ts",
+    "packages/studio-design/handbook/studio-components/agent-panel.html",
+    "packages/studio-design/handbook/studio-components/business-playground.jsx",
+    "services/agent/src/form_agent/agent/graph.py",
+    "services/agent/src/form_agent/agent/nodes/chat.py",
+    "services/agent/src/form_agent/agent/nodes/deliver.py",
+    "services/agent/src/form_agent/business/conversations/references.py",
+    "services/agent/src/form_agent/business/form_authoring/contracts.py",
+    "services/agent/src/form_agent/business/conversations/model.py",
+    "services/agent/src/form_agent/business/form_authoring/task_facts.py",
+    "services/agent/src/form_agent/business/conversations/store.py",
+    "services/agent/src/form_agent/business/conversations/turns.py",
+    "services/agent/src/form_agent/agent/nodes/understand/node.py",
+    "services/agent/src/form_agent/agent/routing.py",
+    "apps/studio/src/app/asset-catalog.tsx",
+    "apps/studio/src/app/material-card.tsx",
+    "apps/studio/src/app/form-agent-sidebar.tsx",
+    "apps/studio/src/app/json-source.tsx",
+    "apps/studio/src/app/data-schema-editor.tsx",
+    "apps/studio/src/app/layout-editor.tsx",
+    "apps/studio/src/app/reaction-editor.tsx",
+    "apps/studio/src/app/constraint-editor.tsx",
+    "apps/studio/src/app/page-reference.css",
+    "apps/studio/tests/verify-asset-references.mjs",
+    "services/api/src/platform/agent-reference.ts",
+    "packages/studio-design/handbook/studio-components/card-list-example.jsx",
+    "packages/studio-design/handbook/studio-components/material-card.html",
+    "packages/studio-design/handbook/studio-components/json-source.html",
+    "services/agent/tests/test_conversations.py"
+  ],
+  "checks": [
+    [".venv-docs/bin/python", "tools/docs/build_docs.py", "--check"],
+    ["pnpm", "--filter", "@form-engine/studio", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "exec",
+      "node",
+      "tests/run-agent-ownership.mjs",
+      "--live",
+      "--form-references"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "exec",
+      "node",
+      "tests/run-agent-ownership.mjs",
+      "--live",
+      "--asset-references"
+    ]
+  ]
+}

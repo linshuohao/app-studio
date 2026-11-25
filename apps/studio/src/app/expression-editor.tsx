@@ -1,21 +1,25 @@
 'use client';
 
-import { EditorViewSwitch, type EditorView } from '../components/ui/editor-view-switch';
+import {
+  EditorViewSwitch,
+  type EditorView,
+} from '@form-engine/studio-design-components/editor-view-switch';
 import { JsonEditor } from '../components/json/json-editor';
 import {
   type ReactNode,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useId,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { Button, Icon, IconButton, Select, Tooltip } from '../components/ui';
+import { Button, Icon, IconButton, Select, Tooltip } from '@form-engine/studio-design-components';
 import { FieldPicker, fieldsFromReactionFields } from '../components/field-picker';
 import { possibleBinding } from './possible-binding';
 import { expressionLabel, ExpressionDisplay } from './expression-display';
-import { StudioSelect } from '../components/ui/select';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import type { Expression, ReactionWatch } from '@form-engine/protocol/definition';
 import type { PureFunctionManifest } from '@form-engine/protocol/capability';
 import { child, semanticModel } from './semantic-model';
@@ -168,6 +172,7 @@ export function ExpressionEditor(props: Props) {
   const [verificationTrigger, setVerificationTrigger] = useState<HTMLButtonElement>();
   const [view, setView] = useState<EditorView>('form');
   const [collapsed, setCollapsed] = useState(false);
+  const [located, setLocated] = useState<{ path: string }>();
   const [invalid, setInvalid] = useState<{ text: string; error: string }>();
   const notify = props.onInvalidDraft;
   const hasInvalidDraft = Boolean(invalid);
@@ -176,6 +181,15 @@ export function ExpressionEditor(props: Props) {
     notify(id, true);
     return () => notify(id, false);
   }, [id, hasInvalidDraft, notify]);
+  useEffect(() => {
+    if (located) document.getElementById(id + '-' + located.path)?.focus();
+  }, [id, located]);
+  function locateCondition(path: string) {
+    setView('form');
+    setCollapsed(false);
+    setVerificationTrigger(undefined);
+    setLocated({ path });
+  }
   function editJson(text: string) {
     try {
       readExpression(text);
@@ -237,7 +251,7 @@ export function ExpressionEditor(props: Props) {
               {invalid && <p role="alert">{invalid.error}</p>}
             </>
           ) : (
-            <ExpressionField {...props} id={id} path="root" depth={0} />
+            <ExpressionField {...props} id={id} path="root" depth={0} located={located} />
           )}
         </div>
       </section>
@@ -256,6 +270,7 @@ export function ExpressionEditor(props: Props) {
           manifests={props.manifests}
           functionDocs={props.functionDocs}
           named={props.named}
+          focus={props.verification.result ? locateCondition : undefined}
         />
       )}
     </div>
@@ -302,8 +317,10 @@ function FunctionSelect({
   docs?: ReadonlyMap<string, FunctionDocumentation>;
   choose: (manifest: PureFunctionManifest) => void;
 }) {
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [container, setContainer] = useState<HTMLElement>();
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const attachTrigger = useCallback((node: HTMLButtonElement | null) => {
+    setContainer(node ? (node.closest('dialog, [role="dialog"]') ?? document.body) : null);
+  }, []);
   const groups = new Map<string, PureFunctionManifest[]>();
   for (const f of manifests) {
     const group = ['core.and', 'core.or', 'core.not', 'core.if'].includes(f.id)
@@ -321,15 +338,12 @@ function FunctionSelect({
       modal={false}
       value={value || null}
       items={manifests.map((f) => ({ value: f.id, label: text(f) }))}
-      onOpenChange={(open) => {
-        if (open) setContainer(trigger.current?.closest('dialog') ?? document.body);
-      }}
       onValueChange={(id) => {
         const f = manifests.find((f) => f.id === id);
         if (f) choose(f);
       }}
     >
-      <Select.Trigger ref={trigger} aria-label={label} className="studio-select-trigger">
+      <Select.Trigger ref={attachTrigger} aria-label={label} className="studio-select-trigger">
         <Select.Value>{() => (current ? text(current) : value || '选择函数')}</Select.Value>
         <Select.Icon />
       </Select.Trigger>
@@ -366,6 +380,7 @@ function ExpressionField(
     id: string;
     path: string;
     depth: number;
+    located?: { path: string };
     inParameter?: boolean;
     parameterHelp?: ParameterHelp;
   },
@@ -403,7 +418,14 @@ function ExpressionField(
   const children = args?.children ?? [];
   const nextParam = fn?.parameters[children.length] ?? fn?.restParameter;
   const combo = Boolean(groupOf(expr));
-  const [expanded, setExpanded] = useState(depth === 0);
+  const target = props.located?.path;
+  const revealTarget = target === path || (target?.startsWith(path + '.') ?? false);
+  const [expanded, setExpanded] = useState(depth === 0 || revealTarget);
+  const [lastLocated, setLastLocated] = useState(props.located);
+  if (lastLocated !== props.located) {
+    setLastLocated(props.located);
+    if (revealTarget) setExpanded(true);
+  }
   const folded = Boolean(call && !expanded);
   const [selecting, setSelecting] = useState<'function' | 'named' | 'field'>();
   const source = call ? 'function' : ref ? 'field' : obj && 'use' in obj ? 'named' : 'literal';

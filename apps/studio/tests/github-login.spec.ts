@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
+import { schemaSource } from './data-schema-fixture';
+import { chooseWorkingVersionAction } from './working-version-menu';
 
 test('binds, signs in, publishes and serves Host, then rejects a late callback after unlink and rebind', async ({
   page,
@@ -61,16 +63,27 @@ test('binds, signs in, publishes and serves Host, then rejects a late callback a
   await page.getByRole('button', { name: '新建表单' }).click();
   await page.getByLabel('表单名称').fill('GitHub 登录发布');
   await page.getByRole('button', { name: '创建表单' }).click();
-  await page.getByRole('button', { name: '文本查看 / 修复' }).click();
-  await page.getByLabel('配置原文').fill(
+  await page.getByRole('button', { name: '新建草稿' }).click();
+  await page.getByLabel('版本名称').fill('GitHub 登录发布版');
+  await page.getByRole('button', { name: '创建并编辑' }).click();
+  await (
+    await schemaSource(page)
+  ).fill(
     JSON.stringify({
       ...travelDefinition,
       views: { desktop: travelDefinition.views.desktop },
     }),
   );
-  await page.getByRole('button', { name: '保存并发布' }).click();
+  await page.getByRole('button', { name: '保存配置', exact: true }).click();
+  await expect(page.getByText('已保存', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  await chooseWorkingVersionAction(page, '发布');
   await page.getByRole('button', { name: '确认发布' }).click();
-  await page.getByRole('button', { name: '查看发布记录' }).click();
+  await expect(page.getByRole('row').filter({ hasText: 'GitHub 登录发布版' })).toContainText(
+    '已发布',
+  );
+  await page.getByRole('button', { name: '发布记录', exact: true }).click();
+  await page.getByRole('link', { name: 'GitHub 登录发布版', exact: true }).click();
   const link = page.getByRole('link', { name: '在示例 Host 中打开' });
   await expect(link).toHaveCount(1);
   const release = await link.getAttribute('href');

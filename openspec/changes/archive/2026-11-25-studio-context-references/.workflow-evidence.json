@@ -1,0 +1,36 @@
+{
+  "fingerprint": "60c121a1ac32f7bcfff8d24207206e8ef25524c14fd93c596f680940e057fb07",
+  "checks": [
+    [
+      ".venv-docs/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/docs",
+      "-p",
+      "*_test.py"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/studio_catalog.py",
+      "build",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/select_references.py",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_contracts.py",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

@@ -1,0 +1,1171 @@
+{
+  "protocolVersion": "1.0",
+  "id": "exception",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "ticketNo": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 24
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "area": {
+          "type": "string",
+          "enum": ["office", "storage", "common"]
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["cleaning", "delivery", "inspection"]
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "visitors": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "startHour": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 23
+        },
+        "endHour": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "afterHoursNote": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 180
+        },
+        "deliveryRoute": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 150
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        }
+      },
+      "required": [
+        "ticketNo",
+        "operator",
+        "area",
+        "reason",
+        "startDate",
+        "endDate",
+        "visitors",
+        "startHour",
+        "endHour",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "物业临时进场审批登记"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "工单资料"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "物业工单编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/ticketNo"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/ticketNo"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "登记人员"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/operator"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/operator"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "作业区域"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/area"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/area"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "office",
+                        "label": "办公区"
+                      },
+                      {
+                        "id": "storage",
+                        "label": "仓储区"
+                      },
+                      {
+                        "id": "common",
+                        "label": "公共区"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "申请类型"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/reason"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/reason"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "cleaning",
+                        "label": "集中保洁"
+                      },
+                      {
+                        "id": "delivery",
+                        "label": "大型物资送达"
+                      },
+                      {
+                        "id": "inspection",
+                        "label": "例行巡检"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "进场安排"
+          },
+          "children": [
+            {
+              "material": "date-range",
+              "props": {
+                "label": "保险期间",
+                "startLabel": "起保日",
+                "endLabel": "终保日"
+              },
+              "bindings": {
+                "start": {
+                  "source": "data",
+                  "path": "/startDate"
+                },
+                "end": {
+                  "source": "data",
+                  "path": "/endDate"
+                }
+              }
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "进场人数"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/visitors"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/visitors"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "每天开始时刻"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/startHour"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/startHour"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "每天结束时刻"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/endHour"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/endHour"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.and",
+                        "args": [
+                          {
+                            "op": "core.exists",
+                            "args": [
+                              {
+                                "ref": {
+                                  "source": "data",
+                                  "path": "/startHour"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "op": "core.exists",
+                            "args": [
+                              {
+                                "ref": {
+                                  "source": "data",
+                                  "path": "/endHour"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.or",
+                        "args": [
+                          {
+                            "op": "core.lt",
+                            "args": [
+                              {
+                                "ref": {
+                                  "source": "data",
+                                  "path": "/startHour"
+                                }
+                              },
+                              8
+                            ]
+                          },
+                          {
+                            "op": "core.gt",
+                            "args": [
+                              {
+                                "ref": {
+                                  "source": "data",
+                                  "path": "/endHour"
+                                }
+                              },
+                              18
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "非开放时段说明"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/afterHoursNote"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/afterHoursNote"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/reason"
+                            }
+                          },
+                          "delivery"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "卸货与搬运路线"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/deliveryRoute"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/deliveryRoute"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/visitors"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.gte",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/visitors"
+                            }
+                          },
+                          12
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "现场复核人员"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/reviewer"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/reviewer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "确认已告知现场负责人此次安排"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/confirmed"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "交物业值班台"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitFacilityException"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "facility-window",
+      "kind": "internal",
+      "assert": {
+        "op": "travel.isTripRangeAllowed",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startDate"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endDate"
+            }
+          },
+          5
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endDate"
+        },
+        "code": "facility-window",
+        "message": {
+          "text": "结束日不得早于开始日，最多 5 个自然日。"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/startDate"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/endDate"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "hour-order",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lt",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/startHour"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/endHour"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/endHour"
+        },
+        "code": "hour-order",
+        "message": {
+          "text": "结束时刻必须晚于开始时刻"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/startHour"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/endHour"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "after-hours",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/afterHoursNote"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/afterHoursNote"
+        },
+        "code": "after-hours",
+        "message": {
+          "text": "请填写非开放时段说明"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startHour"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/endHour"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.or",
+            "args": [
+              {
+                "op": "core.lt",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startHour"
+                    }
+                  },
+                  8
+                ]
+              },
+              {
+                "op": "core.gt",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/endHour"
+                    }
+                  },
+                  18
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "delivery-route",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/deliveryRoute"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/deliveryRoute"
+        },
+        "code": "delivery-route",
+        "message": {
+          "text": "请填写卸货与搬运路线"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/reason"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.eq",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/reason"
+                }
+              },
+              "delivery"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "second-check",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/reviewer"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/reviewer"
+        },
+        "code": "second-check",
+        "message": {
+          "text": "请填写现场复核人员"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/visitors"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.gte",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/visitors"
+                }
+              },
+              12
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-after-hours",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/startHour"
+        },
+        {
+          "source": "data",
+          "path": "/endHour"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/afterHoursNote"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/afterHoursNote"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/startHour"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/endHour"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/startHour"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/endHour"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.or",
+                    "args": [
+                      {
+                        "op": "core.lt",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/startHour"
+                            }
+                          },
+                          8
+                        ]
+                      },
+                      {
+                        "op": "core.gt",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/endHour"
+                            }
+                          },
+                          18
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-route-deliveryRoute",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/reason"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/deliveryRoute"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/deliveryRoute"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/reason"
+                        }
+                      },
+                      "delivery"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-reviewer",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/visitors"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/reviewer"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/reviewer"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/visitors"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/visitors"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/visitors"
+                        }
+                      },
+                      12
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "confirmed": false
+      },
+      "events": {
+        "business.submitFacilityException": "校验当前快照并查工单是否开放，仅交付当前适用字段；已关闭、查无或请求失败均保留草稿。"
+      }
+    }
+  }
+}

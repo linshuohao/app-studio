@@ -1,5 +1,12 @@
 'use client';
-import { Button, DataTable, Input, ListFilterBar, Pagination, Tabs } from '../components/ui';
+import {
+  Button,
+  DataTable,
+  Input,
+  ListFilterBar,
+  Pagination,
+  Tabs,
+} from '@form-engine/studio-design-components';
 import { OperationRecords } from './operation-records';
 import { JoinRequestsAdmin } from './join-requests';
 import { useEffect, useState } from 'react';

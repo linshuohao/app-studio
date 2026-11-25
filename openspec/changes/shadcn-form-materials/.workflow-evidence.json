@@ -1,0 +1,32 @@
+{
+  "fingerprint": "45e2ddbee61182d868fef19f697f8780a8ae96d65b875beb53151eb2024a29ee",
+  "checks": [
+    [
+      "pnpm",
+      "assets:check"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/materials-react",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/materials-react",
+      "test",
+      "--maxWorkers=2"
+    ],
+    [
+      "node",
+      "tools/engineering/catalog-docs.mjs",
+      "--check"
+    ],
+    [
+      ".venv-docs/bin/python",
+      "tools/docs/build_docs.py",
+      "--check"
+    ]
+  ]
+}

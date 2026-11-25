@@ -1,0 +1,61 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md",
+    "docs/design/platform-agent-compose.md",
+    "docs/design/l1/02-data-reference-scope.md"
+  ],
+  "scope": [
+    "apps/studio/tests/assistant-browser.mjs",
+    "apps/studio/tests/run-agent-ownership.mjs",
+    "apps/studio/tests/verify-create-form.mjs",
+    "packages/compiler/src/index.ts",
+    "packages/compiler/src/pipeline/compile.ts",
+    "packages/compiler/src/pipeline/data-schema.ts",
+    "packages/compiler/tests/pipeline/compile.test.ts",
+    "packages/materials-react/src/remote-select/README.md",
+    "services/agent/README.md",
+    "services/agent/evaluation/run.py",
+    "services/agent/evaluation/test_run.py",
+    "services/agent/src/form_agent/business/conversations/references.py",
+    "services/agent/src/form_agent/business/form_authoring/contracts.py",
+    "services/agent/src/form_agent/agent/nodes/compose/action.py",
+    "services/agent/src/form_agent/agent/nodes/compose/node.py",
+    "services/agent/src/form_agent/agent/middleware/authoring.py",
+    "services/agent/src/form_agent/agent/nodes/compose/staged.py",
+    "services/agent/src/form_agent/agent/nodes/repair.py",
+    "services/agent/src/form_agent/agent/prompts/understand.py",
+    "services/agent/src/form_agent/execution/journal.py",
+    "services/agent/src/form_agent/execution/codec.py",
+    "services/agent/src/form_agent/execution/model_calls.py",
+    "services/agent/src/form_agent/integrations/compiler.py",
+    "services/agent/src/form_agent/agent/tools/dependencies.py",
+    "services/agent/src/form_agent/server.py",
+    "services/agent/src/form_agent/agent/state.py",
+    "services/agent/src/form_agent/agent/nodes/load_context.py",
+    "services/agent/src/form_agent/business/form_authoring/evidence.py",
+    "services/agent/tests/test_staged_compose.py",
+    "services/api/src/platform/catalog-documentation.ts",
+    "services/api/src/platform/create-form.controller.spec.ts",
+    "services/api/src/platform/create-form.controller.ts",
+    "tools/engineering/createform-eval-runtime.mjs"
+  ],
+  "checks": [
+    [".venv-docs/bin/python", "tools/docs/build_docs.py", "--check"],
+    [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests",
+      "services/agent/evaluation/test_run.py",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    ["pnpm", "--filter", "@form-engine/compiler", "test"],
+    ["pnpm", "--filter", "@form-engine/runtime", "test"],
+    ["pnpm", "--filter", "@form-engine/api", "test"],
+    ["pnpm", "--filter", "@form-engine/compiler", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/api", "catalog:check"]
+  ]
+}

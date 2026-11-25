@@ -252,9 +252,6 @@ it('applies inclusive bounds to the start picker and rejects out-of-range drafts
   const modal = open();
   const start = within(modal).getByLabelText('开始日期');
   const confirm = within(modal).getByRole('button', { name: '确认日期' });
-  expect(start).toHaveAttribute('type', 'date');
-  expect(start).toHaveAttribute('min', '2028-02-28');
-  expect(start).toHaveAttribute('max', '2028-02-29');
   for (const value of ['2028-02-27', '2028-03-01']) {
     fireEvent.change(start, { target: { value } });
     fireEvent.click(confirm);
@@ -264,4 +261,12 @@ it('applies inclusive bounds to the start picker and rejects out-of-range drafts
   fireEvent.change(start, { target: { value: '2028-02-29' } });
   fireEvent.click(confirm);
   expect(form.runtime.snapshot()).toMatchObject({ start: '2028-02-29', end: '2028-03-01' });
+});
+
+it('opens a calendar for the start date inside the confirmation panel', () => {
+  const form = dateForm();
+  const modal = open();
+  fireEvent.click(within(modal).getByRole('button', { name: '打开开始日期日历' }));
+  expect(within(modal).getByRole('grid')).toBeVisible();
+  expect(form.runtime.dispatch).not.toHaveBeenCalled();
 });

@@ -1,0 +1,1729 @@
+{
+  "protocolVersion": "1.0",
+  "id": "food-receipt",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "shipmentNo": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 28
+        },
+        "receiver": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "receivedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "site": {
+          "type": "string",
+          "enum": ["north", "south"]
+        },
+        "carrier": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "shiftNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "lots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productCode": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 32
+              },
+              "lotCode": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 32
+              },
+              "storage": {
+                "type": "string",
+                "enum": ["ambient", "chilled", "frozen"]
+              },
+              "received": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000
+              },
+              "damaged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5000
+              },
+              "temperatureDeciC": {
+                "type": "integer",
+                "minimum": -500,
+                "maximum": 800
+              },
+              "isolationNote": {
+                "type": "string",
+                "minLength": 10,
+                "maxLength": 180
+              },
+              "damageNote": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 180
+              },
+              "lotId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["productCode", "lotCode", "storage", "received", "damaged", "lotId"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 30
+        }
+      },
+      "required": [
+        "shipmentNo",
+        "receiver",
+        "receivedDate",
+        "site",
+        "carrier",
+        "confirmed",
+        "lots"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "食品配送批次收货与隔离"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "配送信息"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "配送单编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/shipmentNo"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/shipmentNo"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "收货人"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/receiver"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/receiver"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "到货日期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/receivedDate"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/receivedDate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "收货库"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/site"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/site"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "north",
+                        "label": "北区库"
+                      },
+                      {
+                        "id": "south",
+                        "label": "南区库"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "承运方简称"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/carrier"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/carrier"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "班次备注"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/shiftNote"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/shiftNote"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "收货批次"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/lots"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "批次"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "货品编码"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/productCode",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/productCode",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "送货批号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/lotCode",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/lotCode",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "保管类型"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/storage",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/storage",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "ambient",
+                              "label": "常温"
+                            },
+                            {
+                              "id": "chilled",
+                              "label": "冷藏"
+                            },
+                            {
+                              "id": "frozen",
+                              "label": "冷冻"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "实收箱数"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/received",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/received",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "外观破损箱数"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/damaged",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/damaged",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.or",
+                          "args": [
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/storage",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.eq",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/storage",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    "chilled"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.and",
+                              "args": [
+                                {
+                                  "op": "core.exists",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/storage",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.eq",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/storage",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    "frozen"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "箱内抽测温度"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/temperatureDeciC",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "number-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/temperatureDeciC",
+                                "scope": "person"
+                              }
+                            },
+                            "props": {
+                              "inputMode": "numeric"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/temperatureDeciC",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.or",
+                              "args": [
+                                {
+                                  "op": "core.and",
+                                  "args": [
+                                    {
+                                      "op": "core.and",
+                                      "args": [
+                                        {
+                                          "op": "core.exists",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/storage",
+                                                "scope": "person"
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "core.eq",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/storage",
+                                                "scope": "person"
+                                              }
+                                            },
+                                            "chilled"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "core.or",
+                                      "args": [
+                                        {
+                                          "op": "core.lt",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/temperatureDeciC",
+                                                "scope": "person"
+                                              }
+                                            },
+                                            0
+                                          ]
+                                        },
+                                        {
+                                          "op": "core.gt",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/temperatureDeciC",
+                                                "scope": "person"
+                                              }
+                                            },
+                                            80
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "core.and",
+                                  "args": [
+                                    {
+                                      "op": "core.and",
+                                      "args": [
+                                        {
+                                          "op": "core.exists",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/storage",
+                                                "scope": "person"
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "core.eq",
+                                          "args": [
+                                            {
+                                              "ref": {
+                                                "source": "data",
+                                                "path": "/storage",
+                                                "scope": "person"
+                                              }
+                                            },
+                                            "frozen"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "core.gt",
+                                      "args": [
+                                        {
+                                          "ref": {
+                                            "source": "data",
+                                            "path": "/temperatureDeciC",
+                                            "scope": "person"
+                                          }
+                                        },
+                                        -180
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "隔离记录"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/isolationNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/isolationNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/damaged",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.gt",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/damaged",
+                                    "scope": "person"
+                                  }
+                                },
+                                0
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "破损说明"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/damageNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/damageNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/lots"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除批次",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/lots"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加批次",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/lots"
+                            }
+                          }
+                        ]
+                      },
+                      30
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addFoodLot"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "已逐批核对标签与实物"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/confirmed"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "交付收货清单"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitFoodReceipt"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "damage-count",
+      "kind": "internal",
+      "assert": {
+        "op": "core.lte",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/damaged",
+              "scope": "person"
+            }
+          },
+          {
+            "ref": {
+              "source": "data",
+              "path": "/received",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/damaged",
+          "scope": "person"
+        },
+        "code": "damage-count",
+        "message": {
+          "text": "破损箱数不能超过实收箱数"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/damaged",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/received",
+                  "scope": "person"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "temp-required",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/temperatureDeciC",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/temperatureDeciC",
+          "scope": "person"
+        },
+        "code": "temp-required",
+        "message": {
+          "text": "请填写抽测温度"
+        }
+      },
+      "when": {
+        "op": "core.or",
+        "args": [
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/storage",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/storage",
+                      "scope": "person"
+                    }
+                  },
+                  "chilled"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "core.and",
+            "args": [
+              {
+                "op": "core.exists",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/storage",
+                      "scope": "person"
+                    }
+                  }
+                ]
+              },
+              {
+                "op": "core.eq",
+                "args": [
+                  {
+                    "ref": {
+                      "source": "data",
+                      "path": "/storage",
+                      "scope": "person"
+                    }
+                  },
+                  "frozen"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "isolation-required",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/isolationNote",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/isolationNote",
+          "scope": "person"
+        },
+        "code": "isolation-required",
+        "message": {
+          "text": "请填写隔离记录"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/temperatureDeciC",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.or",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          },
+                          "chilled"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.or",
+                    "args": [
+                      {
+                        "op": "core.lt",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/temperatureDeciC",
+                              "scope": "person"
+                            }
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "op": "core.gt",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/temperatureDeciC",
+                              "scope": "person"
+                            }
+                          },
+                          80
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          },
+                          "frozen"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gt",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/temperatureDeciC",
+                          "scope": "person"
+                        }
+                      },
+                      -180
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "damage-required",
+      "kind": "internal",
+      "assert": {
+        "op": "core.exists",
+        "args": [
+          {
+            "ref": {
+              "source": "data",
+              "path": "/damageNote",
+              "scope": "person"
+            }
+          }
+        ]
+      },
+      "issue": {
+        "target": {
+          "source": "data",
+          "path": "/damageNote",
+          "scope": "person"
+        },
+        "code": "damage-required",
+        "message": {
+          "text": "请填写破损说明"
+        }
+      },
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/damaged",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.gt",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/damaged",
+                  "scope": "person"
+                }
+              },
+              0
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "unique-food-lots",
+      "kind": "external",
+      "validator": "business.validateReceiptLots",
+      "target": {
+        "source": "data",
+        "path": "/lots"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/lots"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-temperature",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/storage",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/temperatureDeciC",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/temperatureDeciC",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.or",
+                "args": [
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          },
+                          "chilled"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/storage",
+                              "scope": "person"
+                            }
+                          },
+                          "frozen"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-isolation",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/temperatureDeciC",
+          "scope": "person"
+        },
+        {
+          "source": "data",
+          "path": "/storage",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/isolationNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/isolationNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/temperatureDeciC",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.or",
+                    "args": [
+                      {
+                        "op": "core.and",
+                        "args": [
+                          {
+                            "op": "core.and",
+                            "args": [
+                              {
+                                "op": "core.exists",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/storage",
+                                      "scope": "person"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "core.eq",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/storage",
+                                      "scope": "person"
+                                    }
+                                  },
+                                  "chilled"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "core.or",
+                            "args": [
+                              {
+                                "op": "core.lt",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/temperatureDeciC",
+                                      "scope": "person"
+                                    }
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "op": "core.gt",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/temperatureDeciC",
+                                      "scope": "person"
+                                    }
+                                  },
+                                  80
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.and",
+                        "args": [
+                          {
+                            "op": "core.and",
+                            "args": [
+                              {
+                                "op": "core.exists",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/storage",
+                                      "scope": "person"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "core.eq",
+                                "args": [
+                                  {
+                                    "ref": {
+                                      "source": "data",
+                                      "path": "/storage",
+                                      "scope": "person"
+                                    }
+                                  },
+                                  "frozen"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "core.gt",
+                            "args": [
+                              {
+                                "ref": {
+                                  "source": "data",
+                                  "path": "/temperatureDeciC",
+                                  "scope": "person"
+                                }
+                              },
+                              -180
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-damage-note",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/damaged",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/damageNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/damageNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/damaged",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.gt",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/damaged",
+                          "scope": "person"
+                        }
+                      },
+                      0
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lots"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "lots": [],
+        "confirmed": false
+      },
+      "validators": {
+        "business.validateReceiptLots": "本地查重标准化后的货品编码加批号，在冲突各批的 lotCode 定位。"
+      },
+      "events": {
+        "business.addFoodLot": "生成 lotId 并追加空批次。",
+        "business.submitFoodReceipt": "以同一快照校验、标准化货品或批号码、标记隔离批次并幂等送交库存。"
+      }
+    }
+  }
+}

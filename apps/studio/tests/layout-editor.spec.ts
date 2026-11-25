@@ -61,12 +61,17 @@ const source = JSON.stringify(definition).replace(
 );
 const click = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).click();
 const layoutSelect = (page: Page) => page.getByLabel('当前布局', { exact: true });
+async function chooseOption(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+const layoutFields = (page: Page) => page.getByRole('tabpanel', { name: /^字段/ });
 const outline = (page: Page) => page.getByRole('navigation', { name: '视图大纲' });
 const materialDialog = (page: Page) => page.getByRole('dialog', { name: '选择布局物料' });
 async function pickField(page: Page, label: string, path: string, scope = '表单根') {
   const picker = page.getByRole('dialog', { name: label, exact: true });
   await picker.getByRole('searchbox').fill(path);
-  await expect(picker.getByRole('button', { name: '收起 ' + scope, exact: true })).toBeVisible();
+  await expect(picker.getByText(scope, { exact: true })).toBeVisible();
   await picker.getByText(path, { exact: true }).click();
   await picker.getByRole('button', { name: '应用选择' }).click();
 }
@@ -95,19 +100,16 @@ test('copies a layout, moves a subtree, undoes the edit and reopens the saved wo
   await page.getByLabel('布局 key', { exact: true }).fill('mobile');
   await page.getByLabel('显示名称', { exact: true }).fill('移动表单');
   await click(page, '确认布局');
-  await expect(layoutSelect(page)).toHaveValue('mobile');
+  await expect(layoutSelect(page)).toHaveText('移动表单 · mobile');
   await click(page, '修改名称');
   await page.getByLabel('显示名称', { exact: true }).fill('移动端');
   await click(page, '确认布局');
-  await expect(layoutSelect(page).locator('option:checked')).toContainText('移动端');
+  await expect(layoutSelect(page)).toHaveText('移动端 · mobile');
 
   await outline(page)
     .getByRole('button', { name: /需要移动的分区/ })
     .click();
-  const parent = '/views/mobile/slots/default/1';
-  await page
-    .getByLabel('移动到', { exact: true })
-    .selectOption(JSON.stringify({ parent, slot: 'default', index: 0 }));
+  await chooseOption(page, '移动到', 'grid · default · 第 1 位');
   await click(page, '移动节点');
   await expect(page.getByRole('button', { name: '移动节点', exact: true })).toBeHidden();
   const editor = await schemaSource(page);
@@ -136,8 +138,8 @@ test('copies a layout, moves a subtree, undoes the edit and reopens the saved wo
   await page.reload();
   await chooseWorkingVersionAction(page, '编辑配置');
   await click(page, '布局');
-  await layoutSelect(page).selectOption('mobile');
-  await expect(layoutSelect(page).locator('option:checked')).toContainText('移动端');
+  await chooseOption(page, '当前布局', '移动端 · mobile');
+  await expect(layoutSelect(page)).toHaveText('移动端 · mobile');
   expect(JSON.parse(await (await schemaSource(page)).inputValue())).toEqual(doc);
 
   await checkOrPreview(page, '预览', 'mobile');
@@ -166,10 +168,8 @@ test('inserts compatible material ports from the real catalog and cancels withou
   expect(await (await schemaSource(page)).inputValue()).toBe(source);
   await click(page, '布局');
   await click(page, '编排');
-  await page
-    .getByRole('navigation', { name: '字段结构' })
-    .getByRole('button', { name: 'note', exact: true })
-    .dragTo(add);
+  await page.getByRole('tab', { name: /^字段/ }).click();
+  await layoutFields(page).getByRole('button', { name: 'note', exact: true }).dragTo(add);
   await chooser.getByLabel('搜索物料').fill('date-range');
   await chooser.getByRole('button', { name: '查看 date-range', exact: true }).click();
   await chooser.getByLabel('属性 label', { exact: true }).fill('日期区间');
@@ -229,7 +229,8 @@ test('creates an independent empty root, rejects duplicate keys and updates fiel
   page,
 }) => {
   await openLayout(page);
-  const fields = page.getByRole('navigation', { name: '字段结构' });
+  await page.getByRole('tab', { name: /^字段/ }).click();
+  const fields = layoutFields(page);
   const city = fields.getByRole('button', { name: 'city', exact: true });
   const note = fields.getByRole('button', { name: 'note', exact: true });
   await expect(city).toContainText('已关联');
@@ -243,7 +244,7 @@ test('creates an independent empty root, rejects duplicate keys and updates fiel
   await expect(modal.getByRole('alert')).toContainText('已存在');
   await modal.getByLabel('布局 key').fill('self');
   await modal.getByRole('button', { name: '确认布局' }).click();
-  await expect(layoutSelect(page)).toHaveValue('self');
+  await expect(layoutSelect(page)).toHaveText('自助表单 · self');
   await expect(city).toContainText('未关联');
   await click(page, '选择根容器');
   const chooser = materialDialog(page);
@@ -284,20 +285,16 @@ test('blocks rebinding a subtree to a different collection with the same lexical
   await outline(page)
     .locator('[data-node-path="' + branch + '/slots/default/0"]')
     .click();
-  const destinations = (
-    await page
-      .getByLabel('移动到', { exact: true })
-      .locator('option')
-      .evaluateAll((opts) =>
-        opts.filter((o) => !o.closest('optgroup')).map((o) => (o as HTMLOptionElement).value),
-      )
-  )
-    .filter(Boolean)
-    .map((v) => JSON.parse(v).parent as string);
-  expect(destinations).toContain(branch + '/slots/default/1');
-  expect(destinations).not.toContain('/views/desktop');
-  expect(destinations.some((p) => p.startsWith('/views/desktop/slots/default/1/'))).toBe(false);
-  expect(destinations.some((p) => p.startsWith(branch + '/slots/default/0'))).toBe(false);
+  await page.getByRole('combobox', { name: '移动到', exact: true }).click();
+  await expect(
+    page.getByRole('option', { name: 'grid · default · 第 1 位', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('option', { name: /^乙组/ }).first()).toContainText('受限');
+  await expect(page.getByRole('option', { name: /^人员 ·.*(?<!受限)$/ })).toHaveCount(0);
+  await expect(
+    page.getByRole('option', { name: '成员资料 · default · 第 1 位', exact: true }),
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
   expect(await (await schemaSource(page)).inputValue()).toBe(raw);
 });
 
@@ -329,14 +326,10 @@ test('writes declared property expressions, Host events and requests through the
   await openLayout(page, raw);
   const controls = page.getByRole('region', { name: '控件配置' });
   async function openSetting(name: string) {
-    await controls
-      .locator('summary')
-      .filter({ hasText: name })
-      .or(controls.locator('summary').and(controls.getByLabel(name, { exact: true })))
-      .click();
+    await controls.locator('summary').filter({ hasText: name }).click();
   }
   async function applySetting(name: string) {
-    const button = controls.getByRole('button', { name, exact: true });
+    const button = page.getByRole('button', { name, exact: true });
     await button.click();
     await expect(button).toBeHidden();
   }
@@ -350,7 +343,9 @@ test('writes declared property expressions, Host events and requests through the
   await applySetting('应用属性');
 
   await closeWorkbenchDrawer(page);
-  await outline(page).getByRole('button', { name: '存为草稿' }).click();
+  await outline(page)
+    .getByRole('button', { name: /^存为草稿/ })
+    .click();
   await openSetting('事件 activate');
   await controls.getByLabel('Host 事件 activate').fill('travel.saveDraft');
   await applySetting('应用事件 activate');
@@ -375,15 +370,17 @@ test('keeps an incompatible expression out of the draft even when an unrelated d
   const padding = ' '.repeat(17 * 1024);
   const raw = padding + source.replace('"protocolVersion":"1",', '') + padding;
   await openLayout(page, raw);
-  await outline(page).getByRole('button', { name: '存为草稿' }).click();
+  await outline(page)
+    .getByRole('button', { name: /^存为草稿/ })
+    .click();
   const inspector = page.getByRole('region', { name: '控件配置' });
   await inspector.getByLabel('属性 disabled来源', { exact: true }).selectOption('expression');
   await inspector
     .getByLabel('属性 disabled协议 JSON', { exact: true })
     .fill('{"$expr":{"literal":"错误"}}');
-  await inspector.getByRole('button', { name: '应用属性', exact: true }).click();
+  await click(page, '应用属性');
   await expect(inspector.getByRole('alert')).toContainText('控件未通过检查');
-  await inspector.getByRole('button', { name: '还原', exact: true }).click();
+  await click(page, '还原');
   expect(await (await schemaSource(page)).inputValue()).toBe(raw);
 });
 
@@ -396,8 +393,9 @@ test('preserves narrow outline scroll and selection while entering and leaving n
     page,
     JSON.stringify({ ...definition, views: { desktop: section('全部分区', sections) } }),
   );
-  const target = outline(page).getByRole('button', { name: '第 28 分区', exact: true });
-  const pane = page.locator('.layout-outline');
+  await page.getByRole('button', { name: '大纲', exact: true }).click();
+  const target = outline(page).getByRole('button', { name: /^第 28 分区/ });
+  const pane = page.locator('.layout-structure-panel:visible');
   await target.scrollIntoViewIfNeeded();
   const top = await pane.evaluate((el) => el.scrollTop);
   expect(top).toBeGreaterThan(0);
@@ -415,7 +413,10 @@ test('starts a root container in an empty working draft without adding data fiel
 }) => {
   await openLayout(page, '{}');
   await click(page, '新建布局');
-  await expect(page.getByRole('dialog', { name: '新建布局' })).toHaveClass('workbench-drawer');
+  await expect(page.getByRole('dialog', { name: '新建布局' })).toHaveAttribute(
+    'data-swipe-direction',
+    'right',
+  );
   await page.getByLabel('布局 key').fill('tablet');
   await page.getByLabel('显示名称').fill('平板');
   await click(page, '确认布局');
@@ -457,7 +458,9 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await openLayout(page, raw);
   const repeated = '/views/desktop/slots/default/0';
   const guard = repeated + '/node/slots/default/0';
-  await outline(page).getByRole('button', { name: '被保险人', exact: true }).click();
+  await outline(page)
+    .getByRole('button', { name: /^被保险人/ })
+    .click();
   await click(page, '设置重复区');
   await click(page, '数据来源');
   await pickField(page, '数据来源', '/insureds');
@@ -470,6 +473,8 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await outline(page).locator(`[data-node-path="${guard}"]`).click();
   await click(page, '编辑显示条件');
   async function selectMemberAge() {
+    const expression = page.getByRole('dialog', { name: '显示条件', exact: true });
+    await expect(expression.getByRole('combobox', { name: '显示条件纯函数' })).toHaveText('小于');
     const field = page
       .locator('.expression-field')
       .filter({ has: page.getByRole('combobox', { name: '左侧值取值来源', exact: true }) })
@@ -481,7 +486,8 @@ test('configures travel repetition, trials a scoped visibility condition and kee
       .getByRole('listbox')
       .getByRole('option', { name: '读取字段', exact: true })
       .click();
-    await field.locator('button[aria-haspopup="dialog"]').click();
+    await expect(source).toHaveText('读取字段');
+    await field.getByRole('button', { name: '选择字段', exact: true }).click();
     const picker = page.locator('.picker-dialog');
     await picker.getByRole('searchbox').fill('/age');
     await picker.getByRole('radio', { name: /insured.*age/ }).check();
@@ -496,8 +502,10 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await page.keyboard.press('Escape');
   await expect(comparisonOption).toBeHidden();
   await expect(operator).toBeFocused();
-  const trial = page.getByRole('region', { name: '给定值验证' });
-  const run = () => trial.getByRole('button', { name: '运行验证' }).click();
+  await click(page, '显示条件：验证表达式');
+  const trialDialog = page.getByRole('dialog', { name: '验证表达式 · 显示条件' });
+  const trial = trialDialog.getByRole('region', { name: '给定值验证' });
+  const run = () => trialDialog.getByRole('button', { name: '运行验证' }).click();
   await trial.getByLabel(/样例 · .*age/).fill('16');
   await run();
   await expect(trial.getByRole('status')).toHaveText('条件成立 · 显示');
@@ -507,6 +515,7 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await trial.getByLabel(/样例 · .*age/).fill('');
   await run();
   await expect(trial.getByRole('status')).toHaveText('缺少输入，无法得出结果。');
+  await trialDialog.getByRole('button', { name: '关闭', exact: true }).click();
   await page
     .getByRole('dialog', { name: '显示条件', exact: true })
     .getByRole('button', { name: '关闭', exact: true })
@@ -522,13 +531,7 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await page.getByLabel('右侧值固定值', { exact: true }).fill('18');
   await click(page, '应用显示条件');
   await expect(page.getByRole('dialog', { name: '显示条件' })).toBeHidden();
-  await page.getByLabel('移动到', { exact: true }).selectOption(
-    JSON.stringify({
-      parent: '/views/desktop/slots/default/1',
-      slot: 'default',
-      index: 0,
-    }),
-  );
+  await chooseOption(page, '移动到', '投保人 · default · 第 1 位 · 受限');
   await expect(
     page
       .getByRole('region', { name: '节点设置' })
@@ -539,7 +542,8 @@ test('configures travel repetition, trials a scoped visibility condition and kee
   await closeWorkbenchDrawer(page);
   await outline(page).locator(`[data-node-path="${repeated}"]`).click();
   await click(page, '编辑数据范围');
-  await page.getByLabel('显示方式').selectOption('single');
+  await page.getByLabel('显示方式').click();
+  await page.getByRole('option', { name: '整张表单显示一次', exact: true }).click();
   await click(page, '应用数据范围');
   await expect(page.getByRole('dialog', { name: '数据范围' }).getByRole('alert')).toContainText(
     '字段 /age',

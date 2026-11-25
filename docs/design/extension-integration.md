@@ -229,7 +229,7 @@ L4 已落实 [React SDK](l4-renderer.md#react-implementation)：物料内部共�
 
 ### 物料职责与五类契约 {#first-assets-materials}
 
-首批 14 个物料。基础控件处理输入，field 统一字段呈现，布局容器组织 Slots，复合物料封装明确交付边界的交互。分类用于说明，不作为目录层级。重复列表用 ScopeNode，字段组用 Typed Template，不增加 Repeat、子表单 Store 或物料专属 Adapter。
+基础控件处理输入，field 统一字段呈现，布局容器组织 Slots，复合物料封装明确交付边界的交互。分类用于说明，不作为目录层级。重复列表用 ScopeNode，字段组用 Typed Template，不增加 Repeat、子表单 Store 或物料专属 Adapter。
 
 表中 `?` 为可选 Props，JSON 为 `schema:true`，Option 为 `{id:string,label:string}`，MinorAmount 为整数分。Binding Schema 仅描述静态预期，不能把当前工作值断言为合法类型。未列出的 Events / Requests / Slots 不声明。
 
@@ -247,7 +247,11 @@ L4 已落实 [React SDK](l4-renderer.md#react-implementation)：物料内部共�
 | condition | visible:boolean | 无 | Slots: default；无 Event / Request |
 | dialog-editor | title:string；triggerLabel?:string="编辑"；disabled?=false | 无 | Slots: summary / content；无 Event / Request |
 | remote-select | placeholder?:string；disabled?=false；clearable?=true；filterKey?:string/null | value:Option/null | Request search，latest；无 Event / Slot |
-| date-range | label:string；startLabel?:string；endLabel?:string；disabled?=false | start:string/null；end:string/null | 均无；内部呈现两端标签与校验 |
+| date-picker | placeholder?:string；min?:date；max?:date；disabled?=false；readOnly?=false | value:string/null | 均无 |
+| textarea | placeholder?:string；rows?:integer=3；maxLength?:integer；disabled?=false；readOnly?=false | value:string/null | 均无 |
+| radio-group | options:Option[]；disabled?=false | value:string/null | 均无 |
+| checkbox-group | options:Option[]；disabled?=false | value:string[] | 均无 |
+| date-range | label:string；startLabel?:string；endLabel?:string；startMin?:date；startMax?:date；disabled?=false | start:string/null；end:string/null | 均无；内部呈现两端标签与校验 |
 | insured-summary | premiumMinor:MinorAmount/null；emptyName?:string="未填写姓名" | insured:object | 均无 |
 
 disabled / readOnly / clearable / collapsible / defaultExpanded / requiredMark 均为 boolean。value-display 默认 text；grid 窄屏收为单列。section.defaultExpanded 只初始化该次挂载的 UI 状态，物料默认值不自动写 Data。其余视觉缺省在契约内实现，不新增业务语义。value-display.moneyMinor 首期固定 CNY，整数分显示为元和两位小数；不适合所选格式的值用明确占位，不默认输出对象技术 JSON。输入限制和 requiredMark 不替代 Schema / Constraint。
@@ -259,6 +263,15 @@ field 与子控件分别显式绑定同一位置，不隐式继承。私有 Fiel
 remote-select 的 `query` 来自物料内部搜索框输入，不是选中值，无需配置同名 Props 或 Binding；`filterKey` 来自 Props，可由表达式读取外部筛选条件（如国家代码）。点击搜索或 Enter 时把两者组成请求对象。输入关键词与搜索成功均不写入 `bindings.value`。
 
 remote-select.search 输入为 `{query:string,filterKey:string|null}`，成功业务结果为 `{items:Option[]}`，不含桥接状态包装。首期无分页、自动选中或回填。选择后整体写 `{id,label}`：id 为业务标识，label 为选中时展示快照，不能视为服务端权威名称。
+
+#### 基于 Shadcn 的常用表单控件
+
+单日期、日期范围、多行文本、单选组和多选组采用 Shadcn 的控件组合，基础交互沿用 Base UI 及 Shadcn Calendar。封装与样式归属运行时物料包，由 Studio、Playground 和独立 Host 使用同一物料实现。编译和资产目录从静态入口读取 Manifest。
+
+- 单日期可键入或打开日历。键入按 Enter 或失焦提交，日历选中即提交。写入严格公历 `YYYY-MM-DD`，清空写 `null`。无效草稿和格式提示停留在控件内，Host 外部改值覆盖草稿。`min` / `max` 包含边界。
+- 日期范围两端都支持键入或从日历选择，选择只改变本地草稿，确认时沿用双端写入流程。取消和 Escape 丢弃草稿。只有开始端使用 `startMin` / `startMax`。
+- 多行文本沿用文本输入的提交与输入法规则，保留换行，清空写空字符串。
+- 单选组写一个选项 ID，空态为 `null`。多选组写选项 ID 数组，清空写 `[]`。配置中的 Option ID 唯一。
 
 ### 配置示例与 Scope 组合 {#first-assets-examples}
 
@@ -411,7 +424,21 @@ basic、2 天、1 成人 + 1 未成年人为 500 分，不代表真实价格。�
 
 ### 资产目录、包入口及版本 {#first-assets-organization}
 
+```contract
+id: ASSET-PACKAGING-001
+status: active
+applies_to: 新增、修改或移除物料和纯函数，以及调整聚合导出或包制品
+requires:
+  - 在独立资产目录维护 Manifest、实现和说明。更新行为与签名时同步版本声明、生成的聚合出口和受影响示例。
+  - 静态 Manifest 与运行实现分别导出。只载入静态入口的消费者无需 UI 或 Runtime；物料和纯函数的实际制品应和源登记一致。
+  - 用单资产 Manifest 取得预期 ID 和公开入口，在隔离安装的打包消费者中验证制品。继续核对代表性签名、静态入口隔离与真实运行。
+checks:
+  - assets.packages
+```
+
 公开资产在各包内平铺，每个物料 / 函数独立目录，含实现、manifest.ts、必要类型及 README。不按基础 / 展示 / 布局 / 复合强制分层；分类交叉，新增位置不依赖主观归类。函数目录带语义前缀，如 date-inclusive-days → date.inclusiveDays，逻辑身份由 Manifest 决定。目录移动不改 ID。
+
+查找现有物料和纯函数时，以 Studio 的资产目录及同一目录生成器为入口。仓库中运行 `node tools/engineering/catalog-docs.mjs --lookup <id>`，按稳定 ID 读取当前 Manifest、实现入口、资产 README 和配置示例。内置函数从实际注册的绑定读取签名。签名改 Manifest，用途和边界案例改资产 README，目录展示和说明指针改包内 `catalog-docs.json`，表单配置例子改真实 Playground 场景。目录构建与 `--check` 沿用既有流程。
 
 源码 `src/<asset>/`，测试按现有约定放 `tests/<asset>/`，不混入 src。简单资产不预建空 types / utils / index。内部共享放 _internal，不注册成公开资产；跨包测试仍在根 tests。每目录不等于 npm 包，不按目录数量预设拆包阈值。
 

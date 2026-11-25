@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '../components/ui';
+import { Button } from '@form-engine/studio-design-components';
 import { LiteralValueEditor, newLiteral, type Literal } from './literal-value-editor';
 
 export function LiteralValueList({

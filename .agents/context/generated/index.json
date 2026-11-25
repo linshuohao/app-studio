@@ -1,0 +1,231 @@
+{
+  "charter": [
+    "PROJECT-CHARTER-001"
+  ],
+  "checks": {
+    "agent.turn-replay": [
+      "services/agent/.venv/bin/python",
+      "-m",
+      "pytest",
+      "services/agent/tests/test_execution_replay.py",
+      "services/agent/tests/test_conversations.py"
+    ],
+    "assets.packages": [
+      "pnpm",
+      "packages:check"
+    ],
+    "studio.handbook.build": [
+      "pnpm",
+      "handbook:check:build"
+    ],
+    "studio.handbook.tree": [
+      "pnpm",
+      "handbook:check:tree"
+    ]
+  },
+  "contracts": {
+    "AGENT-TURN-RECOVERY-001": {
+      "checks": [
+        "agent.turn-replay"
+      ],
+      "document_id": "DESIGN-PLATFORM-STUDIO",
+      "file": "contracts/AGENT-TURN-RECOVERY-001.md",
+      "sha256": "a67f0310313cb0268b5b843b001f80f19353145f48e19d0f1548c9f874c1982a",
+      "source": "docs/design/platform-studio.md#agent-turn-recovery"
+    },
+    "ASSET-PACKAGING-001": {
+      "checks": [
+        "assets.packages"
+      ],
+      "document_id": "DESIGN-INTEGRATION",
+      "file": "contracts/ASSET-PACKAGING-001.md",
+      "sha256": "7bd94eacb1244bc11f83a32fc88748db2a1ed60891e85835eedbb93f804f433a",
+      "source": "docs/design/extension-integration.md#first-assets-organization"
+    },
+    "PLATFORM-AGENT-API-001": {
+      "checks": [],
+      "document_id": "DESIGN-PLATFORM-STUDIO",
+      "file": "contracts/PLATFORM-AGENT-API-001.md",
+      "sha256": "75a9b5a56958e3f0d0ab5e8364327707fc26ef38b9e2404a055ded19ef53bb01",
+      "source": "docs/design/platform-studio.md#agent-api"
+    },
+    "PROJECT-CHARTER-001": {
+      "checks": [],
+      "document_id": "GUIDE-WORKFLOWS",
+      "file": "contracts/PROJECT-CHARTER-001.md",
+      "sha256": "8e6cca838bb4b7a8aeea27d9e93610115f79575dce5cee55fe2019b33e33e2bf",
+      "source": "docs/design/workflows.md#engineering-charter"
+    },
+    "STUDIO-COMPONENT-001": {
+      "checks": [
+        "studio.handbook.build"
+      ],
+      "document_id": "DESIGN-PLATFORM-STUDIO",
+      "file": "contracts/STUDIO-COMPONENT-001.md",
+      "sha256": "774b101a44dde17314bcee22e274e9134de2049dfdeae7389a448527ca872fac",
+      "source": "docs/design/platform-studio.md#studio-ui-context"
+    },
+    "STUDIO-FIELD-PICKER-001": {
+      "checks": [
+        "studio.handbook.tree"
+      ],
+      "document_id": "DESIGN-PLATFORM-STUDIO",
+      "file": "contracts/STUDIO-FIELD-PICKER-001.md",
+      "sha256": "956f9ed170b43cc7b74797101213ca79ffaf5433aa23510b9396010bc7448e7f",
+      "source": "docs/design/platform-studio.md#studio-ui-context"
+    },
+    "STUDIO-UI-LAYOUT-001": {
+      "checks": [
+        "studio.handbook.build"
+      ],
+      "document_id": "DESIGN-PLATFORM-STUDIO",
+      "file": "contracts/STUDIO-UI-LAYOUT-001.md",
+      "sha256": "1118ae087afbb36aa70ba40b87e923036542275957b0628969394ad5e17ed1a4",
+      "source": "docs/design/platform-studio.md#studio-ui-context"
+    }
+  },
+  "routes": [
+    {
+      "consumers": [
+        "packages/studio-design/components/src/index.ts",
+        "packages/studio-design/handbook/studio-design-handbook.html"
+      ],
+      "contracts": [
+        "STUDIO-COMPONENT-001"
+      ],
+      "id": "studio-components",
+      "intents": [
+        "studio-component",
+        "studio-handbook"
+      ],
+      "paths": [
+        "apps/studio/src/components/",
+        "apps/studio/src/app/",
+        "packages/studio-design/components/",
+        "packages/studio-design/tokens/",
+        "packages/studio-design/handbook/",
+        "packages/studio-design/guidelines.md"
+      ],
+      "read_first": [
+        "packages/studio-design/guidelines.md"
+      ]
+    },
+    {
+      "consumers": [
+        "packages/studio-design/components/src/index.ts",
+        "apps/studio/src/components/field-tree/index.tsx",
+        "apps/studio/src/components/field-picker/index.tsx",
+        "apps/studio/src/app/layout-field-picker.tsx",
+        "packages/studio-design/handbook/studio-design-handbook.html",
+        "packages/studio-design/handbook/studio-components/treeview.html",
+        "packages/studio-design/handbook/studio-components/field-tree.html",
+        "packages/studio-design/handbook/studio-components/field-picker.html",
+        "packages/studio-design/handbook/studio-components/business-playground.jsx",
+        "packages/studio-design/handbook/tests/tree-view.spec.ts"
+      ],
+      "contracts": [
+        "STUDIO-COMPONENT-001",
+        "STUDIO-FIELD-PICKER-001"
+      ],
+      "id": "studio-tree-and-picker",
+      "intents": [
+        "studio-field-picker"
+      ],
+      "paths": [
+        "packages/studio-design/components/src/tree-view.tsx",
+        "packages/studio-design/components/src/tree-view.css",
+        "apps/studio/src/components/field-picker/",
+        "apps/studio/src/components/field-tree/",
+        "apps/studio/src/app/field-picker.tsx",
+        "apps/studio/src/app/layout-field-picker.tsx",
+        "packages/studio-design/handbook/studio-components/treeview.html",
+        "packages/studio-design/handbook/studio-components/field-tree.html",
+        "packages/studio-design/handbook/studio-components/field-picker.html",
+        "packages/studio-design/handbook/tests/tree-view.spec.ts"
+      ],
+      "read_first": [
+        "packages/studio-design/guidelines.md"
+      ]
+    },
+    {
+      "contracts": [
+        "STUDIO-COMPONENT-001",
+        "STUDIO-UI-LAYOUT-001"
+      ],
+      "id": "studio-layout",
+      "intents": [
+        "studio-layout",
+        "studio-tokens"
+      ],
+      "paths": [
+        "apps/studio/src/app/studio-ui.css",
+        "packages/studio-design/components/styles.css",
+        "packages/studio-design/tokens/",
+        "packages/studio-design/components/src/list-layout.tsx"
+      ],
+      "read_first": [
+        "packages/studio-design/guidelines.md"
+      ]
+    },
+    {
+      "contracts": [
+        "PLATFORM-AGENT-API-001"
+      ],
+      "id": "platform-agent-api",
+      "intents": [
+        "agent-api",
+        "studio-agent-submission"
+      ],
+      "paths": [
+        "services/api/src/platform/agent-conversations.controller.ts",
+        "services/api/src/platform/agent-ui-stream.ts",
+        "services/api/src/platform/create-form.controller.ts",
+        "services/agent/src/form_agent/api/"
+      ]
+    },
+    {
+      "consumers": [
+        "packages/materials-react/src/manifests.ts",
+        "packages/materials-react/src/index.ts",
+        "packages/pure-functions/src/manifests.ts",
+        "packages/pure-functions/src/index.ts",
+        "tools/engineering/check-packages.mjs"
+      ],
+      "contracts": [
+        "ASSET-PACKAGING-001"
+      ],
+      "id": "asset-packaging",
+      "intents": [
+        "asset-packaging"
+      ],
+      "paths": [
+        "packages/materials-react/",
+        "packages/pure-functions/",
+        "tools/engineering/assets/",
+        "tools/engineering/check-packages.mjs"
+      ]
+    },
+    {
+      "consumers": [
+        "services/agent/src/form_agent/api/conversations.py",
+        "services/api/src/platform/agent-conversations.controller.ts",
+        "services/agent/tests/test_execution_replay.py",
+        "services/agent/tests/test_conversations.py"
+      ],
+      "contracts": [
+        "AGENT-TURN-RECOVERY-001"
+      ],
+      "id": "agent-turn-recovery",
+      "intents": [
+        "langgraph-state"
+      ],
+      "paths": [
+        "services/agent/src/form_agent/execution/",
+        "services/agent/src/form_agent/agent/graph.py",
+        "services/agent/src/form_agent/business/conversations/store.py",
+        "services/agent/src/form_agent/business/conversations/turns.py"
+      ]
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { schemaSource } from './data-schema-fixture';
 
 test('filters real catalog categories and renders isolated interactive material previews', async ({
   page,
@@ -18,18 +19,19 @@ test('filters real catalog categories and renders isolated interactive material 
   const pagination = page.getByRole('navigation', { name: '分页' });
   const next = pagination.getByRole('button', { name: '下一页' });
   const previous = pagination.getByRole('button', { name: '上一页' });
-  await expect(pagination).toContainText('第 1 / 3 页，共 15 条');
+  await expect(pagination).toContainText('第 1 / 4 页，共 19 条');
   await expect(page.locator('.material-card')).toHaveCount(6);
   await expect(page.locator('.material-card-render').first()).toBeVisible();
   await expect(page.locator('.material-card-preview').first()).toHaveAttribute('inert', '');
-  for (let pageNumber = 1; pageNumber <= 3; pageNumber++) {
+  for (let pageNumber = 1; pageNumber <= 4; pageNumber++) {
     for (const card of await page.locator('.material-card').all()) {
       await card.scrollIntoViewIfNeeded();
       await expect(card.locator('.material-card-render')).toBeVisible();
     }
-    if (pageNumber < 3) await next.click();
+    if (pageNumber < 4) await next.click();
   }
   await expect(next).toBeDisabled();
+  await previous.click();
   await previous.click();
   await previous.click();
   for (const card of await page.locator('.material-card').all()) {
@@ -139,7 +141,7 @@ test('filters real catalog categories and renders isolated interactive material 
   const rows = await (await page.request.get('/api/platform/catalog/materials')).json();
   for (const row of rows) {
     await page.goto('/?catalog=materials&asset=' + row.id);
-    await expect(preview.locator('.material-preview-canvas')).not.toBeEmpty();
+    await expect(preview.locator('.material-preview-canvas:visible')).not.toBeEmpty();
     await expect(preview).not.toContainText('无法启动');
     if (row.id === 'button') {
       await preview.getByRole('button', { name: '保存示例' }).click();
@@ -198,10 +200,12 @@ test('filters real catalog categories and renders isolated interactive material 
       await hostDocs.getByRole('button', { name: '查看类型与值示例' }).click();
       const examples = page.getByRole('dialog', { name: 'search · 类型与值示例' });
       await expect(examples).toContainText('search(payload: RequestInput): Promise<RequestResult>');
-      await expect(examples.getByLabel('search 示例 1')).toHaveValue(
-        '{\n    "query": "杭州",\n    "filterKey": "CN"\n}\n',
-      );
-      await expect(examples.getByLabel('search 示例 2')).toHaveValue(/"items": \[\n        \{/);
+      await expect(
+        examples.getByRole('textbox', { name: 'search 示例 1', exact: true }),
+      ).toHaveValue('{\n    "query": "杭州",\n    "filterKey": "CN"\n}\n');
+      await expect(
+        examples.getByRole('textbox', { name: 'search 示例 2', exact: true }),
+      ).toHaveValue(/"items": \[\n        \{/);
       await page.keyboard.press('Escape');
       await hostDocs.getByRole('button', { name: '查看原始请求契约' }).click();
       await expect(
@@ -231,7 +235,7 @@ test('filters real catalog categories and renders isolated interactive material 
   await expect(page.getByRole('button', { name: '查看 core.add', exact: true })).toHaveCount(0);
 });
 
-test('immersive authoring formats text on entry and preserves edits on cancelled return', async ({
+test('working-version authoring formats text on entry and preserves edits on cancelled return', async ({
   page,
 }) => {
   await page.goto('/');
@@ -248,32 +252,43 @@ test('immersive authoring formats text on entry and preserves edits on cancelled
   await page.getByRole('button', { name: '新建表单' }).click();
   await page.getByLabel('表单名称').fill('沉浸编辑验收');
   await page.getByRole('button', { name: '创建表单' }).click();
-  await expect(page.getByRole('navigation', { name: '主导航' })).toHaveCount(0);
-  await expect(page.locator('.studio-top')).toHaveCount(0);
-  await page.getByRole('button', { name: '文本查看 / 修复' }).click();
-  await page.getByLabel('配置原文').fill('{"precise":9007199254740993,"nested":{"enabled":true}}');
+  await page.getByRole('button', { name: '新建草稿' }).click();
+  await page.getByLabel('版本名称').fill('配置名称验收');
+  await page.getByRole('button', { name: '创建并编辑' }).click();
+  await expect(
+    page.getByRole('navigation', { name: '主导航' }).getByRole('button', { name: '表单' }),
+  ).toHaveAttribute('aria-current', 'page');
+  const source = await schemaSource(page);
+  await source.fill('{"precise":9007199254740993,"nested":{"enabled":true}}');
   await page.getByRole('button', { name: '层级编辑', exact: true }).click();
   await page.getByRole('button', { name: '文本查看 / 修复' }).click();
-  await expect(page.getByLabel('配置原文')).toHaveValue(
+  await expect(source).toHaveValue(
     '{\n    "precise": 9007199254740993,\n    "nested": {\n        "enabled": true\n    }\n}\n',
   );
+  const confirmation = page.waitForEvent('dialog');
   page.once('dialog', (dialog) => dialog.dismiss());
-  await page.getByRole('button', { name: '返回表单列表' }).click();
-  await expect(page.getByRole('heading', { name: '沉浸编辑验收' })).toBeVisible();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
+  expect((await confirmation).message()).toContain('未保存');
+  await expect(page.getByRole('heading', { name: '配置名称验收' })).toBeVisible();
   await page.getByRole('button', { name: '更多操作' }).click();
   await page.getByRole('menuitem', { name: '保存备注' }).click();
-  await page.getByLabel('版本名称（选填）').fill('配置名称验收');
+  await page.getByLabel('保存备注（选填）').fill('格式化验收');
   await page
     .getByRole('dialog', { name: '保存备注' })
     .getByRole('button', { name: '关闭' })
     .click();
+  const saved = page.waitForResponse(
+    (response) => response.url().endsWith('/versions') && response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: '保存配置', exact: true }).click();
-  await expect(page.locator('.version strong')).toHaveText('配置名称验收');
+  const result = await saved;
+  expect(result.status()).toBe(201);
+  expect(result.request().postDataJSON()).toMatchObject({ note: '格式化验收' });
   await expect(page.getByText('已保存', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '层级编辑', exact: true }).click();
   await page.getByRole('button', { name: '文本查看 / 修复' }).click();
   await expect(page.getByText('已保存', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '返回表单列表' }).click();
+  await page.getByRole('button', { name: '返回版本列表' }).click();
   await expect(page.getByRole('navigation', { name: '主导航' })).toBeVisible();
 });
 
@@ -318,9 +333,18 @@ test('all installed assets expose complete API structures, field meanings and ex
             nodes
               .filter((node) => node.scrollWidth > node.clientWidth + 1)
               .map((node) => ({
+                selector: node.className,
                 text: node.textContent?.slice(0, 100),
                 width: node.clientWidth,
                 scroll: node.scrollWidth,
+                table: node.querySelector('table')?.getBoundingClientRect().width,
+                columns: Array.from(node.querySelectorAll('tbody tr:first-child td')).map(
+                  (cell) => ({
+                    width: cell.getBoundingClientRect().width,
+                    whiteSpace: getComputedStyle(cell).whiteSpace,
+                    overflowWrap: getComputedStyle(cell).overflowWrap,
+                  }),
+                ),
               })),
           );
         expect(overflow, `${asset.id} at ${width}px`).toEqual([]);
@@ -344,8 +368,82 @@ test('all installed assets expose complete API structures, field meanings and ex
       }
       if (asset.id === 'travel.totalPremium')
         await expect(api).toContainText('ratePolicy.rates.basic.adultDailyMinor');
-      if (asset.id === 'button')
-        await expect(page.locator('.event-contract')).toContainText('activate(): void');
+      if (asset.id === 'button') {
+        await page.getByRole('button', { name: '查看事件契约', exact: true }).click();
+        await expect(page.getByRole('dialog')).toContainText('activate(): void');
+        await page.keyboard.press('Escape');
+      }
     }
+  }
+});
+
+test('在 Studio 物料目录预览五项表单控件', async ({ page }) => {
+  await page.goto('/');
+  const passwordLogin = page.getByRole('button', { name: '使用账号密码登录', exact: true });
+  const username = page.getByLabel('用户名', { exact: true });
+  await expect(username.or(passwordLogin)).toBeVisible();
+  if (await passwordLogin.isVisible()) await passwordLogin.click();
+  await username.fill('studio-test');
+  await page.getByLabel('密码', { exact: true }).fill('local-browser-test-password');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.getByRole('button', { name: '物料', exact: true }).click();
+  const search = page.getByRole('searchbox', { name: '搜索资产' });
+  const preview = page.getByRole('region', { name: '物料效果预览' });
+  const cases = [
+    [
+      'date-picker',
+      async () => {
+        await preview.getByRole('button', { name: '打开日期日历' }).click();
+        await page.locator('[data-day="1990-06-16"] button').click();
+        await expect(preview.getByRole('textbox', { name: '出生日期' })).toHaveValue('1990-06-16');
+      },
+    ],
+    [
+      'date-range',
+      async () => {
+        await preview.getByRole('button', { name: '选择日期', exact: true }).click();
+        const range = page.getByRole('dialog', { name: '出行日期' });
+        await range.getByRole('button', { name: '打开开始日期日历' }).click();
+        await range.locator('[data-day="2026-12-02"] button').click();
+        await range.getByRole('button', { name: '确认日期' }).click();
+        await expect(preview.getByText('2026-12-02', { exact: true })).toBeVisible();
+      },
+    ],
+    [
+      'textarea',
+      async () => {
+        const text = preview.getByRole('textbox', { name: '备注' });
+        await text.fill('第一行\n第二行');
+        await expect(text).toHaveValue('第一行\n第二行');
+      },
+    ],
+    [
+      'radio-group',
+      async () => {
+        const radio = preview.getByRole('radio', { name: '飞机' });
+        await radio.click();
+        await expect(radio).toBeChecked();
+      },
+    ],
+    [
+      'checkbox-group',
+      async () => {
+        const checkbox = preview.getByRole('checkbox', { name: '电子邮件' });
+        await expect(checkbox).toBeChecked();
+        await checkbox.click();
+        await expect(checkbox).not.toBeChecked();
+      },
+    ],
+  ] as const;
+
+  for (const [id, exercise] of cases) {
+    await search.fill(id);
+    await search.press('Enter');
+    const open = page.getByRole('button', { name: `查看 ${id}`, exact: true });
+    await open.click();
+    await exercise();
+    await page.getByRole('button', { name: '返回物料目录', exact: true }).click();
+    await expect(search).toBeVisible();
+    await expect(open).toBeFocused();
   }
 });

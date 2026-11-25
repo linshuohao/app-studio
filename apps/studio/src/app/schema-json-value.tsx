@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '../components/ui';
+import { Button } from '@form-engine/studio-design-components';
 import { JsonEditor } from '../components/json/json-editor';
 import { Modal } from './modal';
 

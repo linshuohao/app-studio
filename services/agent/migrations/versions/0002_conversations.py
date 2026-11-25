@@ -1,7 +1,7 @@
 """Persist Agent-owned conversations, private task facts, and replayable deliveries."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "0002_conversations"

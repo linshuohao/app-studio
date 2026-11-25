@@ -1,0 +1,26 @@
+{
+  "name": "@form-engine/studio-design-handbook",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.9.0",
+    "@form-engine/compiler": "workspace:*",
+    "@form-engine/materials-react": "workspace:*",
+    "@form-engine/protocol": "workspace:*",
+    "@form-engine/pure-functions": "workspace:*",
+    "@form-engine/renderer-react": "workspace:*",
+    "@form-engine/runtime": "workspace:*",
+    "@form-engine/studio-design-components": "workspace:*",
+    "@form-engine/studio-design-tokens": "workspace:*",
+    "@playwright/test": "^1.64.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sucrase": "3.35.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
+  }
+}

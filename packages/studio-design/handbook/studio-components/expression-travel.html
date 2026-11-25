@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>家庭旅行投保 · 监护人校验</title>
+  <link rel="stylesheet" href="../../../../apps/studio/src/app/studio.css" />
+  <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../../components/styles.css" />
+    <link rel="stylesheet" href="../../../../apps/studio/src/app/studio-ui.css" /><link
+    rel="stylesheet"
+    href="../../../../apps/studio/src/components/field-picker/field-picker.css"
+  />
+  <link rel="stylesheet" href="assets/expression-travel.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--studio-surface);
+      color: var(--studio-text);
+      font: var(--studio-type-body);
+    }
+    main {
+      max-width: none;
+      margin: 0;
+      padding: var(--studio-space-32);
+    }
+    h1 {
+      font: var(--studio-type-title);
+    }
+    h2 {
+      font: var(--studio-type-section);
+    }
+    h1,
+    h2,
+    p {
+      margin: var(--studio-space-8) 0;
+    }
+    #comparison {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr));
+      gap: var(--studio-space-24);
+      align-items: start;
+      margin-top: var(--studio-space-24);
+    }
+    #comparison > section {
+      min-width: 0;
+      border: 1px solid var(--studio-border);
+      border-radius: var(--studio-radius-12);
+      padding: var(--studio-space-16);
+    }
+    #comparison > section > header,
+    #comparison > section > footer {
+      padding: var(--studio-space-12) 0;
+    }
+    small,
+    header p {
+      color: var(--studio-text-muted);
+      font: var(--studio-type-caption);
+    }
+    #comparison > section > footer {
+      border-top: 1px solid var(--studio-border);
+      justify-content: space-between;
+    }
+    summary {
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: var(--studio-type-code);
+    }
+
+    #comparison > section > header {
+      border-bottom: thin solid var(--studio-border);
+      margin-bottom: var(--studio-space-16);
+    }
+    #studio-main a {
+      color: var(--studio-info-fg);
+      font: var(--studio-type-caption);
+    }
+    #comparison {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+    main {
+      max-width: 90rem;
+      margin: auto;
+    }
+    .stack {
+      display: grid;
+      gap: var(--studio-space-12);
+    }
+    .result {
+      padding: var(--studio-space-12);
+      background: var(--studio-info-bg);
+      color: var(--studio-info-fg);
+      border-radius: var(--studio-radius-8);
+    }
+    pre {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 60rem) {
+      main {
+        padding: var(--studio-space-12);
+      }
+      #comparison > section {
+        padding: var(--studio-space-12);
+      }
+      #comparison {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+  <body>
+    <main id="studio-main">
+      <article data-studio-ui>
+        <a href="expression-editor.html">表达式编辑器手册</a>
+        <h1>监护人姓名校验</h1>
+        <p>家庭旅行投保 / 被保人 / 校验生效条件</p>
+        <div id="comparison"></div>
+      </article>
+    </main>
+    <script src="assets/expression-travel.js"></script>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

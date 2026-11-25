@@ -1,7 +1,5 @@
 """Turn-local journal. Only trusted application types may be restored from JSON."""
 
-from dataclasses import fields
-
 from langchain_core.runnables import RunnableLambda
 
 from form_agent.execution.codec import pack, unpack
@@ -29,5 +27,10 @@ def journal_tools(tools):
         return invoke
 
     return AgentToolDependencies(
-        *(wrap(f.name, getattr(tools, f.name)) for f in fields(AgentToolDependencies))
+        read_protocol=wrap("read_protocol", tools.read_protocol),
+        query_capabilities=wrap("query_capabilities", tools.query_capabilities),
+        check_candidate=wrap("check_candidate", tools.check_candidate),
+        check_schema=wrap("check_schema", tools.check_schema)
+        if tools.check_schema
+        else None,
     )

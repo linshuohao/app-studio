@@ -1,17 +1,19 @@
 'use client';
 
-import { EditorViewSwitch } from '../components/ui/editor-view-switch';
-import { StudioSelect } from '../components/ui/select';
+import { EditorViewSwitch } from '@form-engine/studio-design-components/editor-view-switch';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { useMemo, useState } from 'react';
-import { Button, Input } from '../components/ui';
+import { Button, Input } from '@form-engine/studio-design-components';
 import { JsonEditor } from '../components/json/json-editor';
 import { dataSchemaModel, type DataSchemaModel, type SchemaItem } from './data-schema-model';
 import { child, escapeKey } from './semantic-model';
 import { Modal } from './modal';
 import { compactJson } from '../components/json/format';
 import { SchemaRules } from './schema-rules';
-import { SchemaNavigation, usePendingNavigation } from './schema-navigation';
+import { SchemaNavigation, usePendingNavigation, useSchemaNavigation } from './schema-navigation';
+import { SchemaDefinitionUses } from './schema-definition-uses';
 import { SchemaTypeSelect, schemaTypes } from './schema-drawer-values';
+import { RegexInput } from './regex-input';
 import { LiteralValueList } from './literal-value-list';
 import {
   LiteralValueEditor,
@@ -38,10 +40,10 @@ type Props = {
   text: string;
   readonly?: boolean;
   breadcrumb: string;
-  apply: (text: string, path: string) => void;
+  apply: (text: string, path: string, keepOpen?: boolean) => void;
   close: () => void;
   locate: (path: string) => void;
-  openRelated: (path: string, next?: string) => void;
+  openRelated: (path: string) => void;
   returnFocus?: HTMLElement;
   returnToField?: boolean;
 };
@@ -55,7 +57,7 @@ function refValue(name: string) {
 }
 
 export function SchemaFieldDrawerNext(props: Props) {
-  const { model, item, close, returnFocus } = props;
+  const { model, item, close, returnFocus, locate } = props;
   const ambiguous = model.ambiguous.has(item.node.path);
   const supported = item.node.kind === 'object' || item.node.kind === 'boolean';
   if (ambiguous || !supported) {
@@ -67,7 +69,12 @@ export function SchemaFieldDrawerNext(props: Props) {
         onClose={close}
         returnFocus={returnFocus}
       >
-        <p>此节点需要在 JSON 中核对。</p>
+        <p role="alert">
+          {ambiguous ? '该位置包含重复属性，请在 JSON 原文中核对。' : '此节点需要在 JSON 中核对。'}
+        </p>
+        <Button variant="text" onClick={() => locate(item.node.path)}>
+          在 JSON 中定位
+        </Button>
         <JsonEditor label="字段配置原文" text={model.raw(item.node)} />
       </Modal>
     );
@@ -88,6 +95,7 @@ function Editor({
   returnFocus,
   returnToField,
 }: Props) {
+  const { beforeLeave } = useSchemaNavigation();
   const [staged, setStaged] = useState(text);
   const working = useMemo(() => dataSchemaModel(staged), [staged]);
   const path = item.node.path;
@@ -208,11 +216,11 @@ function Editor({
     }
     return { next, target };
   }
-  function applyStaged() {
+  function applyStaged(keepOpen = false) {
     if (readonly || rulePending) return false;
     try {
       const { next, target } = output();
-      if (next !== text) apply(next, target);
+      if (next !== text) apply(next, target, keepOpen);
       return true;
     } catch (error) {
       setError(error instanceof Error ? error.message : '无法应用修改。');
@@ -223,7 +231,7 @@ function Editor({
     'inspector',
     !readonly && (dirty || rulePending)
       ? {
-          apply: rulePending ? undefined : applyStaged,
+          apply: rulePending ? undefined : () => applyStaged(true),
           discard: () => {
             setStaged(text);
             setJsonInput(undefined);
@@ -239,20 +247,10 @@ function Editor({
   );
 
   function leaveField(related?: string) {
-    if (rulePending) return;
-    if (readonly || !dirty) {
+    beforeLeave(() => {
       if (related) openRelated(related);
       else close();
-      return;
-    }
-    try {
-      const { next, target } = output();
-      if (related) openRelated(related, next);
-      else if (next !== text) apply(next, target);
-      else close();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '无法应用修改。');
-    }
+    });
   }
 
   function openSource() {
@@ -330,6 +328,7 @@ function Editor({
           />
         ) : (
           <Input
+            aria-describedby={key === 'format' ? 'schema-next-format-hint' : undefined}
             list={key === 'format' ? 'schema-next-formats' : undefined}
             value={value}
             onChange={(e) => change(e.target.value)}
@@ -526,14 +525,14 @@ function Editor({
               : rulePending
                 ? '当前规则编辑中'
                 : dirty
-                  ? '关闭时将应用到工作台草稿'
+                  ? '修改尚未应用到工作台'
                   : '已与工作台草稿同步'}
           </small>
           <Button variant="secondary" onClick={() => leaveField()}>
             {returnToField ? '返回字段' : '关闭'}
           </Button>
           {!readonly && (
-            <Button disabled={!dirty || rulePending || invalidJson} onClick={applyStaged}>
+            <Button disabled={!dirty || rulePending || invalidJson} onClick={() => applyStaged()}>
               应用到工作台
             </Button>
           )}
@@ -542,6 +541,9 @@ function Editor({
       toolbar={
         <div className="toolbar schema-next-tools">
           <small title={path}>{breadcrumb}</small>
+          <Button variant="text" onClick={() => locate(path)}>
+            在 JSON 中定位
+          </Button>
           <EditorViewSwitch
             value={view}
             formDisabled={invalidJson}
@@ -557,6 +559,7 @@ function Editor({
             {error}
           </p>
         )}
+        <SchemaDefinitionUses model={working} path={path} locate={locate} />
         {view === 'json' ? (
           <>
             <p>
@@ -715,25 +718,15 @@ function Editor({
                       </summary>
                       <div className="schema-next-grid">
                         {(requested || fits('string', 'pattern')) && (
-                          <label className="schema-next-field schema-next-wide">
-                            正则匹配
-                            <Input
+                          <div className="schema-next-wide">
+                            <RegexInput
                               disabled={readonly || rulePending}
                               value={working.str(child(node, 'pattern')) ?? ''}
-                              onChange={(event) =>
-                                set(
-                                  'pattern',
-                                  event.target.value
-                                    ? JSON.stringify(event.target.value)
-                                    : undefined,
-                                )
+                              onChange={(value) =>
+                                set('pattern', value ? JSON.stringify(value) : undefined)
                               }
                             />
-                            <small>
-                              只填写表达式本体，无需加 /…/。例如 <code>^[0-9]&#123;6&#125;$</code>{' '}
-                              匹配恰好 6 位数字。
-                            </small>
-                          </label>
+                          </div>
                         )}
                         {showNumber && numeric('multipleOf', '倍数')}
                         {fits('object', 'minProperties', 'maxProperties') && (
@@ -775,7 +768,9 @@ function Editor({
                     {(requested || fits('string', 'format')) &&
                       fieldText('format', '格式名称', true)}
                     {(requested || fits('string', 'format')) && (
-                      <small className="schema-next-wide">格式名称作为注解记录。</small>
+                      <small id="schema-next-format-hint" className="schema-next-wide">
+                        格式名称作为注解记录，当前引擎不会用它校验字段值。
+                      </small>
                     )}
                     {list('examples', '示例值')}
                     {fieldText('$comment', '维护注释', true, true)}

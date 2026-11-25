@@ -8,7 +8,7 @@ import {
   type FieldTreeProps,
   type FieldTreeSelection,
 } from '../components/field-tree';
-import { Button, Input } from '../components/ui';
+import { Button, Input } from '@form-engine/studio-design-components';
 import { Modal } from './modal';
 import './layout-field-picker.css';
 

@@ -1,6 +1,6 @@
 import { chooseWorkingVersionAction } from './working-version-menu';
-import { expect, test } from '@playwright/test';
-import { openSchemaDraft, schemaSource } from './data-schema-fixture';
+import { expect, test, type Page } from '@playwright/test';
+import { chooseSchemaOption, openSchemaDraft, schemaSource } from './data-schema-fixture';
 
 test('校验编辑器写入共享草稿并通过 Compiler 筛选同步规则前置', async ({ page }) => {
   const ref = { source: 'data', path: '/age' };
@@ -26,8 +26,30 @@ test('校验编辑器写入共享草稿并通过 Compiler 筛选同步规则前�
   );
   await page.getByRole('button', { name: '校验', exact: true }).click();
   await page.getByRole('button', { name: '编辑 second', exact: true }).click();
-  await page.getByRole('button', { name: '选择内部规则前置' }).click();
-  await page.getByRole('button', { name: '使用 gate', exact: true }).click();
+  const prerequisite = page.getByRole('combobox', { name: '添加需先通过的内部规则' });
+  const check = /\/api\/platform\/forms\/[^/]+\/check$/;
+  let respond!: () => void;
+  const held = new Promise<void>((resolve) => {
+    respond = resolve;
+  });
+  await page.route(
+    check,
+    async (route) => {
+      await held;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  const submitted = page.waitForRequest(check);
+  await chooseSchemaOption(page, prerequisite, 'gate');
+  await submitted;
+  const errorCode = page.getByRole('textbox', { name: '错误码', exact: true });
+  await errorCode.fill('UPDATED_SECOND');
+  respond();
+  await expect(page.getByText('规则草稿已更改，请重新核验。', { exact: true })).toBeVisible();
+  await expect(errorCode).toHaveValue('UPDATED_SECOND');
+  await expect(page.getByText(/规则 · gate/)).toHaveCount(0);
+  await chooseSchemaOption(page, prerequisite, 'gate');
   await expect(page.getByText(/规则 · gate/)).toBeVisible();
   await page.getByRole('button', { name: '完成', exact: true }).click();
   await page.getByRole('button', { name: '编辑 gate', exact: true }).click();
@@ -42,7 +64,7 @@ test('校验编辑器写入共享草稿并通过 Compiler 筛选同步规则前�
   await impact.getByRole('button', { name: '关闭', exact: true }).click();
   await page.getByRole('button', { name: '配置作用域', exact: true }).click();
   const scope = page.getByRole('dialog', { name: '配置执行范围', exact: true });
-  await scope.getByRole('radio', { name: '按数组逐项执行', exact: true }).check();
+  await chooseMemberScope(page);
   await scope.getByRole('button', { name: '应用范围', exact: true }).click();
   impact = page.getByRole('dialog', { name: '变更执行范围', exact: true });
   await expect(impact.getByText(/PREREQUISITE_SCOPE_AMBIGUOUS/)).toBeVisible();
@@ -112,8 +134,8 @@ test('字段前置通过实际 Compiler 拒绝间接环并区分根与成员同�
   );
   await page.getByRole('button', { name: '校验', exact: true }).click();
   await page.getByRole('button', { name: '编辑 gate', exact: true }).click();
-  await page.getByRole('button', { name: '选择字段前置', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: '选择字段前置', exact: true });
+  await page.getByRole('button', { name: '添加字段检查', exact: true }).click();
+  const picker = page.getByRole('dialog', { name: '选择需先通过校验的字段', exact: true });
   const select = async (name: string) => {
     await picker.getByRole('radio', { name, exact: true }).check();
     await picker.getByRole('button', { name: '应用选择', exact: true }).click();
@@ -158,9 +180,8 @@ test('创建逐成员 Host 校验并配置观察、结果归属和可视组合�
   await click('切换校验方式');
   await click('确认切换校验方式');
   await click('配置作用域');
-  await page.getByRole('radio', { name: '按数组逐项执行', exact: true }).check();
-  await page.getByText('高级设置', { exact: true }).click();
-  await page.getByLabel('成员别名', { exact: true }).fill('person');
+  await chooseMemberScope(page);
+  await page.getByLabel('成员名称', { exact: true }).fill('person');
   await click('应用范围');
   await click('确认变更执行范围');
   await click('添加 Host 读取');
@@ -168,8 +189,8 @@ test('创建逐成员 Host 校验并配置观察、结果归属和可视组合�
   await watch.getByRole('checkbox', { name: '表单根 · /age', exact: true }).check();
   await watch.getByRole('checkbox', { name: 'person · /age', exact: true }).check();
   await click('应用选择');
-  await click('选择结果归属');
-  const target = page.getByRole('dialog', { name: '选择结果归属', exact: true });
+  await click('选择字段');
+  const target = page.getByRole('dialog', { name: '选择错误提示位置', exact: true });
   await target.getByRole('radio', { name: 'person · /age', exact: true }).check();
   await click('应用选择');
   await click('编辑适用条件');
@@ -184,9 +205,9 @@ test('创建逐成员 Host 校验并配置观察、结果归属和可视组合�
   await click('应用表达式');
   await expect(page.getByRole('dialog', { name: '编辑适用条件', exact: true })).toBeHidden();
   await click('编辑适用条件');
-  await click('适用条件编辑表达式 JSON');
-  const expression = page.getByRole('dialog', { name: '适用条件 · 表达式 JSON' });
-  await expression.getByRole('textbox').fill(
+  const condition = page.getByRole('dialog', { name: '编辑适用条件', exact: true });
+  await condition.getByRole('button', { name: 'JSON 编辑', exact: true }).click();
+  await condition.getByRole('textbox', { name: '适用条件 · 表达式 JSON', exact: true }).fill(
     JSON.stringify({
       op: 'core.eq',
       args: [
@@ -197,9 +218,7 @@ test('创建逐成员 Host 校验并配置观察、结果归属和可视组合�
       ],
     }),
   );
-  await expression.getByRole('button', { name: '应用表达式', exact: true }).click();
   await click('应用表达式');
-  const condition = page.getByRole('dialog', { name: '编辑适用条件', exact: true });
   await expect(condition.getByRole('alert')).toContainText('VALIDATION_NOT_AVAILABLE');
   await condition.getByRole('button', { name: '关闭', exact: true }).click();
   await page.getByRole('button', { name: '完成', exact: true }).click();
@@ -249,9 +268,11 @@ test('新增与编辑共用大抽屉，完成和取消分别提交与丢弃整�
   expect(rect?.width).toBe(740);
   expect(rect!.x + rect!.width).toBeCloseTo(page.viewportSize()!.width, 0);
   await drawer.getByRole('combobox', { name: '校验要求' }).click();
-  await page.getByRole('option', { name: '日期不早于另一字段' }).click();
+  await page.getByRole('option', { name: '结束日期不早于开始日期' }).click();
   await drawer.getByLabel('提示文案', { exact: true }).fill('请检查返程日期');
-  await expect(drawer.locator('.constraint-preview')).toContainText('返程日期 不早于 出发日期');
+  const preview = drawer.locator('.constraint-preview');
+  await expect(preview).toContainText(/计算含首尾的天数/);
+  await expect(preview).toContainText(/出发日期.*返程日期/);
   await drawer.getByRole('button', { name: '完成', exact: true }).click();
   const edit = button('编辑 rule-1');
   await expect(edit).toBeFocused();
@@ -290,3 +311,13 @@ test('新增与编辑共用大抽屉，完成和取消分别提交与丢弃整�
   await expect(edit).toHaveCount(0);
   await expect(add).toHaveCount(0);
 });
+
+async function chooseMemberScope(page: Page) {
+  const scope = page.getByRole('dialog', { name: '配置执行范围', exact: true });
+  await chooseSchemaOption(
+    page,
+    scope.getByRole('combobox', { name: '执行范围' }),
+    '按数组逐项执行',
+  );
+  await expect(scope.getByRole('button', { name: '/people', exact: true })).toBeVisible();
+}

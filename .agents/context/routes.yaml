@@ -1,0 +1,100 @@
+charter: [PROJECT-CHARTER-001]
+checks:
+  studio.handbook.build: [pnpm, handbook:check:build]
+  studio.handbook.tree: [pnpm, handbook:check:tree]
+  assets.packages: [pnpm, packages:check]
+  agent.turn-replay:
+    [
+      services/agent/.venv/bin/python,
+      -m,
+      pytest,
+      services/agent/tests/test_execution_replay.py,
+      services/agent/tests/test_conversations.py,
+    ]
+routes:
+  - id: studio-components
+    paths:
+      - apps/studio/src/components/
+      - apps/studio/src/app/
+      - packages/studio-design/components/
+      - packages/studio-design/tokens/
+      - packages/studio-design/handbook/
+      - packages/studio-design/guidelines.md
+    intents: [studio-component, studio-handbook]
+    read_first: [packages/studio-design/guidelines.md]
+    contracts: [STUDIO-COMPONENT-001]
+    consumers:
+      [
+        packages/studio-design/components/src/index.ts,
+        packages/studio-design/handbook/studio-design-handbook.html,
+      ]
+  - id: studio-tree-and-picker
+    paths:
+      - packages/studio-design/components/src/tree-view.tsx
+      - packages/studio-design/components/src/tree-view.css
+      - apps/studio/src/components/field-picker/
+      - apps/studio/src/components/field-tree/
+      - apps/studio/src/app/field-picker.tsx
+      - apps/studio/src/app/layout-field-picker.tsx
+      - packages/studio-design/handbook/studio-components/treeview.html
+      - packages/studio-design/handbook/studio-components/field-tree.html
+      - packages/studio-design/handbook/studio-components/field-picker.html
+      - packages/studio-design/handbook/tests/tree-view.spec.ts
+    intents: [studio-field-picker]
+    read_first: [packages/studio-design/guidelines.md]
+    contracts: [STUDIO-COMPONENT-001, STUDIO-FIELD-PICKER-001]
+    consumers:
+      - packages/studio-design/components/src/index.ts
+      - apps/studio/src/components/field-tree/index.tsx
+      - apps/studio/src/components/field-picker/index.tsx
+      - apps/studio/src/app/layout-field-picker.tsx
+      - packages/studio-design/handbook/studio-design-handbook.html
+      - packages/studio-design/handbook/studio-components/treeview.html
+      - packages/studio-design/handbook/studio-components/field-tree.html
+      - packages/studio-design/handbook/studio-components/field-picker.html
+      - packages/studio-design/handbook/studio-components/business-playground.jsx
+      - packages/studio-design/handbook/tests/tree-view.spec.ts
+  - id: studio-layout
+    paths:
+      - apps/studio/src/app/studio-ui.css
+      - packages/studio-design/components/styles.css
+      - packages/studio-design/tokens/
+      - packages/studio-design/components/src/list-layout.tsx
+    intents: [studio-layout, studio-tokens]
+    read_first: [packages/studio-design/guidelines.md]
+    contracts: [STUDIO-COMPONENT-001, STUDIO-UI-LAYOUT-001]
+  - id: platform-agent-api
+    paths:
+      - services/api/src/platform/agent-conversations.controller.ts
+      - services/api/src/platform/agent-ui-stream.ts
+      - services/api/src/platform/create-form.controller.ts
+      - services/agent/src/form_agent/api/
+    intents: [agent-api, studio-agent-submission]
+    contracts: [PLATFORM-AGENT-API-001]
+  - id: asset-packaging
+    paths:
+      - packages/materials-react/
+      - packages/pure-functions/
+      - tools/engineering/assets/
+      - tools/engineering/check-packages.mjs
+    intents: [asset-packaging]
+    contracts: [ASSET-PACKAGING-001]
+    consumers:
+      - packages/materials-react/src/manifests.ts
+      - packages/materials-react/src/index.ts
+      - packages/pure-functions/src/manifests.ts
+      - packages/pure-functions/src/index.ts
+      - tools/engineering/check-packages.mjs
+  - id: agent-turn-recovery
+    paths:
+      - services/agent/src/form_agent/execution/
+      - services/agent/src/form_agent/agent/graph.py
+      - services/agent/src/form_agent/business/conversations/store.py
+      - services/agent/src/form_agent/business/conversations/turns.py
+    intents: [langgraph-state]
+    contracts: [AGENT-TURN-RECOVERY-001]
+    consumers:
+      - services/agent/src/form_agent/api/conversations.py
+      - services/api/src/platform/agent-conversations.controller.ts
+      - services/agent/tests/test_execution_replay.py
+      - services/agent/tests/test_conversations.py

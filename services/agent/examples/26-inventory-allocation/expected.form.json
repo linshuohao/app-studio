@@ -1,0 +1,1504 @@
+{
+  "protocolVersion": "1.0",
+  "id": "allocation",
+  "version": "1.0",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "allocationNo": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 30
+        },
+        "planner": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "source": {
+          "type": "string",
+          "enum": ["north", "south", "east"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["regular", "priority"],
+          "default": "regular"
+        },
+        "shipOn": {
+          "type": "string",
+          "format": "date"
+        },
+        "shipmentCap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "priorityReason": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 180
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true,
+          "default": false
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "destination": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 30
+              },
+              "receiver": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 40
+              },
+              "dock": {
+                "type": "string",
+                "enum": ["dock", "counter"]
+              },
+              "dockCode": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 24
+              },
+              "deliveryNote": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 180
+              },
+              "destinationId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["destination", "receiver", "dock", "destinationId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "dock": {
+                      "const": "dock"
+                    }
+                  },
+                  "required": ["dock"]
+                },
+                "then": {
+                  "required": ["dockCode"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["dockCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 12
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 32
+              },
+              "lot": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 32
+              },
+              "destination": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 30
+              },
+              "units": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              },
+              "volumeLiters": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              },
+              "flag": {
+                "type": "string",
+                "enum": ["standard", "fragile"]
+              },
+              "packingNote": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 180
+              },
+              "lineId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["sku", "lot", "destination", "units", "volumeLiters", "flag", "lineId"],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "flag": {
+                      "const": "fragile"
+                    }
+                  },
+                  "required": ["flag"]
+                },
+                "then": {
+                  "required": ["packingNote"]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": ["packingNote"]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 60
+        }
+      },
+      "required": [
+        "allocationNo",
+        "planner",
+        "source",
+        "priority",
+        "shipOn",
+        "shipmentCap",
+        "confirmed",
+        "destinations",
+        "lines"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "priority": {
+                "const": "priority"
+              }
+            },
+            "required": ["priority"]
+          },
+          "then": {
+            "required": ["priorityReason"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["priorityReason"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "views": {
+    "default": {
+      "material": "section",
+      "props": {
+        "title": "多站点库存调拨和额度确认"
+      },
+      "children": [
+        {
+          "material": "section",
+          "props": {
+            "title": "调拨单"
+          },
+          "children": [
+            {
+              "material": "field",
+              "props": {
+                "label": "调拨任务编号"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/allocationNo"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/allocationNo"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "计划员"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/planner"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/planner"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "发货仓"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/source"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/source"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "north",
+                        "label": "北仓"
+                      },
+                      {
+                        "id": "south",
+                        "label": "南仓"
+                      },
+                      {
+                        "id": "east",
+                        "label": "东仓"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "配送等级"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/priority"
+                }
+              },
+              "children": [
+                {
+                  "material": "select",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/priority"
+                    }
+                  },
+                  "props": {
+                    "options": [
+                      {
+                        "id": "regular",
+                        "label": "常规"
+                      },
+                      {
+                        "id": "priority",
+                        "label": "优先"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "计划发运日期"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/shipOn"
+                }
+              },
+              "children": [
+                {
+                  "material": "text-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/shipOn"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "material": "field",
+              "props": {
+                "label": "本车体积额度"
+              },
+              "bindings": {
+                "value": {
+                  "source": "data",
+                  "path": "/shipmentCap"
+                }
+              },
+              "children": [
+                {
+                  "material": "number-input",
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/shipmentCap"
+                    }
+                  },
+                  "props": {
+                    "inputMode": "numeric"
+                  }
+                }
+              ]
+            },
+            {
+              "material": "condition",
+              "props": {
+                "visible": {
+                  "$expr": {
+                    "op": "core.and",
+                    "args": [
+                      {
+                        "op": "core.exists",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/priority"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "core.eq",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/priority"
+                            }
+                          },
+                          "priority"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "children": [
+                {
+                  "material": "field",
+                  "props": {
+                    "label": "优先配送理由"
+                  },
+                  "bindings": {
+                    "value": {
+                      "source": "data",
+                      "path": "/priorityReason"
+                    }
+                  },
+                  "children": [
+                    {
+                      "material": "text-input",
+                      "bindings": {
+                        "value": {
+                          "source": "data",
+                          "path": "/priorityReason"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "收货点"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/destinations"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "站点"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "收货站点编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/destination",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/destination",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "收货责任人"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/receiver",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/receiver",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "交接方式"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/dock",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/dock",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "dock",
+                              "label": "卸货口"
+                            },
+                            {
+                              "id": "counter",
+                              "label": "服务点"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/dock",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/dock",
+                                    "scope": "person"
+                                  }
+                                },
+                                "dock"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "卸货口号"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/dockCode",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/dockCode",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "收货交接说明"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/deliveryNote",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/deliveryNote",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/destinations"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除站点",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/destinations"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加站点",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/destinations"
+                            }
+                          }
+                        ]
+                      },
+                      12
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addReceivingPoint"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "section",
+          "props": {
+            "title": "调拨明细"
+          },
+          "children": [
+            {
+              "scope": {
+                "from": {
+                  "source": "data",
+                  "path": "/lines"
+                },
+                "mode": "each",
+                "as": "person"
+              },
+              "node": {
+                "material": "section",
+                "props": {
+                  "title": "调拨行"
+                },
+                "children": [
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "库存物品编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/sku",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/sku",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "库存批次编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/lot",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/lot",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "目标站点编号"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/destination",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "text-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/destination",
+                            "scope": "person"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "件数"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/units",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/units",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "单件计划体积"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/volumeLiters",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "number-input",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/volumeLiters",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "inputMode": "numeric"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "field",
+                    "props": {
+                      "label": "包装"
+                    },
+                    "bindings": {
+                      "value": {
+                        "source": "data",
+                        "path": "/flag",
+                        "scope": "person"
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "select",
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/flag",
+                            "scope": "person"
+                          }
+                        },
+                        "props": {
+                          "options": [
+                            {
+                              "id": "standard",
+                              "label": "常规"
+                            },
+                            {
+                              "id": "fragile",
+                              "label": "易碎"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/flag",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.eq",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/flag",
+                                    "scope": "person"
+                                  }
+                                },
+                                "fragile"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "防损要求"
+                        },
+                        "bindings": {
+                          "value": {
+                            "source": "data",
+                            "path": "/packingNote",
+                            "scope": "person"
+                          }
+                        },
+                        "children": [
+                          {
+                            "material": "text-input",
+                            "bindings": {
+                              "value": {
+                                "source": "data",
+                                "path": "/packingNote",
+                                "scope": "person"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": {
+                          "op": "core.and",
+                          "args": [
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/units",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": "core.exists",
+                              "args": [
+                                {
+                                  "ref": {
+                                    "source": "data",
+                                    "path": "/volumeLiters",
+                                    "scope": "person"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "field",
+                        "props": {
+                          "label": "行体积（升）"
+                        },
+                        "children": [
+                          {
+                            "material": "value-display",
+                            "props": {
+                              "value": {
+                                "$expr": {
+                                  "op": "core.mul",
+                                  "args": [
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/units",
+                                        "scope": "person"
+                                      }
+                                    },
+                                    {
+                                      "ref": {
+                                        "source": "data",
+                                        "path": "/volumeLiters",
+                                        "scope": "person"
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              "format": "integer"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "material": "condition",
+                    "props": {
+                      "visible": {
+                        "$expr": true
+                      }
+                    },
+                    "children": [
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "移到首位"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.move",
+                              "target": {
+                                "source": "data",
+                                "path": "/lines"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              },
+                              "position": {
+                                "kind": "index",
+                                "index": 0
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "material": "button",
+                        "props": {
+                          "label": "删除调拨行",
+                          "variant": "danger"
+                        },
+                        "on": {
+                          "activate": {
+                            "type": "form.command",
+                            "command": {
+                              "op": "array.remove",
+                              "target": {
+                                "source": "data",
+                                "path": "/lines"
+                              },
+                              "item": {
+                                "$scope": "person"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "material": "button",
+              "props": {
+                "label": "添加调拨行",
+                "disabled": {
+                  "$expr": {
+                    "op": "core.gte",
+                    "args": [
+                      {
+                        "op": "core.length",
+                        "args": [
+                          {
+                            "ref": {
+                              "source": "data",
+                              "path": "/lines"
+                            }
+                          }
+                        ]
+                      },
+                      60
+                    ]
+                  }
+                }
+              },
+              "on": {
+                "activate": {
+                  "type": "host.emit",
+                  "event": "business.addAllocationLine"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "material": "checkbox",
+          "props": {
+            "label": "已核对库存和收货地点"
+          },
+          "bindings": {
+            "value": {
+              "source": "data",
+              "path": "/confirmed"
+            }
+          }
+        },
+        {
+          "material": "button",
+          "props": {
+            "label": "预约调拨"
+          },
+          "on": {
+            "activate": {
+              "type": "host.emit",
+              "event": "business.submitAllocation"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "inventory-by-warehouse",
+      "kind": "external",
+      "validator": "business.validateStockAllocation",
+      "target": {
+        "source": "data",
+        "path": "/source"
+      },
+      "watch": [
+        {
+          "source": "data",
+          "path": "/source"
+        },
+        {
+          "source": "data",
+          "path": "/shipOn"
+        },
+        {
+          "source": "data",
+          "path": "/shipmentCap"
+        },
+        {
+          "source": "data",
+          "path": "/destinations"
+        },
+        {
+          "source": "data",
+          "path": "/lines"
+        }
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "clear-delivery-priority-priorityReason",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/priority"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/priorityReason"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/priorityReason"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/priority"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/priority"
+                        }
+                      },
+                      "priority"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clear-dock-code-dockCode",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/dock",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/dockCode",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/dockCode",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/dock",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/dock",
+                          "scope": "person"
+                        }
+                      },
+                      "dock"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/destinations"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "clear-packing-note-packingNote",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/flag",
+          "scope": "person"
+        }
+      ],
+      "then": [
+        {
+          "op": "remove",
+          "target": {
+            "source": "data",
+            "path": "/packingNote",
+            "scope": "person"
+          }
+        }
+      ],
+      "runOnActivate": false,
+      "when": {
+        "op": "core.and",
+        "args": [
+          {
+            "op": "core.exists",
+            "args": [
+              {
+                "ref": {
+                  "source": "data",
+                  "path": "/packingNote",
+                  "scope": "person"
+                }
+              }
+            ]
+          },
+          {
+            "op": "core.not",
+            "args": [
+              {
+                "op": "core.and",
+                "args": [
+                  {
+                    "op": "core.exists",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/flag",
+                          "scope": "person"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "op": "core.eq",
+                    "args": [
+                      {
+                        "ref": {
+                          "source": "data",
+                          "path": "/flag",
+                          "scope": "person"
+                        }
+                      },
+                      "fragile"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "scope": {
+        "from": {
+          "source": "data",
+          "path": "/lines"
+        },
+        "mode": "each",
+        "as": "person"
+      }
+    },
+    {
+      "id": "receiving-point-change",
+      "watch": [
+        {
+          "source": "data",
+          "path": "/destinations"
+        }
+      ],
+      "then": [
+        {
+          "type": "host.emit",
+          "event": "business.reconcileReceivingPoints"
+        }
+      ],
+      "runOnActivate": false
+    }
+  ],
+  "metadata": {
+    "hostIntegration": {
+      "initialData": {
+        "destinations": [],
+        "lines": [],
+        "priority": "regular",
+        "confirmed": false
+      },
+      "validators": {
+        "business.validateStockAllocation": "同一快照验证站点存在且唯一、有效引用、SKU+批次+站点唯一、批次可用库存合计、体积额度和站点可接收条件，按稳定行 ID 定位。"
+      },
+      "events": {
+        "business.addReceivingPoint": "生成 destinationId 后添加空站点。",
+        "business.addAllocationLine": "生成 lineId 后追加空分配。",
+        "business.reconcileReceivingPoints": "用上次快照比较标准化站点键；移除或改号后只清空此前引用有效但已失效的目标站点。纯重排、同键格式或备注变化均保留引用。",
+        "business.submitAllocation": "按原任务号和幂等键，在服务端原子预约库存和创建出库任务。按提交快照交付标准化编号和值。"
+      }
+    }
+  }
+}

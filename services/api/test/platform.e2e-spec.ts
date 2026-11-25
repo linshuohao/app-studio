@@ -146,7 +146,7 @@ it('persists sessions, exact config and idempotent results across API processes'
         .set('Idempotency-Key', 'bad-source')
         .send({ text: raw, basedOnVersionId: basedOn })
         .expect(400);
-      await save('oversize', 'a'.repeat(16385)).expect(400);
+      await save('oversize', 'a'.repeat(64 * 1024 + 1)).expect(400);
       await db.execute("INSERT INTO platform_spaces (space_id) VALUES ('other')", []);
       await db.execute("UPDATE platform_forms SET space_id = 'other' WHERE form_id = $1", [other]);
       await read(`/forms/${other}`).expect(404);

@@ -81,6 +81,10 @@ export function createInteractionSession(
   const runtime = createRuntime({
     prepared: compiled.prepared,
     data: {
+      birthDate: '1990-06-15',
+      notes: '',
+      contactMethod: 'email',
+      notifications: [],
       country: 'CN',
       city: { id: 'initial', label: '初始城市' },
       start: '2028-02-28',

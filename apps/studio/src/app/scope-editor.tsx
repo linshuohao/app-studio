@@ -4,8 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ScopeBinder } from '@form-engine/protocol/definition';
 import { FieldPicker, fieldsFromSchema } from '../components/field-picker';
 import { JsonEditor } from '../components/json/json-editor';
-import { Button, EditorViewSwitch, Input, type EditorView } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import {
+  Button,
+  EditorViewSwitch,
+  Input,
+  type EditorView,
+} from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { Modal } from './modal';
 import {
   reactionFields,

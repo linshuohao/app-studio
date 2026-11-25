@@ -22,6 +22,7 @@ from reader import render_document, section_heading, set_catalog
 from diagrams import render_diagram
 from knowledge import load_source, sanitize, build_catalog, index_outputs, relocated_sections, ROW_ID
 from audit_architecture import inventory as source_inventory, INVENTORY, check_reading_links
+from build_contracts import parse_clause
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
@@ -48,7 +49,7 @@ PAGES += [
     for source in sorted((DOCS / "design/decisions").glob("ADR-FE-*.md"))
 ]
 PAGES += [(DOCS / "design" / name, READING / (Path(name).stem + ".html"), "FORM ENGINE · DESIGN") for name in (
-    "capability-map.md", "l4-renderer.md", "extension-integration.md", "platform-studio.md", "design-history.md", "design-review.md", "l3-data-scope.md", "l3-observability.md", "workflows.md")]
+    "capability-map.md", "l4-renderer.md", "extension-integration.md", "platform-studio.md", "platform-agent-compose.md", "design-history.md", "design-review.md", "l3-data-scope.md", "l3-observability.md", "workflows.md")]
 PAGES += [(READING_PLAN, PROTOCOL, "FORM ENGINE · L1 DEFINITION")]
 PAGES += [(source, READING / "l1" / (source.stem + ".html"), "FORM ENGINE · L1 DEFINITION") for source in SOURCES]
 OUTPUTS = {source: output for source, output, _ in PAGES} | {
@@ -100,6 +101,15 @@ def decorate(body: str) -> str:
         label = html.escape(language[1].upper()) if language else "示例"
         content = re.search(r"<code[^>]*>(.*?)</code>", match[0], re.S)[1]
         raw = html.unescape(content)
+        if language and language[1] == "contract":
+            clause = parse_clause(raw, "reading Contract")
+            status = {"active": "生效", "proposed": "候选", "accepted": "已确认",
+                      "superseded": "已替代", "deprecated": "已废弃", "archived": "历史"}
+            title = html.escape(clause["id"])
+            applies = html.escape(clause["applies_to"])
+            items = "".join(f"<li>{html.escape(rule)}</li>" for rule in clause["requires"])
+            return (f'<div class="note"><p><strong>{title}</strong> · {status[clause["status"]]}</p>'
+                    f'<p>适用：{applies}</p><ul>{items}</ul></div>')
         if language and language[1] == "mermaid":
             if len(raw) > 50000 or "%%{" in raw or raw.lstrip().startswith("---"):
                 raise ValueError("Mermaid: per-diagram configuration/directives are disabled; use the shared strict renderer")

@@ -8,6 +8,7 @@ from form_agent.business.form_authoring.contracts import (
     BindingEvidence,
     Blocked,
     Clarification,
+    ComposeCheckpoint,
     TurnInput,
     TurnResult,
 )
@@ -69,6 +70,7 @@ class Composition:
     binding_evidence: BindingEvidence | None = None
     failed_digest: str | None = None
     catalog: list[JsonValue] = field(default_factory=list)
+    compose_checkpoint: ComposeCheckpoint | None = None
 
 
 @dataclass(frozen=True)

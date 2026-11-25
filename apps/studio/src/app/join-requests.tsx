@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Button, DataTable, Pagination } from '../components/ui';
-import { StudioSelect } from '../components/ui/select';
+import { Button, DataTable, Pagination } from '@form-engine/studio-design-components';
+import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { Modal } from './modal';
 import { failureMessage, outcomeUnknown, platform, PlatformError } from './platform-api';
 

@@ -1,6 +1,7 @@
 """Select permitted actions from user intent and verified artifacts."""
 
 import json
+import re
 from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
@@ -47,7 +48,13 @@ def routing_context(state: TurnGraphState):
     return {
         "message": request.message,
         "recent_dialogue": history[-12:],
+        **(
+            {"references": [ref.public() for ref in request.references]}
+            if request.references
+            else {}
+        ),
         "has_document": request.requirements_document is not None,
+        "has_compose_checkpoint": request.previous_compose is not None,
         "existing_goal": previous.goal if previous else None,
         "open_questions": request.open_questions,
         "has_working_candidate": request.referenced_candidate is not None,
@@ -142,6 +149,22 @@ async def route(state: TurnGraphState, *, model: BaseChatModel):
         and not any(i.blocking for i in usable_standard.issues)
     ):
         allowed.append("compose")
+        if (
+            request.previous_compose
+            and not request.references
+            and request.referenced_candidate is None
+            and re.fullmatch(
+                r"(?:请)?(?:继续(?:修复|生成)?|重新(?:试一次|生成)|重试|retry|resume)[。！! ]*",
+                request.message.strip(),
+                re.IGNORECASE,
+            )
+        ):
+            return {
+                "action": "compose",
+                "understanding": Understanding(
+                    decision=ReadyToCompose(kind="ready"), standard=usable_standard
+                ),
+            }
     edit = identify_placeholder_edit(request)
     if (
         edit
@@ -165,7 +188,7 @@ async def route(state: TurnGraphState, *, model: BaseChatModel):
         "The user's current goal takes precedence over the preceding conversation. A request to create a form AND ask about a "
         "business conflict first always enters understand so the pending decision persists. A question about an existing field without a change request is chat. "
         "Create/change requirements, new instructions, and answers to open decisions go to understand. "
-        "Use compose only for explicit generation of unchanged complete prior requirements. "
+        "Use compose for explicit generation or retry of unchanged complete prior requirements, including a saved Compose checkpoint. "
         "Use check to report compilation of the exact working candidate when asked to check only. Use repair or resume_check only when authorized to fix or resume a failed candidate. "
         "Use present to show the same verified candidate on an explicit preview/show request. "
         "Use expand_repair only if answering a pending scope expansion question with explicit approval; continue or explain alone does not expand authority. "

@@ -1,6 +1,6 @@
 ## 权威依据与确认
 
-2026-11-22 实施交接限定 data.schema，交互见 prototypes/data-model-editor.html。
+2026-11-22 实施交接限定 data.schema。交互与验收见[数据模型首期可视化](../../../../docs/design/platform-studio.md#studio-data-model-visual)，当时的原稿可从 Git 提交 `c8dde0a4` 查阅。
 
 ## 内部方案与影响
 

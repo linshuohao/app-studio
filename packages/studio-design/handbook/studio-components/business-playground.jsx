@@ -789,7 +789,21 @@ const stories = {
   ],
   agentreply: [
     ({ text, streaming }) => <AgentReply text={text} streaming={streaming} />,
-    { text: '已添加**姓名**字段。', streaming: false },
+    {
+      text: [
+        '已添加**姓名**字段。',
+        '```json\n{ "name": "姓名", "required": true }\n```',
+        [
+          '| ExternalFormFieldIdentityFromTheSourceSchema | 必填 | 来源 | 说明 | 校验规则 | OriginalFormValueFromTheSourceDocument | 调整后的值 |',
+          '| --- | --- | --- | --- | --- | --- | --- |',
+          ...Array.from(
+            { length: 24 },
+            (_, i) => `| 字段 ${i + 1} | 是 | 表单定义 | 提交前确认 | 非空文本 | 原始值 | 新值 |`,
+          ),
+        ].join('\n'),
+      ].join('\n\n'),
+      streaming: false,
+    },
   ],
   candidatecard: [
     ({ title }) => {

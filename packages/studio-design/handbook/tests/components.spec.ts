@@ -96,3 +96,24 @@ test('unterminated strings preserve raw code and resume highlighting on the next
   await expect(malformed.locator('[data-code-token="literal"]')).toHaveText(['false']);
   expect(await malformed.textContent()).toBe(source);
 });
+
+test('Agent reply highlights fenced code and confines wide table scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 600 });
+  const businessRunner = pathToFileURL(
+    resolve(handbook, 'studio-components/assets/business-playground-runner.html'),
+  ).href;
+  await page.goto(businessRunner + '?run#agentreply');
+  const fence = page.locator('.agent-markdown .studio-code-block code[data-language="json"]');
+  await expect(fence.locator('[data-code-token="string"]')).toHaveText('"姓名"');
+  await expect(fence).toContainText('{ "name": "姓名", "required": true }');
+  await expect(fence.locator('..')).toHaveCSS('white-space', 'pre-wrap');
+  const table = page.getByRole('table');
+  await expect(table.getByRole('row')).toHaveCount(25);
+  const scroll = table.locator('..');
+  await expect(scroll).toHaveCSS('max-height', 'none');
+  await expect(scroll).toHaveCSS('overflow-x', 'auto');
+  expect(await scroll.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+  expect(
+    await page.locator('.agent-markdown').evaluate((node) => node.scrollWidth <= node.clientWidth),
+  ).toBe(true);
+});

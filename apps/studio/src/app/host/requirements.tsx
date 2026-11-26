@@ -1,4 +1,5 @@
 'use client';
+import { CodeBlock } from '../../components/code-block';
 import { useEffect, useState } from 'react';
 import { Button, DataTable, type Column } from '@form-engine/studio-design-components';
 import { Feedback } from '@form-engine/studio-design-components/controls';
@@ -131,10 +132,13 @@ function capabilityRows(prepared: LoadedRelease): Capability[] {
             (site.hasPayload ? '（配置求值，未冻结业务参数 Schema）' : '（无业务参数）'),
         ),
       contract: (
-        <pre>
-          {sharedInput +
-            '\nevent: string  // 动作名\npayload?: JsonValue   // 配置求值后的参数\n返回 void'}
-        </pre>
+        <CodeBlock
+          language="typescript"
+          source={
+            sharedInput +
+            '\nevent: string  // 动作名\npayload?: JsonValue   // 配置求值后的参数\n返回 void'
+          }
+        />
       ),
     })),
     ...requirements.validators.map((validator): Capability => ({
@@ -144,10 +148,13 @@ function capabilityRows(prepared: LoadedRelease): Capability[] {
       locations: validator.constraintIds,
       contract: (
         <>
-          <pre>
-            {sharedInput +
-              '\nruleId: string  // 规则标识\ntarget: DataReference  // 校验目标\n返回 { result: Promise<Array<{ code: string; message?: string; target?: DataReference }>>; cancel?: () => void }'}
-          </pre>
+          <CodeBlock
+            language="typescript"
+            source={
+              sharedInput +
+              '\nruleId: string  // 规则标识\ntarget: DataReference  // 校验目标\n返回 { result: Promise<Array<{ code: string; message?: string; target?: DataReference }>>; cancel?: () => void }'
+            }
+          />
           <p>result 返回问题列表，空数组表示通过。cancel 可取消尚未完成的工作。</p>
         </>
       ),
@@ -356,9 +363,7 @@ export function ReleaseHostExample({ releaseId }: { releaseId: string }) {
         按「所需宿主能力」页签中的契约实现请求、动作和校验。
       </p>
       {message && <Feedback kind="status">{message}</Feedback>}
-      <pre tabIndex={0} aria-label="Host 接入 JSX">
-        <code>{code}</code>
-      </pre>
+      <CodeBlock language="jsx" label="Host 接入 JSX" source={code} />
     </section>
   );
 }

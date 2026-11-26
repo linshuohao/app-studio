@@ -2218,6 +2218,129 @@ export const catalogDocumentation: Record<string, { version: string; description
       }
     ]
   },
+  "array.countNormalizedText": {
+    "version": "0.1.0",
+    "description": "# array.countNormalizedText\n\n按顺序传入行数组、行对象的直接属性名和待比较值。统计该属性经 ECMAScript `trim().toLowerCase()` 后与待比较值相同的行数，包含当前行。非空值的行级唯一性校验要求计数等于 1，将 Issue 绑定到当前 Scope 的字段。所有重复行都能收到自己的 Issue，移动行不改变比较结果。\n\n空白或非字符串比较值计数为 0，行中缺失、空白或非字符串的属性不参与比较。非数组输入返回 null，错误参数个数或空属性名抛错。属性名是直接键，不是 JSON Pointer。函数无副作用，不改写物品编码。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/array-count-normalized-text/README.md",
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.countNormalizedText",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/items"
+              }
+            },
+            "sku",
+            {
+              "ref": {
+                "source": "data",
+                "scope": "row",
+                "path": "/sku"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "统计归一化文本匹配行数",
+    "category": "数组",
+    "summary": "去除首尾空白并忽略大小写，统计同一字段的匹配行，用于逐行判重。",
+    "parameterLabels": {
+      "rows": "全部行",
+      "key": "字段键",
+      "value": "待比较文本"
+    },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "行对象的直接字段键。",
+      "/parameters/2": "待比较值，空白及非字符串返回 0。",
+      "/returns": "匹配行数；非数组返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "sku": " B-2 "
+            },
+            {
+              "sku": "b-2"
+            },
+            {
+              "sku": "B-20"
+            }
+          ],
+          "sku",
+          "B-2"
+        ],
+        "result": 2,
+        "description": "大小写和首尾空白不同的两行均匹配。"
+      }
+    ]
+  },
+  "array.sumProducts": {
+    "version": "0.1.0",
+    "description": "# array.sumProducts\n\n按顺序传入行数组、左因子属性名和右因子属性名。对每行两个非负安全整数相乘后求和，空数组得到 0。每行都重新计算，不依赖已存小计或当前画面显示的行。\n\n行、属性值非法或乘加超出安全整数区间时返回 null，避免把缺失值当作零或部分统计冒充总额。参数个数错误或属性名为空时抛错。属性名是直接键，不是 JSON Pointer。函数不修改输入。\n\n## 用全量合计校验预算\n\n`core.lte` 的两个参数都必须是数值。在同一个短路 `core.and` 中，先用 `core.ne` 判断合计非 null，再将结构相同的合计表达式传给 `core.lte`。编译器会按这个顺序收窄类型。写在约束 `when` 中的守卫只决定规则是否适用，收窄范围到 `when` 为止。\n\n以下是采购预算约束的 `assert`。约束的 `when` 应在预算缺失或合计为 null 时跳过规则，由字段校验处理缺失值；`issue.target` 指向 `/budgetMinor`。\n\n```json\n{\n  \"op\": \"core.and\",\n  \"args\": [\n    {\n      \"op\": \"core.ne\",\n      \"args\": [\n        {\n          \"op\": \"array.sumProducts\",\n          \"args\": [{ \"ref\": { \"source\": \"data\", \"path\": \"/items\" } }, \"quantity\", \"unitPriceMinor\"]\n        },\n        null\n      ]\n    },\n    {\n      \"op\": \"core.lte\",\n      \"args\": [\n        {\n          \"op\": \"array.sumProducts\",\n          \"args\": [{ \"ref\": { \"source\": \"data\", \"path\": \"/items\" } }, \"quantity\", \"unitPriceMinor\"]\n        },\n        { \"ref\": { \"source\": \"data\", \"path\": \"/budgetMinor\" } }\n      ]\n    }\n  ]\n}\n```\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/array-sum-products/README.md",
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.sumProducts",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/items"
+              }
+            },
+            "quantity",
+            "unitPriceMinor"
+          ]
+        }
+      }
+    ],
+    "title": "汇总各行两字段乘积",
+    "category": "数组",
+    "summary": "用各行数量乘整数分单价后求全量合计；工作行不完整或金额溢出时返回 null。",
+    "parameterLabels": {
+      "rows": "全部行",
+      "leftKey": "左因子字段键",
+      "rightKey": "右因子字段键"
+    },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "左因子的直接字段键。",
+      "/parameters/2": "右因子的直接字段键。",
+      "/returns": "非负安全整数合计；任一行无法计算或金额溢出时返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "quantity": 2,
+              "unitPriceMinor": 150000
+            },
+            {
+              "quantity": 3,
+              "unitPriceMinor": 100000
+            }
+          ],
+          "quantity",
+          "unitPriceMinor"
+        ],
+        "result": 600000,
+        "description": "按整数分汇总两个采购行。"
+      }
+    ]
+  },
   "date.ageInYears": {
     "version": "0.1.0",
     "description": "# date.ageInYears\n\n`date.ageInYears(birthDate, asOfDate)` 返回截至指定日期已经满的周岁数。两个参数按顺序传入，均为严格的公历日期字符串 `YYYY-MM-DD`，年份范围为 0001–9999。调用方显式选择业务基准日，例如用起保日判断起保时年龄。函数不读取当前时间或时区。\n\n到达当年生日当天即增加一岁。2 月 29 日出生者在非闰年按 2 月 28 日为当年生日，在闰年按 2 月 29 日。出生当天返回 `0`。缺参、空值、格式或日期无效、计算日期早于出生日期时返回 `null`。比较年龄阈值前先处理 `null`。\n\n| 出生日期 | 截至日期 | 返回值 |\n| --- | --- | --- |\n| 2008-02-29 | 2026-02-27 | 17 |\n| 2008-02-29 | 2026-02-28 | 18 |\n| 2008-02-29 | 2028-02-28 | 19 |\n| 2008-02-29 | 2028-02-29 | 20 |\n| 2009-02-29 | 2026-02-28 | `null` |\n\n函数只计算年龄。年龄区间、监护人要求、计划资格和错误字段由调用方的业务规则决定。如果业务采用不同的闰日生日规则，应选择符合该规则的能力。\n",
@@ -2271,7 +2394,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date.inclusiveDays": {
     "version": "0.1.0",
-    "description": "# date.inclusiveDays\n\n有序参数：start: JSON、end: JSON。输出：integer | null。\n\n严格公历 YYYY-MM-DD，0001–9999 年；含首尾，同日 1。无效、空值、倒序均 null。不读时钟、时区或经过毫秒数。\n\n`invoke(args)` 为同步纯计算，无网络、Runtime 修改或 Promise；普通非法工作值按上述 false / null 退化，配置错误、错误参数个数或溢出抛求值错误。Missing 由 Definition 的 core.exists / core.if 显式处理。输入不修改，制品身份由对应 create 工厂的 Host 参数提供。\n\n示例：`[\"2028-02-28\", \"2028-03-01\"] → 3`。\n\n政策结构、费率与注册方式见[包说明](../../README.md)；Manifest 是机器契约唯一源，测试位于 tests/date-inclusive-days/。\n",
+    "description": "# date.inclusiveDays\n\n有序参数：start: JSON、end: JSON。输出：integer | null。\n\n严格公历 YYYY-MM-DD，0001–9999 年；含首尾，同日 1。无效、空值、倒序均 null。不读时钟、时区或经过毫秒数。\n\n`invoke(args)` 为同步纯计算，无网络、Runtime 修改或 Promise；普通非法工作值返回 null，参数个数错误抛求值错误。Missing 由 Definition 的 core.exists / core.if 显式处理。输入不修改，制品身份由对应 create 工厂的 Host 参数提供。\n\n校验单个公历日期时，把同一个字段传给两个参数。真实日期返回 1，非法日期（包括非闰年 2 月 29 日）返回 null。可用 `core.ne(结果, null)` 作断言；可选字段或 Missing 先按 Schema 必填语义在表达式层处理。\n\n示例：`[\"2028-02-28\", \"2028-03-01\"] → 3`。\n\n政策结构、费率与注册方式见[包说明](../../README.md)；Manifest 是机器契约唯一源，测试位于 tests/date-inclusive-days/。\n",
     "implementation": "JavaScript",
     "source": "packages/pure-functions/src/date-inclusive-days/README.md",
     "examples": [

@@ -129,3 +129,16 @@ node tools/engineering/migrations/split-agent-conversations.mjs
 ```
 
 该命令持有 Agent 会话迁移锁及 Platform 源表事务锁，逐行读回 Agent 数据，逐笔核对草稿和交付标识后切换结构。发生差异会停止；源表仍存在时，解决差异后可重跑。部署前可用 `node tools/engineering/migrations/test-split-agent-conversations.mjs` 在两个临时 PostgreSQL 库演练。离线切分完成后运行 `pnpm --filter @form-engine/api db:migrate` 应用后续迁移。再按运行角色检查草稿读写权限，并核对工作稿、预览及正式版本关联。
+
+## 表单错误上报
+
+部署 API 前运行 `pnpm --filter @form-engine/api db:migrate`，应用
+`1780000000009-form-diagnostics`。数据库迁移角色和 API 角色分离时，API 角色需要访问错误索引、证据和读取审计三张表及审计序列。
+
+受信 Host 在 API 配置 `PLATFORM_DIAGNOSTICS_HOST_ID`、`PLATFORM_DIAGNOSTICS_HOST_FORM_ID` 和
+`PLATFORM_DIAGNOSTICS_HOST_TOKEN` 后，可用 Bearer 凭证向 `POST /api/platform/diagnostics/events` 上报获准表单的发布事件。
+Studio 示例 Host 的 API 入口由 `PLATFORM_DIAGNOSTICS_STUDIO_PILOT=1` 打开，要求管理员会话及受信 Origin。
+
+版本 1 的上报包括事件 ID、Release ID、发生时间、来源、阶段、错误码和证据状态。有可靠定位时须同时提供
+`targetKind` 和 `targetId`，定位必须存在于该发布的配置中。错误列表与单次证据均要求诊断读取权限，
+读取有原始证据的详情会写入访问审计。详见[表单错误采集与定位](../../docs/design/platform-studio.md#platform-diagnostic-mapping)。

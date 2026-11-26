@@ -554,3 +554,7 @@ SRC-OBSERVABILITY 补充（2026-11-09）：用户明确确认“端到端订阅�
 2026-11-22 用户先明确“首期先只把脱敏的错误事件存到 PostgreSQL，完整复现现场留在 Host”，随后确认上报链路、表结构、查询与保留方案，限定受信 Host 转发和管理员查询，确认 30 天平台保留、7 天 Host 默认现场保留、24 小时重试上限，并要求“按这个结论归档，先不开发”。来源为本次设计对话，见[现行设计](platform-studio.md#platform-diagnostic-events)与 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)。
 
 同日增量确认按[事件映射表](platform-studio.md#platform-diagnostic-mapping)的白名单上报。用户明确 Schema 异常、Validator 缺注册、Reaction 叶命令异常留 Host，Renderer 保存现有回调字段，`flush.aborted` 按事件名精确匹配并去重。授权限于归档。
+
+### SRC-DIAGNOSTICS-EVOLUTION：表单错误中心与 Agent 辅助修复阶段蓝图 {#src-diagnostics-evolution}
+
+2026-11-25 用户在设计对话中确认先归档整体现行蓝图，优先做表单错误上报与中心、基于错误的 Agent 辅助定位与修复。明确先复核 Trace 与数据采集，再设计 SDK 上报时机、数据清洗和各端职责。错误限于表单，业务配置、确定性配置缺陷、物料或纯函数按归属分流。来源关联[蓝图](architecture.md#blueprint-diagnostics-evolution)与[演进记录](design-history.md#diagnostics-evolution-confirmed)，随后确认后端同类聚合、错误引用与独立修复 Graph、原始错误现场入库，以及原始值只交给复现工具、模型接收结构化证据的边界，并授权开始首个实施切片。见 [ADR-FE-039](decisions/ADR-FE-039-form-error-evidence.md)。

@@ -1,4 +1,5 @@
 'use client';
+import { CodeBlock } from '../components/code-block';
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 
 import { useEffect, useRef, useState } from 'react';
@@ -637,17 +638,16 @@ export function AssetCatalog({
         {propsSchema !== undefined && (
           <section>
             <h3>输入属性类型</h3>
-            <pre className="contract-type">
-              <code>{`type Props = ${schemaType(propsSchema)}`}</code>
-            </pre>
+            <CodeBlock language="typescript" source={`type Props = ${schemaType(propsSchema)}`} />
           </section>
         )}
         {!!Object.keys(bindings ?? {}).length && (
           <section>
             <h3>绑定值类型</h3>
-            <pre className="contract-type">
-              <code>{`type BindingValues = ${schemaType(bindingSchema)}`}</code>
-            </pre>
+            <CodeBlock
+              language="typescript"
+              source={`type BindingValues = ${schemaType(bindingSchema)}`}
+            />
           </section>
         )}
         {asset.documentation?.valueExamples?.map(({ title, description, value }, index) => (
@@ -764,9 +764,10 @@ export function AssetCatalog({
       <>
         <section className="material-detail-section">
           <h2>函数签名</h2>
-          <pre className="contract-signature">
-            <code>{`${manifest.id}(${parameters.join(', ')}): ${returnType.includes('\n') ? 'ReturnValue' : returnType}`}</code>
-          </pre>
+          <CodeBlock
+            language="typescript"
+            source={`${manifest.id}(${parameters.join(', ')}): ${returnType.includes('\n') ? 'ReturnValue' : returnType}`}
+          />
           <p className="muted">
             按签名顺序传入 args 数组。签名中的 Parameters、RestParameter 和 ReturnValue
             指向下方的类型定义。

@@ -187,7 +187,7 @@ for (const replacement of ['different', 'same'] as const) {
     await page.getByRole('button', { name: '申请加入团队', exact: true }).click();
     await pending;
     await page.getByRole('button', { name: '退出登录', exact: true }).click();
-    await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
     if (replacement === 'different') {
       await expect(
         page
@@ -216,7 +216,7 @@ for (const replacement of ['different', 'same'] as const) {
     await expect(
       page.getByRole('heading', { name: replacement === 'same' ? '尚未加入团队' : '表单列表' }),
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: '登录表单工作台' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toHaveCount(0);
     const current = await (await page.request.get('/api/platform/account')).json();
     if (replacement === 'same') expect(current.userId).toBe(previous.userId);
     else expect(current.userId).not.toBe(previous.userId);

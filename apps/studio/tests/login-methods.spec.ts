@@ -95,7 +95,7 @@ test('verifies GitHub before setup, preserves the current session, revokes other
     expect((await other.request.get(origin + '/api/platform/account')).status()).toBe(401);
     await page.getByLabel('确认内置密码').fill('local-methods-password');
     await page.getByRole('button', { name: '解绑 GitHub', exact: true }).click();
-    await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
     await expect(page.getByText('解绑成功，请使用内置账号重新登录。')).toBeVisible();
     await expect(
       page
@@ -231,7 +231,7 @@ test('ignores a committed password setup response arriving after another account
   await setCredentials(page, 'studio-late-setup-user');
   await saved;
   await page.getByRole('button', { name: '退出登录', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   await expect(
     page
       .getByLabel('用户名', { exact: true })

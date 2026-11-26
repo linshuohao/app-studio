@@ -1,6 +1,6 @@
 interface:
-  display_name: "表单项目 · 统一工作流"
-  short_description: "动态表单引擎的统一协作入口，按当前缺口推进设计、交付、修复和审查"
-  default_prompt: "使用 $form-workflow 推进动态表单引擎当前任务，按目标、契约与授权选择下一项必要工作。"
+  display_name: "Assemble Studio · 统一工作流"
+  short_description: "Assemble Studio 的统一协作入口，按当前缺口推进设计、交付、修复和审查"
+  default_prompt: "使用 $form-workflow 推进 Assemble Studio 当前任务，按目标、契约与授权选择下一项必要工作。"
 policy:
   allow_implicit_invocation: true

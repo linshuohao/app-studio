@@ -1,6 +1,6 @@
 import { SchemaConditionsGuide } from '../../schema-conditions-guide';
 
-export const metadata = { title: '条件规则配置指南 · 表单工作台' };
+export const metadata = { title: '条件规则配置指南 · Assemble Studio' };
 
 export default function SchemaConditionsPage() {
   return (

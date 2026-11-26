@@ -1,9 +1,9 @@
 ---
 name: form-workflow
-description: "Use when working on 动态表单引擎 requirements, design, confirmed documentation, implementation, debugging, review, or collaboration rules, including continuation of legacy form-* requests. Not for unrelated projects."
+description: "Use when working on Assemble Studio requirements, design, confirmed documentation, implementation, debugging, review, or collaboration rules, including continuation of legacy form-* requests. Not for unrelated projects."
 ---
 
-# 动态表单引擎统一工作入口
+# Assemble Studio 统一工作入口
 
 这是本项目唯一的工作流编排入口，采用 ai-co 的共同事实驱动循环：AI 在已授权范围内持续执行，人获得理解重要变化、判断取舍和验收所需的上下文。原 W1–W5 是任务类型与领域能力，不再是互相调用的五条编排链；深度审查是同一循环中的按需能力。
 

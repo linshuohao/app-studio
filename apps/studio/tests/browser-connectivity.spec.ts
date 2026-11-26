@@ -40,10 +40,10 @@ test('hydrates an initially offline browser and preserves root metadata', async 
   const response = await page.goto('/');
   expect(response?.ok()).toBe(true);
   const html = await response?.text();
-  expect(html).toContain('<title>表单工作台</title>');
+  expect(html).toContain('<title>Assemble Studio</title>');
   expect(html).not.toMatch(offlineMessage);
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
-  await expect(page).toHaveTitle('表单工作台');
+  await expect(page).toHaveTitle('Assemble Studio');
   await expect(page.getByRole('status').filter({ hasText: offlineMessage })).toBeVisible();
   expect(hydrationErrors).toEqual([]);
 });

@@ -1,4 +1,6 @@
 'use client';
+
+import { PageHeading } from './page-heading';
 import { CodeBlock } from '../components/code-block';
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 
@@ -21,7 +23,6 @@ import {
   CardList,
   DataTable,
   Input,
-  Icon,
   ListFilterBar,
   Pagination,
   type Column,
@@ -256,54 +257,47 @@ export function AssetCatalog({
     const summary = detail?.documentation?.summary ?? record?.summary ?? record?.description;
     return (
       <section className="material-detail" aria-label={label} data-studio-ui>
-        <header className="material-detail-heading">
-          <div className="material-detail-title">
-            <Button
-              variant="text"
-              className="material-detail-back"
-              aria-label={'返回' + title}
-              title={'返回' + title}
-              onClick={() => select()}
-            >
-              <Icon name="ChevronLeft" />
-            </Button>
-            <h1 ref={detailHeading} tabIndex={-1}>
-              {detail?.documentation?.title ?? record?.title ?? selected.id}
-            </h1>
-            {!material && examples.length > 0 && (
-              <Button
-                variant="secondary"
-                aria-haspopup="dialog"
-                onClick={(event) =>
-                  setDetailDialog({ kind: 'examples', trigger: event.currentTarget })
-                }
-              >
-                配置示例
-              </Button>
-            )}
+        <PageHeading
+          className="material-detail-heading"
+          title={detail?.documentation?.title ?? record?.title ?? selected.id}
+          headingRef={detailHeading}
+          back={{ label: '返回' + title, onClick: () => select() }}
+          description={
+            <div className="material-detail-meta">
+              {summary && <p>{summary}</p>}
+              <p className="material-detail-identity">
+                <code translate="no">{selected.id}</code>
+                {[manifest?.version || selected.version, category, implementation]
+                  .filter(Boolean)
+                  .map((value, index) => (
+                    <span key={index}>{value}</span>
+                  ))}
+              </p>
+            </div>
+          }
+        >
+          {!material && examples.length > 0 && (
             <Button
               variant="secondary"
               aria-haspopup="dialog"
-              disabled={!detail}
               onClick={(event) =>
-                setDetailDialog({ kind: 'technical', trigger: event.currentTarget })
+                setDetailDialog({ kind: 'examples', trigger: event.currentTarget })
               }
             >
-              技术信息
+              配置示例
             </Button>
-          </div>
-          <div className="material-detail-meta">
-            {summary && <p>{summary}</p>}
-            <p className="material-detail-identity">
-              <code translate="no">{selected.id}</code>
-              {[manifest?.version || selected.version, category, implementation]
-                .filter(Boolean)
-                .map((value, index) => (
-                  <span key={index}>{value}</span>
-                ))}
-            </p>
-          </div>
-        </header>
+          )}
+          <Button
+            variant="secondary"
+            aria-haspopup="dialog"
+            disabled={!detail}
+            onClick={(event) =>
+              setDetailDialog({ kind: 'technical', trigger: event.currentTarget })
+            }
+          >
+            技术信息
+          </Button>
+        </PageHeading>
         <div
           key={selected.id + ':' + selected.version}
           className="material-detail-scroll"
@@ -368,20 +362,18 @@ export function AssetCatalog({
 
   return (
     <>
-      <div
-        className="page-title toolbar"
+      <PageHeading
+        title={title}
         data-studio-ui
         data-material-directory-title={(kind === 'materials' && !selected) || undefined}
-      >
-        <div>
-          <h1>{title}</h1>
+        description={
           <p>
             {kind === 'materials'
               ? '查找当前 Web 表单可用的物料与属性契约。'
               : '查找表达式可用的函数、参数和返回值。'}
           </p>
-        </div>
-      </div>
+        }
+      />
       {error && <p role="alert">{error}</p>}
       {kind === 'functions' ? renderFunctionList() : renderMaterialList()}
     </>

@@ -7,12 +7,14 @@ import type {
   DiagnosticExecution,
   DiagnosticTrigger,
   DiagnosticEvidence,
+  DiagnosticTraceStep,
   ReadonlyJson,
 } from '../types.js';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { Journal, retainDiagnostic } from './journal.js';
 import { copyJson } from '../data/json.js';
 import { observeRejection } from '../lifecycle/async.js';
+import { ErrorTrace } from './error-trace.js';
 
 /** 执行元信息只持有不可变输入；异步任务可保留它，不会保留已结束的调度上下文。 */
 export class ExecutionTrace {
@@ -65,6 +67,7 @@ export class DiagnosticReporter {
     private readonly prepared: () => ReadonlyPreparedForm,
     private readonly input: () => DiagnosticInput,
     private readonly tap?: (report: RuntimeDiagnosticReport) => void,
+    private readonly errorTrace?: ErrorTrace,
   ) {}
 
   /** 建立执行身份；子动作继承规则和完整调用，输入始终按实际调用点捕获。 */
@@ -122,7 +125,35 @@ export class DiagnosticReporter {
   }
   /** 捕获当前发布来源；首次激活等无外部发布时分配独立来源身份。 */
   captureTrigger(input: DiagnosticInput): DiagnosticTrigger {
-    return this.trigger ?? Object.freeze({ origin: this.capture('execution.trigger'), input });
+    if (this.trigger) return this.trigger;
+    const entry = this.record(
+      'execution.trigger',
+      undefined,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      { input },
+    );
+    return Object.freeze({
+      origin: Object.freeze({
+        sequence: entry.sequence,
+        ...(entry.round === undefined ? {} : { round: entry.round }),
+      }),
+      input,
+    });
+  }
+
+  get capturesErrorTrace(): boolean {
+    return this.errorTrace !== undefined;
+  }
+
+  traceStep(
+    kind: string,
+    fields: () => Pick<DiagnosticTraceStep, 'input' | 'action' | 'output' | 'phase'>,
+  ): void {
+    if (this.errorTrace)
+      this.record(kind, undefined, undefined, undefined, false, undefined, fields());
   }
   /** 接管实际读到的校验投影，避免公开诊断中的嵌套记录可被改写。 */
   noteRead(value: ReadonlyJson): void {
@@ -199,10 +230,35 @@ export class DiagnosticReporter {
     origin?: DiagnosticOrigin,
     trigger = false,
     evidence?: DiagnosticEvidence,
+    traceFields?: Pick<DiagnosticTraceStep, 'input' | 'action' | 'output' | 'phase'>,
   ): Diagnostic {
     const round = origin ? undefined : this.active?.round;
+    const sequence = ++this.sequence;
+    if (this.errorTrace) {
+      const current = this.current;
+      const step = Object.freeze({
+        sequence,
+        kind,
+        round,
+        origin: origin && Object.freeze({ ...origin }),
+        execution: current?.ref,
+        triggeredBy: current?.triggers.length
+          ? Object.freeze(current.triggers.map((item) => item.origin))
+          : this.trigger
+            ? Object.freeze([this.trigger.origin])
+            : undefined,
+        input: evidence?.input ?? current?.input,
+        action: evidence?.action,
+        output: evidence?.parameters ?? current?.parameters,
+        phase: evidence?.phase,
+        error: evidence?.error,
+        ...traceFields,
+      });
+      if (evidence) evidence = Object.freeze({ ...evidence, trace: this.errorTrace.through(step) });
+      this.errorTrace.record(step);
+    }
     const entry = Object.freeze({
-      sequence: ++this.sequence,
+      sequence,
       kind,
       ...(message === undefined ? {} : { message }),
       ...(ruleId === undefined ? {} : { ruleId }),

@@ -55,6 +55,7 @@ import { ObserverRegistry } from './observation/registry.js';
 import { ReactionScheduler } from './reactions/scheduler.js';
 import { ValidationManager } from './validation/manager.js';
 import { DiagnosticReporter } from './diagnostics/reporter.js';
+import { ErrorTrace } from './diagnostics/error-trace.js';
 import type {
   RuntimeOptions,
   FormRuntime,
@@ -176,6 +177,7 @@ class Runtime implements FormRuntime {
             }
           }
         : undefined,
+      options.captureErrorTrace ? new ErrorTrace() : undefined,
     );
     // 接管注册表；实例装载后不随 Host 注册字典的修改切换实现。
     const functions = Object.freeze(
@@ -737,6 +739,9 @@ class Runtime implements FormRuntime {
       let outcome: 'changed' | 'no-change' | 'error' | 'partial-error' | 'not-executed' =
         'not-executed';
       this.#diagnosticReporter.run(trace, () => {
+        if (command?.op === 'batch')
+          this.#diagnosticReporter.traceStep('command.batch', () => ({ action: { op: 'batch' } }));
+        let capturedAction: ReadonlyJson | undefined;
         try {
           this.#assertAlive();
           if (this.#reactionScheduler.hasAborted()) {
@@ -757,6 +762,13 @@ class Runtime implements FormRuntime {
           // 外部命令在此逐叶检查；Prepared 动作已在装载时接管并检查，动态执行保护仍共用。
           if (source === 'external' && !validCommand(command))
             throw Error('command: invalid shape');
+          if (this.#diagnosticReporter.capturesErrorTrace) {
+            try {
+              capturedAction = copyJson(command);
+            } catch {
+              // Recording an action must never change execution of that action.
+            }
+          }
           const before = this.#dataStore.capture();
           const mutation = executeCommand(
             this.#dataStore,
@@ -786,6 +798,10 @@ class Runtime implements FormRuntime {
             undefined,
             undefined,
             true,
+            undefined,
+            capturedAction === undefined
+              ? undefined
+              : { action: capturedAction, output: this.snapshot() },
           );
           const previousObservedTrigger = this.#observedTrigger;
           this.#observedTrigger = { diagnosticSequence: change.sequence, event: observedChange };
@@ -821,6 +837,11 @@ class Runtime implements FormRuntime {
           );
         } finally {
           // batch 本身不伪造一次叶命令执行；子项分别保留结果和有效修改。
+          if (command?.op !== 'batch' && outcome === 'no-change') {
+            this.#diagnosticReporter.traceStep('command.no-change', () => ({
+              action: capturedAction,
+            }));
+          }
           if (command?.op !== 'batch')
             emitObservedEvent(this, 'command.finished', () => ({
               ...commandRef(),
@@ -970,6 +991,10 @@ class Runtime implements FormRuntime {
         emitObservedEvent(this, 'reaction.condition', () => ({
           ...execution(),
           outcome: condition === undefined ? 'absent' : condition ? 'true' : 'false',
+        }));
+        this.#diagnosticReporter.traceStep('reaction.condition', () => ({
+          phase: 'when',
+          output: condition ?? null,
         }));
         if (condition === false) {
           outcome = 'condition-false';

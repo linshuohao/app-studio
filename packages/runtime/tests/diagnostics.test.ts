@@ -699,3 +699,46 @@ it('报告回调异常和关闭采集不改变熔断预算及后续交互', asyn
     runtime.dispose();
   }
 });
+
+it('异常链路从实际触发到失败，保留先成功的动作和当时输入，排除无关命令', async () => {
+  const runtime = createRuntime({
+    prepared: prepared({
+      reactions: [
+        {
+          id: 'compute',
+          watch: [data('/age')],
+          then: [
+            { op: 'set', target: data('/total'), value: 42 },
+            { type: 'host.emit', event: 'fail' },
+          ],
+        },
+      ],
+    }),
+    data: { age: 0, total: 0, unrelated: 0 },
+    functions,
+    captureErrorTrace: true,
+    host: {
+      events: {
+        fail: () => {
+          throw Error('host failure');
+        },
+      },
+    },
+  });
+  await runtime.flush();
+  runtime.dispatch({ op: 'set', target: data('/unrelated'), value: 1 });
+  runtime.dispatch({ op: 'set', target: data('/age'), value: 1 });
+  await runtime.flush();
+  const trace = runtime.diagnostics().find((entry) => entry.kind === 'reaction.action.error')
+    ?.evidence?.trace;
+  expect(trace?.status).toBe('complete');
+  expect(trace?.steps.at(-1)?.kind).toBe('reaction.action.error');
+  expect(
+    trace?.steps.filter(({ kind }) => kind === 'data.change').map(({ action }) => action),
+  ).toEqual([
+    { op: 'set', target: data('/age'), value: 1 },
+    { op: 'set', target: data('/total'), value: 42 },
+  ]);
+  expect(trace?.steps.at(-1)?.input?.snapshot).toMatchObject({ age: 1, total: 42 });
+  runtime.dispose();
+});

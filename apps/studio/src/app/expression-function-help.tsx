@@ -1,3 +1,4 @@
+import { CodeBlock } from '../components/code-block';
 import type { FunctionParameter, PureFunctionManifest } from '@form-engine/protocol/capability';
 import { ContractTable, schemaLabel, schemaRules } from '../components/catalog/contract-reference';
 import type { FunctionDocumentation } from './function-catalog';
@@ -34,9 +35,7 @@ export function FunctionHelp({
           {examples.map(({ args, result, description }, index) => (
             <div className="expression-function-example" key={index}>
               <p>{description}</p>
-              <pre>
-                <code>{JSON.stringify(args, null, 2)}</code>
-              </pre>
+              <CodeBlock language="json" source={JSON.stringify(args, null, 2)} />
               <p>
                 返回 <code>{JSON.stringify(result)}</code>
               </p>
@@ -129,9 +128,7 @@ export function ArgumentHelp({ help }: { help: ParameterHelp }) {
           />
           <details>
             <summary>查看 Schema JSON</summary>
-            <pre className="contract-type">
-              <code>{JSON.stringify(schema, null, 2)}</code>
-            </pre>
+            <CodeBlock language="json" source={JSON.stringify(schema, null, 2)} />
           </details>
         </details>
       )}

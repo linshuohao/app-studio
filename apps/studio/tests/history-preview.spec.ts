@@ -384,7 +384,8 @@ test('compares draft and historical configuration without replacing the draft', 
   await page.getByRole('menuitem', { name: '查看改动' }).click();
   const dialog = page.getByRole('dialog', { name: '配置对比' });
   await dialog.getByText('修改　/amount', { exact: true }).click();
-  await expect(dialog.getByText('9007199254740995', { exact: true })).toBeVisible();
+  const values = dialog.locator('details[open] .studio-code-block code');
+  await expect(values).toHaveText(['9007199254740994', '9007199254740995']);
   await dialog.getByRole('button', { name: '返回' }).click();
   await expect(editor).toHaveValue(/^\s*\{\s*"amount":\s*9007199254740995\s*\}\s*$/);
   await save(page);
@@ -392,8 +393,7 @@ test('compares draft and historical configuration without replacing the draft', 
   await chooseWorkingVersionAction(page, '保存历史');
   await page.getByRole('button', { name: '对比快照' }).click();
   await dialog.getByText('修改　/amount', { exact: true }).click();
-  await expect(dialog.getByText('9007199254740994', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('9007199254740995', { exact: true })).toBeVisible();
+  await expect(values).toHaveText(['9007199254740994', '9007199254740995']);
   await dialog.getByRole('button', { name: '返回' }).click();
   await page
     .getByRole('dialog', { name: '保存历史' })

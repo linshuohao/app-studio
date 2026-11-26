@@ -495,7 +495,7 @@ Materials 只依赖 Protocol / Renderer 公共接入，不从 apps 反向导入�
 
 已发布 id + version 固定契约；交付代码变化产生新制品身份 / 摘要。目录维护当前源码，Git 追溯，旧 Manifest / 制品 / 锁保留不可变交付，不建 v1 / v2 / v3 源码副本。既有 core 版本不在本次重编号，工具不能追溯改变现有锁。
 
-新 Catalog 经重检 / 重编进入新会话；旧表单不自动换实现，回滚必须取得旧制品，不只靠 Git 重编猜旧字节。现行 Registry 同 ID 选一个确定版本，不预建同表单多版本共存。生成器及资产 / 包编排见[工程工具方案](engineering.md#asset-tooling)。
+新 Catalog 经重检 / 重编进入新会话；旧表单不自动换实现，回滚必须取得旧制品，不只靠 Git 重编猜旧字节。同一表单及目标的装载注册表对同 ID 选一个确定版本。Platform Capability Registry 可以保留多个版本并供不同表单选择，见 [Platform 资产版本管理](platform-studio.md#platform-asset-versions)。生成器及资产 / 包编排见[工程工具方案](engineering.md#asset-tooling)。
 
 ### 批次、验收与 Host 路线 {#first-assets-delivery}
 

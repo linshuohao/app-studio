@@ -2485,6 +2485,124 @@ export const catalogDocumentation: Record<string, { version: string; description
       "end": "返程日期"
     }
   },
+  "expense.countInvoiceMatches": {
+    "version": "0.1.0",
+    "description": "# expense.countInvoiceMatches\n\n按去除所有 ECMAScript 空白字符并转为大写后的票据编号比较。返回费用数组中的匹配个数，包含当前行。非数组输入、非字符串或空白票号返回 `0`，由字段规则处理必填和类型错误。数组中的非对象行及非字符串票号不参与匹配。\n\n例如 `[[{\"invoiceId\":\"ab 1234\"},{\"invoiceId\":\"AB1234\"}],\"ab1234\"]` 返回 `2`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+        "value": {
+          "op": "expense.countInvoiceMatches",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/expenses"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/invoiceId"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "统计报销单内匹配票号",
+    "category": "报销",
+    "summary": "去除全部空白并统一大写后，统计同一报销单内的匹配票号。",
+    "parameterLabels": {
+      "expenses": "费用行",
+      "invoiceId": "当前票号"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "invoiceId": "AB 1234"
+            },
+            {
+              "invoiceId": "ab1234"
+            }
+          ],
+          "ab 1234"
+        ],
+        "result": 2,
+        "description": "忽略票号内部空白与大小写。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "本报销单费用行数组。",
+      "/parameters/1": "当前行原始票号。",
+      "/returns": "归一化后相同的票号数量。"
+    }
+  },
+  "expense.hotelStandardStatus": {
+    "version": "0.1.0",
+    "description": "# expense.hotelStandardStatus\n\n判断住宿申报金额（分）与晚数。金额须为 1 至 5,000,000 分之间的整数，晚数须为 1 至 30 之间的整数，每晚标准为 45,000 分。输入超出范围时返回 `invalid`，金额超过晚数乘以标准时返回 `over`，其余有效输入返回 `within`。\n\n例如 `[90000, 2]` 返回 `within`，`[90001, 2]` 返回 `over`，`[90000.5, 2]` 返回 `invalid`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+        "value": {
+          "op": "expense.hotelStandardStatus",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/claimMinor"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/nights"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "判断住宿金额是否超标",
+    "category": "报销",
+    "summary": "按每晚 45,000 分判断，金额或晚数为非法值时返回 invalid。",
+    "parameterLabels": {
+      "claimMinor": "申报金额（分）",
+      "nights": "晚数"
+    },
+    "callExamples": [
+      {
+        "args": [
+          90000,
+          2
+        ],
+        "result": "within",
+        "description": "两晚恰好等于标准。"
+      },
+      {
+        "args": [
+          90000.5,
+          2
+        ],
+        "result": "invalid",
+        "description": "申报金额必须为整数分。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "申报金额，单位为分。",
+      "/parameters/1": "住宿晚数。",
+      "/returns": "标准内、超标或输入非法。"
+    }
+  },
   "text.isNonBlank": {
     "version": "0.1.0",
     "description": "# text.isNonBlank\n\n同步判断字符串是否包含 ECMAScript String.prototype.trim 空白集合以外的内容。\n不转换类型、不改写原值，不读取环境或执行 I/O。\n\n| 输入 | 返回 |\n| --- | --- |\n| `\"Alice\"`、`\"  张三  \"`、`\"0\"` | true |\n| 空串、空格、换行、不换行空格、全角空格 | false |\n| null、数字、boolean、数组、对象 | false |\n| 零宽空格 U+200B | true，不属于所选 trim 空白集合 |\n\nManifest 参数 schema:true，返回 boolean。Missing 不属于 JSON，表达式调用方须\n使用 core.exists / core.if 明确处理。直接 invoke 缺参数或多参数抛错。\n\n通过 createTextIsNonBlank(artifact) 显式注册；artifact 必须来自确定构建并匹配\nCompiler 能力锁。createCoreFunctions 不自动加载本函数，既有 core 身份不变。\n",

@@ -1,8 +1,22 @@
 'use client';
 import { cjk } from '@streamdown/cjk';
-import { useEffect, useState, type ReactNode } from 'react';
+import { isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { Streamdown } from 'streamdown';
 import { Button, Icon } from '@form-engine/studio-design-components';
+import { CodeBlock, codeLanguage } from '../components/code-block';
+
+function MarkdownCodeBlock({ children }: { children?: ReactNode }) {
+  if (!isValidElement<{ className?: string; children?: ReactNode }>(children)) {
+    return <pre>{children}</pre>;
+  }
+  const { className, children: source } = children.props;
+  if (typeof source !== 'string') return <pre>{children}</pre>;
+
+  const language = className?.match(/(?:^|\s)language-([^\s]+)/)?.[1];
+  return <CodeBlock language={codeLanguage(language)} source={source} />;
+}
+
+const markdownComponents = { pre: MarkdownCodeBlock };
 
 export function AgentMessage({ text, children }: { text: string; children: ReactNode }) {
   const [feedback, setFeedback] = useState<'copied' | 'failed'>();
@@ -51,10 +65,12 @@ export function AgentReply({ text, streaming = false }: { text: string; streamin
   return (
     <Streamdown
       plugins={{ cjk }}
+      components={markdownComponents}
       className="agent-markdown"
       mode={streaming ? 'streaming' : 'static'}
       parseIncompleteMarkdown={streaming}
       controls={false}
+      tableMaxHeight="none"
       skipHtml
       disallowedElements={['img']}
     >

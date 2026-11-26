@@ -744,7 +744,12 @@ export class ValidationManager {
                 this.pending.add(key);
               }
             };
-            if (rule.when !== undefined && !this.evaluator.boolean(rule.when, frame)) {
+            const applies = rule.when === undefined || this.evaluator.boolean(rule.when, frame);
+            this.deps.diagnostics.traceStep('validation.condition', () => ({
+              phase: 'when',
+              output: applies,
+            }));
+            if (!applies) {
               this.revoke(source);
               if (!currentInput()) {
                 retryCurrentInput();
@@ -779,6 +784,11 @@ export class ValidationManager {
                   continue;
                 }
                 const predecessor = execute(candidates[0]!.key)!;
+                this.deps.diagnostics.traceStep('validation.prerequisite', () => ({
+                  phase: 'requires',
+                  action: { constraintId: id },
+                  output: predecessor.status,
+                }));
                 if (
                   predecessor.status === 'invalid' ||
                   (predecessor.status === 'blocked' &&
@@ -832,6 +842,10 @@ export class ValidationManager {
             if (rule.kind === 'internal') {
               phase = 'assert';
               const valid = this.evaluator.boolean(rule.assert, frame);
+              this.deps.diagnostics.traceStep('validation.assertion', () => ({
+                phase: 'assert',
+                output: valid,
+              }));
               const issue: ValidationIssue = {
                 source: source.key,
                 code: rule.issue.code,
@@ -912,7 +926,10 @@ export class ValidationManager {
       this.deps.diagnosticInput(source.scope),
       { ruleId: rule.id, validator: rule.validator },
     );
-    const origin = this.deps.captureOrigin('validator.start', rule.id);
+    const captureOrigin = () => this.deps.captureOrigin('validator.start', rule.id);
+    const origin = this.deps.diagnostics.capturesErrorTrace
+      ? this.deps.diagnostics.run(trace, captureOrigin)
+      : captureOrigin();
     // 必须先登记任务，再开放可能同步 dispatch 的 Host 回调。
     const task = {
       origin,
@@ -998,6 +1015,10 @@ export class ValidationManager {
           }
           const json = copyJson(result) as unknown as readonly ValidatorIssue[];
           trace.parameters = json as unknown as import('../types.js').ReadonlyJson;
+          this.deps.diagnostics.traceStep('validator.returned', () => ({
+            phase: 'result',
+            output: trace.parameters,
+          }));
           if (!Array.isArray(json)) throw Error('validator: issues must be an array');
           const issues = json.map((issue) => {
             if (

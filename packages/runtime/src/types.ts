@@ -61,6 +61,25 @@ export interface DiagnosticTrigger {
   readonly origin: DiagnosticOrigin;
   readonly input: DiagnosticInput;
 }
+export interface DiagnosticTraceStep {
+  readonly sequence: number;
+  readonly kind: string;
+  readonly round?: number;
+  readonly origin?: DiagnosticOrigin;
+  readonly triggeredBy?: readonly DiagnosticOrigin[];
+  readonly execution?: DiagnosticExecution;
+  readonly input?: DiagnosticInput;
+  readonly action?: ReadonlyJson;
+  readonly output?: ReadonlyJson;
+  readonly phase?: string;
+  readonly error?: DiagnosticEvidence['error'];
+}
+export interface DiagnosticTrace {
+  readonly version: 1;
+  readonly status: 'complete' | 'partial';
+  readonly gaps: readonly ('missing_trigger' | 'missing_step' | 'size_limit')[];
+  readonly steps: readonly DiagnosticTraceStep[];
+}
 /** 必需的异常复现证据，不受辅助 Trace 容量控制；Host 决定持久化和上报策略。 */
 export interface DiagnosticEvidence {
   readonly execution: DiagnosticExecution;
@@ -73,6 +92,8 @@ export interface DiagnosticEvidence {
   readonly action?: ReadonlyJson;
   /** 外部能力实际返回的 JSON，或 Host 通知求值后的参数。 */
   readonly parameters?: ReadonlyJson;
+  /** 启用异常链路采集时，从已记录的因果前驱到本次异常。 */
+  readonly trace?: DiagnosticTrace;
 }
 /** 最近执行事件的轻量记录；轮次外事件不伪造当前 round。 */
 export interface Diagnostic {
@@ -210,6 +231,8 @@ export interface RuntimeOptions {
   readonly maxExecutions?: number;
   /** 辅助 Trace / 最近事件条数上限，默认 200；0 关闭辅助采集，异常仍交付出口。 */
   readonly traceCapacity?: number;
+  /** 独立于辅助 Trace，只在异常现场中交付有界因果链。 */
+  readonly captureErrorTrace?: boolean;
   /** 异步交付不可变轮次报告 / 独立事件；异常被隔离，不影响数据写入和执行预算。 */
   readonly onDiagnostic?: (report: RuntimeDiagnosticReport) => void;
   /** 默认 true，递归冻结引擎持有的数据；关闭后只读契约仍有效。 */

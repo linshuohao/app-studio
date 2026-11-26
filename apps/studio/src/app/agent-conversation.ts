@@ -130,6 +130,8 @@ export type TurnAttempt = {
   draftId?: string;
   draftRevision?: number;
   interruptionReason?: string;
+  interruptionTraceId?: string;
+  elapsedMs?: number;
   events: (
     | { type: 'progress'; message: string }
     | ({ type: 'compose_phase' } & ComposePhase)

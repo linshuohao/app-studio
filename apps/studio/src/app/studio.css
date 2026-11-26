@@ -1359,16 +1359,6 @@ button.material-card-open:focus-visible {
   min-width: 160px;
 }
 
-.contract-type {
-  margin: 12px 0;
-  padding: 14px 16px;
-  background: #f7f8fa;
-  border: 1px solid #e9eaee;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 1.7;
-  overflow: auto;
-}
 .contract-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1470,11 +1460,6 @@ button.material-card-open:focus-visible {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* API references wrap at available width; identifiers break at field boundaries. */
-.contract-type {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .contract-columns .catalog-properties td:first-child code {
   overflow-wrap: normal;
   word-break: normal;
@@ -1501,10 +1486,6 @@ button.material-card-open:focus-visible {
   }
   .asset-api .contract-columns .catalog-properties td:nth-child(3) {
     white-space: normal;
-  }
-  .contract-type {
-    padding: 10px;
-    font-size: 11px;
   }
 }
 

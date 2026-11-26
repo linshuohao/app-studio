@@ -1,3 +1,4 @@
+import { CodeBlock } from '../components/code-block';
 import { getParameterHelp, parameterMeaning, parameterTitle } from './expression-function-help';
 import { functionTitle, type FunctionDocumentation } from './function-catalog';
 import { isExpression, type ReactionExpressionContext } from './reaction-expression-model';
@@ -263,7 +264,7 @@ function ReadingView({ node }: { node: ReadingNode }) {
     return (
       <details>
         <summary>{node.label}</summary>
-        <pre>{node.constant}</pre>
+        <CodeBlock language="json" source={node.constant} />
       </details>
     );
   if (node.definition)

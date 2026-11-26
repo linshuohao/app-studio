@@ -1,10 +1,11 @@
+import type { ContentDigest } from '@form-engine/protocol';
 import { capturePreparedForm } from '@form-engine/protocol/internal/prepared';
-export async function digest(text: string) {
+export async function digest(text: string): Promise<ContentDigest> {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return (
-    'sha256:' +
-    Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('')
-  );
+  const hexadecimal = Array.from(new Uint8Array(bytes), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  return `sha256:${hexadecimal}`;
 }
 
 export function canonical(value: unknown): string {

@@ -10,7 +10,7 @@ import {
 const digest = (char: string): `sha256:${string}` => `sha256:${char.repeat(64)}`;
 function publication(profile: string, artifact: string, platform = 'web') {
   return {
-    build: { profile, platform, catalogSnapshotId: 'test' },
+    build: { profile, platform, catalogSnapshotId: 'test', compilerVersion: 'fixture' },
     capabilityLock: {
       materials: {
         input: {

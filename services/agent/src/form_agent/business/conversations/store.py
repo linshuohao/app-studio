@@ -192,7 +192,7 @@ class TurnJournal:
     async def event(self, event):
         await self.write(lambda: self.append("public", None, event))
 
-    async def interrupt(self, reason):
+    async def interrupt(self, reason, *, trace_id=None, elapsed_ms=None):
         def save():
             changed = self.conn.execute(
                 update(turns)
@@ -204,7 +204,12 @@ class TurnJournal:
                 .values(status="failed")
             )
             if changed.rowcount:
-                self.append("public", None, {"type": "interruption", "reason": reason})
+                if elapsed_ms is not None:
+                    self.append("duration", None, {"elapsedMs": elapsed_ms})
+                event = {"type": "interruption", "reason": reason}
+                if trace_id is not None:
+                    event["traceId"] = trace_id
+                self.append("public", None, event)
 
         await self.write(save)
 
@@ -375,16 +380,23 @@ class ConversationStore:
         detail = view(row, history_for(conn, cid, row["revision"]))
         events = {}
         interruptions = {}
-        for tid, event in conn.execute(
-            select(journal_entries.c.turn_id, journal_entries.c.payload)
+        elapsed = {}
+        for tid, kind, event in conn.execute(
+            select(
+                journal_entries.c.turn_id,
+                journal_entries.c.kind,
+                journal_entries.c.payload,
+            )
             .where(
                 journal_entries.c.conversation_id == cid,
-                journal_entries.c.kind == "public",
+                journal_entries.c.kind.in_(("public", "duration")),
             )
             .order_by(journal_entries.c.id)
         ):
-            if event["type"] == "interruption":
-                interruptions[tid] = event["reason"]
+            if kind == "duration":
+                elapsed[tid] = elapsed.get(tid, 0) + event["elapsedMs"]
+            elif event["type"] == "interruption":
+                interruptions[tid] = event
             else:
                 events.setdefault(tid, []).append(event)
         attempts = []
@@ -393,7 +405,7 @@ class ConversationStore:
             .where(turns.c.conversation_id == cid)
             .order_by(turns.c.revision, turns.c.turn_id)
         ):
-            if status == "done" and tid not in events:
+            if status == "done" and tid not in events and tid not in elapsed:
                 continue
             if status == "running" and conn.dialect.name == "postgresql":
                 idle = conn.execute(
@@ -411,8 +423,9 @@ class ConversationStore:
                 if idle:
                     status = "interrupted"
             interrupted = status in ("interrupted", "failed")
+            interruption = interruptions.get(tid, {}) if status == "failed" else {}
             reason = (
-                interruptions.get(tid, "执行进程已结束，未留下具体原因。")
+                interruption.get("reason", "执行进程已结束，未留下具体原因。")
                 if status == "failed"
                 else "执行进程已停止，未留下结束记录。"
             )
@@ -438,6 +451,12 @@ class ConversationStore:
                     "status": "interrupted" if interrupted else status,
                     "resumable": interrupted and req.get("revision") == row["revision"],
                     **({"interruptionReason": reason} if interrupted else {}),
+                    **({"elapsedMs": elapsed[tid]} if tid in elapsed else {}),
+                    **(
+                        {"interruptionTraceId": interruption["traceId"]}
+                        if "traceId" in interruption
+                        else {}
+                    ),
                     "events": events.get(tid, []),
                 }
             )
@@ -703,6 +722,7 @@ class ConversationStore:
         facts: FormAuthoringTaskFacts,
         base: str | None,
         result: dict,
+        elapsed_ms: int | None = None,
     ):
         revision = message.revision + 1
         tid = str(message.turnId)
@@ -775,6 +795,8 @@ class ConversationStore:
                 ):
                     delivery = latest
             journal = TurnJournal(conn, cid, tid)
+            if elapsed_ms is not None:
+                journal.append("duration", None, {"elapsedMs": elapsed_ms})
             batches = reply_batches(result)
             chunks = []
             for event in conn.execute(

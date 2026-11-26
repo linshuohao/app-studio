@@ -60,7 +60,8 @@ try {
     return `  '${manifest.name}': 'file:${tarball}'`;
   });
   writeFileSync(join(scratch, 'pnpm-workspace.yaml'), `overrides:\n${overrides.join('\n')}\n`);
-  run(['add', '--offline', ...archives, `react@${react}`, `react-dom@${reactDom}`], scratch);
+  // The standalone consumer resolves its own dependencies, even on a cold CI cache.
+  run(['add', '--prefer-offline', ...archives, `react@${react}`, `react-dom@${reactDom}`], scratch);
   copyFileSync(
     new URL('./assets/packed-asset-exports.mjs', import.meta.url),
     join(scratch, 'packed-asset-exports.mjs'),

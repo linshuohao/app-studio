@@ -90,6 +90,16 @@ export function useRunningConversation(
   }, [id, scope, update]);
 }
 
+type HistoryStage = ComposePhase['stage'] | 'general' | 'understand';
+const historyLabels = { ...stageLabels, general: '准备与执行', understand: '需求理解' };
+
+function elapsedLabel(milliseconds: number) {
+  const seconds = Math.floor(milliseconds / 1000);
+  return seconds < 60
+    ? seconds + ' 秒'
+    : Math.floor(seconds / 60) + ' 分 ' + (seconds % 60) + ' 秒';
+}
+
 export function AttemptHistory({
   attempt,
   disabled,
@@ -103,28 +113,40 @@ export function AttemptHistory({
 }) {
   let partial = '';
   let lastProgress = '';
-  const entries: string[] = [];
+  const entries: { stage: HistoryStage; text: string }[] = [];
   const phases: ComposePhase[] = [];
   for (const event of attempt.events) {
     if (event.type === 'progress') {
       lastProgress = event.message;
-      entries.push(event.message);
+      entries.push({ stage: 'general', text: event.message });
     }
     if (event.type === 'compose_phase') {
       phases.push(event);
-      entries.push(
-        `${stageLabels[event.stage]} · ${statusLabels[event.status]}` +
+      entries.push({
+        stage: event.stage,
+        text:
+          `${stageLabels[event.stage]} · ${statusLabels[event.status]}` +
           (event.attempt ? `（第 ${event.attempt} 次）` : '') +
           (event.detail ? ` · ${event.detail}` : ''),
-      );
+      });
     }
-    if (event.type === 'understanding_reset') entries.push('重新核对需求');
-    if (event.type === 'understanding_item') entries.push(event.text);
+    if (event.type === 'understanding_reset')
+      entries.push({ stage: 'understand', text: '重新核对需求' });
+    if (event.type === 'understanding_item')
+      entries.push({ stage: 'understand', text: event.text });
     if (event.type === 'text_reset') partial = '';
     if (event.type === 'text_delta') partial += event.delta;
   }
   const done = attempt.status === 'done';
   const interrupted = attempt.status === 'interrupted' && !livePhases;
+  const historical = done || interrupted;
+  const groups = new Map<HistoryStage, string[]>();
+  if (historical)
+    for (const { stage, text } of entries) {
+      const previous = groups.get(stage);
+      if (previous) previous.push(text);
+      else groups.set(stage, [text]);
+    }
   if (livePhases) phases.push(...livePhases);
   const latest = [...latestPhases(phases).values()];
   const active = latest.filter(({ status }) => status === 'started' || status === 'retrying');
@@ -137,14 +159,32 @@ export function AttemptHistory({
     <section>
       {!done && <AgentUserMessage text={attempt.message} references={attempt.references} />}
       {!done && <ComposeProgress events={phases} stopped={interrupted} />}
-      {!!entries.length && (
-        <details open={!done && !phases.length}>
-          <summary>处理过程</summary>
-          <ol>
-            {entries.map((entry, index) => (
-              <li key={index}>{entry}</li>
-            ))}
-          </ol>
+      {(entries.length > 0 || (historical && attempt.elapsedMs !== undefined)) && (
+        <details className="agent-attempt-process" open={!historical && !phases.length}>
+          <summary>
+            处理过程
+            {historical && attempt.elapsedMs !== undefined
+              ? ' · ' + elapsedLabel(attempt.elapsedMs)
+              : ''}
+          </summary>
+          {historical ? (
+            [...groups].map(([stage, events]) => (
+              <details className="agent-attempt-stage" key={stage}>
+                <summary>{historyLabels[stage]}</summary>
+                <ol>
+                  {events.map((event, index) => (
+                    <li key={index}>{event}</li>
+                  ))}
+                </ol>
+              </details>
+            ))
+          ) : (
+            <ol>
+              {entries.map(({ text }, index) => (
+                <li key={index}>{text}</li>
+              ))}
+            </ol>
+          )}
         </details>
       )}
       {!done && partial && (
@@ -157,6 +197,11 @@ export function AttemptHistory({
         <p role="status">
           中断位置：{location}。{attempt.interruptionReason ?? '本轮未留下具体中断原因。'}
           {attempt.resumable ? '可以继续本轮。' : '本轮无法继续，请重新发送。'}
+        </p>
+      )}
+      {interrupted && attempt.interruptionTraceId && (
+        <p className="agent-attempt-trace">
+          追踪 ID <code>{attempt.interruptionTraceId}</code>
         </p>
       )}
       {resume && attempt.resumable && interrupted && (

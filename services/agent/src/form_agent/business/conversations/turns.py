@@ -2,6 +2,7 @@
 
 import asyncio
 from contextlib import aclosing
+from time import monotonic
 
 from form_agent.agent.budgets import TURN_RECURSION_LIMIT
 from form_agent.business.conversations.store import (
@@ -41,6 +42,7 @@ async def run_turn_events(
                 archive.record("turn.replay", result=envelope)
         else:
             journal = TurnJournal(conn, cid, str(message.turnId))
+            started = monotonic()
             try:
                 if graph is None:
                     raise StoreUnavailable("Agent model or tools are unavailable")
@@ -83,6 +85,7 @@ async def run_turn_events(
                                     prepared["facts"],
                                     prepared["input"].referenced_candidate,
                                     result,
+                                    round((monotonic() - started) * 1000),
                                 )
                                 break
                             else:
@@ -94,7 +97,11 @@ async def run_turn_events(
                     else interruption_reason(error)
                 )
                 record_interruption(reason)
-                await journal.interrupt(reason)
+                await journal.interrupt(
+                    reason,
+                    trace_id=str(trace),
+                    elapsed_ms=round((monotonic() - started) * 1000),
+                )
                 raise
     for batch in batches:
         yield batch

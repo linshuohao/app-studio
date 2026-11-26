@@ -13,6 +13,17 @@
 .agent-history p {
   white-space: pre-wrap;
 }
+.agent-attempt-process summary {
+  cursor: pointer;
+}
+.agent-attempt-stage {
+  margin-inline-start: var(--studio-space-12);
+  margin-block: var(--studio-space-4);
+}
+.agent-attempt-trace {
+  color: var(--studio-text-muted);
+  overflow-wrap: anywhere;
+}
 .agent-thread textarea {
   width: 100%;
   min-height: 0;

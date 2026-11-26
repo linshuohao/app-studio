@@ -1,3 +1,4 @@
+import { PageHeading } from '../../../../apps/studio/src/app/page-heading';
 import { Modal } from '../../../../apps/studio/src/app/modal';
 import { JsonSource } from '../../../../apps/studio/src/app/json-source';
 import {
@@ -308,7 +309,54 @@ function LeaveExample() {
     </>
   );
 }
+function PageHeadingExample({ initialTitle, delayedSave }) {
+  const [title, setTitle] = useState(initialTitle);
+  const [renameDisabled, setRenameDisabled] = useState(false);
+  const completeSave = useRef(null);
+
+  function save(value) {
+    if (!delayedSave) {
+      setTitle(value);
+      return;
+    }
+    return new Promise((resolve) => {
+      completeSave.current = () => {
+        completeSave.current = null;
+        setTitle(value);
+        resolve();
+      };
+    });
+  }
+
+  return (
+    <PageHeading
+      title={title}
+      back={{ label: '恢复示例标题', onClick: () => setTitle(initialTitle) }}
+      rename={{ label: '表单名称', onSave: save, disabled: renameDisabled }}
+    >
+      <button type="button" className="studio-button" onClick={() => setTitle(initialTitle)}>
+        重置
+      </button>
+      <button
+        type="button"
+        className="studio-button"
+        aria-pressed={renameDisabled}
+        onClick={() => setRenameDisabled(!renameDisabled)}
+      >
+        禁用标题编辑
+      </button>
+      {delayedSave && (
+        <button type="button" className="studio-button" onClick={() => completeSave.current?.()}>
+          完成保存
+        </button>
+      )}
+    </PageHeading>
+  );
+}
+
 const stories = {
+  'page-heading': [PageHeadingExample, { initialTitle: '差旅审批单', delayedSave: false }],
+  'page-heading-async': [PageHeadingExample, { initialTitle: '差旅审批单', delayedSave: true }],
   identity: [({ id }) => <RecordIdentity id={id} />, { id: 'travel-insurance' }],
   contracttable: [
     ({ required }) => (

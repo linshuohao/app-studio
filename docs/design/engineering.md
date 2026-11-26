@@ -26,7 +26,7 @@ navigation:
   group: 01 · 架构全貌
   order: 30
 last_reviewed: '2026-10-28'
-status_note: 核心 / React / DevTools、资产工具、14 个物料 / 7 个业务函数及完整可控表单已有本地证据；真实 Host、全端性能与远端 CI 未完成
+status_note: 核心 / React / DevTools、资产工具、14 个物料 / 7 个业务函数及完整可控表单已有本地证据；远端 Quality 已通过，主分支保护已启用；真实 Host 与全端性能待验收
 ---
 
 # 工程工具链与初始化方案
@@ -291,7 +291,18 @@ src 不混放测试文件；Vitest 从 tests 发现包内测试。测试可以�
 
 ## 7. Git、提交与版本管理 {#engineering-git}
 
-采用主干开发：main + 短生命周期分支 + PR + Squash Merge，不建立长期 develop。分支使用 feat/、fix/、refactor/、docs/、chore/；一次 PR 聚焦可审查目标，大任务拆成可工作增量。主干禁止强推，合并基于当前检查结果；多人时至少一位其他维护者审查，个人阶段保留自审与自动门禁。
+采用主干开发。所有改动通过以 `main` 为目标的 PR 进入主干，仅使用 Squash Merge。项目使用短期工作分支，不设长期 `develop`。
+
+| 环节 | 规范 |
+| --- | --- |
+| 创建分支 | 从最新 `main` 创建短期分支，使用 `feat/`、`fix/`、`refactor/`、`docs/` 或 `chore/` 前缀。一次 PR 聚焦一个可审查目标，大任务拆成可工作的增量，合并后清理工作分支。 |
+| 提交与合并 | PR 标题遵循 Conventional Commits，正文说明变更、影响和验证结果。合并前分支须与 `main` 同步，最新提交须通过 GitHub Actions 的 Quality `verify`，审查对话须全部解决。 |
+| 审查 | 单人维护阶段执行自审和 CI 检查。多人协作后，至少由一位其他维护者批准。PR 新增提交后须重新审查。 |
+| 热修与回滚 | 热修从 `fix/` 分支提交 PR。回滚通过 Revert PR 完成，保留主干历史。 |
+
+主干须遵守 PR 合并流程，禁止直接推送、强推或删除 `main`。GitHub 强制执行主干限制、同步要求、Quality `verify` 和审查对话要求，管理员同样受约束。独立审批要求在进入多人协作阶段时启用。
+
+2026-11-26，[Quality 工作流](https://github.com/linshuohao/app-studio/actions/runs/45744017895)已通过。仓库公开后已启用 [Protect main 规则集](https://github.com/linshuohao/app-studio/rules/28132041)。规则仅匹配 `refs/heads/main`，要求来自 GitHub Actions 的 `verify`、仅允许 Squash Merge，旁路名单为空。单人维护阶段的强制审批人数为 0。
 
 Conventional Commits 用英文类型 / scope、可用中文描述：
 
@@ -574,7 +585,7 @@ Host 的请求、待处理核验、模式、草稿及模拟提交结果属于验
 | PR 关键链路 | 真实浏览器 E2E，API 启动 / 请求，依赖图受影响范围覆盖消费者；首期规模小先全量执行；复杂行为按下方契约审查闭环验收 |
 | 发布前 | 完整回归、Changesets / API / 兼容与制品检查；只有存在真实发布流程才启用发布 |
 
-质量任务失败阻止合并，取消或跳过不等于通过；统一汇总必需结果，避免路径过滤导致必需检查永久 pending 或误通过。Next build 不承担独立 Lint 门禁。CI 优先 GitHub Actions，实际托管未确认时不声称分支保护已设置。部署、数据库、鉴权、Platform 状态管理、完整监控、Storybook 和远程缓存不作为本轮底座前置。
+质量任务失败时暂缓合并，取消或跳过不等于通过。统一汇总必需结果，避免路径过滤导致必需检查永久 pending 或误通过。Next build 不承担独立 Lint 门禁。GitHub Actions 检查与平台强制状态见[分支管理规范](#engineering-git)。部署、数据库、鉴权、Platform 状态管理、完整监控、Storybook 和远程缓存不作为本轮底座前置。
 
 测试分层：模块测试随包；跨包在 tests/integration；React 使用 Testing Library；Nest 使用实际模块注入与 HTTP 验证；Playwright 操作真实 UI。异步结果顺序可控，不靠固定 sleep；记录时区、随机种子和时钟策略。失败保留报告、Trace 和必要截图，避免敏感业务值，重试不能掩盖不稳定用例。覆盖率先采集、按已有核心分支设门槛，不对空包设置虚高百分比。
 
@@ -621,7 +632,7 @@ AI Contract 生成与同步检查由 `tools/docs/build_contracts.py` 提供。St
 
 协议结构源后续已确认原生 TS 类型 + JSDoc → 自动生成 JSON Schema，Compiler 使用 Ajv，见 [ADR-FE-015](decisions/ADR-FE-015-protocol-source.md)。具体生成器、严格生成配置与正式最低浏览器 / 库运行环境范围仍需在对应实现前闭合；默认组件基础已按实施细化采用 Base UI，三种当前测试浏览器通过不等于历史版本最低范围已确认。预算、发布平台、Platform / Studio 及各层既有 OD 保持原状态。
 
-当前状态：E1–E4 工程配置与本地验证已完成，远端 CI / 受保护分支尚未运行或配置；不对外发布。核心业务按[既有 T01–T07](governance.md#design-roadmap)准备契约与纵切，不因工程文档存在提升模块完成度。
+当前状态：E1–E4 工程配置与本地验证已完成，远端 Quality 已通过，[主分支保护已启用](#engineering-git)；尚无对外制品发布。核心业务按[既有 T01–T07](governance.md#design-roadmap)准备契约与纵切，不因工程文档存在提升模块完成度。
 
 
 ## 10. 初始化实施记录与日常使用 {#engineering-implementation}
@@ -681,7 +692,7 @@ pnpm test:e2e
 
 Python 文档环境按 docs/README.md 准备，CI 采用相同依赖。`pnpm check` 先生成本地阅读产物，再执行只读同步检查。单独运行 `pnpm docs:check` 时，先用 `pnpm docs:build` 准备产物。格式化忽略现行设计 / 生成阅读页、Python 工具及框架生成的 next-env.d.ts，保持各自维护体系。
 
-主动升级使用 `pnpm toolchain:update`，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。远端 CI、分支保护、PR 审查人数与部署权限仍需在真实托管仓库启用，未声称已运行。
+主动升级使用 `pnpm toolchain:update`，不重新运行项目脚手架；查看 diff 与兼容报告，复跑 pnpm check 和浏览器测试后再接受新锁。Git Hook 已接入 lint-staged / commitlint，Changesets 已初始化但无包发布动作。CI 文件使用执行时查询到的最新官方稳定 Action，并固定实际 SHA；Dependabot 提供后续升级 PR 配置。初始化时远端 CI、分支保护、PR 审查和部署权限尚未配置。当前托管与审查状态见[分支管理规范](#engineering-git)。
 
 本地验收包含：冷构建、类型检查、Lint / 格式、单元 / 集成、正反依赖边界、frozen install、隔离 tarball / 类型 / CSS 消费、三浏览器 E2E；开发模式实际移走六包 dist 后验证 Next 渲染与跨包源码更新，浏览器验证 CSS 热更新及输入交互；Nest 验证装饰器依赖注入、本地与间接工作区源码修改触发重启，探针均恢复。工程审查发现的 CSS watch、缓存输入与应用源码越界问题已修复及复验。完整引擎语义、最低历史浏览器兼容与 Platform / Studio 仍按既有任务推进。
 

@@ -41,3 +41,36 @@ it('rejects a changed contract under an already registered asset version', () =>
   old.materials.text!.manifest.propsSchema = { type: 'object' };
   expect(() => new WebAssetCatalog(installed, [old])).toThrow('without a new capability version');
 });
+
+it('allows the deployment to recommend an archive and retain another build only for existing bindings', () => {
+  const installed = snapshot('installed', '2.0.0', '1');
+  const old = snapshot('archive', '1.0.0', '2');
+  const current = installed.materials.text!;
+  const retained = old.materials.text!;
+  const catalog = new WebAssetCatalog(
+    installed,
+    [old],
+    [
+      {
+        kind: 'materials',
+        id: 'text',
+        version: retained.manifest.version,
+        artifactDigest: retained.artifact.digest,
+        policy: 'recommend',
+      },
+      {
+        kind: 'materials',
+        id: 'text',
+        version: current.manifest.version,
+        artifactDigest: current.artifact.digest,
+        policy: 'retain-only',
+      },
+    ],
+  );
+  expect(catalog.find('materials', 'text')).toBe(retained);
+  expect(catalog.find('materials', 'text', current.manifest.version, current.artifact.digest)).toBe(
+    current,
+  );
+  expect(catalog.selectable('materials', current)).toBe(false);
+  expect(catalog.isInstalled('materials', retained)).toBe(false);
+});

@@ -143,7 +143,12 @@ export function AssetCatalog({
     }
     setDetailDialog(undefined);
     setSelected(row);
-    writeLocation({ catalog: kind, asset: row?.id, assetVersion: row?.version });
+    writeLocation({
+      catalog: kind,
+      asset: row?.id,
+      assetVersion: row?.version,
+      assetDigest: row?.artifact.digest,
+    });
   }
   useEffect(() => {
     let active = true;
@@ -170,7 +175,11 @@ export function AssetCatalog({
     if (!selected) return;
     let active = true;
     void platform<Detail>(
-      `/catalog/${kind}/${encodeURIComponent(selected.id)}${selected.version ? `?version=${encodeURIComponent(selected.version)}` : ''}`,
+      `/catalog/${kind}/${encodeURIComponent(selected.id)}?` +
+        new URLSearchParams({
+          ...(selected.version && { version: selected.version }),
+          ...(selected.artifact.digest && { artifactDigest: selected.artifact.digest }),
+        }),
     ).then(
       (result) => {
         if (!active) return;

@@ -3,12 +3,13 @@ import { travelEligibilityValidator } from './validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
 import { readDelivery, type LoadedRelease } from './read-delivery';
 export type { LoadedRelease } from './read-delivery';
+import { webAssetCompatibility } from '@form-engine/protocol/prepared';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests } from '@form-engine/renderer-react';
-import { createRuntime, type RuntimeOptions } from '@form-engine/runtime';
+import { type createRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { goldenData } from '../../../../playground/src/demos/travel/policy';
 import { releaseWebCapabilities } from './available-capabilities';
-import { resolveWebCapabilities, type WebCapabilities } from './resolve-capabilities';
+import { resolveWebCapabilities } from './resolve-capabilities';
 
 export const stages = [
   '获取发布',
@@ -24,6 +25,8 @@ export async function loadRelease(
 ) {
   const release = await readDelivery(releaseId, signal, () => stage(1));
   stage(2, release);
+  const compatibility = webAssetCompatibility(release.prepared);
+  if (compatibility) throw new Error(compatibility.message);
   const capabilities = await resolveWebCapabilities(
     release.prepared.capabilityLock,
     releaseWebCapabilities,
@@ -34,7 +37,7 @@ export async function loadRelease(
 const cities = ['北京', '上海', '广州', '深圳', '成都'];
 export function startRelease(
   prepared: LoadedRelease,
-  { materials, functions }: WebCapabilities,
+  { materials, functions, runtime: engine }: Awaited<ReturnType<typeof resolveWebCapabilities>>,
   show: (message: string) => void,
   onCreate: () => void,
   onRegistrations: (available: {
@@ -141,7 +144,7 @@ export function startRelease(
   }
   let runtime: ReturnType<typeof createRuntime>;
   try {
-    runtime = createRuntime({
+    runtime = engine.create({
       prepared,
       functions,
       onDiagnostic: (report) => {

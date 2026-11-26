@@ -1,3 +1,4 @@
+import { createRuntime } from '@form-engine/runtime';
 import { isCoreBinding } from '@form-engine/pure-functions';
 import type { ArtifactIdentity } from '@form-engine/protocol';
 import type { LockedCapability } from '@form-engine/protocol/prepared';
@@ -5,7 +6,15 @@ import type { LoadedRelease } from './read-delivery';
 import { canonical, digest } from './read-delivery';
 import type { createWebCapabilities } from '../web-capabilities';
 
-export type WebCapabilities = ReturnType<typeof createWebCapabilities>;
+type WebRuntime = {
+  create: typeof createRuntime;
+  ownsCore: typeof isCoreBinding;
+};
+export type WebCapabilities = ReturnType<typeof createWebCapabilities> & {
+  runtime?: WebRuntime;
+};
+
+const installedRuntime: WebRuntime = { create: createRuntime, ownsCore: isCoreBinding };
 
 async function resolveBindings<T extends { artifact: ArtifactIdentity }>(
   locks: Readonly<Record<string, Readonly<LockedCapability>>>,
@@ -40,7 +49,7 @@ async function resolveBindings<T extends { artifact: ArtifactIdentity }>(
 export async function resolveWebCapabilities(
   lock: LoadedRelease['capabilityLock'],
   available: readonly WebCapabilities[],
-): Promise<WebCapabilities> {
+) {
   const [materials, functions] = await Promise.all([
     resolveBindings(
       lock.materials,
@@ -55,12 +64,16 @@ export async function resolveWebCapabilities(
       '函数',
     ),
   ]);
-  for (const [id, binding] of Object.entries(functions)) {
-    if (id.startsWith('core.') && !isCoreBinding(binding)) {
-      throw new Error(
-        `当前 Runtime 无法执行发布锁定的内置函数：${id}（制品 ${binding.artifact.digest}）。`,
-      );
-    }
+  const core = Object.values(functions).filter(({ manifest }) => manifest.id.startsWith('core.'));
+  const runtime = [
+    installedRuntime,
+    ...available.flatMap((item) => (item.runtime ? [item.runtime] : [])),
+  ].find((engine) => core.every((binding) => engine.ownsCore(binding)));
+  if (!runtime) {
+    const requirements = core
+      .map(({ manifest, artifact }) => `${manifest.id}（${artifact.digest}）`)
+      .join('、');
+    throw new Error(`当前 Runtime 无法执行发布锁定的内置函数：${requirements}。`);
   }
-  return { materials: Object.freeze(materials), functions: Object.freeze(functions) };
+  return { materials: Object.freeze(materials), functions: Object.freeze(functions), runtime };
 }

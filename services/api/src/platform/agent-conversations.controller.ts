@@ -29,6 +29,7 @@ import {
   resourceId,
 } from './form-drafts.js';
 import { configText, PlatformForms } from './forms.js';
+import { pinAgentAssetEnvironment } from './agent-asset-environments.js';
 import { ReleaseBuild } from './release-build.js';
 import { requireStudioOrigin, session } from './session-http.js';
 
@@ -48,6 +49,8 @@ type TurnInput = {
   draftId?: string;
   draftRevision?: number;
   workingText?: string;
+  basedOnVersionId?: string;
+  assetChoices?: unknown;
   readOnly?: boolean;
   formId?: string;
   workId?: string;
@@ -75,6 +78,7 @@ export class AgentConversationsController {
     private readonly access: PlatformAccess,
     private readonly drafts: PlatformDrafts,
     private readonly builds: ReleaseBuild,
+    private readonly assetStorage: PlatformDatabase,
     private readonly forms: PlatformForms,
     private readonly db: PlatformDatabase,
   ) {}
@@ -378,6 +382,7 @@ export class AgentConversationsController {
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
     const references = await this.resolveReferences(cookie, actor, body.references);
     const run = async (stream?: TurnStream): Promise<TurnView> => {
+      let environment = checkEnvironment(this.builds);
       let workingText = body.workingText === undefined ? undefined : configText(body.workingText);
       let editingDraft: Pick<Draft, 'id' | 'revision'> | undefined;
       if (body.draftId) {
@@ -409,11 +414,21 @@ export class AgentConversationsController {
       if (body.formId) {
         await this.checkForm(actor, body.formId, body.workId);
         if (body.workId) linkedDraftId = await this.linkedDraft(actor, body.formId, body.workId);
-        workingText = await this.forms.authoringInput(
+        const input = await this.forms.authoringAssetInput(
           session(cookie),
           body.formId,
-          { text: workingText },
+          {
+            text: workingText,
+            basedOnVersionId: body.basedOnVersionId,
+            assetChoices: body.assetChoices,
+          },
           'check',
+        );
+        workingText = input.text;
+        environment = await pinAgentAssetEnvironment(
+          this.assetStorage.executor,
+          this.builds,
+          input.bindings,
         );
       }
       const requestFingerprint = digestText(
@@ -427,6 +442,9 @@ export class AgentConversationsController {
           body.workId,
           body.workingText,
           ...(body.readOnly ? ['read-only'] : []),
+          ...(body.basedOnVersionId || body.assetChoices
+            ? [[body.basedOnVersionId, body.assetChoices]]
+            : []),
           ...(references.length ? [references.map(referenceIdentity)] : []),
         ]),
       );
@@ -452,7 +470,7 @@ export class AgentConversationsController {
                 target: 'web',
                 knowledge_version:
                   process.env.CREATE_FORM_KNOWLEDGE_VERSION || 'createform-l1-2026-11-22.2',
-                check_environment: checkEnvironment(this.builds),
+                check_environment: environment,
                 formId: body.formId,
                 workId: body.workId,
               },

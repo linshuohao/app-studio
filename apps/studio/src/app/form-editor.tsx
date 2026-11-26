@@ -9,7 +9,7 @@ import { Menu } from '@form-engine/studio-design-components/menu';
 import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
 import { RecordIdentity } from '../components/record-identity';
 
-import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import { versionLabel } from './record-labels';
 import { CatalogInsert } from './catalog-insert';
 import type { CatalogKind } from './catalog-targets';
@@ -28,7 +28,8 @@ import './page-reference.css';
 import { writeLocation } from './studio-location';
 import { compactJson, displayJson, storageJson } from './format-json';
 import { Modal } from './modal';
-import { ConfigInspection } from './config-inspection';
+import { AssetBindingEditor, type AssetChoice } from './asset-binding-editor';
+import { ConfigInspection, type InspectionInput } from './config-inspection';
 import { ConfigDiff } from './config-diff';
 import {
   accessDenied,
@@ -40,7 +41,7 @@ import {
 } from './platform-api';
 
 import { DraftRecovery } from './draft-recovery';
-import type { DraftContent, SaveRequest } from './local-drafts';
+import type { AssetInspection, DraftContent, SaveRequest } from './local-drafts';
 
 export function FormEditor({
   form,
@@ -64,7 +65,13 @@ export function FormEditor({
   spaceId: string;
   form: OpenForm;
   continuation?: { key: string; conversation: ConversationLink };
-  working: { id: string; name: string; history: VersionSummary[]; readOnly: boolean };
+  working: {
+    id: string;
+    name: string;
+    source?: string | null;
+    history: VersionSummary[];
+    readOnly: boolean;
+  };
   canEdit: boolean;
   navigating: boolean;
   onBack: () => void;
@@ -92,6 +99,15 @@ export function FormEditor({
   const [showSaveDetails, setShowSaveDetails] = useState(false);
   const [alreadySaved, setAlreadySaved] = useState(false);
   const [note, setNote] = useState('');
+  const [assetChoices, setAssetChoices] = useState<AssetChoice[]>([]);
+  const [assetInspection, setAssetInspection] = useState<AssetInspection>();
+  const recordInspection = useCallback((source: InspectionInput, catalog: string) => {
+    const key = JSON.stringify(source);
+    setAssetInspection((current) =>
+      current?.source === key && current.catalog === catalog ? current : { source: key, catalog },
+    );
+  }, []);
+  const [showAssetVersions, setShowAssetVersions] = useState(false);
   const [savedText, setSavedText] = useState(() => displayJson(form.text));
   const [versionId, setVersionId] = useState(form.version?.versionId ?? null);
   const [pending, setPending] = useState<SaveRequest | null>(null);
@@ -103,7 +119,8 @@ export function FormEditor({
   const [schemaPending, setSchemaPending] = useState(false);
   const storedText = useMemo(() => storageJson(text), [text]);
   const savedComparison = useMemo(() => storageJson(savedText), [savedText]);
-  const dirty = storedText !== savedComparison || note !== '' || pending !== null;
+  const dirty =
+    storedText !== savedComparison || note !== '' || pending !== null || assetChoices.length > 0;
   const hasUnsavedInput = dirty || schemaPending;
   const editable = canEdit && !form.archived && !working.readOnly;
   const chatKey = conversationKey(userId, spaceId, form.formId, working.id);
@@ -140,8 +157,10 @@ export function FormEditor({
       savedText,
       pending,
       agentApplied,
+      assetChoices,
+      assetInspection,
     }),
-    [text, note, versionId, savedText, pending, agentApplied],
+    [text, note, versionId, savedText, pending, agentApplied, assetChoices, assetInspection],
   );
   useEffect(() => {
     if (!hasUnsavedInput) return;
@@ -200,6 +219,11 @@ export function FormEditor({
       text: storedText,
       basedOnVersionId: versionId,
       note,
+      assetChoices,
+      ...(assetInspection &&
+        assetInspection.source === JSON.stringify(inspectionInput) && {
+          inspectedCatalog: assetInspection.catalog,
+        }),
     };
     setPending(snapshot);
     setBusy(true);
@@ -214,6 +238,8 @@ export function FormEditor({
           basedOnVersionId: snapshot.basedOnVersionId,
           ...(snapshot.note && { note: snapshot.note }),
           ...(snapshot.name && { name: snapshot.name }),
+          ...(snapshot.assetChoices?.length && { assetChoices: snapshot.assetChoices }),
+          ...(snapshot.inspectedCatalog && { inspectedCatalog: snapshot.inspectedCatalog }),
         },
       });
       setSavedText(snapshot.text);
@@ -221,6 +247,7 @@ export function FormEditor({
       setNote((current) => (current === snapshot.note ? '' : current));
       setVersionId(result.versionId);
       setPending(null);
+      setAssetChoices([]);
     } catch (error) {
       if (!outcomeUnknown(error) && (!pending || !accessDenied(error))) setPending(null);
       if (accessDenied(error)) onAccessLost();
@@ -257,6 +284,17 @@ export function FormEditor({
     });
   }
   const inspection = editable || (versionId && !dirty);
+  const baseAssetVersion = versionId ?? working.source ?? undefined;
+  const assetContext = {
+    ...(baseAssetVersion && { basedOnVersionId: baseAssetVersion }),
+    ...(assetChoices.length > 0 && { assetChoices }),
+  };
+  const inspectionInput = editable
+    ? { text: storedText, ...assetContext }
+    : { versionId: versionId! };
+  function locateAsset(pointer: string) {
+    setFocusPath((current) => ({ path: pointer, revision: (current?.revision ?? 0) + 1 }));
+  }
 
   return (
     <>
@@ -320,17 +358,27 @@ export function FormEditor({
             </Menu.Root>
           )}
           {inspection && (
+            <Button
+              variant="secondary"
+              disabled={blocked || schemaPending}
+              onClick={() => setShowAssetVersions(true)}
+            >
+              资产版本
+            </Button>
+          )}
+          {inspection && (
             <ConfigInspection
               autoCheck={editable && insertCheck === inspectionRevision}
               key={`${inspectionRevision}:${editable}`}
               path={path}
-              input={editable ? { text: storedText } : { versionId: versionId! }}
+              input={inspectionInput}
               confirmTrial={agentApplied ? (value) => setConfirmedPreview(value) : undefined}
               canCheck={editable}
               disabled={blocked || schemaPending}
               sourceText={text}
               profile={profile}
               onProfile={setProfile}
+              onInspected={recordInspection}
               onLocate={(path) =>
                 setFocusPath((current) => ({ path, revision: (current?.revision ?? 0) + 1 }))
               }
@@ -415,10 +463,34 @@ export function FormEditor({
             setVersionId(row.versionId);
             setSavedText(row.savedText);
             setPending(row.pending);
+            setAssetChoices(row.assetChoices ?? []);
+            setAssetInspection(row.assetInspection);
             setInspectionRevision((v) => v + 1);
             setError('');
             writeLocation({ form: form.formId, work: working.id });
             acceptedUrl.current = location.pathname + location.search;
+          }}
+        />
+      )}
+      {showAssetVersions && (
+        <AssetBindingEditor
+          path={path}
+          input={inspectionInput}
+          editable={editable && !pending}
+          onClose={() => setShowAssetVersions(false)}
+          onLocate={locateAsset}
+          onSelect={(choice) => {
+            setAssetChoices((current) => [
+              ...current.filter(
+                (item) =>
+                  item.profile !== choice.profile ||
+                  item.kind !== choice.kind ||
+                  item.id !== choice.id,
+              ),
+              choice,
+            ]);
+            setConfirmedPreview(undefined);
+            setInspectionRevision((value) => value + 1);
           }}
         />
       )}
@@ -447,6 +519,7 @@ export function FormEditor({
               formId={form.formId}
               workId={working.id}
               source={storedText}
+              assetContext={assetContext}
               locked={agentBusy}
               disabled={schemaPending || busy || navigating || !!pending}
               setLocked={setAgentBusy}
@@ -502,6 +575,8 @@ export function FormEditor({
             }}
           >
             <JsonSource
+              onInspected={recordInspection}
+              assetContext={editable ? assetContext : versionId ? { versionId } : undefined}
               formPath={path}
               profile={profile}
               onProfile={setProfile}
@@ -524,6 +599,7 @@ export function FormEditor({
                   </button>
                   {inserting && (
                     <CatalogInsert
+                      binding={{ formPath: path, input: inspectionInput }}
                       kind={inserting}
                       text={text}
                       onClose={() => setInserting(undefined)}

@@ -12,6 +12,7 @@ import { PlatformDatabase } from './database.js';
 import { PlatformForms, requestIdentity } from './forms.js';
 import { ReleaseBuild, type ReleaseBuildInput } from './release-build.js';
 import { type LocatedDiagnostic, webTarget } from './web-check.js';
+import { captureAssetBindings, deployedAsset } from './version-web-bindings.js';
 type PublishInput = {
   versionId?: unknown;
   profile?: unknown;
@@ -99,9 +100,17 @@ export class PlatformReleases {
       if (complete) return { result: receipt(complete) };
       if (!actor.permissions.includes('form:publish')) throw new ForbiddenException();
       if (form.archived) throw new ConflictException('Form is archived');
-      const { text } = await this.forms.readVersion(actor.spaceId, formId, versionId, db);
+      const revision = await this.forms.readVersion(actor.spaceId, formId, versionId, db);
+      const { text } = revision;
       await this.forms.checkPublishHead(formId, versionId, db);
       if (previous) return { request: previous, text };
+      const bindings = await this.forms.revisionAssetBindings(db, formId, revision);
+      const { catalog, selections } = captureAssetBindings(
+        this.builder.assets,
+        text,
+        target.profile,
+        bindings,
+      );
       const pending: AcceptedRequest = {
         request_id: randomUUID(),
         space_id: actor.spaceId,
@@ -110,7 +119,7 @@ export class PlatformReleases {
         form_id: formId,
         version_id: versionId,
         fingerprint,
-        build_input: JSON.stringify(this.builder.capture(target)),
+        build_input: JSON.stringify(this.builder.capture(target, catalog, selections)),
         release_name: name,
       };
       await db.execute(
@@ -140,6 +149,21 @@ export class PlatformReleases {
     const checked = await this.builder.compile(accepted.text, inputSnapshot);
     if (!checked.success)
       return { success: false as const, versionId, diagnostics: checked.diagnostics };
+    const unavailable = (['materials', 'pureFunctions'] as const).flatMap((kind) =>
+      Object.entries(checked.prepared.capabilityLock[kind]).flatMap(([id, lock]) =>
+        deployedAsset(this.builder.assets, kind, id, lock)
+          ? []
+          : [
+              {
+                code: 'ASSET_ARTIFACT_UNAVAILABLE',
+                severity: 'error' as const,
+                sourcePointer: '',
+                message: `发布目标缺少锁定制品：${id} @ ${lock.version}（${lock.artifact.digest}）`,
+              },
+            ],
+      ),
+    );
+    if (unavailable.length) return { success: false as const, versionId, diagnostics: unavailable };
     // Capture documentation on schema nodes before hashing, keeping historical deliveries self-contained.
     const prepared = structuredClone(checked.prepared);
     for (const [prefix, notes] of Object.entries(inputSnapshot.requestNotes ?? {})) {

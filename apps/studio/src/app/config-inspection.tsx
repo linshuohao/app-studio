@@ -8,9 +8,12 @@ import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { PreviewRuntime } from './preview-runtime';
 import { Button } from '@form-engine/studio-design-components/controls';
 
+import type { AssetChoice } from './asset-binding-editor';
+
 type CheckResult = {
   success: boolean;
   catalogId: string;
+  recommendedCatalog?: string;
   target: { platform: string; profile?: string };
   diagnostics: {
     code: string;
@@ -22,7 +25,8 @@ type CheckResult = {
   prepared?: ReadonlyPreparedForm;
 };
 
-export type InspectionInput = { text: string } | { versionId: string };
+export type InspectionInput =
+  { text: string; basedOnVersionId?: string; assetChoices?: AssetChoice[] } | { versionId: string };
 
 export function ConfigInspection({
   path,
@@ -35,6 +39,7 @@ export function ConfigInspection({
   onProfile,
   sourceText,
   onLocate,
+  onInspected,
 }: {
   path: string;
   input: InspectionInput;
@@ -46,6 +51,7 @@ export function ConfigInspection({
   profile: string;
   onProfile: (profile: string) => void;
   onLocate?: (path: string) => void;
+  onInspected?: (source: InspectionInput, catalog: string) => void;
 }) {
   const [request, setRequest] = useState<{
     id: number;
@@ -97,7 +103,10 @@ export function ConfigInspection({
           ...(target && { profile: target }),
         },
       });
-      if (sequence.current === id) setRequest({ id, source: input, mode, result });
+      if (sequence.current === id) {
+        setRequest({ id, source: input, mode, result });
+        if (result.recommendedCatalog) onInspected?.(input, result.recommendedCatalog);
+      }
     } catch (error) {
       if (sequence.current === id)
         setRequest({ id, source: input, mode, error: failureMessage(error) });

@@ -6,7 +6,7 @@ import { StudioSelect } from '@form-engine/studio-design-components/select';
 import * as manifests from '@form-engine/materials-react/manifests';
 import { compactJson } from '../components/json/format';
 import type { JsonNode } from '../components/json/model';
-import { verifyLayoutEdit } from './layout-check';
+import { verifyLayoutEdit, type LayoutAssetContext } from './layout-check';
 import { failureMessage, PlatformError } from './platform-api';
 import { child, semanticModel, escapeKey, type Model } from './semantic-model';
 import { emptyRoot, editLayout, layoutName } from './layout-keys';
@@ -32,13 +32,16 @@ import { layoutExpressionContext } from './layout-expression';
 import { LayoutScopeInspector } from './layout-scope-inspector';
 import { LayoutLivePreview } from './layout-live-preview';
 import { useSchemaNavigation } from './schema-navigation';
+import { useAssetBindingProfiles } from './asset-binding-editor';
 import './layout-editor.css';
 
 // The Platform Compiler builds its Web Catalog from the same installed manifest entry point.
-const slots = new Map<string, readonly string[]>(
+const installedSlots = new Map<string, readonly string[]>(
   Object.values(manifests).map((m) => [m.id, 'slots' in m ? (m.slots ?? []) : []]),
 );
 type Props = {
+  assetContext?: LayoutAssetContext;
+  onInspected?: (source: import('./config-inspection').InspectionInput, catalog: string) => void;
   text: string;
   readOnly?: boolean;
   apply: (next: string) => void;
@@ -80,6 +83,8 @@ export function LayoutEditor(props: Props) {
 }
 
 function LayoutWorkspace({
+  onInspected,
+  assetContext,
   text,
   readOnly,
   apply,
@@ -94,6 +99,19 @@ function LayoutWorkspace({
   const views = child(m.root, 'views');
   const root = child(views, profile) ?? views?.children?.[0];
   const key = root?.key ?? '';
+  const bindingInput = {
+    formPath,
+    profile: key,
+    source: assetContext?.versionId
+      ? { versionId: assetContext.versionId }
+      : { text, ...assetContext },
+  };
+  const profiles = useAssetBindingProfiles(formPath, bindingInput.source);
+  const activeAssets = profiles?.profiles?.find(({ profile }) => profile === key);
+  const slots = new Map(installedSlots);
+  for (const dependency of activeAssets?.dependencies ?? []) {
+    if (dependency.kind === 'materials') slots.set(dependency.id, dependency.slots ?? []);
+  }
   const [path, setPath] = useState('');
   const [fieldPath, setFieldPath] = useState('');
   const [dialog, setDialog] = useState<'new' | 'copy' | 'rename'>();
@@ -135,7 +153,7 @@ function LayoutWorkspace({
   );
   const item = items.find((i) => i.node === node);
   const materialId = m.str(child(node, 'material'));
-  const inspectorMaterial = useLayoutMaterial(inspecting ? materialId : undefined);
+  const inspectorMaterial = useLayoutMaterial(inspecting ? materialId : undefined, bindingInput);
   const parentNode =
     node && items.findLast(({ node: ancestor }) => node.path.startsWith(ancestor.path + '/'))?.node;
   const itemTitle = node ? nodeName(m, node) : '';
@@ -193,7 +211,7 @@ function LayoutWorkspace({
   async function check(next: string, nodePath: string) {
     const version = current.current;
     const request = ++checkSequence.current;
-    await verifyLayoutEdit(formPath, key, text, next, nodePath);
+    await verifyLayoutEdit(formPath, key, text, next, nodePath, assetContext);
     if (request !== checkSequence.current) throw Error('已有新的编辑操作，请重试。');
     if (version !== current.current) throw Error('编辑位置或草稿已变化，请重试。');
   }
@@ -580,6 +598,8 @@ function LayoutWorkspace({
               ) : (
                 <section className="layout-live" aria-label="真实表单预览">
                   <LayoutLivePreview
+                    assetContext={assetContext}
+                    onInspected={onInspected}
                     key={formPath + ':' + key}
                     formPath={formPath}
                     profile={key}
@@ -667,6 +687,8 @@ function LayoutWorkspace({
                                       <summary>试填表单</summary>
                                       {drawerPreview && (
                                         <LayoutLivePreview
+                                          assetContext={assetContext}
+                                          onInspected={onInspected}
                                           formPath={formPath}
                                           profile={key}
                                           text={
@@ -850,6 +872,7 @@ function LayoutWorkspace({
         </Drawer.Root>
         {activePicker && root && (
           <LayoutMaterialPicker
+            binding={bindingInput}
             fields={candidatesFor(
               activePicker.position ? m.byPath.get(activePicker.position.parent)! : root,
             )}

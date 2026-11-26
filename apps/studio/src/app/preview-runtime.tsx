@@ -4,10 +4,10 @@ import { checkPassportDuplicates, travelPassportValidator } from './host/passpor
 import { projectUnderwritingSubmission } from './host/underwriting-projection';
 import { travelEligibilityValidator } from './host/validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
-import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
+import { webAssetCompatibility, type ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests, FormRenderer } from '@form-engine/renderer-react';
-import { createRuntime, type FormRuntime, type RuntimeOptions } from '@form-engine/runtime';
+import { type FormRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { goldenData } from '../../../playground/src/demos/travel/policy';
 import { previewWebCapabilities } from './host/available-capabilities';
@@ -133,12 +133,18 @@ export function PreviewRuntime({
       }
       setSession(undefined);
       try {
-        const { materials, functions } = await resolveWebCapabilities(
+        const compatibility = webAssetCompatibility(prepared);
+        if (compatibility) throw new Error(compatibility.message);
+        const {
+          materials,
+          functions,
+          runtime: engine,
+        } = await resolveWebCapabilities(
           prepared.capabilityLock,
           capabilities ? [capabilities] : previewWebCapabilities,
         );
         if (!active) return;
-        instance = createRuntime({
+        instance = engine.create({
           prepared,
           functions,
           data:

@@ -1,4 +1,10 @@
 import {
+  captureAssetBindings,
+  checkAssetBindings,
+  reviseAssetBindings,
+  type RevisionBindings,
+} from './version-web-bindings.js';
+import {
   BadGatewayException,
   BadRequestException,
   ConflictException,
@@ -49,6 +55,7 @@ export type Draft = {
   revision: number;
   sourceRevision: number;
   previewDigest: string | null;
+  previewBindings: RevisionBindings | null;
   draftIssues: DraftIssue[];
   appliedDraftIssues: DraftIssue[];
   formId: string | null;
@@ -88,9 +95,27 @@ export type DraftPreview = {
   prepared: Extract<ConfigCheck, { success: true }>['prepared'];
   digest: string;
 };
+function draftPreviewDigest(text: string, bindings: RevisionBindings) {
+  return digestText(
+    JSON.stringify([
+      text,
+      bindings.map(({ profile, selections }) => [
+        profile,
+        selections.map(({ kind, id, lock }) => [
+          kind,
+          id,
+          lock?.version,
+          lock?.manifestDigest,
+          lock?.artifact.id,
+          lock?.artifact.digest,
+        ]),
+      ]),
+    ]),
+  );
+}
 const columns = `id,name,version_name AS "versionName",working_text AS text,candidate_text AS "candidateText",
  candidate_base_text AS "candidateBaseText",candidate_digest AS "candidateDigest",applied_digest AS "appliedDigest",
- draft_issues AS "draftIssues",applied_draft_issues AS "appliedDraftIssues",revision,source_revision AS "sourceRevision",preview_digest AS "previewDigest",form_id AS "formId",version_id AS "versionId",updated_at AS "updatedAt"`;
+ draft_issues AS "draftIssues",applied_draft_issues AS "appliedDraftIssues",revision,source_revision AS "sourceRevision",preview_digest AS "previewDigest",preview_web_bindings AS "previewBindings",form_id AS "formId",version_id AS "versionId",updated_at AS "updatedAt"`;
 // eslint-disable-next-line no-control-regex -- Control characters have no place in a display name.
 const control = /[\u0000-\u001f\u007f]/u;
 function name(value: unknown, max: number) {
@@ -477,21 +502,29 @@ export class PlatformDrafts {
     const row = await this.get(token, id);
     const text = this.text(row, body);
     if (row.formId) throw new ConflictException();
-    const result = await this.builds.compile(text, previewInputs(this.builds, body.profile));
+    const target = previewInputs(this.builds, body.profile).target;
+    const bindings = reviseAssetBindings(this.builds.assets, text, [], []);
+    const { catalog, selections } = captureAssetBindings(
+      this.builds.assets,
+      text,
+      target.profile,
+      bindings,
+    );
+    const result = checkAssetBindings(text, catalog, target, selections, true);
     if (!result.success)
       throw new BadRequestException({
         message: '工作稿未通过编译',
         diagnostics: result.diagnostics,
       });
-    const digest = digestText(text);
+    const digest = draftPreviewDigest(text, bindings);
     await this.storage.transaction(async (db) => {
       const current = await this.get(token, id, db);
       if (current.formId) throw new ConflictException();
       this.text(current, body);
-      await db.execute('UPDATE platform_form_drafts SET preview_digest=$2 WHERE id=$1', [
-        id,
-        digest,
-      ]);
+      await db.execute(
+        'UPDATE platform_form_drafts SET preview_digest=$2, preview_web_bindings=$3 WHERE id=$1',
+        [id, digest, JSON.stringify(bindings)],
+      );
     });
     return { prepared: result.prepared, digest };
   }
@@ -500,7 +533,16 @@ export class PlatformDrafts {
       const actor = await this.access.authenticate(token, 'form:edit', db);
       const row = await this.get(token, id, db);
       const text = this.text(row, body);
-      if (row.previewDigest !== digestText(text) || body.previewDigest !== row.previewDigest)
+      const expectedPreview = row.previewBindings
+        ? draftPreviewDigest(text, row.previewBindings)
+        : row.formId
+          ? digestText(text)
+          : undefined;
+      if (
+        !expectedPreview ||
+        row.previewDigest !== expectedPreview ||
+        body.previewDigest !== row.previewDigest
+      )
         throw new ConflictException('请先预览当前工作稿');
       if (
         (row.draftIssues.length || row.appliedDraftIssues.length) &&
@@ -514,8 +556,16 @@ export class PlatformDrafts {
           throw new ConflictException();
         return { formId: row.formId, versionId: row.versionId, workId: row.versionId };
       }
+      if (!row.previewBindings) throw new ConflictException('请先预览当前工作稿');
       await this.assertEditing(db, id, 'human', body.editingToken);
-      const saved = await this.forms.saveCreatedCandidate(actor, title, text, db, versionName);
+      const saved = await this.forms.saveCreatedCandidate(
+        actor,
+        title,
+        text,
+        db,
+        versionName,
+        row.previewBindings,
+      );
       await db.execute('DELETE FROM platform_draft_editing WHERE draft_id=$1', [id]);
       await db.execute(
         'UPDATE platform_form_drafts SET form_id=$2,version_id=$3,name=$4,version_name=$5,working_text=$6 WHERE id=$1',

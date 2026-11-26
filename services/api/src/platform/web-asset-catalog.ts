@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import {
@@ -9,6 +10,14 @@ import {
 type Snapshot = CompileInput['catalog'];
 export type WebAssetKind = 'materials' | 'pureFunctions';
 type Entry = Snapshot[WebAssetKind][string];
+type SelectionPolicy = {
+  kind: WebAssetKind;
+  id: string;
+  version: string;
+  artifactDigest: string;
+  policy: 'recommend' | 'retain-only';
+};
+const key = (kind: WebAssetKind, id: string, digest: string) => JSON.stringify([kind, id, digest]);
 
 const kinds = ['materials', 'pureFunctions'] as const;
 const artifactDigest = /^sha256:[a-f0-9]{64}$/;
@@ -44,14 +53,46 @@ export function readRetainedCatalogs(file: string | undefined): Snapshot[] {
   return snapshots;
 }
 
+export function readWebAssetPolicies(file: string | undefined): SelectionPolicy[] {
+  if (!file) return [];
+  const policies = JSON.parse(readFileSync(file, 'utf8')) as SelectionPolicy[];
+  if (
+    !Array.isArray(policies) ||
+    policies.some(
+      (entry) =>
+        !entry ||
+        !kinds.includes(entry.kind) ||
+        typeof entry.id !== 'string' ||
+        !entry.id ||
+        typeof entry.version !== 'string' ||
+        !entry.version ||
+        !artifactDigest.test(entry.artifactDigest) ||
+        (entry.policy !== 'recommend' && entry.policy !== 'retain-only'),
+    )
+  )
+    throw new Error('Invalid Web asset selection policy');
+  return policies;
+}
+
 /** Ordered deployment registry. The installed build supplies the recommendations. */
 export class WebAssetCatalog {
+  readonly recommended: Snapshot;
+  private readonly retainOnly = new Set<string>();
+
   constructor(
-    readonly recommended: Snapshot,
+    private readonly installed: Snapshot,
     private readonly retained: readonly Snapshot[],
+    policies: readonly SelectionPolicy[] = [],
   ) {
+    this.recommended = policies.length
+      ? {
+          ...installed,
+          materials: { ...installed.materials },
+          pureFunctions: { ...installed.pureFunctions },
+        }
+      : installed;
     const manifests = new Map<string, Entry['manifest']>();
-    for (const snapshot of [recommended, ...retained]) {
+    for (const snapshot of [installed, ...retained]) {
       for (const kind of kinds) {
         for (const { manifest } of Object.values(snapshot[kind])) {
           const key = JSON.stringify([kind, manifest.id, manifest.version]);
@@ -64,12 +105,53 @@ export class WebAssetCatalog {
         }
       }
     }
+    const recommendations = new Set<string>();
+    const recorded = new Set<string>();
+    for (const { kind, id, version, artifactDigest, policy } of policies) {
+      const entry = this.find(kind, id, version, artifactDigest);
+      const identity = key(kind, id, artifactDigest);
+      if (!entry || recorded.has(identity))
+        throw new Error('Unknown or duplicate Web asset policy: ' + id);
+      recorded.add(identity);
+      if (policy === 'retain-only') this.retainOnly.add(identity);
+      else {
+        const logical = JSON.stringify([kind, id]);
+        if (recommendations.has(logical)) throw new Error('Multiple Web recommendations: ' + id);
+        recommendations.add(logical);
+        Object.defineProperty(this.recommended[kind], id, {
+          value: entry,
+          enumerable: true,
+          configurable: true,
+        });
+      }
+    }
+    if (policies.length) {
+      for (const kind of kinds) {
+        for (const [id, entry] of Object.entries(this.recommended[kind])) {
+          if (!this.selectable(kind, entry)) delete this.recommended[kind][id];
+        }
+      }
+      this.recommended.id =
+        'web:' +
+        createHash('sha256')
+          .update(JSON.stringify([installed.id, policies]))
+          .digest('hex');
+    }
+  }
+
+  isInstalled(kind: WebAssetKind, entry: Entry) {
+    const id = entry.manifest.id;
+    return Object.hasOwn(this.installed[kind], id) && this.installed[kind][id] === entry;
+  }
+
+  selectable(kind: WebAssetKind, entry: Entry) {
+    return !this.retainOnly.has(key(kind, entry.manifest.id, entry.artifact.digest));
   }
 
   entries(kind: WebAssetKind, allVersions = false): Entry[] {
     if (!allVersions) return Object.values(this.recommended[kind]);
     const entries = new Map<string, Entry>();
-    for (const snapshot of [this.recommended, ...this.retained]) {
+    for (const snapshot of [this.recommended, this.installed, ...this.retained]) {
       for (const entry of Object.values(snapshot[kind])) {
         const key = JSON.stringify([
           entry.manifest.id,

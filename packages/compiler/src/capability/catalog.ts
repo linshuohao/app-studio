@@ -12,12 +12,19 @@ import { own } from '../common/object.js';
 import { contentDigest } from '../common/json.js';
 import { validateMaterialManifest, validatePureFunctionManifest } from './validation.js';
 
+export type CapabilityReference = {
+  kind: 'materials' | 'pureFunctions';
+  id: string;
+  sourcePointer: string;
+};
+
 /** 物料与函数共用查询、自检、身份 / 平台检查和双摘要锁；不导入实现或联网。 */
 export function createCapabilityCatalog(
   catalog: CapabilityCatalogSnapshot,
   target: NonNullable<CompileInput['target']>,
   diagnostics: Diagnostics,
   source: (pointer: string) => string,
+  observe?: (reference: CapabilityReference) => void,
 ) {
   function reader<M extends MaterialManifest | PureFunctionManifest>(
     kind: 'materials' | 'pureFunctions',
@@ -28,6 +35,7 @@ export function createCapabilityCatalog(
     const contracts = new Map<string, M | undefined>();
     const locked = new Map<string, LockedCapability>();
     function read(id: string, pointer: string): M | undefined {
+      observe?.({ kind, id, sourcePointer: source(pointer) });
       if (contracts.has(id)) return contracts.get(id);
       if (!own(entries, id)) {
         diagnostics.error(missingCode, source(pointer), `No ${kind} contract for ${id}.`);

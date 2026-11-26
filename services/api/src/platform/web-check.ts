@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   compile,
+  type CapabilityReference,
   type CompileInput,
   type CompileResult,
   type Diagnostic,
@@ -48,7 +49,13 @@ export function webCatalog(
 
 const catalog = webCatalog('studio-web-preview', artifact, artifact);
 
-export type ConfigInput = { text?: unknown; versionId?: unknown; profile?: unknown };
+export type ConfigInput = {
+  text?: unknown;
+  versionId?: unknown;
+  profile?: unknown;
+  basedOnVersionId?: unknown;
+  assetChoices?: unknown;
+};
 
 export type LocatedDiagnostic = Diagnostic & {
   location?: { offset: number; length: number; line: number; column: number };
@@ -104,14 +111,15 @@ export function webTarget(profile: unknown): CompileInput['target'] & { platform
 
 export function withTravelPreviewHost(source: CompileInput['catalog']): CompileInput['catalog'] {
   const { payloadSchema, resultSchema } =
-    source.materials['remote-select']!.manifest.requests!.search!;
+    source.materials['remote-select']?.manifest.requests?.search ?? {};
   return {
     ...source,
     host: {
       ...source.host,
       requests: {
         ...source.host?.requests,
-        'travel.searchCities': { payloadSchema, resultSchema },
+        ...(payloadSchema !== undefined &&
+          resultSchema !== undefined && { 'travel.searchCities': { payloadSchema, resultSchema } }),
       },
       events: {
         ...source.host?.events,
@@ -135,6 +143,7 @@ export function checkWebConfig(text: string, profile: unknown, travelHost = fals
 export function compileWebConfig(
   text: string,
   input: Omit<CompileInput, 'definition'> & { target: { platform: string; profile?: string } },
+  observeCapability?: (reference: CapabilityReference) => void,
 ): ConfigCheck {
   const { catalog, target } = input;
   const identity = { catalogId: catalog.id, target };
@@ -161,7 +170,7 @@ export function compileWebConfig(
     };
   }
 
-  const result = compile({ ...input, definition });
+  const result = compile({ ...input, definition }, observeCapability);
   const tree = syntaxTree(text);
   const diagnostics = result.diagnostics.map((diagnostic: Diagnostic) => {
     const node = tree && sourceNode(tree, diagnostic.sourcePointer);

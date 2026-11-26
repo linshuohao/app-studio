@@ -40,7 +40,7 @@ export class PlatformDatabase implements OnModuleInit, OnModuleDestroy {
       'SELECT name FROM platform_schema_migrations ORDER BY id',
     );
     if (
-      rows.length !== 9 ||
+      rows.length !== 10 ||
       rows[0]?.name !== '1780000000000-platform' ||
       rows[1]?.name !== '1780000000001-scenarios' ||
       rows[2]?.name !== '1780000000002-working-versions' ||
@@ -49,7 +49,8 @@ export class PlatformDatabase implements OnModuleInit, OnModuleDestroy {
       rows[5]?.name !== '1780000000005-independent-form-drafts' ||
       rows[6]?.name !== '1780000000006-remove-retired-studio-storage' ||
       rows[7]?.name !== '1780000000007-agent-partial-draft-issues' ||
-      rows[8]?.name !== '1780000000008-draft-editing'
+      rows[8]?.name !== '1780000000008-draft-editing' ||
+      rows[9]?.name !== '1780000000011-version-web-bindings'
     ) {
       throw new Error('Unsupported Platform schema; run the release migration before startup');
     }

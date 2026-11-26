@@ -99,6 +99,16 @@ Studio 提供真实安装的物料 / 纯函数目录与成员管理。目录机�
 
 管理员可核实身份后创建内置账号、设置初始密码并线下交付，也可关联已有账号。成员本人可在账号设置修改密码：当前会话保留，其他会话撤销。角色及启停有修订冲突校验、事务内最后有效管理员保护；成员停用保留历史，恢复仍可使用未过期、未撤销会话。
 
+### Web 资产保留与切换
+
+发布目标使用构建时本地装配。留存已发布物料、纯函数和 Runtime 的包目录与发布时实际摘要。归档 Runtime 使用可解析的构建依赖，归档物料与 Studio 使用同一套 React、React DOM、Renderer 适配层及相同物料样式。用 `node tools/engineering/prepare-retained-web-assets.mjs <deployment.json>` 校验并生成同一组登记输入。
+
+部署配置中的 `archives` 是归档数组，每条包含 `materialsRoot`、`functionsRoot`、`runtimeRoot` 与相应的 `materialsDigest`、`functionsDigest`、`runtimeDigest`。其余字段为 `currentMaterialsRoot`、位于 Studio 构建工作区的 `moduleFile` 与输出 `catalogsFile`。路径使用绝对路径。API 设置 `PLATFORM_RETAINED_WEB_CATALOGS_FILE` 指向生成目录文件，Studio 构建设置 `STUDIO_RETAINED_WEB_CAPABILITIES_MODULE` 指向生成模块相对于 Studio 工作区的路径。切换时同批使用生成的目录、注册模块和 Runtime 构建产物。
+
+Web 推荐默认来自当前构建。可选的 `PLATFORM_WEB_ASSET_POLICIES_FILE` 提供部署策略数组，每项包含 `kind`、`id`、`version`、`artifactDigest` 和 `policy`。 `recommend` 指定推荐制品，`retain-only` 停止该精确制品的新选择并继续提供既有绑定。API 启动前应用版本 11 迁移，并将新增表 `platform_agent_asset_environments` 的读取和写入权限授予 Platform 运行角色。
+
+真实包验收在可丢弃检出、临时 PostgreSQL 和独立浏览器中执行。构建工作区依赖后，设置 `WEB_ASSET_UPGRADE_ISOLATED=1`、`PLATFORM_TEST_DATABASE_URL`，运行 `node apps/studio/tests/verify-packed-web-asset-upgrade.mjs`。脚本构建并区分真实代码的旧、新测试包，经过实际保存与发布，升级后访问 Host，并在 Studio 保存显式升级的配置修订。
+
 ### 本地开发快捷登录
 
 仅显式设置 `NODE_ENV=development PLATFORM_LOCAL_LOGIN=true` 且 API/Studio 监听回环地址时启用。Studio 登录页显示专用账号 `local-development-only` 和角色；首次点击创建该专用账号及默认空间管理员成员（不创建密码），后续不会恢复停用状态或覆盖角色。登录仍使用正常 HttpOnly 会话和 RBAC。禁止在共享/生产数据库开启；关闭开关或切到生产后已有开发会话也拒绝认证。

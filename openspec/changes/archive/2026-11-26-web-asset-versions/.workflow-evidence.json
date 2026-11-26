@@ -1,0 +1,30 @@
+{
+  "fingerprint": "ea8cb9dedfe8c9c2621100b60675789719d7b96e40fe112b11c4edf30f51fad3",
+  "checks": [
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/api",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "--filter",
+      "@form-engine/studio",
+      "typecheck"
+    ],
+    [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "tests/integration/asset-binding-evidence.test.ts",
+      "tests/integration/web-asset-catalog.test.ts",
+      "tests/integration/web-asset-versions.test.ts"
+    ],
+    [
+      "node",
+      "apps/studio/tests/verify-web-asset-versions.mjs"
+    ]
+  ]
+}

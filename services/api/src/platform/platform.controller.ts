@@ -5,7 +5,13 @@ import { GitHubAccess } from './github-access.js';
 import { PlatformForms } from './forms.js';
 import { PlatformReleases } from './releases.js';
 import { cookieName, cookieOptions, requireStudioOrigin, session } from './session-http.js';
-import { checkWebConfig, type ConfigCheck, type ConfigInput } from './web-check.js';
+import { webTarget, type ConfigCheck, type ConfigInput } from './web-check.js';
+import { ReleaseBuild } from './release-build.js';
+import {
+  captureAssetBindings,
+  checkAssetBindings,
+  describeAssetBindings,
+} from './version-web-bindings.js';
 @Controller('api/platform')
 export class PlatformController {
   constructor(
@@ -13,6 +19,7 @@ export class PlatformController {
     private readonly forms: PlatformForms,
     private readonly releases: PlatformReleases,
     private readonly github: GitHubAccess,
+    private readonly builds: ReleaseBuild,
   ) {}
   @Post('login')
   @HttpCode(200)
@@ -197,6 +204,8 @@ export class PlatformController {
       | {
           text?: unknown;
           workId?: string;
+          assetChoices?: unknown;
+          inspectedCatalog?: unknown;
           basedOnVersionId?: unknown;
           note?: unknown;
           name?: unknown;
@@ -213,6 +222,8 @@ export class PlatformController {
       input?.note,
       input?.name,
       input?.workId,
+      input?.assetChoices,
+      input?.inspectedCatalog,
     );
   }
   @Get('forms/:formId/versions')
@@ -340,6 +351,25 @@ export class PlatformController {
   ) {
     return await this.releases.delivery(releaseId);
   }
+  @Post('forms/:formId/asset-bindings')
+  @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
+  async assetBindings(
+    @Headers('origin') origin: string | undefined,
+    @Headers('cookie') cookie: string | undefined,
+    @Param('formId') formId: string,
+    @Body() input: ConfigInput | undefined,
+  ) {
+    requireStudioOrigin(origin);
+    const { text, bindings } = await this.forms.authoringAssetInput(
+      session(cookie),
+      formId,
+      input ?? {},
+      'preview',
+    );
+    return describeAssetBindings(this.builds.assets, text, bindings);
+  }
+
   @Post('forms/:formId/check')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
@@ -354,14 +384,33 @@ export class PlatformController {
     input: (ConfigInput & { simulateTravelHost?: boolean }) | undefined,
   ) {
     requireStudioOrigin(origin);
-    const text = await this.forms.authoringInput(session(cookie), formId, input ?? {}, 'check');
-    const checked = checkWebConfig(text, input?.profile, input?.simulateTravelHost === true);
-    if (!checked.success) return checked;
+    const { text, bindings } = await this.forms.authoringAssetInput(
+      session(cookie),
+      formId,
+      input ?? {},
+      'check',
+    );
+    const target = webTarget(input?.profile);
+    const { catalog, selections } = captureAssetBindings(
+      this.builds.assets,
+      text,
+      target.profile,
+      bindings,
+    );
+    const checked = checkAssetBindings(
+      text,
+      catalog,
+      target,
+      selections,
+      input?.simulateTravelHost === true,
+    );
+    if (!checked.success) return { ...checked, recommendedCatalog: this.builds.assets.recommended.id };
     return {
       success: true,
       diagnostics: checked.diagnostics,
       catalogId: checked.catalogId,
       target: checked.target,
+      recommendedCatalog: this.builds.assets.recommended.id,
     };
   }
   @Post('forms/:formId/preview')
@@ -376,9 +425,24 @@ export class PlatformController {
     formId: string,
     @Body()
     input: (ConfigInput & { simulateTravelHost?: boolean }) | undefined,
-  ): Promise<ConfigCheck> {
+  ): Promise<ConfigCheck & { recommendedCatalog: string }> {
     requireStudioOrigin(origin);
-    const text = await this.forms.authoringInput(session(cookie), formId, input ?? {}, 'preview');
-    return checkWebConfig(text, input?.profile, input?.simulateTravelHost === true);
+    const { text, bindings } = await this.forms.authoringAssetInput(
+      session(cookie),
+      formId,
+      input ?? {},
+      'preview',
+    );
+    const target = webTarget(input?.profile);
+    const { catalog, selections } = captureAssetBindings(
+      this.builds.assets,
+      text,
+      target.profile,
+      bindings,
+    );
+    return {
+      ...checkAssetBindings(text, catalog, target, selections, input?.simulateTravelHost === true),
+      recommendedCatalog: this.builds.assets.recommended.id,
+    };
   }
 }

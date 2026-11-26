@@ -49,7 +49,7 @@ test('confirms GitHub registration and keeps account access separate from team r
   ).toBeVisible();
   await expect(page.getByRole('button', { name: '解绑 GitHub', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '退出登录', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   expect((await page.request.get('/api/platform/account')).status()).toBe(401);
   await page.getByRole('button', { name: '用 GitHub 登录' }).click();
   await expect(page.getByRole('heading', { name: '尚未加入团队' })).toBeVisible();
@@ -69,7 +69,7 @@ test('can leave registration for an existing account and invalidates its pending
   await expect(page.getByText('GitHub 身份已验证，请确认是否创建平台账号。')).toBeVisible();
   await expect(page.getByText('暂时无法完成 GitHub 授权，请重试。')).toHaveCount(0);
   await page.getByRole('button', { name: '返回登录已有账号' }).click();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   expect(
     (
       await page.request.post('/api/platform/github/register', {
@@ -79,7 +79,7 @@ test('can leave registration for an existing account and invalidates its pending
     ).status(),
   ).toBe(401);
   await page.reload();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   await expect(
     page
       .getByLabel('用户名', { exact: true })
@@ -120,10 +120,10 @@ test('ignores a team-list response that arrives after logout', async ({ page, ba
   await held;
   await page.getByRole('button', { name: '我的账号', exact: true }).click();
   await page.getByRole('menuitem', { name: '退出登录', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   release();
   await page.unrouteAll({ behavior: 'wait' });
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
   await expect(
     page.locator('.studio-navigation').getByRole('button', { name: '表单', exact: true }),
   ).toHaveCount(0);

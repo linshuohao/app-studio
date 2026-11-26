@@ -422,6 +422,7 @@ export class PlatformDrafts {
           `UPDATE platform_form_drafts SET candidate_text=$2,candidate_base_text=$3,candidate_digest=$4,
         source_revision=$5,revision=revision+$6,draft_issues=$7,
         applied_draft_issues=CASE
+          WHEN applied_digest=$4 AND working_text=$2 THEN $7::jsonb
           WHEN applied_digest=$4 AND $7::jsonb <> '[]'::jsonb THEN (
             SELECT jsonb_agg(DISTINCT item)
             FROM jsonb_array_elements(applied_draft_issues || $7::jsonb) AS issues(item)

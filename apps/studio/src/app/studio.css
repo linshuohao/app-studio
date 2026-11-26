@@ -1653,12 +1653,6 @@ button.material-card-open:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-.diff-pair pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: #f7f7f8;
-  padding: 8px;
-}
 @media (max-width: 640px) {
   .diff-pair {
     grid-template-columns: minmax(0, 1fr);

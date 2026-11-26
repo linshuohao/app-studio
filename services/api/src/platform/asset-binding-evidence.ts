@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { capturePreparedForm } from '@form-engine/protocol/internal/prepared';
 import type { CompileInput, CompileResult } from '@form-engine/compiler';
 import type { QueryExecutor } from './database.js';
 
@@ -50,14 +52,48 @@ export async function legacyAssetBindingEvidence(
   formId: string,
   versionId: string,
 ) {
-  const rows = await db.many<{ prepared_text: string }>(
-    'SELECT prepared_text FROM platform_releases WHERE form_id = $1 AND version_id = $2 ORDER BY release_sequence',
+  const rows = await db.many<{ target: string; prepared_text: string; digest: string }>(
+    'SELECT target, prepared_text, digest FROM platform_releases WHERE form_id = $1 AND version_id = $2 ORDER BY release_sequence',
     [formId, versionId],
   );
+  const evidence: ReleaseEvidence[] = [];
+  const incompleteProfiles = new Set<string>();
+  for (const row of rows) {
+    let target: { platform?: unknown; profile?: unknown } | null;
+    try {
+      target = JSON.parse(row.target);
+    } catch {
+      target = null;
+    }
+    if (typeof target?.platform !== 'string' || !target.platform)
+      return { unobserved: 'pending' as const, profiles: [] };
+    if (target.platform !== 'web') continue;
+    if (typeof target.profile !== 'string' || !target.profile)
+      return { unobserved: 'pending' as const, profiles: [] };
+    try {
+      const digest = 'sha256:' + createHash('sha256').update(row.prepared_text).digest('hex');
+      if (digest !== row.digest) {
+        incompleteProfiles.add(target.profile);
+        continue;
+      }
+      const prepared = capturePreparedForm(JSON.parse(row.prepared_text));
+      if (
+        prepared.build.platform !== target.platform ||
+        prepared.build.profile !== target.profile
+      ) {
+        incompleteProfiles.add(target.profile);
+        continue;
+      }
+      evidence.push(prepared);
+    } catch {
+      // The SQLite importer intentionally preserves historical release bytes, including opaque payloads.
+      incompleteProfiles.add(target.profile);
+    }
+  }
   return {
     unobserved: 'pending' as const,
-    profiles: recoverLegacyAssetBindings(
-      rows.map(({ prepared_text }) => JSON.parse(prepared_text) as ReleaseEvidence),
+    profiles: recoverLegacyAssetBindings(evidence).filter(
+      ({ target }) => !incompleteProfiles.has(target.profile!),
     ),
   };
 }

@@ -13,18 +13,16 @@ import {
 import { PlatformAccess } from './access.js';
 import { ReleaseBuild } from './release-build.js';
 import { session } from './session-http.js';
-import { webTarget } from './web-check.js';
+import type { WebAssetKind } from './web-asset-catalog.js';
 @Controller('api/platform/catalog')
 export class CatalogController {
   constructor(
     private readonly access: PlatformAccess,
     private readonly build: ReleaseBuild,
   ) {}
-  private async entries(cookie: string | undefined, kind: string) {
-    await this.access.authenticate(session(cookie), 'form:view');
-    const catalog = this.build.capture(webTarget(undefined)).catalog;
-    if (kind === 'materials') return Object.values(catalog.materials);
-    if (kind === 'functions') return Object.values(catalog.pureFunctions);
+  private kind(kind: string): WebAssetKind {
+    if (kind === 'materials') return 'materials';
+    if (kind === 'functions') return 'pureFunctions';
     throw new NotFoundException('Unknown catalog');
   }
   @Get(':kind')
@@ -36,8 +34,12 @@ export class CatalogController {
     kind: string,
     @Query('q')
     q?: unknown,
+    @Query('allVersions') allVersions?: unknown,
   ) {
-    const entries = await this.entries(cookie, kind);
+    await this.access.authenticate(session(cookie), 'form:view');
+    if (allVersions !== undefined && allVersions !== 'true')
+      throw new BadRequestException('Invalid version filter');
+    const entries = this.build.assets.entries(this.kind(kind), allVersions === 'true');
     if (q !== undefined && (typeof q !== 'string' || q.length > 200))
       throw new BadRequestException('Invalid search query');
     const query = ((q ?? '') as string).trim().toLowerCase();
@@ -77,17 +79,21 @@ export class CatalogController {
     id: string,
     @Query('version')
     version?: unknown,
+    @Query('artifactDigest') artifactDigest?: unknown,
   ) {
-    const entries = await this.entries(cookie, kind);
+    await this.access.authenticate(session(cookie), 'form:view');
     if (
       version !== undefined &&
       (typeof version !== 'string' || !version.length || version.length > 200)
     )
       throw new BadRequestException('Invalid version');
-    const entry = entries.find(
-      ({ manifest }) =>
-        manifest.id === id && (version === undefined || manifest.version === version),
-    );
+    if (
+      artifactDigest !== undefined &&
+      (typeof artifactDigest !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(artifactDigest))
+    )
+      throw new BadRequestException('Invalid artifact digest');
+    const assetKind = this.kind(kind);
+    const entry = this.build.assets.find(assetKind, id, version, artifactDigest);
     if (!entry) throw new NotFoundException('Unknown asset version');
     const documentation = Object.hasOwn(catalogDocumentation, entry.manifest.id)
       ? catalogDocumentation[entry.manifest.id]

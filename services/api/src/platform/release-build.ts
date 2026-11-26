@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { setImmediate } from 'node:timers/promises';
 import { catalogDocumentation } from './catalog-documentation.js';
 import { buildIdentity } from './build-identity.js';
+import { readRetainedCatalogs, WebAssetCatalog } from './web-asset-catalog.js';
 import { compileWebConfig, webCatalog, webTarget } from './web-check.js';
 
 const identity = (specifier: string, id: string) =>
@@ -65,6 +66,10 @@ export type ReleaseBuildInput = ReturnType<typeof releaseInputs> & {
 export class ReleaseBuild {
   // Snapshot the installed artifacts at API startup. A new build runs in a new API process.
   private readonly installed = releaseInputs();
+  readonly assets = new WebAssetCatalog(
+    this.installed.catalog,
+    readRetainedCatalogs(process.env.PLATFORM_RETAINED_WEB_CATALOGS_FILE),
+  );
 
   capture(target: ReturnType<typeof webTarget>): ReleaseBuildInput {
     return {

@@ -293,10 +293,10 @@ export default function HostDemo() {
     // 按发布 ID 获取 Prepared 制品，校验摘要、目标和能力版本。
     async function mount() {
       try {
-        const { prepared } = await loadRelease(releaseId, controller.signal, () => {});
+        const { prepared, capabilities } = await loadRelease(releaseId, controller.signal, () => {});
         if (controller.signal.aborted) return;
         // 注册请求、动作和校验器，创建独立的运行实例。
-        instance = startRelease(prepared, setMessage, () => {}, () => {});
+        instance = startRelease(prepared, capabilities, setMessage, () => {}, () => {});
         setLoaded({ prepared, instance });
       } catch (reason) {
         if (!controller.signal.aborted)

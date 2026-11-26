@@ -1,0 +1,34 @@
+{
+  "authority": [
+    "docs/design/platform-studio.md",
+    "docs/design/decisions/ADR-FE-011-release-lock.md"
+  ],
+  "scope": [
+    "apps/studio/next.config.ts",
+    "apps/studio/tsconfig.json",
+    "apps/studio/src/app/host",
+    "apps/studio/src/app/preview-runtime.tsx",
+    "apps/studio/src/app/web-retained-capabilities.ts",
+    "apps/studio/tests/fixtures/web-asset-versions.ts",
+    "apps/studio/tests/verify-web-asset-versions.mjs",
+    "services/api/src/platform",
+    "services/api/test/platform-release.e2e-spec.ts",
+    "tests/integration/asset-binding-evidence.test.ts",
+    "tests/integration/web-asset-catalog.test.ts",
+    "tests/integration/web-asset-versions.test.ts"
+  ],
+  "checks": [
+    ["pnpm", "--filter", "@form-engine/api", "typecheck"],
+    ["pnpm", "--filter", "@form-engine/studio", "typecheck"],
+    [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "tests/integration/asset-binding-evidence.test.ts",
+      "tests/integration/web-asset-catalog.test.ts",
+      "tests/integration/web-asset-versions.test.ts"
+    ],
+    ["node", "apps/studio/tests/verify-web-asset-versions.mjs"]
+  ]
+}

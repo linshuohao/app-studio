@@ -9,6 +9,7 @@ import {
 import { createHash, randomUUID } from 'node:crypto';
 import { type AccessContext, PlatformAccess } from './access.js';
 import { PlatformDatabase } from './database.js';
+import { legacyAssetBindingEvidence } from './asset-binding-evidence.js';
 const initialText = '{}\n';
 export const maxConfigTextBytes = 64 * 1024;
 const versionIdPattern = /^[0-9a-f-]{36}$/;
@@ -333,6 +334,15 @@ export class PlatformForms {
   ) {
     const { spaceId } = await this.access.authenticate(token, 'form:view', db);
     return await this.readVersion(spaceId, formId, versionId, db);
+  }
+  async assetBindingEvidence(
+    token: string | undefined,
+    formId: string,
+    versionId: string,
+    db: QueryExecutor = this.storage.executor,
+  ) {
+    await this.detail(token, formId, versionId, db);
+    return legacyAssetBindingEvidence(db, formId, versionId);
   }
   async authoringInput(
     token: string | undefined,

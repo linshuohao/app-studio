@@ -89,6 +89,30 @@ it('publishes a selected immutable version and recovers a single success after c
     expect(JSON.parse(delivery.preparedText)).toMatchObject({
       definition: { id: travelDefinition.id },
     });
+    const evidencePath = (id: string) => base + '/versions/' + id + '/asset-binding-evidence';
+    await get(evidencePath(versionId)).expect(401);
+    const readEvidence = (id: string) =>
+      get(evidencePath(id))
+        .set('Cookie', 'platform-session=' + token)
+        .expect(200);
+    const { capabilityLock } = JSON.parse(delivery.preparedText);
+    expect((await readEvidence(versionId)).body).toEqual({
+      unobserved: 'pending',
+      profiles: [
+        {
+          target: { platform: 'web', profile: 'desktop' },
+          dependencies: ['materials', 'pureFunctions'].flatMap((kind) =>
+            Object.entries(capabilityLock[kind]).map(([id, lock]) => ({
+              kind,
+              id,
+              status: 'recoverable',
+              lock,
+            })),
+          ),
+        },
+      ],
+    });
+    expect((await readEvidence(v2)).body).toEqual({ unobserved: 'pending', profiles: [] });
     await get('/releases/missing').expect(404);
     await get(base + '/releases').expect(401);
     await publish(v2, 'release').expect(409);

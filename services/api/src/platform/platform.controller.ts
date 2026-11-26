@@ -237,6 +237,15 @@ export class PlatformController {
   ) {
     return await this.forms.detail(session(cookie), formId, versionId);
   }
+  @Get('forms/:formId/versions/:versionId/asset-binding-evidence')
+  @Header('Cache-Control', 'no-store')
+  assetBindingEvidence(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('formId') formId: string,
+    @Param('versionId') versionId: string,
+  ) {
+    return this.forms.assetBindingEvidence(session(cookie), formId, versionId);
+  }
   @Post('forms/:formId/copies')
   @Header('Cache-Control', 'no-store')
   async copy(

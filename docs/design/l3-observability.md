@@ -134,7 +134,7 @@ Devtools 可额外保存更完整的执行顺序、实际变化、输入状态�
 
 报告交给 Host / 配置平台去重、限频，不能成为正常 Data 写入的等待或许可条件；Devtools 的历史保存与事件消费 API 遵循[只读接缝契约](#observation-api)，具体编码在实现阶段确定。首次入队前后的触发信息需采集并接入本轮；执行上下文与 Journal 在实际调度开始时建立，结束后先封存并交付记录再释放。信息可由外部采集设施承接，不以异常为由给生产 Runtime 增加所有正常轮次的长期历史。
 
-首期生产接入已确认由 Host 接收完整现场、受信服务仅转发脱敏错误事件，Platform 负责事件查询与保留。Host 的现场标识关联到同一错误事件；完整现场的数据与访问权限归 Host。独立诊断和轮次报告中的同一条目用 Runtime 实例身份与事件序号关联。首期白名单及 `flush.aborted` 的精确匹配规则见[平台诊断事件映射](platform-studio.md#platform-diagnostic-mapping)。
+首期生产接入由 Host 接收错误现场，经受信服务上报，Platform 分开保存错误索引与可用的原始现场。Host 的现场标识关联到同一错误事件；原值按独立授权查看和复现，Agent 模型使用结构化证据与复现结果。独立诊断和轮次报告中的同一条目用 Runtime 实例身份与事件序号关联。首期白名单及 `flush.aborted` 的精确匹配规则见[平台诊断事件映射](platform-studio.md#platform-diagnostic-mapping)。
 
 2026-10-24 用户确认并授权落实该生命周期拆分。当前代码中，FlushContext 持有本轮预算计数、停止标志和临时 Journal；DiagnosticReporter 是实例诊断出口及有限最近事件查询，异步交付封存轮次报告和独立事件。异步 Host / Validator 仅持有启动来源编号，迟到回报不会追加到旧 Journal 或冒充其他同步轮次事件。代码入口及局部图见 `packages/runtime/README.md`。该历史批次实现条数截断与来源关联；后续新版 DevTools 观测已补 Command / Change 因果与观测字节预算，见当前实施边界。生产报告脱敏及目标设备阈值仍需单独验收，不因本地工具回归通过而整体标记 Trace 完成。
 

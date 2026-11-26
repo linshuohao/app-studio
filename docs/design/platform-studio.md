@@ -21,6 +21,7 @@ sources:
 related:
   decisions:
   - ADR-FE-038
+  - ADR-FE-039
   - ADR-FE-034
   - ADR-FE-033
   - ADR-FE-032
@@ -903,20 +904,19 @@ Trace 采用本轮有序行为记录、实际 Change 与最小 triggeredBy 来�
 
 ### 首期错误事件采集与查询 {#platform-diagnostic-events}
 
-2026-11-22 用户确认方案并授权归档，暂不开发。Platform 在现有 PostgreSQL 内保存脱敏错误事件，Host 自行保管完整复现现场。管理员可按表单、发布版本、规则或物料定位问题；需要复现时，通过 Host 自己的受控入口以 `hostId + eventId` 查找现场。决策见 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)，引擎侧证据要求见[执行异常的完整现场](l3-observability.md#l3-error-evidence)。
+2026-11-25 用户确认沿用 PostgreSQL 和受信 Host 上报，只采集已发布表单错误，并在 Platform 分开保存错误索引与实际取得的原始现场。首期暂缓脱敏，正常校验不通过及日常交互不进入错误中心。原始数据由授权维护者查看，Agent 侧只交给复现工具。模型读取结构化证据与复现结果。见 [ADR-FE-039](decisions/ADR-FE-039-form-error-evidence.md)；原方案见 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)。
 
 #### 上报与接收 {#platform-diagnostic-ingestion}
 
-Runtime / Renderer 产生结构化诊断 → Host 为错误分配 `eventId`、保存现场并生成脱敏事件 → Host 受信服务异步转发 → Platform 鉴权、校验、限流并提交 → 管理员查询。
+Runtime / Renderer 交付错误诊断 → Host 固定事件与发生时现场 → 浏览器 IndexedDB 异步暂存 → 受信 Host 转发 → Platform 核验发布与上报资格、幂等提交 → Studio 查询。
 
-- 首期按[诊断事件映射白名单](#platform-diagnostic-mapping)采集已发布表单的诊断事件。正常校验不通过继续走原有业务反馈。现场保存失败时仍可上报，由事件携带当时的保存结果。
-- 首期仅接入具备受信转发能力的 Host。接收接口为 `POST /diagnostics/events`，由 Host 后端或受信服务单条提交。服务凭证绑定 Host 和可上报的表单范围，浏览器经 Host 转发。Platform 由凭证确定 Host，并由 Release 回查及校验其表单和空间归属。公开下载的 `releaseId` 只用于标识制品。
-- Host 按白名单构造上报事件，Platform 校验允许字段、枚举和长度。错误摘要由稳定错误码映射为固定文本，配置定位只接受能从制品确认的配置标识。原始异常消息、堆栈、整份数据、Host Context、实例行路径和请求响应体留在 Host。接收失败时服务日志只记录拒绝原因和请求编号。
-- 数据库提交成功后返回接收成功；已接收事件重试时返回成功并保留原记录。超时、限流和临时故障在有界队列内退避重试并复用原 `eventId`，上报最多重试 24 小时。待发队列仅保存脱敏事件，设条数与总字节上限。非法和越权请求直接拒绝；队列满或重试到期由 Host 记录交付失败。上报不等待或阻塞表单交互、提交和执行清理。
+- Host 后端可凭绑定 Host 和表单范围的凭证向 `POST /api/platform/diagnostics/events` 提交。示例 Host 试点由显式配置开启，使用 Studio 管理员会话和 Origin 校验。浏览器队列绑定上报时会话；在 Platform 持久接收前重试复用原事件编号。匿名示例保留本地展示。
+- 采集阶段沿用现有白名单。原始现场独立保存，接收端检查结构、大小与相关配置目标。现场缺失、不可序列化或超过上限时仍可提交错误索引，显式显示证据状态。
+- 重试最长 24 小时。队列按数量和字节限制；请求超时、限流和临时服务故障在窗口内退避重试。相同 Host 与事件编号的同一载荷复用回执；事实不一致时反馈冲突。填写、联动和业务提交无需等待上报。
 
 #### 诊断事件映射与现场边界 {#platform-diagnostic-mapping}
 
-2026-11-22 用户确认首期按下表映射。Host 从 Runtime 和 Renderer 现有的 `onDiagnostic` 接收诊断，用白名单构造脱敏事件。Platform 校验来源、阶段、错误码及定位字段的组合。配置定位由 `targetKind` 与 `targetId` 成对表示，只使用实际运行 Release 中可核验的稳定标识；没有可靠目标时省略。
+2026-11-22 用户确认首期按下表映射。Host 从 Runtime 和 Renderer 现有的 `onDiagnostic` 接收诊断，用白名单构造错误索引和可用的原始现场。Platform 校验来源、阶段、错误码及定位字段的组合。配置定位由 `targetKind` 与 `targetId` 成对表示，只使用实际运行 Release 中可核验的稳定标识；没有可靠目标时省略。
 
 | 来源诊断 | `source` | `phase` | `errorCode` | 配置定位 |
 | --- | --- | --- | --- | --- |
@@ -929,48 +929,39 @@ Runtime / Renderer 产生结构化诊断 → Host 为错误分配 `eventId`、�
 
 白名单外的诊断留在 Host，包括 Schema 执行异常、Validator 缺注册和 Reaction 叶命令异常。Renderer 物料装配失败也可能使用 `MATERIAL_UNAVAILABLE`，由阶段字段区分。
 
-**Flush 熔断。** 精确匹配诊断条目的 `entry.kind === 'flush.aborted'`。Reaction 执行预算、同步校验反馈预算、活动轮次内同步通知反馈预算耗尽都可能发出该事件，统一上报为 `phase: flush`、`errorCode: flush.aborted`。具体原因留在 Host，错误文本不用于解析原因或推定规则目标。轮次结果 `outcome.status === 'aborted'` 可用于排查，它也可能由 `flush.error` 导致，不能单独触发 `flush.aborted` 上报。
+**Flush 熔断。** 精确匹配诊断条目的 `entry.kind === 'flush.aborted'`。Reaction 执行预算、同步校验反馈预算、活动轮次内同步通知反馈预算耗尽都可能发出该事件，统一上报为 `phase: flush`、`errorCode: flush.aborted`。具体原因随可用原始现场存储，错误文本不用于聚合或推定规则目标。轮次结果 `outcome.status === 'aborted'` 可用于排查，它也可能由 `flush.error` 导致，不能单独触发 `flush.aborted` 上报。
 
 Host 用 Runtime 实例身份与 `entry.sequence` 对齐带证据的独立诊断和轮次报告中的重复条目，为同一事件复用 `eventId`。保存现场优先使用独立诊断，辅助 Trace 容量为零时仍可接收。Platform 再以 `hostId + eventId` 保证重试幂等。
 
-**Runtime 现场。** 完整 Data、Host Context、触发与实际调用输入、Scope 和实例路径、校验读取值、事件及 Payload、外部结果、动作或命令、原始异常与堆栈、Prepared 身份，以及用于关联的实例身份、序号、轮次和调用标识均由 Host 保管。Host Validator 注册名也留在现场。[L3 完整现场契约](l3-observability.md#l3-error-evidence)
+**Runtime 现场。** 完整 Data、Host Context、触发与实际调用输入、Scope 和实例路径、校验读取值、事件及 Payload、外部结果、动作或命令、原始异常与堆栈、Prepared 身份，以及用于关联的实例身份、序号、轮次和调用标识可保留在授权证据区。Host Validator 注册名随可用原始现场存储。[L3 完整现场契约](l3-observability.md#l3-error-evidence)
 
-**Renderer 现场。** Host 只保存现有 `RendererDiagnostic` 回调可取得的内容，包括原始 `message`、`scope`、`occurrence` 和 `profile` 等。首期现场要求止于现有回调字段。
+**Renderer 现场。** 首期只保存现有 `RendererDiagnostic` 回调可取得的内容，包括原始 `message`、`scope`、`occurrence` 和 `profile` 等。首期现场要求止于现有回调字段。
 
-**上报字段。** Host 提交事件编号、实际 Release、发生时间、表中映射字段和现场保存结果。Platform 从凭证取得 Host 身份，从 Release 查出表单和空间，在接收端生成接收时间及聚合指纹。只有对应事件类型所需现场成功保存才标记 `captured`；保存失败或必要现场缺失标记 `failed`，无法确认保存结果时标记 `unknown`。
+**异常执行链路。** 单次异常从有因果关联的触发源追到失败，逐步保存执行身份、当时输入、动作、可取得的结果与异常。Runtime 使用有界窗口保存中间步骤，按触发与执行引用筛选后才随该次异常现场交给 Host。无关操作不进入上报包。链路随现场同批接收、幂等保存并按现场权限和保留期处理。旧记录没有链路；缺失来源或上报超限时明确标记部分记录。后续 Studio 切片会在独立详情页展示链路，快照沿用原发布配置和所选发生记录。
+
+**上报字段。** Host 提交协议版本、事件编号、Release、发生时间、映射字段、现场状态和可用现场。Platform 根据受信身份与 Release 校验归属，生成接收时间和聚合指纹。没有现场时保留原因；有现场时保留采集值和结构。
 
 #### PostgreSQL 存储 {#platform-diagnostic-storage}
 
-`diagnostic_events` 每行对应一次已接收错误。首期从事件表查询和聚合。
-
-| 字段 | 含义 |
-| --- | --- |
-| `id` | `bigint` 主键，用于稳定分页 |
-| `host_id`、`event_id` | Host 身份与事件 UUID，联合唯一 |
-| `space_id`、`form_id`、`release_id` | 由 Platform 验证的资源归属与实际运行的发布版本 |
-| `occurred_at`、`received_at` | Host 发生时间与 Platform 接收时间，查询排序与保留期基于接收时间 |
-| `source`、`phase`、`error_code` | 诊断来源、出错阶段、稳定错误码 |
-| `target_kind`、`target_id` | 可选的稳定配置定位，如 Reaction、Constraint 或物料节点 |
-| `fingerprint` | 由来源、阶段、错误码和稳定目标计算，用于同类聚合。Release 单独筛选和分组 |
-| `evidence_status` | 上报时的现场保存结果，如 `captured`、`failed`、`unknown`。当前可取性以 Host 为准 |
-
-联合唯一约束支撑幂等。首期索引按 `(space_id, form_id, received_at DESC, id DESC)` 支撑表单查询，按 `(received_at, id)` 支撑到期清理。Release 或指纹附加索引以查询量和实际执行计划为依据。
+`platform_diagnostic_events` 每行对应一次发生，记录公开诊断编号、Host 与 Event ID、Release、来源、阶段、错误码、稳定目标、指纹、发生与接收时间和现场状态。`platform_diagnostic_evidence` 保存原始现场 JSON，与索引在同一事务写入。定位类别在入口按错误码校验，由同一映射确定。主键与 Host + Event ID 唯一约束支持下钻和幂等，Release、接收时间索引支持查询及清理。读取原始现场记录访问审计。
 
 #### 查询与保留 {#platform-diagnostic-query-retention}
 
-| 查询 | 首期行为 |
-| --- | --- |
-| 表单错误列表 | 默认最近 24 小时，按接收时间、Release、Host、来源和错误码筛选，按 `(received_at, id)` 倒序游标分页 |
-| 同类错误汇总 | 在选定表单和时间窗按 `release_id + fingerprint` 分组，返回已接收次数、最早和最近接收时间，支持下钻。计数会受 Host 离线、限流和交付失败影响 |
-| 单条事件详情 | 查看发布版本、执行位置、错误及现场登记状态，可复制 `hostId + eventId` 到 Host 查找现场 |
+在可访问表单范围内按 `release_id + fingerprint` 聚合，返回已接收次数、首次和最近接收时间，支持下钻到实际事件。每次发生保留自己的现场。同一指纹跨发布分别统计，根因在调查中确认。首个 Studio 入口展示最近 100 个组及组内最近 100 次发生，分页和时间窗筛选在后续切片补齐。
 
-诊断查询单独授权，首期只开放给管理员，校验访问者当前资格和表单所属空间。Platform 事件自 `received_at` 保留 **30 天**，到期即退出列表、详情和汇总。后台每日分批清理并记录删除量与失败。数据库备份独立轮转，恢复后先完成过期清理再开放诊断查询。Host 现场默认保留 **7 天**，可按 Host 的业务数据要求配置，现场到期后 Platform 仍在自身保留期内提供脱敏事件。
+错误索引和原始现场分别保留 30 天、7 天，依据接收时间查询和分批清理。过期现场不通过读取接口继续提供。列表与汇总只查索引。原始现场详情按空间和诊断权限单独核验。
+
+Agent 引用选择器按 Platform 接收时间倒序分页显示单次错误，支持按表单名称、错误码、配置目标和错误 ID 查找。列表使用与单次引用一致的空间和诊断权限，只返回引用元数据。点选后固定单次错误 ID。
 
 #### 验收范围 {#platform-diagnostic-acceptance}
 
-以一次已发布表单的 Reaction 抛错验证端到端链路。管理员能定位 Release 和失败规则，并在 Host 调取当次现场。双回调、响应丢失后重试均只产生一行；数据库不可用时不阻塞表单；含额外敏感字段、越权 Host 上报和非管理员查询均被拒绝；到期事件退出列表、详情和汇总。正式请求 Schema、具体凭证载体及轮换、限额数值和清理任务实现留待交付预检。当前状态为设计已确认，待授权开发与验收。
+用实际字段值触发联动执行异常，验证归属原发布、原规则、触发输入与失败步骤输入。双回调、重试只产生一个事件；独立发生的同类错误聚合但支持各自下钻。离线、账号切换、越权、原始现场过期和超限均明确验证。补充验证关闭辅助 Trace 时熔断仍被采集，且 Flush 的一般中断不冒充熔断。开发状态分切片维护。
 
-映射验收补充三组反例：同一 `flush.aborted` 从两个出口到达时只入库一行，辅助 Trace 关闭仍可上报，只有 `aborted` 轮次结果时不生成熔断事件；相同 Renderer 错误码只有 `render` 阶段进入上报；白名单外事件以及 Runtime / Renderer 原始现场字段均留在 Host。
+### 错误引用与 Agent 调查 {#agent-error-diagnosis}
+
+Studio 附加单次错误 ID，消息持久化固定引用及可展示摘要。统一入口把错误调查请求交给独立维护 Graph，按权限固定原发布与资产锁、定位失败步骤、使用原始值尝试受控复现、按根因交付。业务口径交业务确认；确定性配置缺陷生成候选并检查；资产缺陷走代码任务、回归、PR、人审与版本交付；证据不足时保留缺口。任务与错误组、单次事件分别关联。
+
+原始值限授权的复现工具使用。模型、对话历史和 Graph 恢复状态只接收必要的结构化证据、可用性、引用与复现结果。配置修复基于原版本；向当前工作稿应用时重新核验修订。修复、审查、发布及 Host 采用分别记录。
 
 ## Platform 完整范围与流程草案 {#platform-draft}
 

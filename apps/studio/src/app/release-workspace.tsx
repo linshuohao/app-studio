@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeading } from './page-heading';
+
 import { useEffect, useRef, useState } from 'react';
 import {
   Button,
@@ -195,33 +197,30 @@ function ReleaseDetail({
   }, []);
   return (
     <section className="studio-release-detail" aria-label="发布详情">
-      <header className="studio-release-heading">
-        <IconButton icon="ChevronLeft" aria-label={backLabel} title={backLabel} onClick={onBack} />
-        <div className="toolbar page-title">
-          <h1 ref={heading} tabIndex={-1}>
-            {releaseLabel(release)}
-          </h1>
-          <div className="action-row">
-            {onReference && (
-              <Button variant="secondary" onClick={onReference}>
-                引用到 Agent
-              </Button>
-            )}
-            <Button variant="secondary" onClick={(event) => showDiagnostics(event.currentTarget)}>
-              发布诊断（{release.diagnostics.length}）
-            </Button>
-            <a
-              className="studio-button release-host-link"
-              data-variant="primary"
-              href={'/host?releaseId=' + encodeURIComponent(release.releaseId)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              在示例 Host 中打开
-            </a>
-          </div>
-        </div>
-      </header>
+      <PageHeading
+        className="studio-release-heading"
+        title={releaseLabel(release)}
+        headingRef={heading}
+        back={{ label: backLabel, onClick: onBack }}
+      >
+        {onReference && (
+          <Button variant="secondary" onClick={onReference}>
+            引用到 Agent
+          </Button>
+        )}
+        <Button variant="secondary" onClick={(event) => showDiagnostics(event.currentTarget)}>
+          发布诊断（{release.diagnostics.length}）
+        </Button>
+        <a
+          className="studio-button release-host-link"
+          data-variant="primary"
+          href={'/host?releaseId=' + encodeURIComponent(release.releaseId)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          在示例 Host 中打开
+        </a>
+      </PageHeading>
       <Tabs.Root defaultValue="info" bordered className="studio-release-tabs">
         <Tabs.List aria-label="发布详情视图">
           <Tabs.Tab value="info">发布信息</Tabs.Tab>

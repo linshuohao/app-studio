@@ -351,22 +351,16 @@
 .fe-date-positioner {
   z-index: 1200;
 }
-.fe-date-popup,
-.fe-range-calendar {
+.fe-date-popup {
   width: max-content;
   max-width: 100%;
   border: 1px solid var(--fe-border, #94a3b8);
   border-radius: 0.625rem;
   background: Canvas;
   color: CanvasText;
-}
-.fe-date-popup {
   max-height: var(--available-height);
   overflow-y: auto;
   box-shadow: 0 8px 24px rgb(15 23 42 / 0.16);
-}
-.fe-range-calendar {
-  margin-top: 0.75rem;
 }
 .fe-calendar {
   padding: 0.625rem;

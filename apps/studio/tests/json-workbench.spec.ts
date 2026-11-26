@@ -185,7 +185,7 @@ test('ignores a late form response after Back and keeps directory deep links rea
   });
   await page.reload();
   await expect(page.getByRole('button', { name: '重新加载列表' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toHaveCount(0);
   await page.getByRole('button', { name: '重新加载列表' }).click();
   await expect(page.getByRole('button', { name: '打开 导航竞态验收' })).toBeVisible();
 });

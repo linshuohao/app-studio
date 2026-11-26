@@ -1,7 +1,7 @@
 {
-  "name": "dynamic-form-engine",
+  "name": "app-studio",
   "version": "1.0.0",
-  "description": "Dynamic form engine engineering workspace",
+  "description": "Assemble Studio, an agent-first low-code workspace",
   "scripts": {
     "dev": "node tools/engineering/dev.mjs",
     "dev:all": "node tools/engineering/dev.mjs --all",

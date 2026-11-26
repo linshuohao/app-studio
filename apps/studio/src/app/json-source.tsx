@@ -166,10 +166,7 @@ function SourceViews({
                       {...{ formPath, profile }}
                       text={text}
                       apply={commit}
-                      locate={(path) => {
-                        setFocus({ path, revision: Date.now() });
-                        setMode('json');
-                      }}
+                      locate={locate}
                       repair={() => {
                         setRepair((n) => n + 1);
                         setMode('json');
@@ -197,12 +194,7 @@ function SourceViews({
                         position={position}
                         text={text}
                         apply={commit}
-                        locate={(path) => {
-                          beforeLeave(() => {
-                            setFocus({ path, revision: Date.now() });
-                            setMode('json');
-                          });
-                        }}
+                        locate={locate}
                         repair={() => {
                           setRepair((n) => n + 1);
                           switchMode('json');

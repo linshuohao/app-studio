@@ -279,7 +279,7 @@ function ReleaseDetail({
             </div>
           </dl>
         </Tabs.Panel>
-        <Tabs.Panel value="integration">
+        <Tabs.Panel value="integration" className="studio-release-host-panel">
           <ReleaseHostExample releaseId={release.releaseId} />
         </Tabs.Panel>
         <Tabs.Panel value="capabilities">

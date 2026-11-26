@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  chooseSchemaOption,
-  closeWorkbenchDrawer,
-  openSchemaDraft,
-  schemaSource,
-} from './data-schema-fixture';
+import { chooseSchemaOption, openSchemaDraft, schemaSource } from './data-schema-fixture';
 
 const root = '/data/schema';
 const group = root + '/properties/insured';
@@ -42,13 +37,25 @@ test('protects pending values on node and view changes and keeps one undo per ap
   await expect(nodeSource).toHaveValue('{"type":"integer","minimum":7}');
   await click('在 JSON 中定位');
   await click('应用并继续');
+  const fragment = page.getByRole('dialog', { name: '编辑局部 JSON', exact: true });
+  expect(
+    JSON.parse(await fragment.getByRole('textbox', { name: '局部 JSON' }).inputValue()),
+  ).toEqual({ type: 'integer', minimum: 7 });
+  await fragment.getByRole('textbox', { name: '局部 JSON' }).fill('{"type":"integer","minimum":9}');
+  await fragment.getByRole('button', { name: '应用 JSON', exact: true }).click();
+  await expect(fragment).toHaveCount(0);
   const source = await schemaSource(page);
+  const expected = structuredClone(fixture);
+  expected.data.schema.properties.insured.properties.age.minimum = 9;
+  expect(JSON.parse(await source.inputValue())).toEqual(expected);
+  await click('撤销');
   expect(
     JSON.parse(await source.inputValue()).data.schema.properties.insured.properties.age.minimum,
   ).toBe(7);
   await click('撤销');
   expect(JSON.parse(await source.inputValue())).toEqual(fixture);
   await click('字段');
+  await select(age);
   const minimum = drawer.getByLabel('下限', { exact: true });
   await expect(minimum).toHaveValue('0');
   await minimum.fill('8');
@@ -80,8 +87,9 @@ test('restores the outline, scroll and narrow detail; falls back to the nearest 
   const before = await outline.evaluate((el) => el.scrollTop);
   expect(before).toBeGreaterThan(0);
   await page.getByRole('button', { name: '在 JSON 中定位', exact: true }).click();
-  await schemaSource(page);
-  await page.getByRole('button', { name: '字段', exact: true }).click();
+  const fragment = page.getByRole('dialog', { name: '编辑局部 JSON', exact: true });
+  await expect(fragment.getByRole('textbox', { name: '局部 JSON' })).toBeVisible();
+  await fragment.getByRole('button', { name: '关闭', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '字段配置 · age', exact: true })).toBeVisible();
   expect(await outline.evaluate((el) => el.scrollTop)).toBe(before);
   await expect(outline.locator('button[aria-label="展开extra"]')).toHaveAttribute(
@@ -89,14 +97,11 @@ test('restores the outline, scroll and narrow detail; falls back to the nearest 
     'false',
   );
   await page.setViewportSize({ width: 390, height: 780 });
-  await page.getByRole('button', { name: '在 JSON 中定位', exact: true }).click();
   const editor = await schemaSource(page);
   const changed = JSON.parse(source);
   delete changed.data.schema.properties.insured.properties.age;
   await editor.fill(JSON.stringify(changed));
   await page.getByRole('button', { name: '字段', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: '字段配置 · insured', exact: true })).toBeVisible();
-  await closeWorkbenchDrawer(page);
   await expect(page.locator('[data-schema-path="' + group + '"]')).toHaveAttribute(
     'aria-pressed',
     'true',

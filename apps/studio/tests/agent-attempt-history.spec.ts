@@ -23,6 +23,9 @@ test('shows saved attempt stages, elapsed time, and interruption details without
     elapsedMs: 3620,
     events: [
       { type: 'progress', message: '准备生成候选' },
+      { type: 'understanding_item', kind: 'requirement', text: '已废弃的需求' },
+      { type: 'understanding_reset' },
+      { type: 'understanding_item', kind: 'requirement', text: '重新读取的需求' },
       { type: 'compose_phase', stage: 'schema', status: 'started' },
       { type: 'compose_phase', stage: 'schema', status: 'completed', detail: '字段检查通过' },
     ],
@@ -105,6 +108,10 @@ test('shows saved attempt stages, elapsed time, and interruption details without
     .filter({ hasText: /^Schema$/ })
     .click();
   await expect(page.getByText('字段检查通过', { exact: false })).toBeVisible();
+  await page.getByText('需求理解', { exact: true }).click();
+  await expect(page.getByText('重新核对需求', { exact: true })).toBeVisible();
+  await expect(page.getByText('重新读取的需求', { exact: true })).toBeVisible();
+  await expect(page.getByText('已废弃的需求', { exact: true })).toHaveCount(0);
   await expect(page.locator('summary').filter({ hasText: /^处理过程$/ })).toBeVisible();
   await expect(page.getByText(traceId, { exact: true })).toBeVisible();
   await expect(page.getByText('已保留的部分回复', { exact: true })).toBeVisible();

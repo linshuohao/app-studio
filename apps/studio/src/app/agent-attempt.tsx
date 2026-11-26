@@ -115,7 +115,10 @@ export function AttemptHistory({
   let lastProgress = '';
   const entries: { stage: HistoryStage; text: string }[] = [];
   const phases: ComposePhase[] = [];
-  for (const event of attempt.events) {
+  const lastUnderstandingReset = attempt.events.findLastIndex(
+    ({ type }) => type === 'understanding_reset',
+  );
+  for (const [index, event] of attempt.events.entries()) {
     if (event.type === 'progress') {
       lastProgress = event.message;
       entries.push({ stage: 'general', text: event.message });
@@ -132,7 +135,7 @@ export function AttemptHistory({
     }
     if (event.type === 'understanding_reset')
       entries.push({ stage: 'understand', text: '重新核对需求' });
-    if (event.type === 'understanding_item')
+    if (event.type === 'understanding_item' && index > lastUnderstandingReset)
       entries.push({ stage: 'understand', text: event.text });
     if (event.type === 'text_reset') partial = '';
     if (event.type === 'text_delta') partial += event.delta;

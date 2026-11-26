@@ -11,7 +11,7 @@ export function useArrayBinding(name: string, options?: { allowUnbound?: boolean
   if (!target)
     return {
       bound: false as const,
-      ids: [],
+      ids: [] as string[],
       write: () => {
         throw Error('Missing array binding: ' + name);
       },

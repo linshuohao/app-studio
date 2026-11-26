@@ -90,6 +90,11 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
   await expect(hostLink).toBeVisible();
   const second = await hostLink.getAttribute('href');
   expect(second).not.toBe(first);
+  await page.getByRole('tab', { name: 'Host 接入', exact: true }).click();
+  const snippet = page.getByRole('group', { name: 'Host 接入 JSX' });
+  await expect(snippet).toContainText('<FormRenderer');
+  await snippet.focus();
+  await expect(snippet).toBeFocused();
   await page.getByRole('tab', { name: '所需宿主能力', exact: true }).click();
   await page.getByRole('button', { name: '查看契约 travel.searchCities', exact: true }).click();
   await expect(

@@ -31,3 +31,68 @@ test('the shared Button preserves variant and disabled colors in the Handbook', 
   });
   await expect(button).toHaveCSS('background-color', await color('--studio-disabled-bg'));
 });
+
+test('code blocks preserve text and highlight the declared language in a narrow panel', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 600 });
+  const businessRunner = pathToFileURL(
+    resolve(handbook, 'studio-components/assets/business-playground-runner.html'),
+  ).href;
+  await page.goto(businessRunner + '?run#codeblock');
+
+  const json = page.getByRole('group', { name: 'JSON 配置' });
+  const property = json.locator('[data-code-token="property"]').first();
+  const literal = json.locator('[data-code-token="literal"]');
+  await expect(property).toHaveText('"name"');
+  await expect(literal).toHaveText('true');
+  await expect(property).not.toHaveCSS(
+    'color',
+    await literal.evaluate((node) => getComputedStyle(node).color),
+  );
+  expect(await json.textContent()).toBe('{\n  "name": "差旅申请",\n  "enabled": true\n}');
+  const jsx = page.getByRole('group', { name: 'JSX 示例' });
+  await expect(jsx.locator('[data-code-token="tag"]')).toHaveText('<FormRenderer');
+  await expect(jsx).toHaveCSS('white-space', 'pre-wrap');
+  expect(await jsx.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  const typescript = page.getByRole('group', { name: 'TypeScript 契约' });
+  await expect(typescript.locator('[data-code-token="keyword"]')).toHaveText('type');
+
+  await json.focus();
+  await expect(json).toHaveCSS('outline-style', 'solid');
+  await page.keyboard.press('Tab');
+  await expect(jsx).toBeFocused();
+});
+
+test('the CodeBlock component page sizes its embedded preview', async ({ page }) => {
+  const componentPage = pathToFileURL(resolve(handbook, 'studio-components/code-block.html')).href;
+  await page.goto(componentPage);
+  const preview = page.locator('iframe[title="CodeBlock 交互预览"]');
+  await expect(preview.contentFrame().locator('pre[aria-label="TypeScript 契约"]')).toBeVisible();
+  await expect(preview).toHaveAttribute('style', /height: \d+px/);
+});
+
+test('unterminated strings preserve raw code and resume highlighting on the next line', async ({
+  page,
+}) => {
+  const businessRunner = pathToFileURL(
+    resolve(handbook, 'studio-components/assets/business-playground-runner.html'),
+  ).href;
+  await page.goto(businessRunner + '?run#codeblock');
+  const json = page.getByRole('group', { name: 'JSON 配置' });
+  await expect(json).toBeVisible();
+
+  const source = '"' + '\\"'.repeat(45_000) + 'true\n"enabled": false';
+  await page.evaluate((source) => {
+    const code = `import React from 'react';
+      import { CodeBlock } from '../../../../apps/studio/src/components/code-block';
+      export default function Example() {
+        return <CodeBlock language="json" label="不完整的 JSON" source={${JSON.stringify(source)}} />;
+      }`;
+    window.postMessage({ type: 'handbook-run', revision: 1, code }, '*');
+  }, source);
+
+  const malformed = page.locator('pre[aria-label="不完整的 JSON"]');
+  await expect(malformed.locator('[data-code-token="literal"]')).toHaveText(['false']);
+  expect(await malformed.textContent()).toBe(source);
+});

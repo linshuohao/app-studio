@@ -419,6 +419,25 @@ it('keeps partial draft issues through replay and only clears applied issues wit
   expect(applied.appliedDraftIssues).toEqual([]);
 });
 
+it('refreshes applied draft issues when a new candidate confirms the same working text', async () => {
+  const conversationId = randomUUID();
+  const fixed = { message: '缺少删除绑定', sourcePointer: '/views', requirementIds: ['R26'] };
+  const remaining = { message: '缺少联动', sourcePointer: '/reactions', requirementIds: ['R30'] };
+  const text = config('partial');
+  const initial = proposal(text, { checkId: undefined, draftIssues: [fixed, remaining] });
+  const first = (await mockTurn(conversationId, initial).expect(201)).body.draft;
+  const updated = proposal(text, {
+    draftId: first.id,
+    baseRevision: first.revision,
+    sourceRevision: 2,
+    checkId: undefined,
+    draftIssues: [remaining],
+  });
+  const latest = (await mockTurn(conversationId, updated).expect(201)).body.draft;
+  expect(latest.draftIssues).toEqual([remaining]);
+  expect(latest.appliedDraftIssues).toEqual([remaining]);
+});
+
 it('forwards the saved working text for the exact draft revision and rejects an unpersisted override', async () => {
   const id = randomUUID();
   const initial = proposal(config('partial'), {

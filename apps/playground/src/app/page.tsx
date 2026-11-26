@@ -5,7 +5,7 @@ export default function Home() {
     <main className="mx-auto max-w-5xl space-y-10 px-6 py-16">
       <header className="max-w-2xl space-y-4">
         <p className="text-sm font-medium text-muted-foreground">场景演示</p>
-        <h1 className="text-3xl font-semibold tracking-tight">动态表单引擎 · Playground</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Assemble Studio · Playground</h1>
         <p className="leading-7 text-muted-foreground">
           从基础填写到完整业务流程，选择一个场景体验。所有表单均使用现有正式物料库，服务与提交使用本地模拟数据。
         </p>

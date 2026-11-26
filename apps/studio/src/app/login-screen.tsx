@@ -14,11 +14,11 @@ export function LoginScreen({
 }) {
   const [method, setMethod] = useState<'choose' | 'password'>('choose');
   return (
-    <section className="login-screen" aria-label="登录表单工作台">
+    <section className="login-screen" aria-label="登录 Assemble Studio">
       <div className="login-mark" aria-hidden="true">
         {'{ }'}
       </div>
-      <h1>{method === 'choose' ? '登录表单工作台' : '使用账号密码登录'}</h1>
+      <h1>{method === 'choose' ? '登录 Assemble Studio' : '使用账号密码登录'}</h1>
       <p className="login-description">
         {method === 'choose' ? '选择登录方式，继续你的工作。' : '输入你的内置账号信息。'}
       </p>

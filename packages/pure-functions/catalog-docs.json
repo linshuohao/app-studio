@@ -66,6 +66,63 @@
       }
     ]
   },
+  "expense.countInvoiceMatches": {
+    "title": "统计报销单内匹配票号",
+    "category": "报销",
+    "summary": "去除全部空白并统一大写后，统计同一报销单内的匹配票号。",
+    "parameterLabels": { "expenses": "费用行", "invoiceId": "当前票号" },
+    "callExamples": [
+      {
+        "args": [[{ "invoiceId": "AB 1234" }, { "invoiceId": "ab1234" }], "ab 1234"],
+        "result": 2,
+        "description": "忽略票号内部空白与大小写。"
+      }
+    ],
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+        "value": {
+          "op": "expense.countInvoiceMatches",
+          "args": [
+            { "ref": { "source": "data", "path": "/expenses" } },
+            { "ref": { "source": "data", "scope": "expense", "path": "/invoiceId" } }
+          ]
+        }
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "本报销单费用行数组。",
+      "/parameters/1": "当前行原始票号。",
+      "/returns": "归一化后相同的票号数量。"
+    }
+  },
+  "expense.hotelStandardStatus": {
+    "title": "判断住宿金额是否超标",
+    "category": "报销",
+    "summary": "按每晚 45,000 分判断，金额或晚数为非法值时返回 invalid。",
+    "parameterLabels": { "claimMinor": "申报金额（分）", "nights": "晚数" },
+    "callExamples": [
+      { "args": [90000, 2], "result": "within", "description": "两晚恰好等于标准。" },
+      { "args": [90000.5, 2], "result": "invalid", "description": "申报金额必须为整数分。" }
+    ],
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+        "value": {
+          "op": "expense.hotelStandardStatus",
+          "args": [
+            { "ref": { "source": "data", "scope": "expense", "path": "/claimMinor" } },
+            { "ref": { "source": "data", "scope": "expense", "path": "/nights" } }
+          ]
+        }
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "申报金额，单位为分。",
+      "/parameters/1": "住宿晚数。",
+      "/returns": "标准内、超标或输入非法。"
+    }
+  },
   "core.eq": {
     "displayTemplate": "{arg0} 等于 {arg1}",
     "title": "相等比较",

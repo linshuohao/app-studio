@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { CodeBlock } from '../components/code-block';
 import { parseJson, type JsonNode } from '../components/json/model';
 import { displayJson } from './format-json';
 import { StudioSelect } from '@form-engine/studio-design-components/select';
@@ -52,10 +53,13 @@ function compare(left: string, right: string) {
 function Pair({ left, right }: { left?: string; right?: string }) {
   return (
     <div className="diff-pair">
-      {[left, right].map((value, i) => (
-        <div key={i}>
-          <small>{i ? '当前' : '基准'}</small>
-          <pre>{value ?? '（无）'}</pre>
+      {[
+        { label: '基准', source: left },
+        { label: '当前', source: right },
+      ].map(({ label, source }) => (
+        <div key={label}>
+          <small>{label}</small>
+          <CodeBlock label={label} language="json" source={source ?? '（无）'} />
         </div>
       ))}
     </div>

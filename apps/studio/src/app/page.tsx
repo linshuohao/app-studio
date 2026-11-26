@@ -1,4 +1,6 @@
 'use client';
+
+import { PageHeading } from './page-heading';
 import {
   Button,
   DataTable,
@@ -1265,8 +1267,7 @@ export default function Studio() {
             />
           ) : settings ? (
             <>
-              <div className="toolbar page-title">
-                <h1>账号与权限</h1>
+              <PageHeading title="账号与权限">
                 <button
                   type="button"
                   className="quiet"
@@ -1275,7 +1276,7 @@ export default function Studio() {
                 >
                   退出登录
                 </button>
-              </div>
+              </PageHeading>
               {account && (
                 <AccountSecurity
                   key={account.userId}
@@ -1316,12 +1317,9 @@ export default function Studio() {
             </>
           ) : (
             <>
-              <div className="toolbar page-title form-list-heading" data-studio-ui>
-                <div>
-                  <h1>表单列表</h1>
-                </div>
+              <PageHeading title="表单列表" className="form-list-heading" data-studio-ui>
                 {canEdit && (
-                  <div className="action-row">
+                  <>
                     <Button variant="secondary" onClick={openDrafts}>
                       表单草稿
                     </Button>
@@ -1335,9 +1333,9 @@ export default function Studio() {
                     >
                       新建表单
                     </Button>
-                  </div>
+                  </>
                 )}
-              </div>
+              </PageHeading>
               {draftBoxOpen && canEdit && (
                 <AgentDraftBox
                   returnFocus={dialogTrigger}

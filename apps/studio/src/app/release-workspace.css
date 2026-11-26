@@ -43,12 +43,6 @@
 .studio-release-tabs > [data-studio-part='tab-list'] {
   flex: none;
 }
-.studio-release-heading .studio-button[data-variant='text'] {
-  text-decoration: none;
-}
-.studio-release-heading .page-title {
-  align-items: center;
-}
 .release-host-link {
   display: inline-flex;
   align-items: center;

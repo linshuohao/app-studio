@@ -1,4 +1,6 @@
-# 复杂动态表单与数据录入引擎
+# Assemble Studio
+
+Agent-first low-code workspace
 
 当前处于核心契约细化与工程落地阶段。首期采用 Web/TypeScript + React；pnpm / Turborepo 工作区、六包、Next.js 轻量 Playground、NestJS 服务及测试 / 质量配置已初始化。工程示例不代表生产表单 Runtime 已实现。目录及包边界见[应用与工程架构](docs/design/architecture.md)，安装、命令、实际版本与验收见[工程方案](docs/design/engineering.md)。
 

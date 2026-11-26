@@ -3,7 +3,8 @@ test('首页导航连接四种正式物料场景，离开后重新进入使用�
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '动态表单引擎 · Playground' })).toBeVisible();
+  await expect(page).toHaveTitle('Assemble Studio · Playground');
+  await expect(page.getByRole('heading', { name: 'Assemble Studio · Playground' })).toBeVisible();
   for (const [name, path, heading] of [
     ['基础资料', '/demos/basic', '基础资料'],
     ['家庭成员', '/demos/members', '家庭成员'],
@@ -24,7 +25,7 @@ test('首页导航连接四种正式物料场景，离开后重新进入使用�
   await expect(page.getByRole('textbox', { name: '姓名', exact: true })).toHaveValue('Alice');
   await page.getByRole('link', { name: '全部 Demo', exact: true }).click();
   await expect(page).toHaveURL('/');
-  await expect(page.getByRole('heading', { name: '动态表单引擎 · Playground' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Assemble Studio · Playground' })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL('/demos/basic');
   await page.getByRole('button', { name: '打开物料验收' }).click();

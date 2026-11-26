@@ -1,3 +1,4 @@
+import { CodeBlock } from '../code-block';
 import type { ReactNode } from 'react';
 
 export type Schema = boolean | { type?: string | string[]; [key: string]: unknown };
@@ -216,9 +217,7 @@ export function ContractPanel({
       )}
       {description && <p className="muted">{description}</p>}
       {showType && (
-        <pre className="contract-type">
-          <code>{`type ${typeName} = ${schemaType(schema)}`}</code>
-        </pre>
+        <CodeBlock language="typescript" source={`type ${typeName} = ${schemaType(schema)}`} />
       )}
       <ContractTable
         schema={schema}

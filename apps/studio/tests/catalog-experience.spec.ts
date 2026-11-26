@@ -317,18 +317,22 @@ test('all installed assets expose complete API structures, field meanings and ex
       if (kind === 'materials') {
         await api.getByRole('button', { name: '查看类型定义与值示例' }).click();
         const types = page.getByRole('dialog', { name: '类型定义与值示例' });
-        await expect(types.locator('.contract-type').first()).toBeVisible();
+        await expect(
+          types.locator('.studio-code-block [data-code-token="keyword"]').first(),
+        ).toBeVisible();
         await page.keyboard.press('Escape');
         await expect(types).toBeHidden();
       } else {
-        await expect(api.locator('.contract-type').first()).toBeVisible();
+        await expect(
+          api.locator('.studio-code-block code[data-language="typescript"]').first(),
+        ).toBeVisible();
         await expect(page.getByLabel('调用参数示例', { exact: true })).toBeVisible();
         await expect(page.getByLabel('返回值示例', { exact: true })).toBeVisible();
       }
       for (const width of [1440, 1024, 390]) {
         await page.setViewportSize({ width, height: 900 });
         const overflow = await page
-          .locator('.contract-signature, .contract-type, .contract-columns .table-scroll')
+          .locator('.studio-code-block, .contract-columns .table-scroll')
           .evaluateAll((nodes) =>
             nodes
               .filter((node) => node.scrollWidth > node.clientWidth + 1)

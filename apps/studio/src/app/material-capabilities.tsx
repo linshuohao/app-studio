@@ -1,5 +1,6 @@
 'use client';
 
+import { CodeBlock } from '../components/code-block';
 import type { MaterialManifest } from '@form-engine/protocol/capability';
 import type { ViewNode } from '@form-engine/protocol/definition';
 import { useState, type ReactNode } from 'react';
@@ -59,9 +60,7 @@ export function MaterialCapabilities({
         </section>
         <section>
           <h3>{setup.title} · JSX</h3>
-          <pre className="contract-type">
-            <code>{setup.jsx}</code>
-          </pre>
+          <CodeBlock language="jsx" source={setup.jsx} />
         </section>
       </>,
     );
@@ -97,13 +96,15 @@ export function MaterialCapabilities({
                       <>
                         <section>
                           <h3>事件签名</h3>
-                          <pre className="contract-type">
-                            <code>
-                              {signature}
-                              {payload !== undefined &&
-                                `\n\ntype EventPayload = ${schemaType(payload)}`}
-                            </code>
-                          </pre>
+                          <CodeBlock
+                            language="typescript"
+                            source={
+                              signature +
+                              (payload !== undefined
+                                ? `\n\ntype EventPayload = ${schemaType(payload)}`
+                                : '')
+                            }
+                          />
                         </section>
                         <section>
                           <h3>原始事件契约</h3>
@@ -177,15 +178,14 @@ export function MaterialCapabilities({
                       <>
                         <section>
                           <h3>请求签名与类型</h3>
-                          <pre className="contract-type">
-                            <code>
-                              {[
-                                `${name}(payload: RequestInput): Promise<RequestResult>`,
-                                `type RequestInput = ${schemaType(request.payloadSchema)}`,
-                                `type RequestResult = ${schemaType(request.resultSchema)}`,
-                              ].join('\n\n')}
-                            </code>
-                          </pre>
+                          <CodeBlock
+                            language="typescript"
+                            source={[
+                              `${name}(payload: RequestInput): Promise<RequestResult>`,
+                              `type RequestInput = ${schemaType(request.payloadSchema)}`,
+                              `type RequestResult = ${schemaType(request.resultSchema)}`,
+                            ].join('\n\n')}
+                          />
                         </section>
                         {requestExamples?.[name]?.map((sample, index) => (
                           <section key={index}>

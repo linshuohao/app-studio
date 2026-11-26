@@ -203,7 +203,3 @@
 .material-capability h4 {
   margin-block-end: var(--studio-space-8);
 }
-.material-detail-dialog-content .contract-type code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}

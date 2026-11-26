@@ -1,6 +1,6 @@
 ## Context
 
-Platform currently takes its capability catalog from the installed packages. Prepared already stores an exact lock. The [confirmed design](../../../docs/design/platform-studio.md#platform-asset-versions) defines selection and compatibility.
+Before this change, Platform took its capability catalog from the installed packages. Prepared already stores an exact lock. The [confirmed design](../../../../docs/design/platform-studio.md#platform-asset-versions) defines selection and compatibility.
 
 ## Decisions
 

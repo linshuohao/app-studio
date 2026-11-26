@@ -4,7 +4,7 @@ Web deployments must preserve the implementations selected by older form revisio
 
 ## What Changes
 
-Implement the confirmed [Platform asset version contract](../../../docs/design/platform-studio.md#platform-asset-versions) for Web. Verify simultaneous old and new publication execution after upgrade. Remote module delivery remains a separate design topic.
+Implement the confirmed [Platform asset version contract](../../../../docs/design/platform-studio.md#platform-asset-versions) for Web. Verify simultaneous old and new publication execution after upgrade. Remote module delivery remains a separate design topic.
 
 ## Capabilities
 

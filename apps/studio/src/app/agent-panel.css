@@ -131,10 +131,16 @@
 .agent-markdown p {
   white-space: normal;
 }
-.agent-markdown pre {
+.agent-markdown pre:not(.studio-code-block) {
   max-width: 100%;
   overflow-x: auto;
   white-space: pre;
+}
+.agent-markdown [data-streamdown='table-wrapper'] {
+  margin-block: var(--studio-space-12);
+}
+.agent-markdown [data-streamdown='table-wrapper'] > :has(> [data-streamdown='table']) {
+  overflow: auto;
 }
 .agent-markdown table {
   border-collapse: collapse;

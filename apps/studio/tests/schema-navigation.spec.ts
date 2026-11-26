@@ -156,7 +156,9 @@ test('keeps module navigation visible and returns from JSON to the originating m
     await page.getByRole('button', { name: label, exact: true }).click();
     if (exists) {
       await page.getByRole('button', { name: '在 JSON 中编辑', exact: true }).click();
-      await expect(page.locator('[data-json-path="/' + key + '"]:focus')).toHaveCount(1);
+      const dialog = page.getByRole('dialog', { name: '编辑局部 JSON' });
+      await expect(dialog.getByText('/' + key + '/desktop', { exact: true })).toBeVisible();
+      await dialog.getByRole('button', { name: '关闭', exact: true }).click();
     } else {
       await expect(
         page.getByRole('heading', {
@@ -164,8 +166,8 @@ test('keeps module navigation visible and returns from JSON to the originating m
           exact: true,
         }),
       ).toBeVisible();
-      await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
     }
+    await page.getByRole('button', { name: 'JSON 原文', exact: true }).click();
     await page.getByRole('button', { name: '返回' + label, exact: true }).click();
     const moduleView = exists
       ? page.getByRole('region', { name: '布局编辑器', exact: true })

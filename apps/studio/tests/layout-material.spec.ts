@@ -28,7 +28,8 @@ test('逐层修改选项和事件命令，原文未编辑部分可逐字恢复',
   await expect(settings.getByLabel('第 1 项显示名称', { exact: true })).toBeHidden();
 
   await settings.getByLabel('选项设置', { exact: true }).click();
-  await settings.getByLabel('属性 options来源', { exact: true }).selectOption('expression');
+  await settings.getByRole('combobox', { name: '属性 options来源', exact: true }).click();
+  await page.getByRole('option', { name: '表达式', exact: true }).click();
   await settings.getByLabel('属性 options协议 JSON', { exact: true }).fill('{"$expr":false}');
   await page.getByRole('button', { name: '应用属性', exact: true }).click();
   await expect(settings.getByRole('alert')).toBeVisible();

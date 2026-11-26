@@ -8,7 +8,7 @@ import '../components/field-picker/field-picker.css';
 import './selection-controls.css';
 import '@form-engine/materials-react/styles.css';
 
-export const metadata = { title: '表单工作台' };
+export const metadata = { title: 'Assemble Studio' };
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

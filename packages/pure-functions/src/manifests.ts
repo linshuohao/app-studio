@@ -2,6 +2,8 @@
 export {};
 
 // <generated-assets>
+export { manifest as arrayCountNormalizedTextManifest } from './array-count-normalized-text/manifest.js';
+export { manifest as arraySumProductsManifest } from './array-sum-products/manifest.js';
 export { manifest as dateAgeInYearsManifest } from './date-age-in-years/manifest.js';
 export { manifest as dateInclusiveDaysManifest } from './date-inclusive-days/manifest.js';
 export { manifest as textIsNonBlankManifest } from './text-is-non-blank/manifest.js';

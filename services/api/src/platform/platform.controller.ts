@@ -404,7 +404,8 @@ export class PlatformController {
       selections,
       input?.simulateTravelHost === true,
     );
-    if (!checked.success) return { ...checked, recommendedCatalog: this.builds.assets.recommended.id };
+    if (!checked.success)
+      return { ...checked, recommendedCatalog: this.builds.assets.recommended.id };
     return {
       success: true,
       diagnostics: checked.diagnostics,

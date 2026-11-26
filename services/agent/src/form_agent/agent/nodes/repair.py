@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from form_agent.agent.authoring_state import FormAuthoringState, RepairRound
 from form_agent.agent.events import emit_compose_phase
 from form_agent.agent.nodes.compose.staged import repair_staged
-from form_agent.agent.prompts.repair import BINDING_GUIDE, INSTRUCTIONS
+from form_agent.agent.prompts.repair import BINDING_GUIDE, INSTRUCTIONS, SYNTAX_GUIDE
 from form_agent.agent.state import TurnGraphState
 from form_agent.agent.tools.candidate_checks import (
     bind_repair_field,
@@ -32,6 +32,14 @@ class TextEdit(BaseModel):
     kind: Literal["edit"]
     before: str = Field(min_length=1)
     after: str
+    summary: str = Field(min_length=1)
+
+
+class SyntaxEdit(BaseModel):
+    kind: Literal["syntax_edit"]
+    delete_before: int = Field(ge=0, le=64)
+    delete_after: int = Field(ge=0, le=64)
+    replacement: str = Field(max_length=128)
     summary: str = Field(min_length=1)
 
 
@@ -57,6 +65,27 @@ class RepairDecision(BaseModel):
     action: TextEdit | FieldEdit | CapabilityGap | BusinessQuestion
 
 
+class SyntaxRepairDecision(BaseModel):
+    action: SyntaxEdit
+
+
+def syntax_anchor(text: str, diagnostics: list[dict]) -> int | None:
+    """Convert the Compiler's JavaScript UTF-16 offset to a Python string index."""
+    for diagnostic in diagnostics:
+        location = diagnostic.get("location")
+        if diagnostic.get("code") != "JSON_SYNTAX" or not isinstance(location, dict):
+            continue
+        offset = location.get("offset")
+        encoded = text.encode("utf-16-le")
+        if type(offset) is not int or not 0 <= offset <= len(encoded) // 2:
+            continue
+        try:
+            return len(encoded[: offset * 2].decode("utf-16-le"))
+        except UnicodeDecodeError:
+            continue
+    return None
+
+
 async def repair(
     state: FormAuthoringState,
     *,
@@ -76,6 +105,8 @@ async def repair(
     history = state.get("repairs", [])
     rounds_used = len(history) - repair_rounds_before_execution(len(history))
     request = state["request"]
+    has_syntax_error = any(d.get("code") == "JSON_SYNTAX" for d in receipt.diagnostics)
+    anchor = syntax_anchor(text, receipt.diagnostics) if has_syntax_error else None
 
     def stopped():
         diagnostics = "；".join(
@@ -102,7 +133,8 @@ async def repair(
     )
 
     if (
-        state.get("placeholder_edit") is None
+        not has_syntax_error
+        and state.get("placeholder_edit") is None
         and reading.standard is not None
         and composition.binding_evidence is not None
         and composition.binding_evidence.schema_check is not None
@@ -110,7 +142,7 @@ async def repair(
         return await repair_staged(state, model, tools)
 
     manual = state.get("repair_manual")
-    if manual is None:
+    if manual is None and anchor is None:
         manual = await tools.read_protocol(request.context, "")
     has_binding_error = any(
         d.get("code") in ("BINDING_INCOMPATIBLE", "BINDING_UNPROVEN")
@@ -167,19 +199,28 @@ async def repair(
             for r in history
         ],
     }
+    decision_schema = RepairDecision
+    instructions = INSTRUCTIONS + ("\n" + BINDING_GUIDE if has_binding_error else "")
+    if anchor is not None:
+        decision_schema = SyntaxRepairDecision
+        instructions = SYNTAX_GUIDE
+        payload = {
+            "receipt": payload["receipt"],
+            "syntax_anchor": {
+                "before": text[max(0, anchor - 64) : anchor],
+                "after": text[anchor : anchor + 64],
+            },
+        }
     decision = await structured(
         model,
-        RepairDecision,
+        decision_schema,
         [
-            SystemMessage(
-                content=INSTRUCTIONS
-                + ("\n" + BINDING_GUIDE if has_binding_error else "")
-            ),
+            SystemMessage(content=instructions),
             HumanMessage(content=json.dumps(payload, ensure_ascii=False)),
         ],
         method="function_calling",
     )
-    if not isinstance(decision, RepairDecision):
+    if not isinstance(decision, decision_schema):
         raise ValueError("Missing structured repair decision")
     action = decision.action
     if isinstance(action, (CapabilityGap, BusinessQuestion)):
@@ -211,7 +252,22 @@ async def repair(
                 ),
             )
         }
-    if isinstance(action, FieldEdit):
+    if isinstance(action, SyntaxEdit):
+        if (
+            anchor is not None
+            and action.delete_before <= anchor
+            and anchor + action.delete_after <= len(text)
+        ):
+            revision = (
+                text[: anchor - action.delete_before]
+                + action.replacement
+                + text[anchor + action.delete_after :]
+            )
+            submit_candidate(checks, revision)
+            next_digest = candidate_digest(revision)
+        else:
+            change = "未修改，语法修复超出编译器标记的原文范围"
+    elif isinstance(action, FieldEdit):
         field_tool = bind_repair_field(checks)
         result = await field_tool(
             digest, action.schema_pointer, action.property_schema_json

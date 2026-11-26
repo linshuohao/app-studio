@@ -22,7 +22,7 @@ type Props = {
 const contract = defineMaterialContract<Props, 'value'>(manifest);
 function ArrayEditor() {
   const a = useMaterialAdapter(contract),
-    binding = useArrayBinding('value'),
+    binding = useArrayBinding('value', { allowUnbound: true }),
     p = a.props;
   const read = a.values.value,
     values = read.kind === 'value' && Array.isArray(read.value) ? (read.value as Row[]) : [];
@@ -49,10 +49,11 @@ function ArrayEditor() {
     <section className={'fe-array-editor' + (edit ? ' has-drawer' : '')} aria-label={p.title}>
       <header>
         <strong>{p.title}</strong>{' '}
-        <button type="button" onClick={() => open(null, p.initial)}>
+        <button type="button" disabled={!binding.bound} onClick={() => open(null, p.initial)}>
           新增成员
         </button>
       </header>
+      {!binding.bound && <p role="alert">请绑定对象数组后再编辑成员。</p>}
       <div className="fe-array-list">
         {binding.ids.map((id, i) => (
           <details key={id} open={p.defaultExpanded ?? true}>

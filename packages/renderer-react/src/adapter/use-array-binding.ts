@@ -2,11 +2,20 @@ import { useContext } from 'react';
 import type { JsonValue } from '@form-engine/protocol';
 import { MaterialContext } from './material-context.js';
 
-/** Resolve member identity at execution time. Never persist a row index between renders. */
-export function useArrayBinding(name: string) {
+/** Resolve member identity at execution time. Optional bindings have no members or writes. */
+export function useArrayBinding(name: string, options?: { allowUnbound?: boolean }) {
   const projection = useContext(MaterialContext);
   const target = projection?.node.bindings?.[name];
-  if (!projection || !target) throw Error('Missing array binding: ' + name);
+  if (!projection || (!target && !options?.allowUnbound))
+    throw Error('Missing array binding: ' + name);
+  if (!target)
+    return {
+      bound: false as const,
+      ids: [],
+      write: () => {
+        throw Error('Missing array binding: ' + name);
+      },
+    };
   const { runtime } = projection.environment;
   let alias = 'arrayMember';
   while (Object.hasOwn(projection.scope, alias)) alias += '_';
@@ -55,5 +64,5 @@ export function useArrayBinding(name: string) {
         value: Object.fromEntries(Object.entries(value).map(([k, v]) => [k, { $literal: v }])),
       });
   }
-  return { ids: ids(), write };
+  return { bound: true as const, ids: ids(), write };
 }

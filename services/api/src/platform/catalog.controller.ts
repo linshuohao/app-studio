@@ -95,11 +95,10 @@ export class CatalogController {
     return {
       ...entry,
       documentation: documentation?.version === entry.manifest.version ? documentation : null,
-      ...(kind === 'materials' &&
-        entry.manifest.version === '0.1.0' && {
-          preview: materialPreview(entry.manifest.id),
-          previewVariants: materialPreviewVariants(entry.manifest.id),
-        }),
+      ...(kind === 'materials' && {
+        preview: materialPreview(entry.manifest.id),
+        previewVariants: materialPreviewVariants(entry.manifest.id),
+      }),
     };
   }
 }

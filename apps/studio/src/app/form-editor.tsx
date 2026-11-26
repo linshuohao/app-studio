@@ -1,10 +1,7 @@
 'use client';
-import {
-  IconButton,
-  Button,
-  Feedback,
-  Input,
-} from '@form-engine/studio-design-components/controls';
+
+import { PageHeading } from './page-heading';
+import { Button, Feedback, Input } from '@form-engine/studio-design-components/controls';
 import { Menu } from '@form-engine/studio-design-components/menu';
 import { Field, FormLayout } from '@form-engine/studio-design-components/form-layout';
 import { RecordIdentity } from '../components/record-identity';
@@ -260,24 +257,20 @@ export function FormEditor({
 
   return (
     <>
-      <div className="toolbar page-title editor-title" data-config-workspace>
-        <div>
-          <IconButton
-            icon="ChevronLeft"
-            aria-label={backLabel}
-            title={backLabel}
-            disabled={blocked}
-            onClick={() =>
-              leave(() => {
-                leavingByButton.current = true;
-                onBack();
-              })
-            }
-          />
-          <h1>
-            {working.name}
-            {form.archived ? '（已归档）' : ''}
-          </h1>
+      <PageHeading
+        title={working.name + (form.archived ? '（已归档）' : '')}
+        className="editor-title"
+        data-config-workspace
+        back={{
+          label: backLabel,
+          disabled: blocked,
+          onClick: () =>
+            leave(() => {
+              leavingByButton.current = true;
+              onBack();
+            }),
+        }}
+        description={
           <p className="badge" role="status">
             {!editable
               ? '只读配置'
@@ -297,104 +290,103 @@ export function FormEditor({
                             : '已保存'
                           : '尚无配置版本'}
           </p>
-        </div>
-        <div className="action-row">
-          {editable && (
-            <Menu.Root>
-              <Menu.Trigger>更多操作</Menu.Trigger>
-              <Menu.Portal>
-                <Menu.Positioner>
-                  <Menu.Popup>
-                    <Menu.Item disabled={blocked} onClick={() => setAgentOpen(!agentOpen)}>
-                      Agent 协作
+        }
+      >
+        {editable && (
+          <Menu.Root>
+            <Menu.Trigger>更多操作</Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner>
+                <Menu.Popup>
+                  <Menu.Item disabled={blocked} onClick={() => setAgentOpen(!agentOpen)}>
+                    Agent 协作
+                  </Menu.Item>
+                  <Menu.Item onClick={() => setShowSaveDetails(true)}>保存备注</Menu.Item>
+                  {versionId && (
+                    <Menu.Item onClick={() => setDiff({ left: versionId, right: 'draft' })}>
+                      查看改动
                     </Menu.Item>
-                    <Menu.Item onClick={() => setShowSaveDetails(true)}>保存备注</Menu.Item>
-                    {versionId && (
-                      <Menu.Item onClick={() => setDiff({ left: versionId, right: 'draft' })}>
-                        查看改动
-                      </Menu.Item>
-                    )}
-                  </Menu.Popup>
-                </Menu.Positioner>
-              </Menu.Portal>
-            </Menu.Root>
-          )}
-          {inspection && (
-            <ConfigInspection
-              autoCheck={editable && insertCheck === inspectionRevision}
-              key={`${inspectionRevision}:${editable}`}
-              path={path}
-              input={editable ? { text: storedText } : { versionId: versionId! }}
-              confirmTrial={agentApplied ? (value) => setConfirmedPreview(value) : undefined}
-              canCheck={editable}
-              disabled={blocked || schemaPending}
-              sourceText={text}
-              profile={profile}
-              onProfile={setProfile}
-              onLocate={(path) =>
-                setFocusPath((current) => ({ path, revision: (current?.revision ?? 0) + 1 }))
-              }
-            />
-          )}
-          {editable && (
-            <>
-              <Button
-                type="button"
-                className="workspace-save"
-                onClick={() => void save()}
-                disabled={blocked || (needsPreview && !pending) || schemaPending}
-              >
-                {busy && pending ? '正在保存…' : pending ? '重试本次保存' : '保存配置'}
-              </Button>
-            </>
-          )}
-          {onReference && (
-            <Button variant="secondary" onClick={onReference}>
-              引用到 Agent
-            </Button>
-          )}
-          {!editable && versionId && (
-            <Button variant="secondary" onClick={() => setShowSaveDetails(true)}>
-              版本信息
-            </Button>
-          )}
-          {showSaveDetails && (
-            <Modal
-              title={editable ? '保存备注' : '版本信息'}
-              size="standard"
-              onClose={() => setShowSaveDetails(false)}
+                  )}
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+        )}
+        {inspection && (
+          <ConfigInspection
+            autoCheck={editable && insertCheck === inspectionRevision}
+            key={`${inspectionRevision}:${editable}`}
+            path={path}
+            input={editable ? { text: storedText } : { versionId: versionId! }}
+            confirmTrial={agentApplied ? (value) => setConfirmedPreview(value) : undefined}
+            canCheck={editable}
+            disabled={blocked || schemaPending}
+            sourceText={text}
+            profile={profile}
+            onProfile={setProfile}
+            onLocate={(path) =>
+              setFocusPath((current) => ({ path, revision: (current?.revision ?? 0) + 1 }))
+            }
+          />
+        )}
+        {editable && (
+          <>
+            <Button
+              type="button"
+              className="workspace-save"
+              onClick={() => void save()}
+              disabled={blocked || (needsPreview && !pending) || schemaPending}
             >
-              <FormLayout density="dense">
-                {editable && (
-                  <Field label="保存备注（选填）">
-                    {(control) => (
-                      <Input
-                        {...control}
-                        name="note"
-                        autoComplete="off"
-                        maxLength={300}
-                        value={note}
-                        onChange={(event) => setNote(event.target.value)}
-                      />
+              {busy && pending ? '正在保存…' : pending ? '重试本次保存' : '保存配置'}
+            </Button>
+          </>
+        )}
+        {onReference && (
+          <Button variant="secondary" onClick={onReference}>
+            引用到 Agent
+          </Button>
+        )}
+        {!editable && versionId && (
+          <Button variant="secondary" onClick={() => setShowSaveDetails(true)}>
+            版本信息
+          </Button>
+        )}
+        {showSaveDetails && (
+          <Modal
+            title={editable ? '保存备注' : '版本信息'}
+            size="standard"
+            onClose={() => setShowSaveDetails(false)}
+          >
+            <FormLayout density="dense">
+              {editable && (
+                <Field label="保存备注（选填）">
+                  {(control) => (
+                    <Input
+                      {...control}
+                      name="note"
+                      autoComplete="off"
+                      maxLength={300}
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                    />
+                  )}
+                </Field>
+              )}
+              {versionId && (
+                <div className="version">
+                  配置版本{' '}
+                  <strong>
+                    {versionLabel(
+                      working.history.find((v) => v.versionId === versionId) ?? form.version,
                     )}
-                  </Field>
-                )}
-                {versionId && (
-                  <div className="version">
-                    配置版本{' '}
-                    <strong>
-                      {versionLabel(
-                        working.history.find((v) => v.versionId === versionId) ?? form.version,
-                      )}
-                    </strong>
-                    <RecordIdentity id={versionId} />
-                  </div>
-                )}
-              </FormLayout>
-            </Modal>
-          )}
-        </div>
-      </div>
+                  </strong>
+                  <RecordIdentity id={versionId} />
+                </div>
+              )}
+            </FormLayout>
+          </Modal>
+        )}
+      </PageHeading>
       {editable && (
         <DraftRecovery
           checkpointRef={checkpoint}

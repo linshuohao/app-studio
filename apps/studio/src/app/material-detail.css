@@ -22,29 +22,17 @@
   background: var(--studio-surface);
   font: var(--studio-type-body);
 }
-.material-detail-heading {
+.toolbar.material-detail-heading {
   flex: none;
-  display: grid;
-  gap: var(--studio-space-4);
+  margin-block-end: 0;
   padding: var(--studio-space-8) var(--material-detail-gutter);
   border-block-end: 1px solid var(--studio-border);
 }
-.material-detail-title,
 .material-contract-heading {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--studio-space-8);
-}
-.material-detail-title h1 {
-  flex: 1;
-  min-inline-size: min(120px, 100%);
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.material-detail-title .material-detail-back {
-  text-decoration: none;
-  min-inline-size: var(--studio-control-height);
 }
 .material-detail-meta,
 .material-detail-identity {
@@ -202,8 +190,4 @@
 }
 .material-capability h4 {
   margin-block-end: var(--studio-space-8);
-}
-.material-detail-dialog-content .contract-type code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }

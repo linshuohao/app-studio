@@ -7,8 +7,7 @@
   padding: 0.85rem;
   min-width: 0;
 }
-.layout-bar,
-.layout-move {
+.layout-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -51,15 +50,13 @@
   border: 0;
   color: inherit;
 }
-.visual-layout
-  :is(.layout-bar, .layout-move, .layout-inspector)
-  button:not([class], dialog button) {
+.visual-layout :is(.layout-bar, .layout-inspector) button:not([class], dialog button) {
   background: white;
   color: var(--studio-text);
   border-color: var(--studio-control-border);
 }
 .visual-layout
-  :is(.layout-bar, .layout-move, .layout-inspector)
+  :is(.layout-bar, .layout-inspector)
   button:not([class], dialog button, :disabled):hover {
   background: var(--studio-hover);
 }
@@ -79,7 +76,7 @@
 .layout-block.selected {
   border-color: var(--studio-primary);
 }
-.layout-block.selected > .layout-node-name {
+.layout-block.selected > .layout-block-header > .layout-node-name {
   background: var(--studio-selected);
   color: var(--studio-primary);
 }
@@ -109,16 +106,21 @@
 .layout-slot-grid > .layout-gap {
   grid-column: 1 / -1;
 }
-.layout-paper-bar {
+.layout-block-header,
+.layout-empty {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.45rem;
-  margin-block-end: 0.65rem;
+  gap: var(--studio-space-4);
 }
-.layout-paper-bar h3 {
-  margin: 0;
+.layout-block-header .layout-node-name {
+  flex: 1;
+  min-inline-size: 0;
+}
+.layout-block-header [data-icon-button],
+.layout-empty [data-icon-button] {
+  flex: none;
+  min-inline-size: var(--studio-control-height-dense);
+  min-block-size: var(--studio-control-height-dense);
 }
 .layout-view-switch {
   display: flex;
@@ -313,9 +315,6 @@
 .layout-selection .studio-select-trigger {
   min-width: 240px;
 }
-.layout-move .studio-select-trigger {
-  min-width: 220px;
-}
 .layout-selection > code {
   color: var(--studio-text-muted);
   font: var(--studio-type-code);
@@ -407,17 +406,6 @@
   padding: var(--studio-space-16);
   background: var(--studio-bg);
 }
-.layout-paper-bar {
-  margin-block-end: var(--studio-space-12);
-}
-.layout-paper-bar h3 {
-  font: var(--studio-type-section);
-}
-.layout-paper-bar h3 small {
-  margin-inline-start: var(--studio-space-8);
-  color: var(--studio-text-muted);
-  font: var(--studio-type-caption);
-}
 .layout-view-switch {
   padding: 2px;
   gap: 2px;
@@ -445,7 +433,7 @@
 .layout-block.selected {
   border-color: var(--studio-focus-ring);
 }
-.layout-block.selected > .layout-node-name {
+.layout-block.selected > .layout-block-header > .layout-node-name {
   background: var(--studio-selected);
   color: var(--studio-primary);
 }
@@ -455,11 +443,14 @@
   font: var(--studio-type-control);
 }
 .layout-outline-tree > .layout-outline-row,
-.layout-node-name,
-.layout-gap {
+.layout-node-name {
   cursor: pointer;
 }
+.layout-property-backdrop {
+  z-index: 20;
+}
 .layout-property-drawer[data-studio-part='drawer'] {
+  z-index: 21;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(640px, 100vw);
@@ -518,7 +509,7 @@
 }
 .layout-drawer-actions {
   display: flex;
-  flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--studio-space-8);
 }
@@ -533,25 +524,16 @@
 .layout-drawer-footer:empty {
   display: none;
 }
-.layout-property-drawer .layout-move {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--studio-space-8);
-  align-items: end;
-}
-.layout-property-drawer .layout-move-reason {
-  grid-column: 1 / -1;
-}
-.layout-property-drawer .layout-move .studio-select-trigger {
-  min-width: 0;
-  width: 100%;
-}
 @media (max-width: 600px) {
   .layout-property-drawer :is(.layout-drawer-header, .layout-drawer-body) {
     padding-inline: var(--studio-space-16);
   }
   .layout-property-drawer .layout-drawer-header {
     flex-wrap: wrap;
+    row-gap: var(--studio-space-8);
+  }
+  .layout-property-drawer .layout-drawer-header > div {
+    flex-basis: 100%;
   }
 }
 .layout-settings-form {
@@ -584,10 +566,6 @@
 }
 .layout-gap {
   color: var(--studio-text-muted);
-}
-.layout-gap[aria-disabled='true'] {
-  background: var(--studio-danger-bg);
-  color: var(--studio-danger-fg);
 }
 .layout-move-reason {
   color: var(--studio-danger-fg);

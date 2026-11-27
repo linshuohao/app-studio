@@ -10,6 +10,7 @@ const destinations = [
   ['forms', '表单', 'FileText'],
   ['materials', '物料', 'Component'],
   ['functions', '纯函数', 'FunctionSquare'],
+  ['diagnostics', '表单错误', 'Info'],
 ] as const;
 
 export type StudioPage = (typeof destinations)[number][0] | 'members' | 'account' | 'draft';
@@ -20,14 +21,17 @@ const workspaceLabels = {
   forms: '表单',
   materials: '物料',
   functions: '纯函数',
+  diagnostics: '表单错误',
   members: '成员',
   account: '账号与权限',
 };
 
 function visibleDestinations(access: Access) {
-  return destinations.filter(
-    ([page]) => page !== 'agent' || access.permissions.includes('form:edit'),
-  );
+  return destinations.filter(([page]) => {
+    if (page === 'agent') return access.permissions.includes('form:edit');
+    if (page === 'diagnostics') return access.permissions.includes('diagnostic:view');
+    return true;
+  });
 }
 
 export function StudioBreadcrumb({

@@ -1,4 +1,6 @@
 'use client';
+
+import { PageHeading } from './page-heading';
 import {
   Button,
   DataTable,
@@ -154,12 +156,11 @@ export function Members({
     editing?.active === active ? '保存成员设置' : active ? '确认恢复' : '确认停用';
   return (
     <section className="studio-members" data-studio-ui>
-      <div className="toolbar page-title">
-        <h1>成员管理</h1>
+      <PageHeading title="成员管理">
         <Button variant="secondary" onClick={(event) => setGuideTrigger(event.currentTarget)}>
           角色说明
         </Button>
-      </div>
+      </PageHeading>
       <Tabs.Root
         className="studio-members-tabs"
         value={tab}

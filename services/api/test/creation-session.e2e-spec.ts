@@ -780,3 +780,149 @@ it('expires a human grant without letting it save or release the next grant', as
     .send({ ...edit, editingToken: next })
     .expect(200);
 });
+
+it('supplies the installed compiler environment when resuming a saved Agent turn', async () => {
+  const id = randomUUID();
+  const turnId = randomUUID();
+  upstream.mockResolvedValueOnce(
+    Response.json({ id, attempts: [{ turnId, status: 'interrupted' }] }),
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id,
+        turns: [{ turnId, message: '原始需求', result: { kind: 'answer', message: '继续完成' } }],
+      },
+    }),
+  );
+  const path = '/agent-conversations/' + id + '/turns/' + turnId + '/resume';
+  await setup('post', path).send({ check_environment: 'client-supplied' }).expect(201);
+  const [url, request] = upstream.mock.calls[1]!;
+  expect(url.pathname).toBe('/internal/v1/conversations/' + id + '/turns/' + turnId + '/resume');
+  expect(JSON.parse(request.body)).toEqual({
+    check_environment: checkEnvironment(app.get(ReleaseBuild)),
+  });
+});
+
+it('relays scoped progress and reply chunks before the turn result', async () => {
+  const id = randomUUID();
+  const turnId = randomUUID();
+  upstream.mockImplementationOnce((_url, request) => {
+    const traceId = request.headers['X-Trace-Id'];
+    const turn = { turnId, result: { kind: 'answer', message: '编译通过' } };
+    const frames = [
+      { type: 'progress', stage: 'schema', message: '正在生成数据 Schema' },
+      { type: 'text_delta', delta: '编译通过' },
+      { type: 'result', result: { conversation: { id, turns: [turn] } } },
+    ];
+    return new Response(
+      frames.map((frame) => JSON.stringify({ traceId, ...frame }) + '\n').join(''),
+      {
+        headers: { 'Content-Type': 'application/x-ndjson' },
+      },
+    );
+  });
+  const response = await setup('post', '/agent-conversations/' + id + '/turns')
+    .set('Accept', 'text/event-stream')
+    .send({ turnId, revision: 0, message: '检查表单' })
+    .buffer(true)
+    .expect(200);
+  const frames = response.text
+    .split('\n')
+    .filter((line) => line.startsWith('data: {'))
+    .map((line) => JSON.parse(line.slice(6)));
+  const progressIndex = frames.findIndex(({ type }) => type === 'data-stage-progress');
+  const textIndex = frames.findIndex(({ type }) => type === 'text-delta');
+  const resultIndex = frames.findIndex(({ type }) => type === 'data-result');
+  expect(frames[progressIndex]?.data).toEqual({ stage: 'schema', message: '正在生成数据 Schema' });
+  expect(textIndex).toBeGreaterThan(progressIndex);
+  expect(resultIndex).toBeGreaterThan(textIndex);
+});
+
+it('resolves an error ID into read-only Agent metadata and never forwards original values', async () => {
+  vi.stubEnv('PLATFORM_DIAGNOSTICS_STUDIO_PILOT', '1');
+  const { formId } = (
+    await setup('post', '/forms')
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: '错误引用试点' })
+      .expect(201)
+  ).body;
+  const { versionId } = (
+    await setup('post', `/forms/${formId}/versions`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ text: config('diagnostic-reference') })
+      .expect(201)
+  ).body;
+  const { releaseId } = (
+    await setup('post', `/forms/${formId}/releases`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ versionId })
+      .expect(201)
+  ).body;
+  const { owner } = (await setup('get', '/diagnostics/pilot').expect(200)).body;
+  const original = 'original-business-value-must-not-be-forwarded';
+  const { diagnosticId } = (
+    await setup('post', '/diagnostics/pilot/events')
+      .set('X-Diagnostic-Owner', owner)
+      .send({
+        eventId: randomUUID(),
+        schemaVersion: 1,
+        releaseId,
+        occurredAt: new Date().toISOString(),
+        source: 'runtime',
+        phase: 'flush',
+        errorCode: 'flush.aborted',
+        evidenceStatus: 'captured',
+        evidence: { snapshot: { value: original } },
+      })
+      .expect(201)
+  ).body;
+  const reference = { kind: 'diagnostic', diagnosticId };
+  const id = randomUUID(),
+    turnId = randomUUID();
+  const turn = {
+    turnId,
+    message: '定位错误',
+    result: { kind: 'answer', message: '已定位到发布' },
+  };
+  const conversation = {
+    id,
+    title: '错误调查',
+    revision: 1,
+    updatedAt: '2026-11-25',
+    turns: [turn],
+  };
+  const metadata = (await setup('get', `/diagnostics/events/${diagnosticId}/reference`).expect(200))
+    .body;
+  expect(metadata).toMatchObject({
+    ...reference,
+    formId,
+    releaseId,
+    versionId,
+    evidenceStatus: 'captured',
+  });
+  expect(metadata).not.toHaveProperty('evidence');
+
+  upstream.mockResolvedValueOnce(Response.json({ conversation }));
+  await setup('post', `/agent-conversations/${id}/turns`)
+    .send({
+      turnId,
+      revision: 0,
+      message: turn.message,
+      references: [{ ...reference, evidence: original }],
+    })
+    .expect(201);
+  const body = upstream.mock.calls[0]![1].body as string;
+  expect(body).not.toContain(original);
+  expect(JSON.parse(body)).toMatchObject({ readOnly: true, references: [metadata] });
+
+  await setup('post', `/agent-conversations/${id}/turns`)
+    .send({
+      turnId,
+      revision: 0,
+      message: turn.message,
+      references: [{ ...reference, diagnosticId: randomUUID() }],
+    })
+    .expect(404);
+  expect(upstream).toHaveBeenCalledTimes(1);
+});

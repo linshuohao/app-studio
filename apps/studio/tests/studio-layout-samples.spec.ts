@@ -99,3 +99,38 @@ test('form metadata stays single-column, preserves narrow keyboard order and sav
     description: '在窄屏继续编辑',
   });
 });
+
+test('renames a form from the version workspace and preserves its description', async ({
+  page,
+  baseURL,
+}) => {
+  const created = await page.request.post('/api/platform/forms', {
+    headers: { Origin: baseURL!, 'Idempotency-Key': crypto.randomUUID() },
+    data: { name: '页头改名样板' },
+  });
+  expect(created.ok()).toBeTruthy();
+  const { formId } = await created.json();
+
+  const formPath = '/api/platform/forms/' + formId;
+  const { revision } = await (await page.request.get(formPath)).json();
+  const described = await page.request.post(formPath + '/metadata', {
+    headers: { Origin: baseURL! },
+    data: { name: '页头改名样板', description: '保留表单说明', revision },
+  });
+  expect(described.ok()).toBeTruthy();
+
+  await page.goto('/?form=' + formId);
+  const heading = page.getByRole('heading', { name: '页头改名样板', exact: true });
+  await heading.getByRole('button').click();
+  const input = page.getByRole('textbox', { name: '表单名称', exact: true });
+  await input.fill('准备取消');
+  await input.press('Escape');
+  await expect(heading.getByRole('button')).toBeFocused();
+  await heading.getByRole('button').click();
+  await input.fill('页头改名完成');
+  await input.press('Enter');
+
+  await expect(page.getByRole('heading', { name: '页头改名完成', exact: true })).toBeVisible();
+  const saved = await page.request.get('/api/platform/forms/' + formId);
+  expect(await saved.json()).toMatchObject({ name: '页头改名完成', description: '保留表单说明' });
+});

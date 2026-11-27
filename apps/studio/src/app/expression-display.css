@@ -34,10 +34,6 @@
   margin: 0 0 var(--studio-space-4);
   color: var(--studio-text-muted);
 }
-.expression-reading-argument-body pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .expression-reading-lines {
   display: grid;
   gap: var(--studio-space-4);

@@ -6,6 +6,25 @@ Manifest 是本目录的机器契约唯一来源。Props、Bindings、Events、R
 
 只发一个无 Payload 的 activate 事件；使用 type=button，不隐式提交 HTML form。失败提示不伪造业务 Issue。
 
+删除当前数组成员时，将按钮放在该数组 `scope.mode: "each"` 的 `node` 内。下面的按钮位于 `/insureds` 的成员 Scope 内，该 Scope 的别名为 `member`。Renderer 使用按钮所在的渲染 Scope 执行命令，`item.$scope` 解析到当前成员的稳定身份。事件仍无 Payload。
+
+```json
+{
+  "material": "button",
+  "props": { "label": "删除家人", "variant": "danger" },
+  "on": {
+    "activate": {
+      "type": "form.command",
+      "command": {
+        "op": "array.remove",
+        "target": { "source": "data", "path": "/insureds" },
+        "item": { "$scope": "member" }
+      }
+    }
+  }
+}
+```
+
 运行装配调用 `createButton(artifact)`，将返回值交给 Renderer 的 createMaterialRegistry；Compiler Catalog 使用同一 Manifest 和制品身份。编译端从 `@form-engine/materials-react/manifests` 导入契约。样式显式导入 `@form-engine/materials-react/styles.css`，不由静态入口加载。
 
 真实输入、非法态及 Host 改值回归在 `../../tests/button/implementation.test.tsx`，浏览器验收页为 Playground 的 /materials。完整已确认契约见仓库 docs/design/extension-integration.md#first-assets-materials。

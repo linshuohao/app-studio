@@ -1,3 +1,5 @@
+import type { RendererDiagnostic } from '@form-engine/renderer-react';
+import type { createDiagnosticUpload } from './diagnostic-upload';
 import { checkPassportDuplicates, travelPassportValidator } from './passport-validator';
 import { travelEligibilityValidator } from './validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
@@ -61,6 +63,7 @@ export function startRelease(
     events: string[];
     validators: string[];
   }) => void,
+  upload?: ReturnType<typeof createDiagnosticUpload>,
 ) {
   const calls = { requests: 0, events: 0, validators: 0 };
   const requests = defineHostRequests(
@@ -163,7 +166,9 @@ export function startRelease(
     runtime = createRuntime({
       prepared,
       functions,
+      captureErrorTrace: upload !== undefined,
       onDiagnostic: (report) => {
+        upload?.runtime(report);
         const entries = report.kind === 'runtime' ? [report.entry] : report.entries;
         for (const entry of entries)
           if (entry.kind.endsWith('.error') || entry.kind.endsWith('.abort'))
@@ -180,8 +185,10 @@ export function startRelease(
     calls,
     available,
     errors,
-    diagnostic: (report: { code: string; phase: string }) =>
-      recordError(report.phase + ' · ' + report.code),
+    diagnostic: (report: RendererDiagnostic) => {
+      recordError(report.phase + ' · ' + report.code);
+      upload?.renderer(report);
+    },
     materials,
     requests,
     restoreDraft() {

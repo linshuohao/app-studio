@@ -16,21 +16,29 @@ interface CalendarTriggerProps {
   max?: string | undefined;
   disabled?: boolean | undefined;
   onSelect: (value: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // shadcn/ui Date Picker composition: Button, Popover and Calendar.
-export function CalendarTrigger({ label, disabled, onSelect, ...calendar }: CalendarTriggerProps) {
+export function CalendarTrigger({
+  label,
+  disabled,
+  onSelect,
+  open,
+  onOpenChange,
+  ...calendar
+}: CalendarTriggerProps) {
   const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
   const [container, setContainer] = useState<HTMLDialogElement>();
+  function changeOpen(next: boolean) {
+    if (next) setContainer(trigger.current?.closest('dialog') ?? undefined);
+    if (open === undefined) setLocalOpen(next);
+    onOpenChange?.(next);
+  }
   return (
-    <Popover.Root
-      open={open && !disabled}
-      onOpenChange={(next) => {
-        if (next) setContainer(trigger.current?.closest('dialog') ?? undefined);
-        setOpen(next);
-      }}
-    >
+    <Popover.Root open={(open ?? localOpen) && !disabled} onOpenChange={changeOpen}>
       <Popover.Trigger
         ref={trigger}
         className="fe-button fe-date-trigger"
@@ -40,13 +48,18 @@ export function CalendarTrigger({ label, disabled, onSelect, ...calendar }: Cale
         <CalendarIcon />
       </Popover.Trigger>
       <Popover.Portal container={container}>
-        <Popover.Positioner className="fe-date-positioner" sideOffset={6} align="start">
-          <Popover.Popup className="fe-date-popup" aria-label={label}>
+        <Popover.Positioner
+          className="fe-date-positioner"
+          positionMethod="fixed"
+          sideOffset={6}
+          align="start"
+        >
+          <Popover.Popup className="fe-date-popup" aria-label={label} finalFocus={trigger}>
             <Calendar
               {...calendar}
               onSelect={(value) => {
                 onSelect(value);
-                setOpen(false);
+                changeOpen(false);
               }}
             />
           </Popover.Popup>

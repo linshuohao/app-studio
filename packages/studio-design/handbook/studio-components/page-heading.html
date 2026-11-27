@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PageHeading 页面标题与操作 · Studio Design Handbook</title>
+    <link rel="stylesheet" href="../../tokens/tokens.css" />
+    <link rel="stylesheet" href="../studio-handbook.css" />
+    <link rel="stylesheet" href="../studio-technical-samples.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <nav aria-label="组件目录">
+          <a href="../studio-design-handbook.html">组件总览</a>
+          <a aria-current="page" href="page-heading.html">PageHeading · 页面标题与操作</a>
+        </nav>
+      </aside>
+      <main>
+        <article>
+          <header class="hero">
+            <small>布局</small>
+            <h1>PageHeading · 页面标题与操作</h1>
+            <p>统一 Studio 页面标题、返回入口和页面级操作的布局。</p>
+          </header>
+          <section id="api" class="section">
+            <h2>接口与用途</h2>
+            <table>
+              <tbody>
+                <tr><th>title</th><td>页面标题。传入字符串时可以启用组件内联编辑。</td></tr>
+                <tr><th>back</th><td>可选的返回按钮，提供名称、事件和禁用状态。</td></tr>
+                <tr><th>description</th><td>标题下方的说明或状态。</td></tr>
+                <tr><th>children</th><td>页面右侧的操作。空间不足时可换行。</td></tr>
+                <tr><th>rename</th><td>可选的编辑配置，由页面提供字段名称、保存回调和禁用状态。禁用期间无法修改或提交标题，保存失败时保留输入。</td></tr>
+              </tbody>
+            </table>
+            <p>点击标题或按 Enter 开始编辑。输入后按 Enter 或移开焦点保存，按 Escape 取消。异步保存完成时，如果焦点已转到其他控件，焦点保留在该控件。</p>
+            <a href="../../../../apps/studio/src/app/page-heading.tsx">查看 PageHeading 源码</a>
+          </section>
+          <section class="section">
+            <h2>交互预览</h2>
+            <iframe
+              class="component-playground"
+              title="PageHeading 交互预览"
+              sandbox="allow-scripts"
+              loading="lazy"
+              src="assets/business-playground-runner.html?run#page-heading"
+            ></iframe>
+            <a class="playground-link" href="business-playground.html#page-heading">单独打开预览</a>
+          </section>
+        </article>
+      </main>
+    </div>
+    <script src="handbook-layout.js"></script>
+  </body>
+</html>

@@ -1,5 +1,7 @@
 'use client';
 
+import { PageHeading } from './page-heading';
+
 import { useState } from 'react';
 import { JoinApplication } from './join-requests';
 import { AccountSecurity } from './account-security';
@@ -113,27 +115,19 @@ export function AccountAdmission({
   }
   return (
     <div className="authoring-panel">
-      <div className="toolbar page-title">
-        <h1>{settings ? '账号与安全' : '团队访问资格'}</h1>
-        <div className="action-row">
-          <button
-            type="button"
-            className="quiet"
-            disabled={busy}
-            onClick={() => onSettingsChange(!settings)}
-          >
-            {settings ? '返回团队状态' : '账号设置'}
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            disabled={busy}
-            onClick={() => void run(onLogout)}
-          >
-            退出登录
-          </button>
-        </div>
-      </div>
+      <PageHeading title={settings ? '账号与安全' : '团队访问资格'}>
+        <button
+          type="button"
+          className="quiet"
+          disabled={busy}
+          onClick={() => onSettingsChange(!settings)}
+        >
+          {settings ? '返回团队状态' : '账号设置'}
+        </button>
+        <button type="button" className="quiet" disabled={busy} onClick={() => void run(onLogout)}>
+          退出登录
+        </button>
+      </PageHeading>
       <p>
         当前账号：
         {account.username ?? (account.githubLogin ? '@' + account.githubLogin : account.userId)}

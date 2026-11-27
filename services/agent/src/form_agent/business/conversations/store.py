@@ -34,7 +34,9 @@ from sqlalchemy.pool import NullPool
 from form_agent.business.conversations.model import (
     Message,
     Owner,
+    explain_draft_issues,
     fingerprint,
+    has_unmapped_deferrals,
     make_delivery,
     public_result,
     stable_id,
@@ -386,6 +388,21 @@ class ConversationStore:
     def detail(self, conn, row):
         cid = row["id"]
         detail = view(row, history_for(conn, cid, row["revision"]))
+        legacy_turns = {
+            turn["turnId"]: turn
+            for turn in detail["turns"]
+            if has_unmapped_deferrals(turn["result"])
+        }
+        if legacy_turns:
+            for turn_id, trace in conn.execute(
+                select(
+                    turns.c.turn_id, turns.c.private_result["requirements_trace"]
+                ).where(
+                    turns.c.conversation_id == cid, turns.c.turn_id.in_(legacy_turns)
+                )
+            ):
+                turn = legacy_turns[turn_id]
+                turn["result"] = explain_draft_issues(turn["result"], trace)
         events = {}
         interruptions = {}
         elapsed = {}

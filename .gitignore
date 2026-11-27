@@ -32,6 +32,7 @@ services/agent/.langfuse-evaluation/
 
 # Generated documentation. Keep the reader's CSS, JS, vendor assets and historical sources.
 /docs/reading/*.html
+/docs/reading/handbook/*.html
 /docs/reading/decisions/*.html
 /docs/reading/l1/*.html
 /docs/reading/assets/build-report.json

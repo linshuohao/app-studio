@@ -22,4 +22,4 @@ Agent-first low-code workspace
 
 后续工作统一维护在[设计进展与待讨论事项](docs/design/governance.md)，包含每层缺口，以及尚未展开的 [Platform / Studio](docs/design/platform-studio.md)。历史取舍在[设计演进](docs/design/design-history.md)和独立 ADR 按需查看，不穿插在设计主线。原始 V0.* 等标签只用于追溯讨论来源，不是文档或引擎版本。
 
-Markdown 是唯一正文，HTML 阅读页与索引在本地或 CI 按需生成。安装文档依赖后运行 `.venv-docs/bin/python tools/docs/serve.py --build`，打开[本地阅读系统](http://127.0.0.1:8765/docs/reading/architecture.html)。[安装、构建及维护说明](docs/README.md)，[协作约定](AGENTS.md)。
+Markdown 是唯一正文，HTML 阅读页与索引在本地或 CI 按需生成。安装文档依赖后运行 `.venv-docs/bin/python tools/docs/serve.py --build`，打开[本地阅读系统](http://127.0.0.1:8765/docs/reading/index.html)。[安装、构建及维护说明](docs/README.md)，[协作约定](AGENTS.md)。

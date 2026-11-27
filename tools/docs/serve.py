@@ -8,6 +8,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from reader import READING_HOME
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -30,7 +32,7 @@ def main():
         server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(ReaderHandler, directory=str(ROOT)))
     except OSError as error:
         parser.exit(1, f"Cannot bind local port {args.port}: {error}. Choose another --port.\n")
-    print(f"Architecture reader: http://127.0.0.1:{args.port}/docs/reading/architecture.html", flush=True)
+    print(f"Project handbook: http://127.0.0.1:{args.port}/{READING_HOME.relative_to(ROOT).as_posix()}", flush=True)
     print("Loopback only. Press Ctrl+C to stop.", flush=True)
     try:
         server.serve_forever()

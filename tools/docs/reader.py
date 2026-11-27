@@ -11,7 +11,9 @@ from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "docs/reading/assets"
+READING_HOME = ASSETS.parent / "handbook/index.html"
 NAVIGATION = [
+    ("Assemble Studio 项目手册", READING_HOME.relative_to(ROOT).as_posix()),
     ("使用与开发指南", "docs/reading/usage-guide.html"),
     ("设计者指南 · 整体架构", "docs/reading/architecture.html"),
     ("L1 定义协议", "docs/reading/l1-definition-protocol-v1.html"),
@@ -157,7 +159,7 @@ def render_document(*, output: Path, title: str, body: str,
         if target: primary.append(catalog_link(target, output, label))
     values = {
         "title": html.escape(title),
-        "home": relative(ROOT / "docs/reading/architecture.html", output),
+        "home": relative(READING_HOME, output),
         "archive": relative(ROOT / "docs/history/index.html", output),
         "stylesheet": asset(ASSETS / "documentation.css", output),
         "script": asset(ASSETS / "documentation.js", output),

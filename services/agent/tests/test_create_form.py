@@ -51,6 +51,7 @@ class ScriptedModel(BaseChatModel):
                 {"CapabilitySelection"},
                 {"RepairDecision"},
                 {"SyntaxRepairDecision"},
+                {"IntegrationExample"},
             )
             or names <= allowed
         )
@@ -63,7 +64,13 @@ class ScriptedModel(BaseChatModel):
             json.loads(str(next(m.content for m in messages if m.type == "human")))
         )
         payload = self._inputs[-1]
-        if "available" in payload:
+        if "host_pending" in payload:
+            message = tool_call(
+                "IntegrationExample",
+                "integration-example",
+                code=f"validateCandidate({payload['candidate_text']})",
+            )
+        elif "available" in payload:
             message = tool_call(
                 "CapabilitySelection",
                 "selection",
@@ -226,6 +233,7 @@ def test_framework_calls_tools_and_repairs_after_check():
     assert checked == [original, revised]
     assert response.json()["check"]["check_id"] == "check-2"
     assert response.json()["candidate_text"] == revised
+    assert response.json()["guide"]["exampleCode"] == f"validateCandidate({revised})"
 
 
 def test_stream_includes_nested_tools_before_committed_candidate():

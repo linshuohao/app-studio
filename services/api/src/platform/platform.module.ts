@@ -1,3 +1,5 @@
+import { AssetRepairsController } from './asset-repairs.controller.js';
+import { DiagnosticReplayController } from './diagnostic-replay.js';
 import { DiagnosticsController } from './diagnostics.controller.js';
 import { AgentConversationsController } from './agent-conversations.controller.js';
 import { FormDraftsController } from './form-drafts.controller.js';
@@ -23,6 +25,8 @@ import { ReleaseBuild } from './release-build.js';
   controllers: [
     CreateFormController,
     DiagnosticsController,
+    AssetRepairsController,
+    DiagnosticReplayController,
     AgentConversationsController,
     FormDraftsController,
     OperationRecordsController,

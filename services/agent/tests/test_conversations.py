@@ -2,6 +2,7 @@ import json
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update
@@ -180,13 +181,16 @@ def test_rename_changes_only_the_owned_conversation_title(tmp_path):
     engine = database(tmp_path)
     cid = str(uuid4())
     url = "/internal/v1/conversations/" + cid
-    body = message()
+    body = message(text="请介绍我在工作台上可以创建和维护哪些表单，以及从哪里开始。")
     steps = [
         decision("chat"),
         tool_call("ChatReply", "reply", message="可以讨论。"),
+        decision("chat"),
+        tool_call("ChatReply", "follow-up", message="可以继续完善表单。"),
     ]
     with TestClient(app(engine, steps)) as client:
         original = client.post(url + "/turns", headers=AUTH, json=body).json()
+        assert original["conversation"]["title"] == "表单协作"
         other = {**AUTH, "X-Agent-Space": "other"}
         assert (
             client.patch(url, headers=other, json={"title": "不允许"}).status_code
@@ -201,6 +205,10 @@ def test_rename_changes_only_the_owned_conversation_title(tmp_path):
             **original,
             "conversation": renamed,
         }
+        follow_up = client.post(
+            url + "/turns", headers=AUTH, json=message(revision=1, text="继续讨论")
+        ).json()
+        assert follow_up["conversation"]["title"] == "请假表讨论"
 
 
 def test_import_preserves_private_state_and_durable_delivery(tmp_path):
@@ -501,7 +509,9 @@ def test_partial_reply_checkpoint_reset_and_final_suffix(tmp_path, monkeypatch):
     resume = url + "/turns/" + body["turnId"] + "/resume"
     calls = 0
 
-    async def interrupted_then_recovered(graph, request, trace, recursion_limit):
+    async def interrupted_then_recovered(
+        graph, request, trace, recursion_limit, **_options
+    ):
         nonlocal calls
         calls += 1
         yield {"type": "text_reset"}
@@ -580,3 +590,133 @@ def test_stream_failure_trace_can_be_found_in_attempt_history(tmp_path, monkeypa
         assert attempt["interruptionTraceId"] == trace
         assert attempt["resumable"]
         assert attempt["elapsedMs"] >= 0
+
+
+def test_schema_tool_explains_unavailable_compiler_environment(tmp_path, monkeypatch):
+    from form_agent.api import conversations as api
+    from form_agent.integrations.platform_tools import platform_tools
+
+    def unavailable(request):
+        assert request.url.path == "/internal/agent-tools/check-schema"
+        return httpx.Response(
+            503, json={"message": "Requested compiler environment unavailable"}
+        )
+
+    client_factory = httpx.AsyncClient
+
+    def mock_platform(**kwargs):
+        return client_factory(transport=httpx.MockTransport(unavailable), **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", mock_platform)
+
+    async def check_schema(graph, request, trace, recursion_limit, **_options):
+        yield {"type": "progress", "message": "正在请求 Platform 检查数据 Schema"}
+        tools = platform_tools("http://test-platform", "service", None)
+        assert tools.check_schema is not None
+        await tools.check_schema({"check_environment": "env"}, "{}", [])
+
+    monkeypatch.setattr(api, "stream_graph_events", check_schema)
+    url = "/internal/v1/conversations/" + str(uuid4())
+    with TestClient(app(database(tmp_path), [])) as client:
+        response = client.post(
+            url + "/turns",
+            headers={**AUTH, "Accept": "application/x-ndjson"},
+            json=message(),
+        )
+        failure = json.loads(response.text.splitlines()[-1])
+        assert failure["status"] == 502
+        assert "本次执行所用的编译环境已不可用" in failure["reason"]
+        assert "使用当前环境重新检查" in failure["reason"]
+        (attempt,) = client.get(url, headers=AUTH).json()["attempts"]
+        assert attempt["interruptionReason"] == failure["reason"]
+
+
+def test_resume_rechecks_in_new_compiler_environment_and_keeps_original_request(
+    tmp_path, monkeypatch
+):
+    from form_agent.api import conversations as api
+    from form_agent.business.form_authoring.contracts import Answer
+    from form_agent.execution.journal import call, step
+
+    checked = []
+    understood = []
+    protocol_reads = []
+    executed = []
+
+    async def understand(state):
+        value = state["request"].message
+
+        async def invoke():
+            understood.append(value)
+            return value
+
+        return {"requirements": await call("llm", {"message": value}, invoke, str, str)}
+
+    async def check(state):
+        environment = state["request"].context["check_environment"]
+
+        async def read_protocol():
+            protocol_reads.append(environment)
+            return "pinned protocol"
+
+        await call(
+            "tool",
+            {"name": "read_protocol", "version": "pinned"},
+            read_protocol,
+            str,
+            str,
+        )
+
+        async def invoke():
+            checked.append(environment)
+            return environment
+
+        return {"receipt": await call("tool", {"schema": "{}"}, invoke, str, str)}
+
+    async def stream(graph, request, trace, recursion_limit, **_options):
+        yield {"type": "progress", "message": "正在检查"}
+        environment = request.context["check_environment"]
+        executed.append(environment)
+        state = {"request": request}
+        requirements = await step("understand", understand)(state)
+        receipt = await step("check", check)({**state, "steps": 1})
+        assert receipt["receipt"] == environment
+        if len(executed) < 3:
+            raise RuntimeError("interrupted after saving check")
+        yield {
+            "type": "private_result",
+            "result": Answer(kind="answer", message=requirements["requirements"]),
+        }
+
+    monkeypatch.setattr(api, "stream_graph_events", stream)
+    engine = database(tmp_path)
+    url = "/internal/v1/conversations/" + str(uuid4())
+    body = message()
+    resume = url + "/turns/" + body["turnId"] + "/resume"
+    with TestClient(app(engine, [])) as client:
+        assert client.post(url + "/turns", headers=AUTH, json=body).status_code == 502
+        updated = {"check_environment": "next-env"}
+        interrupted = client.post(
+            resume, headers={**AUTH, "Accept": "application/x-ndjson"}, json=updated
+        )
+        assert interrupted.status_code == 200
+        first, _, failure = (json.loads(line) for line in interrupted.text.splitlines())
+        assert first["type"] == "progress" and "当前编译环境" in first["message"]
+        assert failure["type"] == "error" and failure["status"] == 502
+        result = client.post(resume, headers=AUTH, json=updated)
+        assert result.status_code == 200, result.text
+        (turn,) = result.json()["conversation"]["turns"]
+        assert turn["turnId"] == body["turnId"]
+        assert (
+            client.post(
+                resume, headers=AUTH, json={"check_environment": "later"}
+            ).json()
+            == result.json()
+        )
+    assert executed == ["env", "next-env", "next-env"]
+    assert checked == ["env", "next-env"]
+    assert understood == [body["message"]]
+    assert protocol_reads == ["env"]
+    with engine.connect() as conn:
+        stored = conn.execute(select(turns.c.request)).scalar_one()
+        assert stored["context"] == CONTEXT

@@ -68,6 +68,10 @@ function proposal(candidateText: string, overrides: Partial<Delivery> = {}): Del
     ...overrides,
   };
 }
+function mockHistory(id: string) {
+  upstream.mockResolvedValueOnce(Response.json({ id, turns: [] }));
+}
+
 function mockTurn(id: string, delivery: Delivery) {
   const turns = Array.from({ length: delivery.sourceRevision }, (_, idx) => ({
     turnId: idx === delivery.sourceRevision - 1 ? delivery.turnId : randomUUID(),
@@ -75,6 +79,7 @@ function mockTurn(id: string, delivery: Delivery) {
     result: { kind: 'proposal', summary: '候选就绪' },
     draftId: delivery.draftId,
   }));
+  if (delivery.sourceRevision > 1) mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: { id, title: '会话', revision: turns.length, updatedAt: '2026-11-23', turns },
@@ -92,12 +97,44 @@ function mockTurn(id: string, delivery: Delivery) {
   });
 }
 function fetchDelivery(id: string, delivery: Delivery) {
+  mockHistory(id);
   upstream.mockResolvedValueOnce(Response.json(delivery));
   return setup(
     'post',
     '/agent-conversations/' + id + '/deliveries/' + delivery.turnId + '/receive',
   );
 }
+it('prepares the exact checked delivery for its JSX guide without creating or rewriting a draft', async () => {
+  const id = randomUUID();
+  const original = proposal(config('original-candidate'));
+  const path = `/agent-conversations/${id}/deliveries/${original.turnId}/integration`;
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(original));
+  const guide = await setup('get', path).expect(200);
+  expect(guide.body.candidateDigest).toBe(original.digest);
+  expect(guide.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, candidateText: config('other') }));
+  await setup('get', path).expect(502);
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, checkEnvironment: 'other' }));
+  const regenerated = await setup('get', path).expect(200);
+  expect(regenerated.body.regenerated).toBe(true);
+  expect(regenerated.body.candidateDigest).toBe(original.digest);
+  expect(regenerated.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  const invalid = proposal('{}', { checkEnvironment: 'other' });
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(invalid));
+  const failure = await setup('get', path).expect(409);
+  expect(failure.body.message).toContain('当前编译环境中未通过检查');
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, draftIssues: [] }));
+  await setup('get', path).expect(404);
+});
 it('proxies Agent conversations under authenticated identity and never creates a draft for chat', async () => {
   const id = randomUUID(),
     turnId = randomUUID();
@@ -151,6 +188,7 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
     initial = proposal(config('initial'));
   const first = await mockTurn(id, initial).expect(201);
   const presentId = randomUUID();
+  mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: {
@@ -473,6 +511,7 @@ it('forwards the saved working text for the exact draft revision and rejects an 
     })
     .expect(409);
   expect(upstream.mock.calls).toHaveLength(before);
+  mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: {
@@ -536,11 +575,11 @@ it('accepts only one concurrent candidate against the same draft revision', asyn
   const candidates = ['candidate-a', 'candidate-b'].map((id) =>
     proposal(config(id), { draftId: first.id, baseRevision: first.revision, sourceRevision: 2 }),
   );
-  upstream.mockImplementation((url: URL) =>
-    Promise.resolve(
-      Response.json(candidates.find((candidate) => url.pathname.endsWith(candidate.turnId))),
-    ),
-  );
+  upstream.mockImplementation(async (url: URL) => {
+    if (url.pathname.endsWith('/' + conversation))
+      return Response.json({ id: conversation, turns: [] });
+    return Response.json(candidates.find((candidate) => url.pathname.endsWith(candidate.turnId)));
+  });
   const replies = await Promise.all(
     candidates.map((candidate) =>
       setup(
@@ -662,6 +701,7 @@ it('holds one draft editing slot and rejects competing changes before Agent gene
   const running = new Promise<void>((resolve) => {
     started = resolve;
   });
+  mockHistory(id);
   upstream.mockImplementationOnce(() => {
     started();
     return new Promise<Response>((resolve) => {

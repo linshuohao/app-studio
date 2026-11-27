@@ -13,7 +13,8 @@ type AssetKey = {
   assetVersion: string;
   artifactDigest: string;
 };
-export type ReferenceKey = FormKey | AssetKey;
+export type DiagnosticKey = { kind: 'diagnostic'; diagnosticId: string };
+export type ReferenceKey = FormKey | AssetKey | DiagnosticKey;
 
 function token(value: unknown) {
   if (typeof value !== 'string' || !value.length || value.length > 200)
@@ -24,6 +25,8 @@ function token(value: unknown) {
 export function referenceKey(raw: unknown): ReferenceKey {
   if (!raw || typeof raw !== 'object') throw new BadRequestException('无效的引用。');
   const item = raw as Record<string, unknown>;
+  if (item.kind === 'diagnostic')
+    return { kind: 'diagnostic', diagnosticId: resourceId(item.diagnosticId).toLowerCase() };
   if (item.kind === 'function' || item.kind === 'material')
     return {
       kind: item.kind,
@@ -46,7 +49,10 @@ export function referenceKey(raw: unknown): ReferenceKey {
 }
 
 export function referenceIdentity(key: ReferenceKey) {
-  if ('kind' in key) return [key.kind, key.assetId, key.assetVersion, key.artifactDigest];
+  if ('kind' in key)
+    return key.kind === 'diagnostic'
+      ? [key.kind, key.diagnosticId]
+      : [key.kind, key.assetId, key.assetVersion, key.artifactDigest];
   return key.pointer === undefined
     ? [key.formId, key.versionId]
     : [key.formId, key.versionId, key.pointer];
@@ -148,7 +154,7 @@ function formObject(text: string, pointer: string) {
 }
 
 export async function resolveReference(
-  key: ReferenceKey,
+  key: FormKey | AssetKey,
   spaceId: string,
   forms: PlatformForms,
   builds: ReleaseBuild,

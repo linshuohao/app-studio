@@ -1,6 +1,7 @@
 import { CodeBlock } from '../../components/code-block';
 import type { ReactNode } from 'react';
 import type { DiagnosticTraceStep } from '@form-engine/runtime';
+import type { DiagnosticAssetCandidate } from '../agent-conversation';
 import { diagnosticExplanation } from './diagnostic-explanation';
 
 type ChainDetail = {
@@ -10,6 +11,7 @@ type ChainDetail = {
   phase: string;
   targetId: string | null;
   evidence: unknown;
+  assetCandidates?: DiagnosticAssetCandidate[];
 };
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -59,6 +61,10 @@ export function DiagnosticSummary({ detail }: { detail: ChainDetail }) {
           ['错误码', detail.errorCode],
           ['失败阶段', detail.phase],
           ['配置目标', detail.targetId],
+          [
+            '关联资产',
+            detail.assetCandidates?.map(({ lock }) => lock.id + ' · ' + lock.version).join('、'),
+          ],
           ['异常原文', message],
         ]}
       />

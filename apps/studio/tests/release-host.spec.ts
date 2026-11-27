@@ -51,6 +51,14 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
   await chooseWorkingVersionAction(page, '查看本次发布', firstRow);
   const hostLink = page.getByRole('link', { name: '在示例 Host 中打开' });
   await expect(hostLink).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('#studio-main').evaluate((element) => {
+        const style = getComputedStyle(element);
+        return parseFloat(style.paddingBlockEnd);
+      }),
+    )
+    .toBeGreaterThan(0);
   const first = await hostLink.getAttribute('href');
   expect(publishRequests.map((r) => r.versionId)).toEqual([firstVersion]);
   await page.getByRole('button', { name: '返回版本列表', exact: true }).click();

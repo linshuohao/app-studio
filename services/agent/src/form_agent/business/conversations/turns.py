@@ -23,6 +23,7 @@ async def run_turn_events(
     trace,
     *,
     resume,
+    check_environment,
     timeout_seconds,
     callbacks,
     archive,
@@ -34,7 +35,9 @@ async def run_turn_events(
             "turn.request", conversation_id=cid, message=message, resume=resume
         )
     async with store.exclusive(cid) as conn:
-        prepared = await db_step(store.prepare, conn, cid, owner, message)
+        prepared = await db_step(
+            store.prepare, conn, cid, owner, message, check_environment
+        )
         if "replay" in prepared:
             envelope = prepared["replay"]
             batches = []
@@ -43,10 +46,22 @@ async def run_turn_events(
         else:
             journal = TurnJournal(conn, cid, str(message.turnId))
             started = monotonic()
+            compiler_scope = prepared["compiler_scope"]
             try:
                 if graph is None:
                     raise StoreUnavailable("Agent model or tools are unavailable")
-                completed = await journal.completed_repair_rounds() if resume else 0
+                completed = (
+                    await journal.completed_repair_rounds(compiler_scope)
+                    if resume
+                    else 0
+                )
+                if compiler_scope:
+                    event = {
+                        "type": "progress",
+                        "message": "正在使用当前编译环境继续核对检查结果",
+                    }
+                    await journal.event(event)
+                    yield event
                 trace_options = {}
                 if callbacks:
                     trace_options = {
@@ -58,13 +73,22 @@ async def run_turn_events(
                             "capture_version": "raw-events-v1",
                         },
                     }
-                with execution_scope(journal, resume=resume):
+                with execution_scope(
+                    journal,
+                    resume=resume,
+                    compiler_scope=compiler_scope,
+                    turn_deadline=monotonic() + timeout_seconds,
+                ):
                     async with asyncio.timeout(timeout_seconds):
                         stream = stream_graph_events(
                             graph,
                             prepared["input"],
                             trace,
                             TURN_RECURSION_LIMIT + 6 * completed,
+                            generate_conversation_title=prepared[
+                                "generate_conversation_title"
+                            ],
+                            actor=owner,
                             **trace_options,
                         )
                         async with aclosing(stream):
@@ -86,6 +110,7 @@ async def run_turn_events(
                                     prepared["input"].referenced_candidate,
                                     result,
                                     round((monotonic() - started) * 1000),
+                                    event.get("conversation_title"),
                                 )
                                 break
                             else:

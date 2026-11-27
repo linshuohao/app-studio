@@ -79,6 +79,13 @@ def public_result(result: dict) -> dict:
             for k in ("compilation", "checkCode", "candidateDigest")
             if k in result["verification"]
         }
+    if result["kind"] == "proposal" and (guide := result.get("guide")) is not None:
+        check = result["check"]
+        public["candidateGuide"] = {
+            **guide,
+            "candidateDigest": check["candidate_digest"],
+            "hostRequirements": check["host_requirements"],
+        }
     return public
 
 

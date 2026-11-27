@@ -19,11 +19,9 @@
 .agent-merge-row dd {
   margin: 0;
 }
-.agent-merge-row pre {
+.agent-merge-row .studio-code-block {
   margin: 0;
-  white-space: pre-wrap;
-  overflow: auto;
-  max-height: 14em;
+  max-block-size: 14em;
 }
 .agent-merge-row fieldset {
   display: flex;

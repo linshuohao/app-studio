@@ -509,6 +509,9 @@ input::file-selector-button {
   min-block-size: 0;
   padding-block-end: 0;
 }
+.studio-content:has(.studio-retained-form:not([hidden]) .studio-release-detail) > #studio-main {
+  padding-block-end: var(--studio-workspace-inline-padding, var(--studio-space-24));
+}
 .studio-version-workspace {
   display: flex;
   flex: 1;

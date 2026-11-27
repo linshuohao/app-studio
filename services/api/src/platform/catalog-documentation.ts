@@ -365,7 +365,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date-picker": {
     "version": "0.1.0",
-    "description": "# date-picker · 日期选择\n\n选择单个公历日期。用 `field` 为控件提供字段标签和校验提示。\n\n- Binding `value` 接受严格的 `YYYY-MM-DD` 公历日期字符串或 `null`；清空写 `null`。\n- 手输按 Enter 或失焦提交。无效格式、无效闰日和超界输入保留在本地并显示提示。日历选中即提交，关闭日历不产生额外写入。\n- `min` / `max` 是包含边界的可选日期，约束可选日期和手输提交。`disabled`、`readOnly` 阻止编辑，`placeholder` 默认为 `YYYY-MM-DD`。\n- 显示和提交公历日，不经过浏览器所在时区；Host 改值覆盖尚未提交的草稿。字段业务校验继续由表单配置负责。\n",
+    "description": "# date-picker · 日期选择\n\n选择单个公历日期。用 `field` 为控件提供字段标签和校验提示。\n\n- Binding `value` 接受严格的 `YYYY-MM-DD` 公历日期字符串或 `null`；清空写 `null`。\n- 日期框点击或键盘激活后打开锚定日历。选中日期即提交，清空操作位于日历浮层。Escape 或点外部关闭浮层，Host 提供的无效值会显示提示。\n- `min` / `max` 是包含边界的可选日期，约束可选日期。`disabled`、`readOnly` 阻止编辑，`placeholder` 默认为「选择日期」。\n- 显示和提交公历日，不经过浏览器所在时区；显示始终跟随 Runtime 当前值。字段业务校验继续由表单配置负责。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/date-picker/README.md",
     "examples": [
@@ -388,7 +388,7 @@ export const catalogDocumentation: Record<string, { version: string; description
     ],
     "title": "日期选择",
     "category": "输入",
-    "summary": "键入或从日历选择单个日期。",
+    "summary": "从日期框弹出的日历选择单个日期。",
     "annotations": {
       "/propsSchema/properties/min": "可选日期的下限，包含当天。",
       "/propsSchema/properties/max": "可选日期的上限，包含当天。",
@@ -417,7 +417,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date-range": {
     "version": "0.1.0",
-    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入，或者用各自的日历按钮打开锚定浮层选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
+    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。点击任一日期框或使用键盘激活，打开锚定在该日期框上的日历浮层。日历展开时，确认弹窗保持原有尺寸。清空操作位于对应日历浮层。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；打开日历时，Escape 先关闭日历并返回日期框。取消区间编辑时不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），清空转 null；Host 提供的非法日期字符串保留并展示提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/date-range/README.md",
     "examples": [

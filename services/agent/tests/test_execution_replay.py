@@ -180,7 +180,11 @@ def test_restores_deep_agent_tool_messages_without_reading_protocol_again():
             )
         restored, _, _, prompts = invoke([], request)
     assert restored["kind"] == "proposal"
-    assert prompts == []
+    # Delivery can prepare a Host example for the restored, already-checked candidate.
+    # The requirements, composition, and protocol reads must still come from the journal.
+    assert len(prompts) == 1
+    assert prompts[0]["candidate_text"] == '{"ok":true}'
+    assert prompts[0]["host_requirements"] == {}
     authoring = {
         data["authoring"]["name"]
         for kind, data in journal.requests.values()

@@ -1,8 +1,6 @@
 'use client';
 
-import { useId, type ReactNode } from 'react';
-import type { UnderstandingItem } from './platform-api';
-import { AgentMessage, AgentReply } from './agent-reply';
+import { useId, type MouseEventHandler, type ReactNode } from 'react';
 
 export function AgentInteractionCard({
   title,
@@ -13,18 +11,25 @@ export function AgentInteractionCard({
   title: string;
   children?: ReactNode;
   tone?: 'neutral' | 'info' | 'warning';
-  links?: { href: string; label: string; detail?: string; newTab?: boolean }[];
+  links?: {
+    href: string;
+    label: string;
+    detail?: string;
+    newTab?: boolean;
+    onClick?: MouseEventHandler<HTMLAnchorElement>;
+  }[];
 }) {
   const heading = useId();
   return (
     <section className="agent-interaction-card" data-tone={tone} aria-labelledby={heading}>
       <h3 id={heading}>{title}</h3>
       {children}
-      {links?.map(({ href, label, detail, newTab }) => (
+      {links?.map(({ href, label, detail, newTab, onClick }) => (
         <a
           key={href}
           className="agent-resource-link"
           href={href}
+          onClick={onClick}
           target={newTab ? '_blank' : undefined}
           rel={newTab ? 'noopener' : undefined}
         >
@@ -33,42 +38,5 @@ export function AgentInteractionCard({
         </a>
       ))}
     </section>
-  );
-}
-
-export function AgentTurnProgress({
-  label,
-  text,
-  items,
-}: {
-  label: string;
-  text: string;
-  items: UnderstandingItem[];
-}) {
-  return (
-    <>
-      {label && <p role="status">{label}…</p>}
-      {!!items.length && (
-        <details className="agent-interaction-card">
-          <summary>查看暂时识别的需求</summary>
-          <ul>
-            {items.map((item, index) => (
-              <li key={index}>
-                {item.kind === 'question' ? '待确认：' : ''}
-                {item.text}
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-      {text && (
-        <AgentMessage text={text}>
-          <div data-speaker="assistant">
-            <b>表单助手</b>
-            <AgentReply text={text} streaming />
-          </div>
-        </AgentMessage>
-      )}
-    </>
   );
 }

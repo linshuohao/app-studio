@@ -30,6 +30,7 @@ STAGED_LABELS = {
     "compose.CounterexampleReview": ("schema", "正在复核数据 Schema 反例"),
 }
 
+
 async def stream_graph_events(
     graph,
     request,
@@ -38,6 +39,8 @@ async def stream_graph_events(
     *,
     callbacks=(),
     trace_metadata=None,
+    generate_conversation_title=False,
+    actor=None,
 ) -> AsyncGenerator[dict[str, Any], None]:
     config: dict[str, Any] = {
         "run_id": trace,
@@ -45,10 +48,15 @@ async def stream_graph_events(
         "run_name": "AgentTurn",
         "metadata": {"creation_trace_id": str(trace), **(trace_metadata or {})},
     }
+    if actor is not None:
+        config["configurable"] = {"diagnostic_actor": actor}
     if callbacks:
         config["callbacks"] = list(callbacks)
     stream = graph.astream_events(
-        {"request": request},
+        {
+            "request": request,
+            "generate_conversation_title": generate_conversation_title,
+        },
         version="v2",
         config=config,
     )
@@ -77,6 +85,7 @@ def project_public_event(event):
         return {
             "type": "private_result",
             "result": event["data"]["output"]["result"],
+            "conversation_title": event["data"]["output"].get("conversation_title"),
         }
     elif name in STAGED_LABELS and kind == "on_chain_start":
         stage, message = STAGED_LABELS[name]

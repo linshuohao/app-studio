@@ -24,6 +24,8 @@ import {
 import type { PreparedForm, PreparedViewNode } from '@form-engine/protocol/prepared';
 import { PlatformAccess, tokenHash } from './access.js';
 import { PlatformDatabase } from './database.js';
+import { readDiagnosticAssets } from './diagnostic-assets.js';
+import { listDiagnosticReferences, readDiagnosticReference } from './diagnostic-reference.js';
 import { requireStudioOrigin, session } from './session-http.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -345,6 +347,44 @@ export class DiagnosticsController implements OnModuleInit, OnModuleDestroy {
   }
 
   @Header('Cache-Control', 'no-store')
+  @Get('references')
+  async references(
+    @Headers('cookie') cookie: string | undefined,
+    @Query('q') query: unknown = '',
+    @Query('page') pageText: unknown = '1',
+    @Query('limit') limitText: unknown = '8',
+  ) {
+    const { spaceId } = await this.access.authenticate(session(cookie), 'diagnostic:view');
+    if (
+      typeof query !== 'string' ||
+      query.length > 200 ||
+      typeof pageText !== 'string' ||
+      !/^\d{1,6}$/.test(pageText) ||
+      typeof limitText !== 'string' ||
+      !/^\d{1,2}$/.test(limitText)
+    )
+      throw new BadRequestException('Invalid diagnostic reference query');
+    const page = Number(pageText);
+    const limit = Number(limitText);
+    if (page < 1 || limit < 1 || limit > 32)
+      throw new BadRequestException('Invalid diagnostic reference pagination');
+    return listDiagnosticReferences(
+      this.db.executor,
+      spaceId,
+      query.trim(),
+      limit,
+      (page - 1) * limit,
+    );
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Get('events/:id/reference')
+  async reference(@Headers('cookie') cookie: string | undefined, @Param('id') id: string) {
+    const { spaceId } = await this.access.authenticate(session(cookie), 'diagnostic:view');
+    return readDiagnosticReference(this.db.executor, spaceId, id);
+  }
+
+  @Header('Cache-Control', 'no-store')
   @Get('events/:id')
   async detail(@Headers('cookie') cookie: string | undefined, @Param('id') id: string) {
     const eventId = identifier(id);
@@ -380,7 +420,8 @@ export class DiagnosticsController implements OnModuleInit, OnModuleDestroy {
           [eventId, userId],
         );
       }
-      return { diagnosticId: eventId, ...row };
+      const assetCandidates = await readDiagnosticAssets(tx, row);
+      return { diagnosticId: eventId, ...row, ...(assetCandidates.length && { assetCandidates }) };
     });
   }
 }

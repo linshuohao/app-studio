@@ -1,4 +1,5 @@
 'use client';
+import { CodeBlock } from '../components/code-block';
 import { useMemo, useState } from 'react';
 import { Button, Feedback } from '@form-engine/studio-design-components/controls';
 import { Modal } from './modal';
@@ -76,7 +77,10 @@ export function AgentMerge({ base, current, candidate, onApply, onClose }: Props
                   <div key={label}>
                     <dt>{label}</dt>
                     <dd>
-                      <pre>{value === undefined ? '（无此项）' : displayJson(value).trimEnd()}</pre>
+                      <CodeBlock
+                        language="json"
+                        source={value === undefined ? '（无此项）' : displayJson(value).trimEnd()}
+                      />
                     </dd>
                   </div>
                 ))}

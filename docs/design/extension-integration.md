@@ -268,8 +268,8 @@ remote-select.search 输入为 `{query:string,filterKey:string|null}`，成功�
 
 单日期、日期范围、多行文本、单选组和多选组采用 Shadcn 的控件组合，基础交互沿用 Base UI 及 Shadcn Calendar。封装与样式归属运行时物料包，由 Studio、Playground 和独立 Host 使用同一物料实现。编译和资产目录从静态入口读取 Manifest。
 
-- 单日期可键入或打开日历。键入按 Enter 或失焦提交，日历选中即提交。写入严格公历 `YYYY-MM-DD`，清空写 `null`。无效草稿和格式提示停留在控件内，Host 外部改值覆盖草稿。`min` / `max` 包含边界。
-- 日期范围两端都支持键入或从日历选择，选择只改变本地草稿，确认时沿用双端写入流程。取消和 Escape 丢弃草稿。只有开始端使用 `startMin` / `startMax`。
+- 单日期通过日期框打开日历。选中即提交严格公历 `YYYY-MM-DD`，浮层内清空写 `null`。`min` / `max` 包含边界。Host 提供的非法值由控件显示提示。
+- 日期范围两端通过日期框打开日历。选中与清空只改变本地草稿，确认时沿用双端写入流程。日历打开时 Escape 先关闭日历并返回触发控件。取消区间编辑丢弃草稿。只有开始端使用 `startMin` / `startMax`。
 - 多行文本沿用文本输入的提交与输入法规则，保留换行，清空写空字符串。
 - 单选组写一个选项 ID，空态为 `null`。多选组写选项 ID 数组，清空写 `[]`。配置中的 Option ID 唯一。
 

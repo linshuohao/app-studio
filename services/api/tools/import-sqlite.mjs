@@ -63,8 +63,10 @@ export async function importSqlite(sourcePath, connectionString) {
               (versions.length === 8 ||
                 (versions[8]?.name === '1780000000008-draft-editing' &&
                   (versions.length === 9 ||
-                    (versions.length === 10 &&
-                      versions[9]?.name === '1780000000009-form-diagnostics'))))))
+                    (versions[9]?.name === '1780000000009-form-diagnostics' &&
+                      (versions.length === 10 ||
+                        (versions.length === 11 &&
+                          versions[10]?.name === '1780000000010-asset-repair-tasks'))))))))
         )) ||
       versions[0]?.name !== '1780000000000-platform' ||
       versions[1]?.name !== '1780000000001-scenarios' ||

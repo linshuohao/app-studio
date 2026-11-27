@@ -27,7 +27,15 @@ class TurnModel(ScriptedModel):
             json.loads(str(next(m.content for m in messages if m.type == "human")))
         )
         payload = self._inputs[-1]
-        if "available" in payload:
+        if "first_message" in payload:
+            message = tool_call("ConversationTitle", "title", title="表单协作")
+        elif "host_pending" in payload:
+            message = tool_call(
+                "IntegrationExample",
+                "integration-example",
+                code="validateCandidate(snapshot)",
+            )
+        elif "available" in payload:
             message = tool_call(
                 "CapabilitySelection", "caps", material=["text-input"], pure_function=[]
             )

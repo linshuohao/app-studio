@@ -142,3 +142,9 @@ node tools/engineering/migrations/split-agent-conversations.mjs
 版本 1 的上报包括事件 ID、Release ID、发生时间、来源、阶段、错误码和证据状态。有可靠定位时须同时提供
 `targetKind` 和 `targetId`，定位必须存在于该发布的配置中。错误列表与单次证据均要求诊断读取权限，
 读取有原始证据的详情会写入访问审计。详见[表单错误采集与定位](../../docs/design/platform-studio.md#platform-diagnostic-mapping)。
+
+### 诊断调查与资产修复
+
+部署此版本前继续应用 `1780000000010-asset-repair-tasks`。数据库角色分离时，确保 API 运行角色可读写资产任务、关联发生记录和操作历史三张表。
+
+在 API 设置 `PLATFORM_ASSET_REPAIR_REPOSITORY`（`owner/repo`）后，开发者可登记该仓库的 PR URL、提交摘要和目标资产版本。可选的 `PLATFORM_ASSET_REPAIR_GITHUB_TOKEN` 在服务端读取 GitHub PR 状态。任务审查由维护者在 Studio 记录，登记的 PR 和版本属于人工交付凭据。

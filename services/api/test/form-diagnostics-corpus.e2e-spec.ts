@@ -159,11 +159,9 @@ it('publishes ten forms and verifies fifty runtime errors with twenty distinct f
                 targetId: sample.kind === 'loop' ? undefined : diagnostic.ruleId,
                 targetKind:
                   diagnostic.ruleId && sample.kind !== 'loop'
-                    ? sample.code === 'validation.error'
+                    ? sample.code === 'validation.error' || sample.code === 'validator.error'
                       ? 'constraint'
-                      : sample.code === 'validator.error'
-                        ? 'validator'
-                        : 'reaction'
+                      : 'reaction'
                     : undefined,
                 evidenceStatus: 'captured',
                 evidence: diagnostic.evidence,

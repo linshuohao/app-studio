@@ -252,4 +252,11 @@ test('queues a real form error offline and opens its original evidence after rec
   await expect(config.locator('.studio-code-block')).toContainText('diagnostic-fixture');
   await page.getByRole('button', { name: '返回错误列表', exact: true }).click();
   await expect(diagnosticRow).toBeFocused();
+  await diagnosticRow.click();
+  const reference = page.getByRole('link', { name: '引用到 Agent', exact: true });
+  await expect(reference).toHaveAttribute('href', /diagnostic=/);
+  await reference.click();
+  const referenceList = page.getByRole('list', { name: '待发送的引用' });
+  await expect(referenceList.getByRole('link', { name: /^错误.*reaction.error/ })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '发送消息', exact: true })).toBeFocused();
 });

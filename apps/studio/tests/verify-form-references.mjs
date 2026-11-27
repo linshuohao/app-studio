@@ -54,6 +54,10 @@ try {
   await remove.click();
 
   await page.getByRole('button', { name: '添加引用', exact: true }).click();
+  const referenceTypes = page.getByRole('menu', { name: '引用类型' });
+  await expect(referenceTypes.getByRole('menuitem')).toHaveText(['表单', '纯函数', '物料', '错误']);
+  await expect(page.getByRole('dialog', { name: '引用表单' })).toHaveCount(0);
+  await referenceTypes.getByRole('menuitem', { name: '表单' }).click();
   await page.getByRole('dialog', { name: '引用表单' }).waitFor();
   await page.keyboard.press('Escape');
   await expect(input).toBeFocused();
@@ -80,10 +84,12 @@ try {
   await page.keyboard.press('Escape');
   await expect(input).toBeFocused();
   await input.pressSequentially('/form');
-  const search = page.getByRole('searchbox', { name: '搜索表单' });
+  const picker = page.getByRole('dialog', { name: '引用表单' });
+  const search = picker.getByRole('searchbox', { name: '搜索表单' });
   await search.fill(name);
+  const referenceTable = picker.getByRole('table', { name: '可引用表单' });
   await expect(
-    page.getByRole('button', { name: /引用验收 A/ }).filter({ hasText: name }),
+    referenceTable.getByRole('button', { name: '引用 ' + name, exact: true }),
   ).toBeVisible();
   await search.press('Enter');
   await expect(remove).toBeVisible();

@@ -147,4 +147,6 @@ node tools/engineering/migrations/split-agent-conversations.mjs
 
 部署此版本前继续应用 `1780000000010-asset-repair-tasks`。数据库角色分离时，确保 API 运行角色可读写资产任务、关联发生记录和操作历史三张表。
 
-在 API 设置 `PLATFORM_ASSET_REPAIR_REPOSITORY`（`owner/repo`）后，开发者可登记该仓库的 PR URL、提交摘要和目标资产版本。可选的 `PLATFORM_ASSET_REPAIR_GITHUB_TOKEN` 在服务端读取 GitHub PR 状态。任务审查由维护者在 Studio 记录，登记的 PR 和版本属于人工交付凭据。
+开发者可先创建和认领资产修复任务。提交审查前，在 API 进程设置 `PLATFORM_ASSET_REPAIR_REPOSITORY`（`owner/repo`）。认领人登记该仓库的 PR 地址、40 位提交 SHA 和拟发布的资产版本，再由另一位具有表单管理权限的维护者记录审查结果。
+
+为 API 配置可读取该仓库 Pull Requests 的 `PLATFORM_ASSET_REPAIR_GITHUB_TOKEN` 后，审查列表和任务详情会显示 PR 的草稿、开启、关闭或合并状态。缺少令牌或 GitHub 查询失败时，状态显示为不可用。Studio 单独保存人工审查记录，GitHub 合并和资产发布仍由各自的工程流程完成。

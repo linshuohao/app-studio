@@ -185,6 +185,11 @@ def test_restores_deep_agent_tool_messages_without_reading_protocol_again():
     assert len(prompts) == 1
     assert prompts[0]["candidate_text"] == '{"ok":true}'
     assert prompts[0]["host_requirements"] == {}
+    assert restored["guide"]["exampleCode"] == "validateCandidate(snapshot)"
+    with execution_scope(journal):
+        replayed, _, _, prompts = invoke([], request)
+    assert replayed["guide"] == restored["guide"]
+    assert prompts == []
     authoring = {
         data["authoring"]["name"]
         for kind, data in journal.requests.values()

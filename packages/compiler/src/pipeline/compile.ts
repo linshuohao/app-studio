@@ -5,7 +5,7 @@ import { at } from '../common/pointer.js';
 import { own } from '../common/object.js';
 import { receive } from '../input/receive.js';
 import { normalize } from '../input/normalize.js';
-import { createCapabilityCatalog } from '../capability/catalog.js';
+import { createCapabilityCatalog, type CapabilityReference } from '../capability/catalog.js';
 import { SchemaModel } from '../analysis/schema/model.js';
 import { ReferenceAnalyzer, rootEnvironment } from '../analysis/reference/environment.js';
 import { ExpressionAnalyzer } from '../analysis/expression/analyze.js';
@@ -23,7 +23,10 @@ import { executableDataSchema } from './data-schema.js';
  * 规则和动态 Props 共用分析事实；订阅、求值和真实 Scope 身份留在运行端。
  * 任一阶段有错误都不交付 Prepared，避免运行端消费缺少语义的半成品。
  */
-export function compile(input: CompileInput): CompileResult {
+export function compile(
+  input: CompileInput,
+  observeCapability?: (reference: CapabilityReference) => void,
+): CompileResult {
   const diagnostics = new Diagnostics();
   const fail = (): CompileResult => ({ success: false, diagnostics: diagnostics.list() });
   // 先得到独立 JSON 快照，再规范化；后续阶段不会修改调用者的对象。
@@ -58,7 +61,13 @@ export function compile(input: CompileInput): CompileResult {
     received.schemaResources ?? {},
     diagnostics,
   );
-  const capabilities = createCapabilityCatalog(catalog, target, diagnostics, source);
+  const capabilities = createCapabilityCatalog(
+    catalog,
+    target,
+    diagnostics,
+    source,
+    observeCapability,
+  );
   const references = new ReferenceAnalyzer(models, diagnostics, source);
   const expressions = new ExpressionAnalyzer(
     references,

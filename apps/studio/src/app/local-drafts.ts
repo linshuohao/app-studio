@@ -1,13 +1,20 @@
+import type { AssetChoice } from './asset-binding-editor';
+
 export type SaveRequest = {
   key: string;
   text: string;
   basedOnVersionId: string | null;
+  assetChoices?: AssetChoice[];
   note: string;
   name?: string;
+  inspectedCatalog?: string;
 };
+export type AssetInspection = { source: string; catalog: string };
 export type DraftContent = {
+  assetInspection?: AssetInspection;
   agentApplied?: boolean;
   text: string;
+  assetChoices?: AssetChoice[];
   note: string;
   versionId: string | null;
   savedText: string;

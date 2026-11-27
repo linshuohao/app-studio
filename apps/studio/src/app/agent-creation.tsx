@@ -34,7 +34,6 @@ import { AgentPanel, AgentUserMessage, ConversationTitle } from './agent-panel';
 import { AgentDockButton } from './agent-dock-button';
 import { AgentMerge } from './agent-merge';
 import { type TurnEvent, failureMessage, platform, PlatformError } from './platform-api';
-import { installedWebCapabilities } from './web-capabilities';
 import { PreviewRuntime } from './preview-runtime';
 import './agent-creation.css';
 
@@ -1364,12 +1363,7 @@ export function AgentCreation({
       {showPreview && preview && (
         <Modal title="工作稿试填" size="wide" onClose={() => setShowPreview(false)}>
           <section aria-label="候选预览">
-            <PreviewRuntime
-              capabilities={installedWebCapabilities}
-              prepared={preview.prepared}
-              onReady={onReady}
-              onFailure={onFailure}
-            />
+            <PreviewRuntime prepared={preview.prepared} onReady={onReady} onFailure={onFailure} />
           </section>
           <Button
             disabled={!ready || !isCurrent}

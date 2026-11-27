@@ -381,6 +381,8 @@ class ConversationStore:
         form: str | None = None,
         work: str | None = None,
         linked_draft: str | None = None,
+        *,
+        include_check_environment: bool = False,
     ):
         def query(conn):
             row = required(conn, cid, owner)
@@ -394,11 +396,13 @@ class ConversationStore:
                     and row["task"].get("draft_id") == linked_draft
                 ):
                     raise MissingConversation()
-            return self.detail(conn, row)
+            return self.detail(
+                conn, row, include_check_environment=include_check_environment
+            )
 
         return await self.read(query)
 
-    def detail(self, conn, row):
+    def detail(self, conn, row, *, include_check_environment=False):
         cid = row["id"]
         detail = view(row, history_for(conn, cid, row["revision"]))
         legacy_turns = {
@@ -498,6 +502,10 @@ class ConversationStore:
                     "events": events.get(tid, []),
                 }
             )
+            if include_check_environment:
+                environment = (req.get("context") or {}).get("check_environment")
+                if isinstance(environment, str):
+                    attempts[-1]["checkEnvironment"] = environment
         detail["attempts"] = attempts
         return detail
 

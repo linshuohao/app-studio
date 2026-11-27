@@ -43,7 +43,12 @@ import {
 } from './studio-location';
 
 type Row = { id: string; name: string; updated: string; head: string | null; published: boolean };
-type Detail = Row & { text: string; version: Version | null; history: VersionSummary[] };
+type Detail = Row & {
+  source?: string | null;
+  text: string;
+  version: Version | null;
+  history: VersionSummary[];
+};
 const versionPageSizes = [10, 20, 50];
 const defaultVersionPageSize = 20;
 export function WorkingVersions(props: {
@@ -357,6 +362,7 @@ export function WorkingVersions(props: {
         working={{
           id: current.id,
           name: current.name,
+          source: current.source,
           history: current.history,
           readOnly: !!snapshot || current.published,
         }}

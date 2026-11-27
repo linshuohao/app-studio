@@ -3,15 +3,14 @@ import type { createDiagnosticUpload } from './diagnostic-upload';
 import { checkPassportDuplicates, travelPassportValidator } from './passport-validator';
 import { travelEligibilityValidator } from './validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
-import { readDelivery, digest, canonical, type LoadedRelease } from './read-delivery';
+import { readDelivery, type LoadedRelease } from './read-delivery';
 export type { LoadedRelease } from './read-delivery';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests } from '@form-engine/renderer-react';
-import { createRuntime, type RuntimeOptions } from '@form-engine/runtime';
+import { type createRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { goldenData } from '../../../../playground/src/demos/travel/policy';
-import { installedWebCapabilities } from '../web-capabilities';
-
-const { materials, functions } = installedWebCapabilities;
+import { releaseWebCapabilities } from './available-capabilities';
+import { resolvePreparedWebCapabilities } from './resolve-capabilities';
 
 export const stages = [
   '获取发布',
@@ -27,35 +26,21 @@ export async function loadRelease(
 ) {
   const release = await readDelivery(releaseId, signal, () => stage(1));
   stage(2, release);
-  for (const kind of ['materials', 'pureFunctions'] as const) {
-    const locks = release.prepared.capabilityLock[kind];
-    for (const [id, lock] of Object.entries(locks)) {
-      const material = kind === 'materials';
-      const binding = material
-        ? Object.hasOwn(materials, id)
-          ? materials[id]
-          : undefined
-        : Object.hasOwn(functions, id)
-          ? functions[id]
-          : undefined;
-      const manifest =
-        binding && ('contract' in binding ? binding.contract.manifest : binding.manifest);
-      const title = '缺少兼容的' + (material ? '物料' : '函数') + '：' + id;
-      if (!manifest || !binding || lock.id !== id) throw Error(title + '，请安装发布锁定的制品。');
-      if (manifest.version !== lock.version)
-        throw Error(title + '，需要版本 ' + lock.version + '，当前 ' + manifest.version + '。');
-      if (
-        canonical(binding.artifact) !== canonical(lock.artifact) ||
-        (await digest(canonical(manifest))) !== lock.manifestDigest
-      )
-        throw Error(title + '，制品身份或契约摘要与发布锁不符。');
-    }
-  }
-  return release;
+  const capabilities = await resolvePreparedWebCapabilities(
+    release.prepared,
+    releaseWebCapabilities,
+  );
+  signal.throwIfAborted();
+  return { ...release, capabilities };
 }
 const cities = ['北京', '上海', '广州', '深圳', '成都'];
 export function startRelease(
   prepared: LoadedRelease,
+  {
+    materials,
+    functions,
+    runtime: engine,
+  }: Awaited<ReturnType<typeof resolvePreparedWebCapabilities>>,
   show: (message: string) => void,
   onCreate: () => void,
   onRegistrations: (available: {
@@ -163,7 +148,7 @@ export function startRelease(
   }
   let runtime: ReturnType<typeof createRuntime>;
   try {
-    runtime = createRuntime({
+    runtime = engine.create({
       prepared,
       functions,
       captureErrorTrace: upload !== undefined,

@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CreateFormController } from './create-form.controller.js';
 import { configText } from './forms.js';
+import type { PlatformDatabase } from './database.js';
 import type { ReleaseBuild } from './release-build.js';
+
+const database = { executor: {} } as PlatformDatabase;
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -29,7 +32,10 @@ describe('Platform CreateForm boundary', () => {
         },
       },
     });
-    const endpoint = new CreateFormController({ capture, compile } as unknown as ReleaseBuild);
+    const endpoint = new CreateFormController(
+      { capture, compile } as unknown as ReleaseBuild,
+      database,
+    );
     const candidate = '{"title":"' + '保'.repeat(21841) + 'x"}';
     expect(Buffer.byteLength(candidate)).toBe(65536);
     expect(configText(candidate)).toBe(candidate);
@@ -52,14 +58,16 @@ describe('Platform CreateForm boundary', () => {
   it('rejects tool calls before reading installed assets or invoking Compiler', async () => {
     vi.stubEnv('AGENT_SERVICE_TOKEN', 'real-service');
     const capture = vi.fn();
-    const endpoint = new CreateFormController({ capture } as unknown as ReleaseBuild);
-    expect(() => endpoint.catalog('wrong', { kind: 'material', query: 'select' })).toThrow();
-    expect(() => endpoint.checkSchema('wrong', { schema_text: '{}', cases: [] })).toThrow();
+    const endpoint = new CreateFormController({ capture } as unknown as ReleaseBuild, database);
+    await expect(
+      endpoint.catalog('wrong', { kind: 'material', query: 'select' }),
+    ).rejects.toThrow();
+    await expect(endpoint.checkSchema('wrong', { schema_text: '{}', cases: [] })).rejects.toThrow();
     await expect(endpoint.check('', { candidate_text: '{}' })).rejects.toThrow();
     expect(capture).not.toHaveBeenCalled();
   });
 
-  it('checks an exact Data Schema and returns case diagnostics under the pinned target', () => {
+  it('checks an exact Data Schema and returns case diagnostics under the pinned target', async () => {
     vi.stubEnv('AGENT_SERVICE_TOKEN', 'real-service');
     const capture = () => ({
       compiler: 'test',
@@ -74,8 +82,8 @@ describe('Platform CreateForm boundary', () => {
         },
       },
     });
-    const endpoint = new CreateFormController({ capture } as unknown as ReleaseBuild);
-    const result = endpoint.checkSchema('real-service', {
+    const endpoint = new CreateFormController({ capture } as unknown as ReleaseBuild, database);
+    const result = await endpoint.checkSchema('real-service', {
       schema_text: '{"type":"object","required":["age"]}',
       cases: [{ name: 'required age', data: {}, valid: true }],
     });
@@ -84,16 +92,16 @@ describe('Platform CreateForm boundary', () => {
       candidate_digest: expect.stringMatching(/^sha256:/),
       diagnostics: [expect.objectContaining({ code: 'DATA_SCHEMA_CASE_MISMATCH' })],
     });
-    expect(() =>
+    await expect(
       endpoint.checkSchema('real-service', {
         schema_text: '{}',
         cases: [],
         check_environment: 'outdated',
       }),
-    ).toThrow('Requested compiler environment unavailable');
+    ).rejects.toThrow('Requested compiler environment unavailable');
   });
 
-  it('returns selected material behavior notes only for the installed version', () => {
+  it('returns selected material behavior notes only for the installed version', async () => {
     vi.stubEnv('AGENT_SERVICE_TOKEN', 'real-service');
     const fixture = (version: string) =>
       ({
@@ -115,14 +123,14 @@ describe('Platform CreateForm boundary', () => {
           },
         }),
       }) as unknown as ReleaseBuild;
-    const exact = new CreateFormController(fixture('0.1.0'));
+    const exact = new CreateFormController(fixture('0.1.0'), database);
     const query = { kind: 'material', query: 'remote-select' };
-    expect(exact.catalog('real-service', query)).toMatchObject([
+    expect(await exact.catalog('real-service', query)).toMatchObject([
       { id: 'remote-select', description: expect.stringContaining('候选和当前选择都展示') },
     ]);
-    expect(exact.catalog('real-service', { ...query, query: '' })).toEqual(['remote-select']);
-    const different = new CreateFormController(fixture('0.0.0'));
-    expect(different.catalog('real-service', query)).not.toMatchObject([
+    expect(await exact.catalog('real-service', { ...query, query: '' })).toEqual(['remote-select']);
+    const different = new CreateFormController(fixture('0.0.0'), database);
+    expect(await different.catalog('real-service', query)).not.toMatchObject([
       { description: expect.any(String) },
     ]);
   });

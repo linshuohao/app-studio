@@ -15,6 +15,8 @@ import request from 'supertest';
 import { expect, it, vi } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { PlatformAccess } from '../src/platform/access.js';
+import { ReleaseBuild } from '../src/platform/release-build.js';
+import { WebAssetCatalog } from '../src/platform/web-asset-catalog.js';
 import { defaultSpaceId } from '../src/platform/credentials.js';
 import { PlatformDatabase } from '../src/platform/database.js';
 import { diagnosticForms, formDefinition, ref } from './fixtures/diagnostic-corpus.js';
@@ -301,6 +303,36 @@ it('publishes ten forms and verifies fifty runtime errors with twenty distinct f
                 );
                 expect(audit?.count).toBe(2);
 
+                // Withdrawing a recommendation must not prevent replay using the installed implementation.
+                const builds = module.get(ReleaseBuild);
+                const installed = builds.assets.installed;
+                const eq = installed.pureFunctions['core.eq']!;
+                const policy = new WebAssetCatalog(
+                  installed,
+                  [],
+                  [
+                    {
+                      kind: 'pureFunctions',
+                      id: 'core.eq',
+                      version: eq.manifest.version,
+                      artifactDigest: eq.artifact.digest,
+                      policy: 'retain-only',
+                    },
+                  ],
+                );
+                const capture = builds.capture.bind(builds);
+                const overridden = vi
+                  .spyOn(builds, 'capture')
+                  .mockImplementation((target, catalog = policy.recommended, selections) =>
+                    capture(target, catalog, selections),
+                  );
+                try {
+                  expect((await replay(diagnosticId, releaseId).expect(200)).body).toMatchObject({
+                    status: 'reproduced',
+                  });
+                } finally {
+                  overridden.mockRestore();
+                }
                 const environment = await db.one<{ requestId: string; input: string }>(
                   `SELECT r.request_id AS "requestId", rq.build_input AS input
                     FROM platform_releases r JOIN platform_release_requests rq USING(request_id)

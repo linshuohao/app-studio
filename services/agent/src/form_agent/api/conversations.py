@@ -81,8 +81,16 @@ def conversation_router(
         formId: str | None = None,
         workId: str | None = None,
         linkedDraftId: str | None = None,
+        includeCheckEnvironment: bool = False,
     ):
-        return await store.get(str(id), owner, formId, workId, linkedDraftId)
+        return await store.get(
+            str(id),
+            owner,
+            formId,
+            workId,
+            linkedDraftId,
+            include_check_environment=includeCheckEnvironment,
+        )
 
     @router.get("/{id}/deliveries/{turn_id}")
     async def delivery(

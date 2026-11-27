@@ -3,12 +3,20 @@ import { ancestorBinders } from './layout-bindings';
 import { platform } from './platform-api';
 import { child, semanticModel } from './semantic-model';
 
+import type { AssetChoice } from './asset-binding-editor';
+
+export type LayoutAssetContext = {
+  versionId?: string;
+  basedOnVersionId?: string;
+  assetChoices?: AssetChoice[];
+};
+
 type Diagnostic = { severity: string; code: string; sourcePointer: string; message: string };
 type Result = { success: boolean; diagnostics: Diagnostic[] };
 
 // An unrelated structural error can stop the Compiler before it analyses any view. When that
 // happens, check the edited subtree under its real lexical binders and shared declarations.
-export function layoutCheckDefinition(source: string, nodePath: string) {
+export function layoutCheckDefinition(source: string, nodePath: string, profile = 'entry') {
   const m = semanticModel(source);
   const node = m.byPath.get(nodePath);
   if (!node || m.ambiguous.has(node.path)) throw Error('无法唯一定位待检查节点。');
@@ -25,7 +33,9 @@ export function layoutCheckDefinition(source: string, nodePath: string) {
     return n ? [JSON.stringify(k) + ':' + m.raw(n)] : [];
   });
   return (
-    '{"protocolVersion":"1","id":"studio-layout-check","version":"draft","views":{"entry":' +
+    '{"protocolVersion":"1","id":"studio-layout-check","version":"draft","views":{' +
+    JSON.stringify(profile) +
+    ':' +
     view +
     '}' +
     (shared.length ? ',' + shared.join(',') : '') +
@@ -39,9 +49,17 @@ export async function verifyLayoutEdit(
   before: string,
   after: string,
   nodePath: string,
+  assetContext?: LayoutAssetContext,
 ) {
   const run = (text: string, profile: string) =>
-    platform<Result>(formPath + '/check', { body: { text: compactJson(text), profile } });
+    platform<Result>(formPath + '/check', {
+      body: {
+        ...assetContext,
+        text: compactJson(text),
+        profile,
+        assetChoices: assetContext?.assetChoices?.filter((choice) => choice.profile === profile),
+      },
+    });
   const checked = await run(after, profile);
   if (checked.success) return;
   const errors = (r: Result) => r.diagnostics.filter((d) => d.severity === 'error');
@@ -52,6 +70,6 @@ export async function verifyLayoutEdit(
   const known = new Set(errors(original).map(signature));
   const added = errors(checked).find((d) => !known.has(signature(d)));
   if (added) throw Error(describe(added));
-  const local = await run(layoutCheckDefinition(after, nodePath), 'entry');
+  const local = await run(layoutCheckDefinition(after, nodePath, profile), profile);
   if (!local.success) throw Error('控件未通过检查：' + describe(errors(local)[0]));
 }

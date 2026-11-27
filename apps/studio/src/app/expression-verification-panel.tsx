@@ -1,8 +1,9 @@
 'use client';
 
 import { Modal } from './modal';
+import { FormAssetScope } from './form-asset-scope';
 import { JsonEditor } from '../components/json/json-editor';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Button, Input } from '@form-engine/studio-design-components/controls';
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 import type { JsonSchema } from '@form-engine/protocol/capability';
@@ -287,6 +288,7 @@ export function ExpressionVerificationPanel({
   dialog?: { title: string; returnFocus: HTMLElement; onClose: () => void };
   focus?: (path: string) => void;
 }) {
+  const assets = useContext(FormAssetScope);
   const [sample, setSample] = useState('{}');
   const [context, setContext] = useState('{}');
   const [members, setMembers] = useState<Record<string, number>>({});
@@ -297,7 +299,15 @@ export function ExpressionVerificationPanel({
     busy?: true;
   }>();
   const pending = useRef<AbortController | null>(null);
-  const key = JSON.stringify([raw, config, sample, context, members]);
+  const key = JSON.stringify([
+    raw,
+    config,
+    assets?.profile,
+    assets?.choices,
+    sample,
+    context,
+    members,
+  ]);
   const [inputKey, setInputKey] = useState(key);
   if (inputKey !== key) {
     setInputKey(key);
@@ -349,7 +359,7 @@ export function ExpressionVerificationPanel({
     setAnswer({ key, busy: true });
     try {
       const value = await verifyExpression(
-        config,
+        { ...config, profile: assets?.profile, assetContext: assets?.choices },
         raw,
         expr,
         sampleData.value,

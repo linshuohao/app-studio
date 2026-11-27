@@ -145,7 +145,12 @@ export function AssetCatalog({
     }
     setDetailDialog(undefined);
     setSelected(row);
-    writeLocation({ catalog: kind, asset: row?.id, assetVersion: row?.version });
+    writeLocation({
+      catalog: kind,
+      asset: row?.id,
+      assetVersion: row?.version,
+      assetDigest: row?.artifact.digest,
+    });
   }
   useEffect(() => {
     let active = true;
@@ -172,7 +177,11 @@ export function AssetCatalog({
     if (!selected) return;
     let active = true;
     void platform<Detail>(
-      `/catalog/${kind}/${encodeURIComponent(selected.id)}${selected.version ? `?version=${encodeURIComponent(selected.version)}` : ''}`,
+      `/catalog/${kind}/${encodeURIComponent(selected.id)}?` +
+        new URLSearchParams({
+          ...(selected.version && { version: selected.version }),
+          ...(selected.artifact.digest && { artifactDigest: selected.artifact.digest }),
+        }),
     ).then(
       (result) => {
         if (!active) return;
@@ -202,7 +211,8 @@ export function AssetCatalog({
   );
   const detail =
     loadedDetail?.manifest.id === selected?.id &&
-    (!selected?.version || loadedDetail?.manifest.version === selected.version)
+    (!selected?.version || loadedDetail?.manifest.version === selected.version) &&
+    (!selected?.artifact.digest || loadedDetail?.artifact.digest === selected.artifact.digest)
       ? loadedDetail
       : undefined;
   const manifest = detail?.manifest;
@@ -250,7 +260,10 @@ export function AssetCatalog({
       examples: '配置示例',
     };
     const record = rows?.find(
-      (row) => row.id === selected.id && (!selected.version || selected.version === row.version),
+      (row) =>
+        row.id === selected.id &&
+        (!selected.version || selected.version === row.version) &&
+        (!selected.artifact.digest || selected.artifact.digest === row.artifact.digest),
     );
     const category = detail?.documentation?.category ?? record?.category;
     const implementation = detail?.documentation?.implementation ?? record?.implementation;

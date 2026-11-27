@@ -84,12 +84,13 @@ export function ReleaseHost({
       }
       advance(0);
       try {
-        const { prepared, name } = await loadRelease(id, request.signal, advance);
+        const { prepared, name, capabilities } = await loadRelease(id, request.signal, advance);
         if (request.signal.aborted) return;
         advance(3, { prepared, name });
         const instanceId = ++next.current;
         const instance = startRelease(
           prepared,
+          capabilities,
           (message) => {
             if (active.current.has(instanceId))
               setMessages((current) => ({ ...current, [instanceId]: message }));

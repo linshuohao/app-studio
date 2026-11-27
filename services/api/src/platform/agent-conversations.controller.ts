@@ -21,12 +21,7 @@ import type { Response } from 'express';
 import { PlatformAccess, type AccessContext } from './access.js';
 import { PlatformDatabase } from './database.js';
 import { sendAgentStream } from './agent-ui-stream.js';
-import {
-  checkEnvironment,
-  conversationRequest,
-  previewInputs,
-  type TurnStream,
-} from './create-form-agent.js';
+import { checkEnvironment, conversationRequest, type TurnStream } from './create-form-agent.js';
 import {
   PlatformDrafts,
   type Delivery,
@@ -36,6 +31,11 @@ import {
   resourceId,
 } from './form-drafts.js';
 import { configText, PlatformForms } from './forms.js';
+import {
+  agentCompileInputs,
+  currentAgentAssetEnvironment,
+  pinAgentAssetEnvironment,
+} from './agent-asset-environments.js';
 import { ReleaseBuild } from './release-build.js';
 import { readDiagnosticReference } from './diagnostic-reference.js';
 import { requireStudioOrigin, session } from './session-http.js';
@@ -56,6 +56,8 @@ type TurnInput = {
   draftId?: string;
   draftRevision?: number;
   workingText?: string;
+  basedOnVersionId?: string;
+  assetChoices?: unknown;
   readOnly?: boolean;
   formId?: string;
   workId?: string;
@@ -323,8 +325,16 @@ export class AgentConversationsController {
     if (delivery.formId) await this.checkForm(current, delivery.formId, delivery.workId);
     const text = configText(delivery.candidateText);
     if (digestText(text) !== delivery.digest) throw new BadGatewayException('Invalid candidate');
-    const regenerated = delivery.checkEnvironment !== checkEnvironment(this.builds);
-    const checked = await this.builds.compile(text, previewInputs(this.builds));
+    const environment = await currentAgentAssetEnvironment(
+      this.db.executor,
+      this.builds,
+      delivery.checkEnvironment,
+    );
+    const regenerated = delivery.checkEnvironment !== environment.id;
+    const checked = await this.builds.compile(
+      text,
+      agentCompileInputs(this.builds, text, environment.bindings),
+    );
     await this.reauthorize(cookie, actor, diagnostic);
     if (!checked.success) {
       const diagnostic = checked.diagnostics.find((item) => item.severity === 'error');
@@ -384,10 +394,11 @@ export class AgentConversationsController {
         draftId?: string;
         draftRevision?: number;
         status: string;
+        checkEnvironment?: string;
         readOnly?: boolean;
         references?: ReferenceKey[];
       }[];
-    }>(actor, path);
+    }>(actor, path, { query: new URLSearchParams({ includeCheckEnvironment: 'true' }) });
     const diagnosticHistory = hasDiagnosticHistory(target);
     if (diagnosticHistory) await this.reauthorize(cookie, actor, true);
     const attempt = target.attempts?.find((entry) => entry.turnId === turnId);
@@ -423,7 +434,15 @@ export class AgentConversationsController {
               method: 'POST',
               // Diagnostic replies follow the post-run permission check before reaching the browser.
               stream: diagnosticHistory ? undefined : stream,
-              body: { check_environment: checkEnvironment(this.builds) },
+              body: {
+                check_environment: (
+                  await currentAgentAssetEnvironment(
+                    this.db.executor,
+                    this.builds,
+                    attempt?.checkEnvironment,
+                  )
+                ).id,
+              },
             },
           );
           await this.reauthorize(
@@ -490,6 +509,7 @@ export class AgentConversationsController {
     );
     const readOnly = body.readOnly || hasDiagnostic;
     const run = async (stream?: TurnStream): Promise<TurnView> => {
+      let environment = checkEnvironment(this.builds);
       let workingText = body.workingText === undefined ? undefined : configText(body.workingText);
       let editingDraft: Pick<Draft, 'id' | 'revision'> | undefined;
       if (body.draftId) {
@@ -521,12 +541,18 @@ export class AgentConversationsController {
       if (body.formId) {
         await this.checkForm(actor, body.formId, body.workId);
         if (body.workId) linkedDraftId = await this.linkedDraft(actor, body.formId, body.workId);
-        workingText = await this.forms.authoringInput(
+        const input = await this.forms.authoringAssetInput(
           session(cookie),
           body.formId,
-          { text: workingText },
+          {
+            text: workingText,
+            basedOnVersionId: body.basedOnVersionId,
+            assetChoices: body.assetChoices,
+          },
           'check',
         );
+        workingText = input.text;
+        environment = await pinAgentAssetEnvironment(this.db.executor, this.builds, input.bindings);
       }
       const requestFingerprint = digestText(
         JSON.stringify([
@@ -539,6 +565,9 @@ export class AgentConversationsController {
           body.workId,
           body.workingText,
           ...(readOnly ? ['read-only'] : []),
+          ...(body.basedOnVersionId || body.assetChoices
+            ? [[body.basedOnVersionId, body.assetChoices]]
+            : []),
           ...(references.length ? [references.map(referenceIdentity)] : []),
         ]),
       );
@@ -567,7 +596,7 @@ export class AgentConversationsController {
                 target: 'web',
                 knowledge_version:
                   process.env.CREATE_FORM_KNOWLEDGE_VERSION || 'createform-l1-2026-11-22.2',
-                check_environment: checkEnvironment(this.builds),
+                check_environment: environment,
                 formId: body.formId,
                 workId: body.workId,
               },

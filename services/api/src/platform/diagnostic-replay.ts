@@ -39,7 +39,6 @@ import { PlatformDatabase } from './database.js';
 import { moveDivisionGuard } from './diagnostic-condition-repair.js';
 import { readDiagnosticReference } from './diagnostic-reference.js';
 import { ReleaseBuild, type ReleaseBuildInput } from './release-build.js';
-import { webTarget } from './web-check.js';
 
 type BlockReason =
   | 'evidence_unavailable'
@@ -146,11 +145,10 @@ async function replayCondition(
   const conditionLimit = conditionBlock(rule.when, prepared.definition.expressions ?? {});
   if (conditionLimit) return blocked(conditionLimit);
 
-  const { profile, platform } = prepared.build;
+  const { platform } = prepared.build;
   if (platform !== 'web' || prepared.preparedFormatVersion !== SUPPORTED_PREPARED_FORMAT)
     return blocked('environment_unavailable');
-  const catalog = builds.capture(webTarget(profile)).catalog;
-  const artifact = catalog.pureFunctions['core.eq']!.artifact;
+  const artifact = builds.assets.installed.pureFunctions['core.eq']!.artifact;
   const functions = {
     ...createCoreFunctions(artifact),
     ...Object.fromEntries(

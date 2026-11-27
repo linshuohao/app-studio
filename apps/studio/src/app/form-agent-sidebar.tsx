@@ -1,4 +1,5 @@
 'use client';
+import type { LayoutAssetContext } from './layout-check';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@form-engine/studio-design-components';
 import { AttemptHistory, useRunningConversation } from './agent-attempt';
@@ -31,6 +32,7 @@ export function FormAgentSidebar({
   formId,
   workId,
   source,
+  assetContext,
   locked,
   disabled,
   setLocked,
@@ -44,6 +46,7 @@ export function FormAgentSidebar({
   formId: string;
   workId: string;
   source: string;
+  assetContext?: LayoutAssetContext;
   locked: boolean;
   disabled: boolean;
   setLocked: (busy: boolean) => void;
@@ -172,6 +175,7 @@ export function FormAgentSidebar({
       formId,
       workId,
       workingText: source,
+      ...assetContext,
       ...(references.length && { references: references.map(referenceRequest) }),
     };
     const fingerprint = JSON.stringify(payload);

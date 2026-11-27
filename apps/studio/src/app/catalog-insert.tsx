@@ -40,9 +40,10 @@ function Choice({
     </label>
   );
 }
-function useCatalog<T>(path: string) {
+function useCatalog<T>(path?: string) {
   const [state, setState] = useState<{ path: string; value?: T; error?: string }>();
   useEffect(() => {
+    if (!path) return;
     let active = true;
     platform<T>(path).then(
       (value) => {
@@ -58,16 +59,21 @@ function useCatalog<T>(path: string) {
   }, [path]);
   return state?.path === path ? state : undefined;
 }
+import { catalogAssetPath, useAssetBindingProfiles } from './asset-binding-editor';
+import type { InspectionInput } from './config-inspection';
+
 type Apply = (source: string, next: string, path: string) => void;
 export function CatalogInsert({
   kind,
   text,
   initialTarget,
+  binding,
   onApply,
   onClose,
 }: {
   kind: CatalogKind;
   initialTarget?: string;
+  binding?: { formPath: string; input: InspectionInput };
   text: string;
   onApply: Apply;
   onClose: () => void;
@@ -110,6 +116,7 @@ export function CatalogInsert({
             返回目录
           </button>
           <InsertFields
+            binding={binding}
             key={selected.id + selected.version}
             {...{ kind, asset: selected, text, context: model.context, initialTarget, onApply }}
           />
@@ -165,6 +172,7 @@ function InsertFields({
   kind,
   asset,
   initialTarget,
+  binding,
   text,
   context,
   onApply,
@@ -172,19 +180,11 @@ function InsertFields({
   kind: CatalogKind;
   asset: Summary;
   initialTarget?: string;
+  binding?: { formPath: string; input: InspectionInput };
   text: string;
   context: ReturnType<typeof insertionContext>;
   onApply: Apply;
 }) {
-  const detail = useCatalog<Detail>(
-    '/catalog/' +
-      kind +
-      '/' +
-      encodeURIComponent(asset.id) +
-      '?version=' +
-      encodeURIComponent(asset.version),
-  );
-  const manifest = detail?.value?.manifest;
   const [path, setPath] = useState(initialTarget ?? ''),
     [values, setValues] = useState<Record<string, string>>({}),
     [preview, setPreview] = useState<{
@@ -194,6 +194,44 @@ function InsertFields({
       fragment: string;
       before?: string;
     }>();
+  const rawProfile = /^\/views\/([^/]+)/.exec(path)?.[1];
+  const selectedProfile = rawProfile?.replaceAll('~1', '/').replaceAll('~0', '~');
+  const profiles = useAssetBindingProfiles(binding?.formPath, binding?.input);
+  const references = profiles?.profiles
+    ?.filter(({ profile }) => !selectedProfile || selectedProfile === profile)
+    .flatMap(({ dependencies }) =>
+      dependencies.filter(
+        (dependency) =>
+          dependency.id === asset.id &&
+          dependency.kind === (kind === 'materials' ? 'materials' : 'pureFunctions'),
+      ),
+    );
+  const locked = references?.[0]?.lock;
+  const sharedProfilesDisagree =
+    path === '/expressions' &&
+    locked &&
+    references!.length < (profiles?.profiles?.length ?? 0) &&
+    locked.version !== asset.version;
+  const conflicted =
+    sharedProfilesDisagree ||
+    references?.some(
+      ({ lock, available }) =>
+        !available || !lock || lock.artifact.digest !== locked?.artifact.digest,
+    );
+  const error =
+    profiles?.error ??
+    (conflicted ? '这个资产在现有视图中待绑定或版本不同。请先在资产版本中确认。' : undefined);
+  const detail = useCatalog<Detail>(
+    !path || (binding && !profiles) || error
+      ? undefined
+      : catalogAssetPath(
+          kind,
+          asset.id,
+          locked?.version ?? asset.version,
+          locked?.artifact.digest ?? asset.artifact.digest,
+        ),
+  );
+  const manifest = detail?.value?.manifest;
   function put(k: string, v: string) {
     setPreview(undefined);
     setValues((old) => ({ ...old, [k]: v }));
@@ -329,22 +367,23 @@ function InsertFields({
   return (
     <div className="insert-fields">
       <h3>{asset.title || asset.id}</h3>
-      {detail?.error ? (
-        <p role="alert">{detail.error}</p>
-      ) : !manifest ? (
+      <Choice
+        label="目标位置"
+        value={path}
+        choices={context.targets.map((t) => [t.named ? '/expressions' : t.node.path, t.label])}
+        onChange={(v) => {
+          setPath(v);
+          setValues({});
+          setPreview(undefined);
+        }}
+      />
+      {!context.targets.length && <p>当前配置没有支持的位置。请先添加视图或具名表达式。</p>}
+      {error || detail?.error ? (
+        <p role="alert">{error || detail?.error}</p>
+      ) : !path ? null : !manifest ? (
         <p>正在读取契约…</p>
       ) : (
         <>
-          <Choice
-            label="目标位置"
-            value={path}
-            choices={context.targets.map((t) => [t.named ? '/expressions' : t.node.path, t.label])}
-            onChange={(v) => {
-              setPath(v);
-              setPreview(undefined);
-            }}
-          />
-          {!context.targets.length && <p>当前配置没有支持的位置。请先添加视图或具名表达式。</p>}
           {path && <small>{path}</small>}
           {target?.named && input('expressionName', '表达式名称')}
           {Object.entries(properties).map(([n, s]) =>

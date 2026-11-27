@@ -5,6 +5,7 @@ import { Button } from '@form-engine/studio-design-components/controls';
 import { SchemaNavigation, usePendingNavigation, useSchemaNavigation } from './schema-navigation';
 import { ConstraintEditor } from './constraint-editor';
 import { ReactionEditor } from './reaction-editor';
+import { FormAssetScope } from './form-asset-scope';
 import { LayoutEditor } from './layout-editor';
 import { DataSchemaEditor, useSchemaPosition } from './data-schema-editor';
 import { JsonEditor, JsonEditorView, useJsonHistory } from '../components/json/json-editor';
@@ -23,6 +24,8 @@ type Module = keyof typeof modules;
 export type SourceFocus = { path: string; revision: number; section?: Module };
 
 type Props = {
+  onInspected?: (source: import('./config-inspection').InspectionInput, catalog: string) => void;
+  assetContext?: import('./layout-check').LayoutAssetContext;
   initialSection?: Module;
   formPath: string;
   profile: string;
@@ -37,14 +40,35 @@ type Props = {
 };
 
 export function JsonSource(props: Props) {
+  let activeProfile = props.profile || undefined;
+  try {
+    const profiles = Object.keys(JSON.parse(props.text)?.views ?? {});
+    if (!activeProfile || !profiles.includes(activeProfile)) activeProfile = profiles[0];
+  } catch {
+    // The editors still allow repairing invalid source text.
+  }
+  const input = props.assetContext?.versionId
+    ? { versionId: props.assetContext.versionId }
+    : { text: props.text, ...props.assetContext };
   return (
-    <SchemaNavigation text={props.text} onPendingChange={props.onPendingChange}>
-      <SourceViews key={props.formPath} {...props} />
-    </SchemaNavigation>
+    <FormAssetScope.Provider
+      value={{
+        formPath: props.formPath,
+        input,
+        profile: activeProfile,
+        choices: props.assetContext,
+      }}
+    >
+      <SchemaNavigation text={props.text} onPendingChange={props.onPendingChange}>
+        <SourceViews key={props.formPath} {...props} />
+      </SchemaNavigation>
+    </FormAssetScope.Provider>
   );
 }
 
 function SourceViews({
+  onInspected,
+  assetContext,
   initialSection,
   formPath,
   profile,
@@ -148,6 +172,8 @@ function SourceViews({
                   <LayoutEditor
                     key={String(readOnly)}
                     readOnly={readOnly}
+                    assetContext={assetContext}
+                    onInspected={onInspected}
                     {...{ formPath, profile, onProfile, text }}
                     apply={commit}
                     locate={locate}

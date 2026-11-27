@@ -8,6 +8,12 @@ import { fileURLToPath } from 'node:url';
 import { setImmediate } from 'node:timers/promises';
 import { catalogDocumentation } from './catalog-documentation.js';
 import { buildIdentity } from './build-identity.js';
+import {
+  readRetainedCatalogs,
+  readWebAssetPolicies,
+  WebAssetCatalog,
+} from './web-asset-catalog.js';
+import { checkAssetBindings } from './version-web-bindings.js';
 import { compileWebConfig, webCatalog, webTarget } from './web-check.js';
 
 const identity = (specifier: string, id: string) =>
@@ -57,6 +63,7 @@ function releaseInputs() {
 
 export type ReleaseBuildInput = ReturnType<typeof releaseInputs> & {
   target: ReturnType<typeof webTarget> & { preparedFormatVersion: string };
+  selections?: Parameters<typeof checkAssetBindings>[3];
   requestNotes?: Record<string, Record<string, string>>;
   schemaResources: NonNullable<Parameters<typeof compileWebConfig>[1]['schemaResources']>;
 };
@@ -65,12 +72,23 @@ export type ReleaseBuildInput = ReturnType<typeof releaseInputs> & {
 export class ReleaseBuild {
   // Snapshot the installed artifacts at API startup. A new build runs in a new API process.
   private readonly installed = releaseInputs();
+  readonly assets = new WebAssetCatalog(
+    this.installed.catalog,
+    readRetainedCatalogs(process.env.PLATFORM_RETAINED_WEB_CATALOGS_FILE),
+    readWebAssetPolicies(process.env.PLATFORM_WEB_ASSET_POLICIES_FILE),
+  );
 
-  capture(target: ReturnType<typeof webTarget>): ReleaseBuildInput {
+  capture(
+    target: ReturnType<typeof webTarget>,
+    catalog = this.assets.recommended,
+    selections?: Parameters<typeof checkAssetBindings>[3],
+  ): ReleaseBuildInput {
     return {
       ...this.installed,
+      catalog,
+      selections,
       requestNotes: Object.fromEntries(
-        Object.entries(this.installed.catalog.materials).flatMap(([id, { manifest }]) => {
+        Object.entries(catalog.materials).flatMap(([id, { manifest }]) => {
           const doc = catalogDocumentation[id];
           if (doc?.version !== manifest.version) return [];
           return Object.keys(manifest.requests ?? {}).flatMap((local) => {
@@ -100,6 +118,8 @@ export class ReleaseBuild {
     await setImmediate();
     if (input.compiler !== this.installed.compiler)
       throw new ServiceUnavailableException('Pinned Compiler build unavailable');
+    if (input.selections)
+      return checkAssetBindings(text, input.catalog, input.target, input.selections);
     return compileWebConfig(text, {
       catalog: input.catalog,
       target: input.target,

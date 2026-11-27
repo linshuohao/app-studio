@@ -3,11 +3,11 @@
 import { CodeBlock } from '../../components/code-block';
 import { useEffect, useState } from 'react';
 import { FormRenderer, type HostRequestRegistry } from '@form-engine/renderer-react';
-import { createRuntime, type FormRuntime } from '@form-engine/runtime';
+import type { FormRuntime } from '@form-engine/runtime';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { Feedback } from '@form-engine/studio-design-components/controls';
 import { loadRelease } from '../host/load-release';
-import { installedWebCapabilities } from '../web-capabilities';
+import type { WebCapabilities } from '../host/resolve-capabilities';
 
 type SnapshotDetail = { evidence: unknown; formId: string; versionId: string; releaseId: string };
 
@@ -23,6 +23,7 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
     prepared: ReadonlyPreparedForm;
     runtime: FormRuntime;
     requests: HostRequestRegistry;
+    materials: WebCapabilities['materials'];
   }>();
   const [previewError, setPreviewError] = useState('');
   const input = object(object(detail.evidence)?.input);
@@ -51,17 +52,17 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
     let runtime: FormRuntime | undefined;
     if (snapshot !== undefined) {
       loadRelease(releaseId, signal, () => undefined)
-        .then(({ prepared }) => {
+        .then(({ prepared, capabilities }) => {
           if (signal.aborted) return;
           const readOnlyPrepared = {
             ...prepared,
             definition: { ...prepared.definition, reactions: [], constraints: [] },
           };
-          runtime = createRuntime({
+          runtime = capabilities.runtime.create({
             prepared: readOnlyPrepared,
             data: snapshot,
             context,
-            functions: installedWebCapabilities.functions,
+            functions: capabilities.functions,
           });
           // Keep request-backed materials mounted without connecting to the original Host.
           const requests = Object.fromEntries(
@@ -72,7 +73,12 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
               },
             ]),
           );
-          setPreview({ prepared: readOnlyPrepared, runtime, requests });
+          setPreview({
+            prepared: readOnlyPrepared,
+            runtime,
+            requests,
+            materials: capabilities.materials,
+          });
         })
         .catch((error: Error) => {
           if (!signal.aborted) setPreviewError(error.message);
@@ -100,7 +106,7 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
               prepared={preview.prepared}
               runtime={preview.runtime}
               requests={preview.requests}
-              materials={installedWebCapabilities.materials}
+              materials={preview.materials}
             />
           </div>
         )}

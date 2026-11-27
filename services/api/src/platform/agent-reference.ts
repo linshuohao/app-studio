@@ -4,7 +4,6 @@ import { catalogDocumentation } from './catalog-documentation.js';
 import { resourceId } from './form-drafts.js';
 import type { PlatformForms } from './forms.js';
 import type { ReleaseBuild } from './release-build.js';
-import { webTarget } from './web-check.js';
 
 type FormKey = { formId: string; versionId: string; pointer?: string };
 type AssetKey = {
@@ -160,15 +159,13 @@ export async function resolveReference(
   builds: ReleaseBuild,
 ) {
   if ('kind' in key) {
-    const catalog = builds.capture(webTarget(undefined)).catalog;
-    const entries = key.kind === 'material' ? catalog.materials : catalog.pureFunctions;
-    const entry = Object.hasOwn(entries, key.assetId) ? entries[key.assetId] : undefined;
-    if (
-      !entry ||
-      entry.manifest.version !== key.assetVersion ||
-      entry.artifact.digest !== key.artifactDigest
-    )
-      throw new NotFoundException('引用的资产版本已不可用，请移除或重新选择。');
+    const entry = builds.assets.find(
+      key.kind === 'material' ? 'materials' : 'pureFunctions',
+      key.assetId,
+      key.assetVersion,
+      key.artifactDigest,
+    );
+    if (!entry) throw new NotFoundException('引用的资产版本已不可用，请移除或重新选择。');
     const doc = Object.hasOwn(catalogDocumentation, key.assetId)
       ? catalogDocumentation[key.assetId]
       : undefined;

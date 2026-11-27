@@ -8,10 +8,11 @@ import { remoteSelectRequests } from '@form-engine/materials-react';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests, FormRenderer } from '@form-engine/renderer-react';
-import { createRuntime, type FormRuntime, type RuntimeOptions } from '@form-engine/runtime';
+import { type FormRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { goldenData } from '../../../playground/src/demos/travel/policy';
-import { webPreviewCapabilities } from './web-capabilities';
+import { previewWebCapabilities } from './host/available-capabilities';
+import { resolvePreparedWebCapabilities, type WebCapabilities } from './host/resolve-capabilities';
 
 function simulate<T>(value: T) {
   let settle: (value: T) => void;
@@ -46,7 +47,7 @@ export function PreviewRuntime({
   prepared,
   data,
   preserveData = false,
-  capabilities = webPreviewCapabilities,
+  capabilities,
   onReady,
   onFailure,
   onDiagnostic,
@@ -54,15 +55,15 @@ export function PreviewRuntime({
   prepared: ReadonlyPreparedForm;
   data?: JsonValue;
   preserveData?: boolean;
-  capabilities?: typeof webPreviewCapabilities;
+  capabilities?: WebCapabilities;
   onDiagnostic?: React.ComponentProps<typeof FormRenderer>['onDiagnostic'];
   onFailure?: (reason: string) => void;
   onReady?: (r: FormRuntime) => void;
 }) {
-  const { materials, functions } = capabilities;
   const [session, setSession] = useState<{
     prepared: ReadonlyPreparedForm;
     runtime: FormRuntime;
+    materials: WebCapabilities['materials'];
   }>();
   const previewData = useRef<JsonValue | undefined>(undefined);
   const [message, setMessage] = useState('');
@@ -70,7 +71,7 @@ export function PreviewRuntime({
     let active = true;
     let submitAttempt = 0;
     let instance: FormRuntime | undefined;
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       if (!active) return;
       setMessage('');
       const show = (value: string) => {
@@ -134,8 +135,18 @@ export function PreviewRuntime({
         );
         return;
       }
+      setSession(undefined);
       try {
-        instance = createRuntime({
+        const {
+          materials,
+          functions,
+          runtime: engine,
+        } = await resolvePreparedWebCapabilities(
+          prepared,
+          capabilities ? [capabilities] : previewWebCapabilities,
+        );
+        if (!active) return;
+        instance = engine.create({
           prepared,
           functions,
           data:
@@ -153,9 +164,10 @@ export function PreviewRuntime({
           },
           host,
         });
-        setSession({ prepared, runtime: instance });
+        setSession({ prepared, runtime: instance, materials });
         onReady?.(instance);
       } catch (error) {
+        if (!active) return;
         const reason =
           error instanceof Error ? '无法启动预览实例：' + error.message : '无法启动预览实例。';
         setSession(undefined);
@@ -169,7 +181,7 @@ export function PreviewRuntime({
         previewData.current = structuredClone(instance.snapshot()) as JsonValue;
       instance?.dispose();
     };
-  }, [prepared, data, onReady, onFailure, preserveData, functions]);
+  }, [prepared, data, onReady, onFailure, preserveData, capabilities]);
 
   return (
     <>
@@ -179,7 +191,7 @@ export function PreviewRuntime({
           onDiagnostic={onDiagnostic}
           prepared={session.prepared}
           runtime={session.runtime}
-          materials={materials}
+          materials={session.materials}
           requests={requests}
         />
       )}

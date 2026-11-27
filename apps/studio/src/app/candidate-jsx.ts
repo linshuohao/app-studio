@@ -218,14 +218,13 @@ export function candidateExample(prepared: ReadonlyPreparedForm, exampleCode?: s
   const jsx = `'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createRuntime } from '@form-engine/runtime';
 import { ${usesCities ? 'defineHostRequests, ' : ''}FormRenderer } from '@form-engine/renderer-react';
 ${usesCities ? "import { remoteSelectRequests } from '@form-engine/materials-react';\n" : ''}import '@form-engine/materials-react/styles.css';
-import { installedWebCapabilities } from './web-capabilities';
+import { releaseWebCapabilities } from './host/available-capabilities';
+import { resolvePreparedWebCapabilities } from './host/resolve-capabilities';
 ${usesPassport ? "import { checkPassportDuplicates } from './host/passport-validator';\n" : ''}${underwriting ? "import { projectUnderwritingSubmission } from './host/underwriting-projection';\n" : ''}import prepared from './prepared.json';
 import initialData from './sample-data.json';
 
-const { materials, functions } = installedWebCapabilities;
 ${modelNotes}
 ${useHandlers ? 'const emptyHandlers = {};\n' : ''}${purchase ? purchaseTypes : ''}${
     usesCities
@@ -242,7 +241,24 @@ const requests = defineHostRequests({ '${cityRequest}': remoteSelectRequests.sea
 `
       : ''
   }
-${purchase ? '/** @param {{ context?: object, data?: object, integration?: PurchaseIntegration' + (useHandlers ? ', host?: object' : '') + ' }} props */\n' : ''}export default function CandidateForm({ context: hostContext, data = initialData${useHandlers ? ', host: handlers = emptyHandlers' : ''}${purchase ? ', integration' : ''} } = {}) {
+export default function CandidateForm(props) {
+  const [assets, setAssets] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    resolvePreparedWebCapabilities(prepared, releaseWebCapabilities).then(
+      (bindings) => { if (active) setAssets(bindings); },
+      (reason) => { if (active) setError(reason instanceof Error ? reason.message : '无法装载候选资产。'); },
+    );
+    return () => { active = false; };
+  }, []);
+  if (error) return <p role="alert">{error}</p>;
+  if (!assets) return <p role="status">正在装载候选资产…</p>;
+  return <BoundCandidateForm {...props} assets={assets} />;
+}
+
+${purchase ? '/** @param {{ assets: Awaited<ReturnType<typeof resolvePreparedWebCapabilities>>, context?: object, data?: object, integration?: PurchaseIntegration' + (useHandlers ? ', host?: object' : '') + ' }} props */\n' : ''}function BoundCandidateForm({ assets, context: hostContext, data = initialData${useHandlers ? ', host: handlers = emptyHandlers' : ''}${purchase ? ', integration' : ''} } = {}) {
+  const { materials, functions, runtime: engine } = assets;
   // Mount with a different React key to start an independent form with new initial data.
   const initialValues = useRef(data);
   const hostInputs = useRef({ hostContext${useHandlers ? ', handlers' : ''}${purchase ? ', integration' : ''} });
@@ -285,7 +301,7 @@ ${usesCities ? '        ...requests,\n' : ''}${hostHandlers(customRequests, 'req
     };
 `
       : ''
-  }    const instance = createRuntime({
+  }    const instance = engine.create({
       prepared,
       functions,
       data: initialValues.current,

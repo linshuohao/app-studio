@@ -81,6 +81,11 @@ relocated_sections:
 
 # 设计决策与讨论演进
 
+## 2026-11-26：平台资产版本管理 {#platform-asset-versions-confirmed}
+
+现有工程资产版本和不可变发布锁继续生效。用户确认新选择默认取平台推荐项，存量配置从唯一可确认的旧发布恢复依赖，剩余项待绑定。先归档再落地 Web，验收升级后新旧表单的装载与真实执行。远程组件加载另议。见 [Platform 现行方案](platform-studio.md#platform-asset-versions)。
+
+
 ## 2026-10-22：运行时全景与外部能力展示 {#runtime-overview-confirmed}
 
 用户指出局部 Command / Flush、变化检测与校验图缺少以整个 Runtime 为中心的贯穿关系，要求完整显示状态组成、指令、同步联动、校验与结果通知，并补出纵向分层、物料、纯函数及 Host。确认校验结果按每次有效结果就绪更新和通知，不等待全部异步完成才呈现。

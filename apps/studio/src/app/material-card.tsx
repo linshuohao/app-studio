@@ -5,6 +5,7 @@ import type { JsonValue } from '@form-engine/protocol';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { platform } from './platform-api';
 import { Button } from '@form-engine/studio-design-components';
+import { catalogAssetPath } from './asset-binding-editor';
 import { PreviewRuntime } from './preview-runtime';
 
 type Preview = { prepared: ReadonlyPreparedForm; data: JsonValue };
@@ -18,6 +19,7 @@ export function MaterialCard({
   asset: {
     id: string;
     version: string;
+    artifact?: { digest: string };
     title?: string;
     summary?: string;
     category?: string;
@@ -51,7 +53,7 @@ export function MaterialCard({
     if (!visible) return;
     let active = true;
     void platform<{ preview?: Preview }>(
-      `/catalog/materials/${encodeURIComponent(asset.id)}?version=${encodeURIComponent(asset.version)}`,
+      catalogAssetPath('materials', asset.id, asset.version, asset.artifact?.digest),
     ).then(
       (result) => {
         if (!active) return;
@@ -65,7 +67,7 @@ export function MaterialCard({
     return () => {
       active = false;
     };
-  }, [visible, asset.id, asset.version]);
+  }, [visible, asset.id, asset.version, asset.artifact?.digest]);
   useLayoutEffect(() => {
     const frame = previewFrame.current;
     const render = previewRender.current;

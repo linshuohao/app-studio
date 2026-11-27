@@ -1,13 +1,17 @@
 import type { Expression, ScopeBinder, ScopeDeclaration } from '@form-engine/protocol/definition';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
-import { createRuntime, type ReadResult } from '@form-engine/runtime';
+import { type ReadResult } from '@form-engine/runtime';
 import { compactJson } from '../components/json/format';
 import { child, type Model } from './semantic-model';
 import { platform } from './platform-api';
-import { webPreviewCapabilities } from './web-capabilities';
+import { previewWebCapabilities } from './host/available-capabilities';
+import { resolveWebCapabilities } from './host/resolve-capabilities';
+import type { LayoutAssetContext } from './layout-check';
 
 export type ExpressionVerificationContext = {
   formPath: string;
+  profile?: string;
+  assetContext?: LayoutAssetContext;
   schema: string;
   expressions?: string;
   scopes: string[];
@@ -130,16 +134,26 @@ export async function verifyExpression(
     (node, scope) => '{"scope":' + scope + ',"node":' + node + '}',
     leaf,
   );
+  const profile = config.profile ?? 'entry';
   const definition =
     '{"protocolVersion":"1","id":"studio-expression-verification","version":"draft","data":{"schema":' +
     config.schema +
     '}' +
     (config.expressions === undefined ? '' : ',"expressions":' + config.expressions) +
-    ',"views":{"entry":' +
+    ',"views":{' +
+    JSON.stringify(profile) +
+    ':' +
     view +
     '}}';
   const preview = await platform<Preview>(config.formPath + '/preview', {
-    body: { text: compactJson(definition), profile: 'entry' },
+    body: {
+      text: compactJson(definition),
+      profile,
+      basedOnVersionId: config.assetContext?.basedOnVersionId ?? config.assetContext?.versionId,
+      assetChoices: config.assetContext?.assetChoices?.filter(
+        (choice) => choice.profile === profile,
+      ),
+    },
     signal,
   });
   if (!preview.prepared) {
@@ -148,9 +162,14 @@ export async function verifyExpression(
       fault ? [fault.sourcePointer, fault.message].filter(Boolean).join(' · ') : '表达式无法编译。',
     );
   }
-  const runtime = createRuntime({
+  const { functions, runtime: engine } = await resolveWebCapabilities(
+    preview.prepared.capabilityLock,
+    previewWebCapabilities,
+  );
+  signal.throwIfAborted();
+  const runtime = engine.create({
     prepared: preview.prepared,
-    functions: webPreviewCapabilities.functions,
+    functions,
     data,
     context: hostContext,
     traceCapacity: 0,

@@ -74,6 +74,7 @@ const detailPath = (id: string) => '/catalog/materials/' + encodeURIComponent(id
 export function LayoutMaterialPicker({
   fields,
   verification,
+  binding,
   preferredField,
   rootOnly,
   replacement,
@@ -83,6 +84,7 @@ export function LayoutMaterialPicker({
   onClose,
 }: {
   fields: Fields;
+  binding?: MaterialBindingInput;
   verification: ExpressionVerificationContext;
   preferredField?: string;
   rootOnly?: boolean;
@@ -98,9 +100,7 @@ export function LayoutMaterialPicker({
   const [asset, select] = useState<Summary>();
   const [busy, setBusy] = useState(false);
   const catalog = useCatalog<Summary[]>('/catalog/materials');
-  const selected = useCatalog<Detail>(
-    asset && detailPath(asset.id) + '?version=' + encodeURIComponent(asset.version),
-  );
+  const selected = useLayoutMaterial(asset?.id, binding && { ...binding, allowNew: true });
   const previous = useMemo(
     () => (replacement ? semanticModel(replacement) : undefined),
     [replacement],
@@ -510,8 +510,73 @@ type InspectorProps = {
   preview?: ReactNode;
   onPreview: (draft?: { base: string; path: string; text: string }) => void;
 };
-export function useLayoutMaterial(id?: string) {
-  return useCatalog<Detail>(id && detailPath(id));
+type MaterialBindingInput = {
+  allowNew?: boolean;
+  formPath: string;
+  profile: string;
+  source: import('./config-inspection').InspectionInput;
+};
+export function useLayoutMaterial(id?: string, bindingInput?: MaterialBindingInput) {
+  const input = id && bindingInput ? JSON.stringify(bindingInput) : '';
+  const [binding, setBinding] = useState<{
+    input: string;
+    id: string;
+    query?: string;
+    error?: string;
+  }>();
+  useEffect(() => {
+    if (!input || !id) return;
+    const abort = new AbortController();
+    const { formPath, profile, source, allowNew } = JSON.parse(input) as MaterialBindingInput;
+    void platform<
+      {
+        profile: string;
+        dependencies: {
+          id: string;
+          kind: string;
+          available: boolean;
+          lock: { version: string; artifact: { digest: string } } | null;
+        }[];
+      }[]
+    >(formPath + '/asset-bindings', { body: source, signal: abort.signal }).then(
+      (profiles) => {
+        if (abort.signal.aborted) return;
+        const dependency = profiles
+          .find((row) => row.profile === profile)
+          ?.dependencies.find((asset) => asset.kind === 'materials' && asset.id === id);
+        if (dependency?.lock && dependency.available) {
+          setBinding({
+            input,
+            id,
+            query: new URLSearchParams({
+              version: dependency.lock.version,
+              artifactDigest: dependency.lock.artifact.digest,
+            }).toString(),
+          });
+        } else if (!dependency && allowNew) setBinding({ input, id, query: '' });
+        else
+          setBinding({
+            input,
+            id,
+            error: dependency?.lock ? '锁定的物料制品不可用。' : '请先绑定该物料的版本。',
+          });
+      },
+      (error: unknown) => {
+        if (!abort.signal.aborted) setBinding({ input, id, error: failureMessage(error) });
+      },
+    );
+    return () => abort.abort();
+  }, [id, input]);
+  const current = binding?.input === input && binding.id === id ? binding : undefined;
+  const detail = useCatalog<Detail>(
+    id &&
+      (!input
+        ? detailPath(id)
+        : current?.query !== undefined
+          ? detailPath(id) + '?' + current.query
+          : undefined),
+  );
+  return current?.error ? { path: input, error: current.error } : detail;
 }
 export function LayoutMaterialInspector({
   result,

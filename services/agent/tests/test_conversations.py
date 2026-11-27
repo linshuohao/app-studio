@@ -672,6 +672,11 @@ def test_stream_failure_trace_can_be_found_in_attempt_history(
         (attempt,) = client.get(url, headers=AUTH).json()["attempts"]
         assert attempt["interruptionTraceId"] == trace
         assert attempt["resumable"]
+        assert "checkEnvironment" not in attempt
+        internal = client.get(
+            url, headers=AUTH, params={"includeCheckEnvironment": True}
+        )
+        assert internal.json()["attempts"] == [{**attempt, "checkEnvironment": "env"}]
         assert trace in caplog.text
         assert "RuntimeError" in caplog.text
         assert "private compiler failure" not in caplog.text

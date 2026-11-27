@@ -1,3 +1,7 @@
+import { PlatformDatabase } from './database.js';
+import { agentCompileInputs, readAgentAssetEnvironment } from './agent-asset-environments.js';
+import { captureAssetBindings } from './version-web-bindings.js';
+import { withTravelPreviewHost } from './web-check.js';
 import { checkDataSchema } from '@form-engine/compiler';
 import type { DataSchemaCase } from '@form-engine/compiler';
 import {
@@ -8,36 +12,40 @@ import {
   Headers,
   HttpCode,
   Post,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { catalogDocumentation } from './catalog-documentation.js';
 import { isUtf8ConfigText, maxConfigTextBytes } from './forms.js';
 import { ReleaseBuild } from './release-build.js';
-import { checkEnvironment, previewInputs, requireAgent } from './create-form-agent.js';
+import { previewInputs, requireAgent } from './create-form-agent.js';
 
 @Controller()
 export class CreateFormController {
-  constructor(private readonly builds: ReleaseBuild) {}
-
-  private requireEnvironment(expected?: string) {
-    const current = checkEnvironment(this.builds);
-    if (expected !== undefined && expected !== current)
-      throw new ServiceUnavailableException('Requested compiler environment unavailable');
-    return current;
+  constructor(
+    private readonly builds: ReleaseBuild,
+    private readonly storage: PlatformDatabase,
+  ) {}
+  private environment(expected?: string) {
+    return readAgentAssetEnvironment(this.storage.executor, this.builds, expected);
   }
 
   @Post('internal/agent-tools/catalog')
   @HttpCode(200)
-  catalog(
+  async catalog(
     @Headers('x-agent-service-token') token: string,
     @Body() body: { kind: string; query: string; check_environment?: string },
     @Headers('x-trace-id') traceId?: string,
   ) {
     requireAgent(token);
-    this.requireEnvironment(body.check_environment);
+    const environment = await this.environment(body.check_environment);
     if (traceId) Logger.log({ traceId, kind: body.kind }, 'CreateFormCatalog');
-    const { catalog } = previewInputs(this.builds);
+    const profile =
+      environment.bindings.length === 1 ? environment.bindings[0]?.profile : undefined;
+    const catalog = profile
+      ? withTravelPreviewHost(
+          captureAssetBindings(this.builds.assets, '', profile, environment.bindings).catalog,
+        )
+      : previewInputs(this.builds).catalog;
     if (body.kind === 'host')
       return {
         ...catalog.host,
@@ -86,7 +94,7 @@ export class CreateFormController {
 
   @Post('internal/agent-tools/check-schema')
   @HttpCode(200)
-  checkSchema(
+  async checkSchema(
     @Headers('x-agent-service-token') token: string,
     @Body() body: { schema_text: string; cases: DataSchemaCase[]; check_environment?: string },
   ) {
@@ -107,10 +115,10 @@ export class CreateFormController {
       )
     )
       throw new BadRequestException('Invalid Data Schema cases');
-    const environment = this.requireEnvironment(body.check_environment);
+    const environment = await this.environment(body.check_environment);
     const receipt = {
       check_id: randomUUID(),
-      check_environment: environment,
+      check_environment: environment.id,
       candidate_digest: 'sha256:' + createHash('sha256').update(text).digest('hex'),
     };
     if (Buffer.byteLength(text) > maxConfigTextBytes)
@@ -145,11 +153,14 @@ export class CreateFormController {
     requireAgent(token);
     const text = body?.candidate_text;
     if (!isUtf8ConfigText(text)) throw new BadRequestException('Config must be UTF-8 text');
-    const environment = this.requireEnvironment(body.check_environment);
+    const environment = await this.environment(body.check_environment);
     const bytes = Buffer.byteLength(text);
     const checked =
       bytes <= maxConfigTextBytes
-        ? await this.builds.compile(text, previewInputs(this.builds))
+        ? await this.builds.compile(
+            text,
+            agentCompileInputs(this.builds, text, environment.bindings),
+          )
         : {
             success: false as const,
             diagnostics: [
@@ -173,7 +184,7 @@ export class CreateFormController {
     );
     return {
       check_id: randomUUID(),
-      check_environment: environment,
+      check_environment: environment.id,
       candidate_digest: digest,
       success: checked.success,
       diagnostics: checked.diagnostics,

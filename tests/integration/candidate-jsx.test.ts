@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { runInThisContext } from 'node:vm';
-import * as runtime from '@form-engine/runtime';
+import { webcrypto } from 'node:crypto';
+import * as resolver from '../../apps/studio/src/app/host/resolve-capabilities.js';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
@@ -18,6 +19,7 @@ import { ReleaseBuild } from '../../services/api/src/platform/release-build.js';
 afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 async function mountCandidate(
@@ -26,6 +28,7 @@ async function mountCandidate(
   props: Record<string, unknown> = {},
 ) {
   const builds = new ReleaseBuild();
+  vi.stubGlobal('crypto', webcrypto);
   const materialArtifact = Object.values(prepared.capabilityLock.materials)[0]!.artifact;
   vi.stubEnv('RELEASE_MATERIAL_DIGEST', materialArtifact.digest);
   vi.stubEnv(
@@ -37,10 +40,12 @@ async function mountCandidate(
     Object.entries({
       react: React,
       'react/jsx-runtime': jsxRuntime,
-      '@form-engine/runtime': runtime,
       '@form-engine/renderer-react': renderer,
       '@form-engine/materials-react/styles.css': {},
-      './web-capabilities': capabilities,
+      './host/available-capabilities': {
+        releaseWebCapabilities: [capabilities.installedWebCapabilities],
+      },
+      './host/resolve-capabilities': resolver,
       './host/passport-validator': passport,
       './host/underwriting-projection': projection,
       './prepared.json': prepared,
@@ -116,9 +121,40 @@ it('mounts the copied JSX with its Prepared JSON and executes the declared previ
   expect(example.unsupported).toEqual([]);
   expect(example.jsx).toBeDefined();
   await mountCandidate(result.prepared, example);
-  fireEvent.click(screen.getByRole('button', { name: '模拟初核' }));
+  fireEvent.click(await screen.findByRole('button', { name: '模拟初核' }));
   expect(await screen.findByText('本地校验与投影通过，渠道核保待接入。')).toBeTruthy();
 }, 90_000);
+
+it('blocks a copied candidate when its exact material manifest is unavailable', async () => {
+  const builds = new ReleaseBuild();
+  const result = await builds.compile(
+    JSON.stringify({
+      protocolVersion: '1.0',
+      id: 'missing-asset',
+      version: '1.0',
+      data: { schema: { type: 'object' } },
+      views: { default: { material: 'button', props: { label: '历史按钮' } } },
+    }),
+    previewInputs(builds),
+  );
+  if (!result.success) throw new Error(JSON.stringify(result.diagnostics));
+  const prepared = {
+    ...result.prepared,
+    capabilityLock: {
+      ...result.prepared.capabilityLock,
+      materials: {
+        ...result.prepared.capabilityLock.materials,
+        button: {
+          ...result.prepared.capabilityLock.materials.button!,
+          manifestDigest: `sha256:${'0'.repeat(64)}` as const,
+        },
+      },
+    },
+  };
+  await mountCandidate(prepared, candidateExample(prepared));
+  expect((await screen.findByRole('alert')).textContent).toContain('button');
+  expect(screen.queryByRole('button', { name: '历史按钮' })).toBeNull();
+});
 
 it('wires purchase array insertion and sends only a valid snapshot to the supplied Host', async () => {
   const builds = new ReleaseBuild();
@@ -184,11 +220,11 @@ it('wires purchase array insertion and sends only a valid snapshot to the suppli
     data: { items: [first], budgetMinor: 600000 },
     integration,
   });
-  const add = screen.getByRole('button', { name: '新增采购明细' });
+  const add = await screen.findByRole('button', { name: '新增采购明细' });
   fireEvent.click(add);
   expect(createPurchaseLine).toHaveBeenCalledWith({ items: [first], index: 1 });
   expect(add.hasAttribute('disabled')).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: '送审' }));
+  fireEvent.click(await screen.findByRole('button', { name: '送审' }));
   await waitFor(() => {
     expect(submitPurchaseRequest).toHaveBeenCalledExactlyOnceWith({
       snapshot: { items: [first, second], budgetMinor: 600000 },
@@ -204,7 +240,7 @@ it('wires purchase array insertion and sends only a valid snapshot to the suppli
     data: { items: [first, second], budgetMinor: 599999 },
     integration,
   });
-  fireEvent.click(screen.getByRole('button', { name: '送审' }));
+  fireEvent.click(await screen.findByRole('button', { name: '送审' }));
   expect(await screen.findByText('整单校验未通过。')).toBeTruthy();
   expect(submitPurchaseRequest).toHaveBeenCalledTimes(1);
 });

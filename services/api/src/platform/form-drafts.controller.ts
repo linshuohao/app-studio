@@ -13,8 +13,7 @@ import {
 } from '@nestjs/common';
 import { PlatformDrafts, type DraftAction, type DraftPreview } from './form-drafts.js';
 import { requireStudioOrigin, session } from './session-http.js';
-import { checkWebConfig, type ConfigInput } from './web-check.js';
-import { configText } from './forms.js';
+import type { ConfigInput } from './web-check.js';
 
 @Controller('api/platform/form-drafts')
 export class FormDraftsController {
@@ -95,8 +94,7 @@ export class FormDraftsController {
     @Body() body: ConfigInput,
   ) {
     requireStudioOrigin(origin);
-    await this.drafts.get(session(cookie), id);
-    return checkWebConfig(configText(body?.text), body?.profile, true);
+    return this.drafts.inspect(session(cookie), id, body);
   }
   @Post(':id/preview')
   preview(

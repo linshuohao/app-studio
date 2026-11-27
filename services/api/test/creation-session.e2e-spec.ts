@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { PlatformDatabase } from '../src/platform/database.js';
 import { checkEnvironment } from '../src/platform/create-form-agent.js';
+import { pinAgentAssetEnvironment } from '../src/platform/agent-asset-environments.js';
 import { ReleaseBuild } from '../src/platform/release-build.js';
 import type { Delivery } from '../src/platform/form-drafts.js';
 import { maxConfigTextBytes } from '../src/platform/forms.js';
@@ -259,6 +260,10 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
   const preview = await setup('post', base + '/preview')
     .send(action)
     .expect(201);
+  const inspected = await setup('post', base + '/editor/preview')
+    .send({ text: mergedText })
+    .expect(201);
+  expect(inspected.body.prepared.capabilityLock).toEqual(preview.body.prepared.capabilityLock);
   const saved = await setup('post', base + '/save')
     .send({ ...action, previewDigest: preview.body.digest })
     .expect(201);
@@ -779,6 +784,49 @@ it('expires a human grant without letting it save or release the next grant', as
   await setup('patch', base)
     .send({ ...edit, editingToken: next })
     .expect(200);
+});
+
+it('preserves the checked asset environment on resume and when preparing a candidate guide', async () => {
+  const id = randomUUID();
+  const db = app.get(PlatformDatabase).executor;
+  const builds = app.get(ReleaseBuild);
+  // With no bound section the candidate must fail compilation, even though the default catalog has it.
+  const bindings = [
+    { profile: 'default', selections: [{ kind: 'materials' as const, id: 'section', lock: null }] },
+  ];
+  const pinned = await pinAgentAssetEnvironment(db, builds, bindings);
+  const original = proposal(config('pinned-candidate'), { checkEnvironment: pinned });
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(original));
+  await setup('get', `/agent-conversations/${id}/deliveries/${original.turnId}/integration`).expect(
+    409,
+  );
+
+  // Simulate a previous compiler's environment for the same asset choices.
+  const historical = '1'.repeat(64);
+  await db.execute(
+    'INSERT INTO platform_agent_asset_environments(id, baseline, web_asset_bindings) VALUES ($1,$2,$3)',
+    [historical, 'previous-compiler', JSON.stringify(bindings)],
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      id,
+      attempts: [{ turnId: original.turnId, status: 'interrupted', checkEnvironment: historical }],
+    }),
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id,
+        turns: [{ turnId: original.turnId, result: { kind: 'answer', message: '恢复' } }],
+      },
+    }),
+  );
+  await setup('post', `/agent-conversations/${id}/turns/${original.turnId}/resume`)
+    .send({})
+    .expect(201);
+  expect(upstream.mock.calls.at(-2)![0].searchParams.get('includeCheckEnvironment')).toBe('true');
+  expect(JSON.parse(upstream.mock.calls.at(-1)![1].body)).toEqual({ check_environment: pinned });
 });
 
 it('supplies the installed compiler environment when resuming a saved Agent turn', async () => {

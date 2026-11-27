@@ -13,7 +13,8 @@ test('正式物料真实输入、未知选项、字段校验、Host 改值与完
   const age = page.getByRole('textbox', { name: '年龄', exact: true });
   const plan = page.getByRole('combobox', { name: '方案', exact: true });
   await expect(name).toHaveValue('Alice');
-  await expect(plan.getByRole('option', { name: '选项不可用' })).toHaveJSProperty('selected', true);
+  await expect(plan).toHaveValue('unknown');
+  await expect(plan.locator('option:checked')).toHaveText('选项不可用');
   await expect(page.getByText('¥5.00', { exact: true })).toBeVisible();
   await page.locator('label').filter({ hasText: '姓名' }).click();
   await expect(name).toBeFocused();

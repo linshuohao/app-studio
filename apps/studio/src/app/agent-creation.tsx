@@ -566,7 +566,8 @@ export function AgentCreation({
       try {
         const attached = resource;
         const readOnlyTurn =
-          readOnlyChat || attachments.some((reference) => reference.kind === 'diagnostic');
+          readOnlyChat ||
+          attachments.some((reference) => 'kind' in reference && reference.kind === 'diagnostic');
         if (
           !readOnlyTurn &&
           attached &&

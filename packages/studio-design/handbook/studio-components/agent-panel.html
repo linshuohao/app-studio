@@ -94,7 +94,8 @@
             <h2>接口与用途</h2>
             <p>
               open、onCollapse 控制展开状态，message、onMessage、onSend 驱动输入与发送，children
-              承载消息记录。浮窗通过 title 显示会话标题，通过 conversationId 区分会话。提供
+              承载消息记录。嵌入页面时由外层提供标题，面板直接显示消息和输入区。浮窗通过
+              title 显示会话标题，通过 conversationId 区分会话。提供
               onRename(title) 时允许就地改名，由调用方保存并回传新标题。 提供 onReference
               时显示「添加引用」，调用方用 references 传入当前草稿的表单引用， 用 onRemoveReference
               响应移除。面板返回所选表单或资产版本的标识，提交由调用方负责。

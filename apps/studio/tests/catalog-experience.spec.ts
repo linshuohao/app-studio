@@ -34,7 +34,7 @@ test('material directory uses the width freed by collapsing the main navigation'
     width: expanded.width + 112,
   });
   await page.getByRole('button', { name: '纯函数', exact: true }).click();
-  await expect(page.getByRole('combobox', { name: '每页条数' })).toHaveValue('10');
+  await expect(page.getByRole('combobox', { name: '每页条数' })).toHaveText('10');
 });
 
 test('filters real catalog categories and renders isolated interactive material previews', async ({

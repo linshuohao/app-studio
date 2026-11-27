@@ -1120,3 +1120,58 @@ def test_member_delete_moves_from_reaction_to_view_without_losing_the_page(
             assert partial.issues[0].requirementIds == ["R26"]
             assert partial.issues[0].sourcePointer == "/views"
         assert calls.count(("reaction", ["R26"])) == 1
+
+
+@pytest.mark.parametrize("same_candidate", [True, False])
+def test_delivery_preserves_staged_partial_and_attaches_only_its_own_failure(
+    same_candidate,
+):
+    from form_agent.agent.authoring_state import (
+        CheckEvidence,
+        Composition,
+        ReadyToCompose,
+        Understanding,
+    )
+    from form_agent.agent.nodes.deliver import deliver
+    from form_agent.business.form_authoring.contracts import (
+        Blocked,
+        CreateFormInput,
+        DraftIssue,
+        PartialDraft,
+    )
+
+    failed = '{"data":{"schema":{"type":"object"}}}'
+    digest = candidate_digest(failed)
+    checks = CheckEvidence(
+        failed_text={digest: failed},
+        receipts={
+            digest: CheckReceipt(
+                check_id="compiler",
+                candidate_digest=digest,
+                success=False,
+                diagnostics=[{"message": "旧编译错误"}],
+            )
+        },
+    )
+    partial = PartialDraft(
+        candidate_text=failed
+        if same_candidate
+        else '{"data":{"schema":{"type":"object"}},"reactions":[]}',
+        issues=[DraftIssue(message="本轮片段的业务规则缺失", requirementIds=["R1"])],
+    )
+    result = asyncio.run(
+        deliver(
+            {
+                "request": CreateFormInput(message="继续", context={}),
+                "understanding": Understanding(decision=ReadyToCompose(kind="ready")),
+                "composition": Composition(
+                    Blocked(kind="blocked", reason="片段不完整", partial_draft=partial),
+                    checks,
+                ),
+            },
+            model=ScriptedModel([]),
+        )
+    )["result"]
+    assert isinstance(result, Blocked)
+    assert result.partial_draft == partial
+    assert (result.repair_context is not None) == same_candidate

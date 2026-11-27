@@ -68,6 +68,85 @@ def database(tmp_path):
     return engine
 
 
+def test_legacy_unmapped_deferrals_show_the_exact_turn_requirements(tmp_path):
+    engine = database(tmp_path)
+    cid = str(uuid4())
+    url = "/internal/v1/conversations/" + cid
+    body = message()
+    steps = [
+        decision("chat"),
+        tool_call("ChatReply", "reply", message="已读取。"),
+    ]
+    raw = "片段未通过写入范围或需求映射检查。Unmapped deferrals: R45, R9."
+    issue = {"message": raw, "sourcePointer": "/reactions", "requirementIds": []}
+    trace = {
+        "standard": {
+            "requirements": [
+                {
+                    "id": "R9",
+                    "kind": "host",
+                    "subject": "清理渠道结果",
+                    "behavior": "只清理该成员。",
+                },
+                {
+                    "id": "R45",
+                    "kind": "reaction",
+                    "subject": "清理本地结果",
+                    "behavior": "输入改变后清除旧值。",
+                },
+            ]
+        }
+    }
+    from form_agent.business.conversations.model import make_delivery, public_result
+
+    generated = {
+        "kind": "blocked",
+        "reason": "其他问题。" + raw,
+        "partial_draft": {"candidate_text": "{}", "issues": [issue]},
+        "requirements_trace": trace,
+    }
+    rendered = public_result(generated)
+    assert rendered["reason"].startswith("其他问题。")
+    delivery = make_delivery(
+        cid, body["turnId"], 1, generated, "draft", None, None, None, None
+    )
+    assert delivery["draftIssues"] == rendered["draftIssues"]
+
+    with TestClient(app(engine, steps)) as client:
+        response = client.post(url + "/turns", headers=AUTH, json=body)
+        assert response.status_code == 200
+        saved = response.json()["conversation"]["turns"][0]
+        result = {"kind": "blocked", "reason": raw, "draftIssues": [issue]}
+        with engine.begin() as conn:
+            conn.execute(
+                update(turns)
+                .where(
+                    turns.c.conversation_id == cid, turns.c.turn_id == body["turnId"]
+                )
+                .values(
+                    public_turn={**saved, "result": result},
+                    private_result={"requirements_trace": trace},
+                )
+            )
+        visible = client.get(url, headers=AUTH).json()["turns"][0]["result"]
+        assert [row["requirementIds"] for row in visible["draftIssues"]] == [
+            ["R9"],
+            ["R45"],
+        ]
+        assert all(
+            row["sourcePointer"] == "/reactions" for row in visible["draftIssues"]
+        )
+        assert "只清理该成员" in visible["draftIssues"][0]["message"]
+        assert "Host 待接入声明" in visible["draftIssues"][0]["message"]
+        assert "缺少对应的本地配置" in visible["draftIssues"][1]["message"]
+        assert "Unmapped deferrals" not in visible["reason"]
+        with engine.connect() as conn:
+            assert (
+                conn.execute(select(turns.c.public_turn)).scalar_one()["result"]
+                == result
+            )
+
+
 def test_persist_public_reply_and_retry_after_service_restart(tmp_path):
     engine = database(tmp_path)
     cid = str(uuid4())

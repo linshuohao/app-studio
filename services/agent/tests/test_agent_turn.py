@@ -448,3 +448,22 @@ def test_repair_stops_after_ten_failed_rounds():
     assert result["kind"] == "blocked"
     assert "本次已完成 10 轮修复" in result["reason"]
     assert checked == [f'{{"value":"bad-{i}"}}' for i in range(11)]
+
+
+def test_repair_summary_includes_syntax_location_and_keeps_unstructured_diagnostics():
+    from form_agent.agent.nodes.repair import diagnostic_summary
+
+    assert (
+        diagnostic_summary(
+            [
+                {
+                    "code": "JSON_SYNTAX",
+                    "message": "缺少逗号",
+                    "location": {"line": 3, "column": 4},
+                },
+                {"sourcePointer": "/data"},
+                {"additional": "详情"},
+            ]
+        )
+        == 'JSON_SYNTAX 缺少逗号 （第 3 行，第 4 列）；/data；{"additional": "详情"}'
+    )

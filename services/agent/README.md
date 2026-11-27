@@ -126,6 +126,8 @@ uv run --locked --project services/agent --extra observability \
 
 首次试跑可用 `--repeat 1 --case contact-length`。做正式对比时保留完整报告的 `dataset_digest`、`scorer` 和 `capture_version`，用相同口径对齐两次运行。运行未通过时报告仍写盘，退出码为 1。
 
+Agent 评估可通过 `--compact-understanding` 试跑紧凑的 PRD 提取提示词。默认使用原提示词。报告的 `understanding_profile` 记录本轮配置，比较时使用相同用例和模型，同时核对需求、来源与约束覆盖。
+
 用 `--compose legacy` 和 `--compose staged` 在同一工作区切换创作路径。需求理解、模型、目录、Compiler、Runtime 和评分保持同一版本。离线运行支持 `--jobs`，比较时保持并发设置一致。报告的 `model_usage` 累计每次模型调用的输入、输出与缓存输入 token，并记录实际回报用量的调用数。缺少用量的调用按未知处理，比较完整用量时检查 `complete`。
 
 Studio 全流程浏览器验收可用 `pnpm --filter @form-engine/studio exec node tests/run-agent-ownership.mjs --live --create-form`。运行器创建独立 Platform 和 Agent 测试数据库，使用当前本机模型和预览 Host。可用 `CREATE_FORM_ACCEPTANCE_OUTPUT` 写出独立验收报告。

@@ -34,6 +34,7 @@ from sqlalchemy.pool import NullPool
 from form_agent.business.conversations.model import (
     Message,
     Owner,
+    diagnostic_actions,
     fingerprint,
     make_delivery,
     public_result,
@@ -285,12 +286,24 @@ def view(row, history):
 
 
 def history_for(conn: Connection, cid: str, revision: int | None = None):
-    q = select(turns.c.public_turn).where(
+    q = select(turns.c.public_turn, turns.c.request["references"]).where(
         turns.c.conversation_id == cid, turns.c.status == "done"
     )
     if revision is not None:
         q = q.where(turns.c.revision <= revision)
-    return list(conn.execute(q.order_by(turns.c.revision)).scalars())
+    history = []
+    for turn, references in conn.execute(q.order_by(turns.c.revision)):
+        result = turn["result"]
+        if "diagnosticRepair" in result or "assetRepair" in result:
+            validated = diagnostic_actions(result, references)
+            result = {
+                k: v
+                for k, v in result.items()
+                if k not in ("diagnosticRepair", "assetRepair")
+            }
+            turn = {**turn, "result": {**result, **validated}}
+        history.append(turn)
+    return history
 
 
 def required(conn: Connection, cid: str, owner: Owner):
@@ -766,7 +779,7 @@ class ConversationStore:
             "createdAt": committed_at.isoformat(),
             "turnId": tid,
             "message": message.message,
-            "result": public_result(result),
+            "result": public_result(result, message.references),
         }
         if message.references:
             public["references"] = [

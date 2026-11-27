@@ -835,3 +835,86 @@ def test_diagnostic_replay_uses_authenticated_actor_and_only_journals_receipt(
             **({"repair": repair} if candidate_case == "verified" else {}),
         }
     )
+
+
+def test_migrated_and_persisted_actions_require_the_original_diagnostic_reference(
+    tmp_path,
+):
+    engine = database(tmp_path)
+    result = {
+        "kind": "answer",
+        "message": "情况说明。",
+        "diagnosticRepair": {"raw": "private-value"},
+    }
+    row = {
+        "id": str(uuid4()),
+        "space_id": "team",
+        "user_id": "alice",
+        "revision": 1,
+        "document": "调查",
+        "updated_at": "2026-01-01T00:00:00+00:00",
+        "turns": [{"message": "调查", "result": result}],
+    }
+    with engine.begin() as conn:
+        migrate_row(conn, row, False)
+        saved = conn.execute(select(turns.c.public_turn)).scalar_one()
+        assert "diagnosticRepair" not in saved["result"]
+        conn.execute(update(turns).values(public_turn={**saved, "result": result}))
+    with TestClient(app(engine, [])) as client:
+        response = client.get("/internal/v1/conversations/" + row["id"], headers=AUTH)
+        assert response.status_code == 200, response.text
+        assert response.json()["turns"][0]["result"] == {
+            "kind": "answer",
+            "message": "情况说明。",
+        }
+        assert "private-value" not in response.text
+
+
+def test_action_projection_matches_original_reference_and_rejects_extra_nested_fields():
+    from form_agent.business.conversations.model import diagnostic_actions
+
+    reference = {
+        "kind": "diagnostic",
+        "formId": "f",
+        "versionId": "v",
+        "releaseId": "r",
+        "diagnosticId": "d",
+        "name": "example",
+        "phase": "when",
+        "evidenceStatus": "captured",
+        "errorCode": "reaction.error",
+        "assetCandidates": [
+            {
+                "kind": "material",
+                "lock": {
+                    "id": "example",
+                    "version": "1",
+                    "manifestDigest": "m",
+                    "artifact": {"id": "example", "platform": "web", "digest": "a"},
+                },
+            }
+        ],
+    }
+    repair = {
+        "diagnosticId": "d",
+        "formId": "f",
+        "versionId": "v",
+        "releaseId": "r",
+        "candidateDigest": "a" * 64,
+    }
+    asset = {"diagnosticId": "d", "candidates": reference["assetCandidates"]}
+
+    def project(**fields):
+        return diagnostic_actions({"kind": "answer", **fields}, [reference])
+
+    assert project(assetRepair=asset) == {"assetRepair": asset}
+    assert not project(diagnosticRepair={**repair, "raw": "private-value"})
+    assert not project(diagnosticRepair={**repair, "formId": "another"})
+    assert not project(diagnosticRepair={**repair, "candidateDigest": "private-value"})
+    assert not project(diagnosticRepair=repair, assetRepair=asset)
+    assert not project(
+        assetRepair={
+            "diagnosticId": "d",
+            "candidates": [{**reference["assetCandidates"][0], "raw": "private-value"}],
+        }
+    )

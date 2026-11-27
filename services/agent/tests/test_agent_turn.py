@@ -493,7 +493,7 @@ def test_diagnostic_reference_uses_read_only_graph_without_model_or_compiler():
     assert "尚未复现" in result["message"]
     from form_agent.business.conversations.model import public_result
 
-    assert public_result(result)["assetRepair"] == result["assetRepair"]
+    assert "assetRepair" not in public_result(result)
     assert result["assetRepair"]["diagnosticId"] == "diagnostic-id"
     lock = result["assetRepair"]["candidates"][0]["lock"]
     assert lock["id"] == "travel.personPremium"

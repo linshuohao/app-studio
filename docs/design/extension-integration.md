@@ -381,11 +381,12 @@ remote-select.search 输入为 `{query:string,filterKey:string|null}`，成功�
 | 勾选 | 用户切换交付 boolean；missing / 非法值不自动写 false | 按 Runtime 展示，非法态可辨识 |
 | 固定选项 | 选择交付 ID，清空为 null | 未知 ID 显示选项不可用，不静默换值 |
 | 远程选项 | 搜索不写；选择后交付 Option，清空为 null | Runtime 选中值 |
-| 日期范围 | 暂存未确认选择，确认交付，取消不写 | Runtime 当前两端 |
+| 单日期 | 从日期框锚定浮层选择即交付，清空为 null | Runtime 当前日期 |
+| 日期范围 | 两端分别用锚定日历选择；暂存未确认选择，确认交付，取消不写 | Runtime 当前两端 |
 
 数字使用文本输入配合键盘提示；首期不接受指数、分组逗号或隐式空白转换。不安全解析时保留文本，不静默舍入。输入法组合态局部管理，结束交付最终文本。编辑缓存只服务当前交互；Host 改值时接受新值，不在后续失焦覆盖回旧缓存。
 
-date-range 单个日期确认为严格 YYYY-MM-DD 或 null；无法解析的草稿留在弹层提示修正。两端合法但倒序可交付，由 Constraint 报错。打开期间 Host 改任一端，整组草稿重置到最新 Runtime 并提示再确认。
+单日期和日期范围共用日期框与日历浮层。日期框只通过日历选择和清空更新；浮层独立定位，确认弹窗保持原有尺寸。date-range 单个日期确认为严格 YYYY-MM-DD 或 null；Host 提供的非法日期需要重新选择或清空。两端合法但倒序可交付，由 Constraint 报错。打开期间 Host 改任一端，整组草稿重置到最新 Runtime 并提示再确认。
 
 双端口连续两次 set，沿用即时、非原子语义，都检查 kind 及 executed.result.ok。第一端成功、第二端失败不能显示整体成功，应重读并报告局部失败。Adapter 不公开 Binding DataReference，不承诺物料自行拼通用批量端口 API。dialog-editor 内普通 Slot 输入实时写 Runtime；完成 / 关闭 / Escape 只关视图，没有整组回滚，不提供含糊的取消编辑承诺。
 

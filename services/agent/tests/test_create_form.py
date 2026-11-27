@@ -1252,7 +1252,9 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
             from typing import cast
 
             from form_agent.agent.nodes.check import check
+            from form_agent.agent.nodes.deliver import deliver_creation
             from form_agent.agent.state import TurnGraphState
+            from form_agent.business.form_authoring.contracts import Proposal
 
             checked_state = cast(
                 TurnGraphState,
@@ -1273,5 +1275,11 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
             assert isinstance(draft, CheckedDraft) and len(texts) == 2
             assert draft.candidate_digest == candidate_digest(texts[-1])
             assert "生产提交需把城市对象映射成城市 ID" in draft.summary
+            delivery = deliver_creation({**state, "composition": verified_composition})
+            proposal = delivery["result"]
+            assert isinstance(proposal, Proposal) and proposal.guide
+            assert proposal.guide.hostPending[0].details == [
+                "生产提交需把城市对象映射成城市 ID"
+            ]
 
     asyncio.run(exercise())

@@ -14,11 +14,13 @@ from form_agent.business.conversations.model import stable_id
 from form_agent.business.conversations.store import (
     ConversationStore,
     conversations,
+    journal_entries,
     metadata,
     turns,
 )
 from form_agent.import_conversations import migrate_row
 from form_agent.integrations.compiler import candidate_digest
+from form_agent.integrations.platform_tools import platform_tools
 
 AUTH = {
     "X-Agent-Service-Token": "service",
@@ -720,3 +722,116 @@ def test_resume_rechecks_in_new_compiler_environment_and_keeps_original_request(
     with engine.connect() as conn:
         stored = conn.execute(select(turns.c.request)).scalar_one()
         assert stored["context"] == CONTEXT
+
+
+@pytest.mark.parametrize(
+    "candidate_case", ["verified", "different_version", "unexpected_raw"]
+)
+def test_diagnostic_replay_uses_authenticated_actor_and_only_journals_receipt(
+    tmp_path, monkeypatch, candidate_case
+):
+    engine = database(tmp_path)
+    diagnostic_id, release_id = str(uuid4()), str(uuid4())
+    body = {
+        **message(text="定位这个错误"),
+        "references": [
+            {
+                "kind": "diagnostic",
+                "diagnosticId": diagnostic_id,
+                "releaseId": release_id,
+                "formId": "form",
+                "versionId": "version",
+                "name": "报销单",
+                "errorCode": "reaction.error",
+                "phase": "when",
+                "targetId": "calculate-total",
+                "evidenceStatus": "captured",
+            }
+        ],
+    }
+    calls = []
+    actual_client = httpx.AsyncClient
+    unexpected_raw = candidate_case == "unexpected_raw"
+    repair = {
+        "status": "verified",
+        "versionId": "other-version"
+        if candidate_case == "different_version"
+        else "version",
+        "pointer": "/reactions/0/when/args/1",
+        "candidateDigest": "a" * 64,
+    }
+
+    def platform_response(request):
+        calls.append(request.url.path)
+        assert request.headers["X-Agent-User"] == AUTH["X-Agent-User"]
+        assert request.headers["X-Agent-Space"] == AUTH["X-Agent-Space"]
+        assert request.headers["X-Agent-Service-Token"] == AUTH["X-Agent-Service-Token"]
+        assert json.loads(request.content) == {
+            "diagnosticId": diagnostic_id,
+            "releaseId": release_id,
+            "proposeRepair": True,
+        }
+        receipt = {
+            "status": "reproduced",
+            "reason": "same_condition_failure",
+            "repair": repair,
+        }
+        if unexpected_raw:
+            receipt["repair"] = {**repair, "raw": "secret-input-from-host"}
+        return httpx.Response(200, json=receipt)
+
+    transport = httpx.MockTransport(platform_response)
+    monkeypatch.setattr(
+        httpx, "AsyncClient", lambda **opts: actual_client(transport=transport, **opts)
+    )
+    model = TurnModel([])
+    service = create_app(
+        model=model,
+        tools=platform_tools(
+            "http://test-platform", AUTH["X-Agent-Service-Token"], None
+        ),
+        store=LocalTestStore(engine),
+        service_token=AUTH["X-Agent-Service-Token"],
+    )
+    url = "/internal/v1/conversations/" + str(uuid4()) + "/turns"
+    with TestClient(service) as client:
+        result = client.post(url, headers=AUTH, json=body)
+        assert result.status_code == 200, result.text
+        saved = client.post(url, headers=AUTH, json=body)
+        assert saved.status_code == 200, saved.text
+    assert calls == ["/internal/agent-tools/replay-diagnostic"]
+    assert not model._inputs
+    assert "secret-input-from-host" not in result.text
+    assert (
+        "无法取得复现执行结果" if unexpected_raw else "得到相同的联动条件异常"
+    ) in result.text
+    assert ("配置修复候选" in result.text) == (candidate_case == "verified")
+    conversation = result.json()["conversation"]
+    assert conversation["title"] == "表单错误调查"
+    answer = conversation["turns"][0]["result"]
+    if candidate_case == "verified":
+        assert answer["diagnosticRepair"] == {
+            "diagnosticId": diagnostic_id,
+            "formId": "form",
+            "releaseId": release_id,
+            "versionId": "version",
+            "candidateDigest": "a" * 64,
+        }
+    else:
+        assert "diagnosticRepair" not in answer
+    with engine.connect() as conn:
+        payload = conn.execute(
+            select(journal_entries.c.payload).where(
+                journal_entries.c.step_key.like("%diagnostic.replay%"),
+                journal_entries.c.kind == "result",
+            )
+        ).scalar_one()
+    assert payload["value"] == (
+        {"status": "blocked", "reason": "executor_unavailable"}
+        if unexpected_raw
+        else {
+            "status": "reproduced",
+            "reason": "same_condition_failure",
+            **({"repair": repair} if candidate_case == "verified" else {}),
+        }
+    )

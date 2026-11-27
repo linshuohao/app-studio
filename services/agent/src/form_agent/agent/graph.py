@@ -46,6 +46,9 @@ def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
         outcome = await diagnostic.ainvoke({"reference": reference})
         return {
             "result": outcome["result"],
+            "conversation_title": "表单错误调查"
+            if state.get("generate_conversation_title")
+            else None,
         }
 
     graph.add_node("load_context", initialize)

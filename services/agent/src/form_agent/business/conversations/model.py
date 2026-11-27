@@ -53,6 +53,10 @@ def public_result(result: dict) -> dict:
         for k in ("kind", "message", "summary", "reason", "questions")
         if k in result
     }
+    if result["kind"] == "answer" and result.get("diagnosticRepair"):
+        public["diagnosticRepair"] = result["diagnosticRepair"]
+    if result["kind"] == "answer" and result.get("assetRepair"):
+        public["assetRepair"] = result["assetRepair"]
     if "issues" in result:
         public["issues"] = [
             {

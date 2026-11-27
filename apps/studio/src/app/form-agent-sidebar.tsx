@@ -239,6 +239,7 @@ export function FormAgentSidebar({
         }
         initialPosition={initialChat?.position}
         open={open}
+        jumpToLatest
         onCollapse={onCollapse}
         onPosition={(p) => {
           position.current = p;

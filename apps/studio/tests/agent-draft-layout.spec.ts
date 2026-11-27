@@ -145,7 +145,7 @@ test('floating chat wraps long messages and edits its conversation title indepen
         turns: [
           {
             turnId: 'one',
-            message: long.repeat(10),
+            message: Array.from({ length: 40 }, () => long).join('\n'),
             result: { kind: 'answer', message: 'LongToken'.repeat(100) },
           },
         ],
@@ -165,6 +165,16 @@ test('floating chat wraps long messages and edits its conversation title indepen
   for (const area of [panel, panel.getByRole('log')]) {
     expect(await area.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   }
+  const history = panel.getByRole('log');
+  const latest = panel.getByRole('button', { name: '回到最新消息' });
+  await expect.poll(() => history.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await history.evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await expect(latest).toBeVisible();
+  await latest.press('Enter');
+  await expect(latest).toBeHidden();
+  await expect(history).toBeFocused();
   const before = await panel.boundingBox();
   await title.click();
   const input = panel.getByRole('textbox', { name: '对话标题' });

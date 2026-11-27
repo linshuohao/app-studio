@@ -1,4 +1,6 @@
 'use client';
+
+import { PageHeading } from './page-heading';
 import {
   DataTable,
   Icon,
@@ -487,68 +489,79 @@ export function WorkingVersions(props: {
     <div className="studio-version-workspace">
       {!(releases && release) && (
         <>
-          <div className="toolbar page-title" data-studio-ui={!releases || undefined}>
-            <div>
-              <IconButton
-                icon="ChevronLeft"
-                aria-label={returnLabel}
-                title={returnLabel}
-                onClick={origin && releases ? back : props.onBack}
-              />
-              <h1>{form.name}</h1>
-            </div>
-            <div className="action-row">
-              {props.canEdit && form.version && (
-                <Button variant="secondary" onClick={() => referenceVersion(form.version!)}>
-                  引用到 Agent
-                </Button>
-              )}
-              {(edit || props.canManage) && (
-                <Menu.Root>
-                  <Menu.Trigger id={manageFormId} disabled={busy || props.navigating}>
-                    管理表单 <Icon name="ChevronDown" />
-                  </Menu.Trigger>
-                  <Menu.Portal>
-                    <Menu.Positioner align="end">
-                      <Menu.Popup>
-                        {edit && (
-                          <Menu.Item onClick={() => openFormAction('edit')}>
-                            编辑名称与说明
-                          </Menu.Item>
-                        )}
-                        {form.version && edit && (
-                          <Menu.Item onClick={() => openFormAction('copy')}>复制为新表单</Menu.Item>
-                        )}
-                        {props.canManage && (
-                          <Menu.Item
-                            onClick={() => openFormAction(form.archived ? 'restore' : 'archive')}
-                          >
-                            {form.archived ? '恢复表单' : '归档表单'}
-                          </Menu.Item>
-                        )}
-                      </Menu.Popup>
-                    </Menu.Positioner>
-                  </Menu.Portal>
-                </Menu.Root>
-              )}
-              {props.canManage && (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setRecordFilters(undefined);
-                    setModal('records');
-                  }}
-                >
-                  操作记录
-                </Button>
-              )}
-              {edit && (
-                <Button disabled={busy} onClick={(event) => void open('new', event.currentTarget)}>
-                  新建草稿
-                </Button>
-              )}
-            </div>
-          </div>
+          <PageHeading
+            data-studio-ui={!releases || undefined}
+            title={form.name}
+            back={{ label: returnLabel, onClick: origin && releases ? back : props.onBack }}
+            rename={
+              edit
+                ? {
+                    label: '表单名称',
+                    disabled: busy || props.navigating,
+                    onSave: async (name) => {
+                      setBusy(true);
+                      try {
+                        props.onMetadata(
+                          await platform<FormSummary>(path + '/metadata', {
+                            body: { name, description: form.description, revision: form.revision },
+                          }),
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
+                    },
+                  }
+                : undefined
+            }
+          >
+            {props.canEdit && form.version && (
+              <Button variant="secondary" onClick={() => referenceVersion(form.version!)}>
+                引用到 Agent
+              </Button>
+            )}
+            {(edit || props.canManage) && (
+              <Menu.Root>
+                <Menu.Trigger id={manageFormId} disabled={busy || props.navigating}>
+                  管理表单 <Icon name="ChevronDown" />
+                </Menu.Trigger>
+                <Menu.Portal>
+                  <Menu.Positioner align="end">
+                    <Menu.Popup>
+                      {edit && (
+                        <Menu.Item onClick={() => openFormAction('edit')}>编辑名称与说明</Menu.Item>
+                      )}
+                      {form.version && edit && (
+                        <Menu.Item onClick={() => openFormAction('copy')}>复制为新表单</Menu.Item>
+                      )}
+                      {props.canManage && (
+                        <Menu.Item
+                          onClick={() => openFormAction(form.archived ? 'restore' : 'archive')}
+                        >
+                          {form.archived ? '恢复表单' : '归档表单'}
+                        </Menu.Item>
+                      )}
+                    </Menu.Popup>
+                  </Menu.Positioner>
+                </Menu.Portal>
+              </Menu.Root>
+            )}
+            {props.canManage && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setRecordFilters(undefined);
+                  setModal('records');
+                }}
+              >
+                操作记录
+              </Button>
+            )}
+            {edit && (
+              <Button disabled={busy} onClick={(event) => void open('new', event.currentTarget)}>
+                新建草稿
+              </Button>
+            )}
+          </PageHeading>
           {formNotice && <Feedback kind="status">{formNotice}</Feedback>}
           <nav className="workbench-tabs" aria-label="表单版本视图">
             <Button aria-current={!releases ? 'page' : undefined} onClick={() => go()}>

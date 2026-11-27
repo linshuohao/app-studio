@@ -93,7 +93,7 @@ export function AssetCatalog({
   const materialResults = useRef<HTMLDivElement>(null);
   const materialSearch = useRef<HTMLInputElement>(null);
   const [functionPage, setFunctionPage] = useState(1);
-  const [functionPageSize, setFunctionPageSize] = useState<number>(functionPageSizes[0]);
+  const [functionPageSize, setFunctionPageSize] = useState(10);
   const functionResults = useRef<HTMLDivElement>(null);
   const functionSearch = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<Summary>();

@@ -327,21 +327,22 @@
 }
 
 /* shadcn/ui form controls, scoped to the runtime material stylesheet. */
-.fe-date-input {
-  display: flex;
-  align-items: stretch;
-  gap: 0.375rem;
+.fe-input.fe-date-trigger {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: start;
 }
-.fe-date-input > .fe-input {
-  flex: 1;
+.fe-date-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.fe-date-trigger {
-  display: inline-grid;
-  flex: none;
-  place-items: center;
-  min-width: 2.6rem;
-  padding: 0.375rem;
-  font-size: 1.125rem;
+.fe-date-trigger [data-placeholder] {
+  color: #64748b;
 }
 .fe-date-trigger svg,
 .fe-checkbox-indicator svg {
@@ -353,14 +354,19 @@
 }
 .fe-date-popup {
   width: max-content;
-  max-width: 100%;
+  max-width: var(--available-width);
+  max-height: var(--available-height);
+  overflow: auto;
   border: 1px solid var(--fe-border, #94a3b8);
   border-radius: 0.625rem;
   background: Canvas;
   color: CanvasText;
-  max-height: var(--available-height);
-  overflow-y: auto;
   box-shadow: 0 8px 24px rgb(15 23 42 / 0.16);
+}
+.fe-date-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0.625rem 0.625rem;
 }
 .fe-calendar {
   padding: 0.625rem;

@@ -178,6 +178,7 @@
 .studio-content.studio-next > #studio-main {
   flex: 1 1 auto;
   min-block-size: 0;
+  max-inline-size: none;
   overflow: auto;
   overscroll-behavior: contain;
 }

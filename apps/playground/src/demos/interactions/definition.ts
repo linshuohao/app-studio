@@ -115,6 +115,16 @@ export const interactionDefinition: FormDefinition = {
               actions: [
                 {
                   material: 'button',
+                  props: { label: '模拟导入非法开始日期' },
+                  on: {
+                    activate: {
+                      type: 'form.command',
+                      command: { op: 'set', target: ref('/start'), value: '2027-02-29' },
+                    },
+                  },
+                },
+                {
+                  material: 'button',
                   props: { label: '模拟结束端不可写' },
                   on: {
                     activate: {

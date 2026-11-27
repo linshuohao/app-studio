@@ -20,11 +20,17 @@ import type { Response } from 'express';
 import { PlatformAccess, type AccessContext } from './access.js';
 import { PlatformDatabase } from './database.js';
 import { sendAgentStream } from './agent-ui-stream.js';
-import { checkEnvironment, conversationRequest, type TurnStream } from './create-form-agent.js';
+import {
+  checkEnvironment,
+  conversationRequest,
+  previewInputs,
+  type TurnStream,
+} from './create-form-agent.js';
 import {
   PlatformDrafts,
   type Delivery,
   type Draft,
+  type DraftPreview,
   digestText,
   resourceId,
 } from './form-drafts.js';
@@ -247,6 +253,40 @@ export class AgentConversationsController {
     @Query('workId') workId?: string,
   ) {
     return this.readDelivery(cookie, id, turnId, { formId, workId }, false);
+  }
+  @Get(':id/deliveries/:turnId/integration')
+  @Header('Cache-Control', 'no-store')
+  async integration(
+    @Headers('cookie') cookie: string,
+    @Param('id') id: string,
+    @Param('turnId') turnId: string,
+  ): Promise<{
+    candidateDigest: string;
+    prepared: DraftPreview['prepared'];
+    regenerated: boolean;
+  }> {
+    const actor = await this.access.authenticate(session(cookie), 'form:edit');
+    const delivery = await conversationRequest<Delivery>(
+      actor,
+      '/' + resourceId(id) + '/deliveries/' + resourceId(turnId),
+    );
+    if (delivery.draftIssues !== undefined || !delivery.checkId) throw new NotFoundException();
+    const current = await this.reauthorize(cookie, actor);
+    if (delivery.formId) await this.checkForm(current, delivery.formId, delivery.workId);
+    const text = configText(delivery.candidateText);
+    if (digestText(text) !== delivery.digest) throw new BadGatewayException('Invalid candidate');
+    const regenerated = delivery.checkEnvironment !== checkEnvironment(this.builds);
+    const checked = await this.builds.compile(text, previewInputs(this.builds));
+    if (!checked.success) {
+      const diagnostic = checked.diagnostics.find((item) => item.severity === 'error');
+      throw new ConflictException(
+        diagnostic
+          ? `这版候选在当前编译环境中未通过检查：${diagnostic.message}`
+          : '这版候选在当前编译环境中未通过检查。',
+      );
+    }
+    await this.reauthorize(cookie, actor);
+    return { candidateDigest: delivery.digest, prepared: checked.prepared, regenerated };
   }
   @Post(':id/deliveries/:turnId/receive')
   async receiveDelivery(

@@ -1,5 +1,6 @@
 import { platform, type TurnEvent } from './platform-api';
 import { studioUrl } from './studio-location';
+import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import type { IssueReport } from './agent-issues';
 
 export type PanelPosition = { x: number; y: number; width?: number; height?: number };
@@ -104,12 +105,29 @@ export type DraftIssue = {
   requirementIds: string[];
 };
 
+export type CandidatePendingItem = {
+  title: string;
+  details: string[];
+  requirementIds: string[];
+};
+
+export type CandidateGuide = {
+  title?: string | null;
+  exampleCode?: string | null;
+  exampleUnavailable?: boolean;
+  candidateDigest: string;
+  hostRequirements: Partial<ReadonlyPreparedForm['hostRequirements']>;
+  hostPending: CandidatePendingItem[];
+  previewPending: CandidatePendingItem[];
+};
+
 export type AssistantTurn = {
   turnId: string;
   message: string;
   references?: MessageReference[];
   result: {
     kind: string;
+    candidateGuide?: CandidateGuide;
     message?: string;
     summary?: string;
     reason?: string;

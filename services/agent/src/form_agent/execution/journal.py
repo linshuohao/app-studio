@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from hashlib import sha256
+from time import monotonic
 from typing import Any, Protocol
 
 from form_agent.execution.codec import pack, unpack
@@ -44,16 +45,34 @@ def repair_rounds_before_execution(completed_rounds: int) -> int:
     return budget.previous_rounds
 
 
+_turn_deadline = ContextVar[float | None]("turn_deadline", default=None)
+
+
+def supplementary_model_timeout(maximum: float) -> float:
+    deadline = _turn_deadline.get()
+    return (
+        maximum
+        if deadline is None
+        else max(0, min(maximum, deadline - monotonic() - 5))
+    )
+
+
 @contextmanager
 def execution_scope(
-    journal: ExecutionJournal, *, resume: bool = False, compiler_scope: str = ""
+    journal: ExecutionJournal,
+    *,
+    resume: bool = False,
+    compiler_scope: str = "",
+    turn_deadline: float | None = None,
 ):
     token = _journal.set(journal)
     budget_token = _repair_budget.set(RepairBudget(None if resume else 0))
     compiler_token = _compiler_scope.set(compiler_scope)
+    deadline_token = _turn_deadline.set(turn_deadline)
     try:
         yield
     finally:
+        _turn_deadline.reset(deadline_token)
         _compiler_scope.reset(compiler_token)
         _repair_budget.reset(budget_token)
         _journal.reset(token)

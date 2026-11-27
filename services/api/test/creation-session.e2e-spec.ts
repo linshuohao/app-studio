@@ -98,6 +98,32 @@ function fetchDelivery(id: string, delivery: Delivery) {
     '/agent-conversations/' + id + '/deliveries/' + delivery.turnId + '/receive',
   );
 }
+it('prepares the exact checked delivery for its JSX guide without creating or rewriting a draft', async () => {
+  const id = randomUUID();
+  const original = proposal(config('original-candidate'));
+  const path = `/agent-conversations/${id}/deliveries/${original.turnId}/integration`;
+  upstream.mockResolvedValueOnce(Response.json(original));
+  const guide = await setup('get', path).expect(200);
+  expect(guide.body.candidateDigest).toBe(original.digest);
+  expect(guide.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  upstream.mockResolvedValueOnce(Response.json({ ...original, candidateText: config('other') }));
+  await setup('get', path).expect(502);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, checkEnvironment: 'other' }));
+  const regenerated = await setup('get', path).expect(200);
+  expect(regenerated.body.regenerated).toBe(true);
+  expect(regenerated.body.candidateDigest).toBe(original.digest);
+  expect(regenerated.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  const invalid = proposal('{}', { checkEnvironment: 'other' });
+  upstream.mockResolvedValueOnce(Response.json(invalid));
+  const failure = await setup('get', path).expect(409);
+  expect(failure.body.message).toContain('当前编译环境中未通过检查');
+  upstream.mockResolvedValueOnce(Response.json({ ...original, draftIssues: [] }));
+  await setup('get', path).expect(404);
+});
 it('proxies Agent conversations under authenticated identity and never creates a draft for chat', async () => {
   const id = randomUUID(),
     turnId = randomUUID();

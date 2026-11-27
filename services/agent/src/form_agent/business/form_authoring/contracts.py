@@ -172,12 +172,27 @@ class CheckedDraft(BaseModel):
     summary: str
 
 
+class CandidatePendingItem(BaseModel):
+    title: str
+    details: list[str]
+    requirementIds: list[str]
+
+
+class CandidateGuide(BaseModel):
+    title: str | None = None
+    hostPending: list[CandidatePendingItem] = Field(default_factory=list)
+    previewPending: list[CandidatePendingItem] = Field(default_factory=list)
+    exampleCode: str | None = None
+    exampleUnavailable: bool = False
+
+
 class Proposal(CreateFormBusinessResult):
     binding_evidence: BindingEvidence | None = None
     kind: Literal["proposal"]
     candidate_text: str = Field(min_length=1)
     summary: str
     check: CheckReceipt
+    guide: CandidateGuide | None = None
 
 
 CreateFormResult = Annotated[

@@ -74,7 +74,10 @@ async def run_turn_events(
                         },
                     }
                 with execution_scope(
-                    journal, resume=resume, compiler_scope=compiler_scope
+                    journal,
+                    resume=resume,
+                    compiler_scope=compiler_scope,
+                    turn_deadline=monotonic() + timeout_seconds,
                 ):
                     async with asyncio.timeout(timeout_seconds):
                         stream = stream_graph_events(
@@ -82,6 +85,9 @@ async def run_turn_events(
                             prepared["input"],
                             trace,
                             TURN_RECURSION_LIMIT + 6 * completed,
+                            generate_conversation_title=prepared[
+                                "generate_conversation_title"
+                            ],
                             **trace_options,
                         )
                         async with aclosing(stream):
@@ -103,6 +109,7 @@ async def run_turn_events(
                                     prepared["input"].referenced_candidate,
                                     result,
                                     round((monotonic() - started) * 1000),
+                                    event.get("conversation_title"),
                                 )
                                 break
                             else:

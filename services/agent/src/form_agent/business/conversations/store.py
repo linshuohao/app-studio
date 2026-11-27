@@ -642,7 +642,7 @@ class ConversationStore:
                         id=cid,
                         user_id=owner.user,
                         space_id=owner.space,
-                        title=message.message.strip()[:60],
+                        title="新对话",
                         revision=0,
                         task={},
                         form_id=message.context.formId,
@@ -733,6 +733,8 @@ class ConversationStore:
                 "compiler_scope": compiler_scope,
                 "message": message,
                 "facts": facts,
+                "generate_conversation_title": row["revision"] == 0
+                and row["title"] == "新对话",
                 "input": facts.graph_input(cid, message, history_for(conn, cid)),
             }
 
@@ -752,6 +754,7 @@ class ConversationStore:
         base: str | None,
         result: dict,
         elapsed_ms: int | None = None,
+        suggested_title: str | None = None,
     ):
         revision = message.revision + 1
         tid = str(message.turnId)
@@ -870,6 +873,13 @@ class ConversationStore:
                 .where(owned(cid, owner))
                 .values(
                     revision=revision,
+                    title=(
+                        suggested_title
+                        if message.revision == 0
+                        and row["title"] == "新对话"
+                        and suggested_title
+                        else row["title"]
+                    ),
                     task=facts.model_dump(mode="json", exclude_none=True),
                     updated_at=committed_at,
                 )

@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@form-engine/studio-design-components';
 import { AttemptHistory, useRunningConversation } from './agent-attempt';
 import { AgentIssues } from './agent-issues';
 import { AgentReply, AgentCandidateCard, AgentMessage } from './agent-reply';
+import { AgentCandidateGuide } from './agent-candidate-guide';
 import { renameConversation } from './agent-conversation';
 import { AgentPanel, AgentUserMessage } from './agent-panel';
 import { AgentMerge } from './agent-merge';
@@ -263,18 +265,61 @@ export function FormAgentSidebar({
               .map((a) => (
                 <AttemptHistory key={a.turnId} attempt={a} disabled />
               ))}
-            <AgentMessage text={assistantText(t.result)}>
-              <div data-speaker="assistant">
-                <b>表单助手</b>
-                <AgentReply text={assistantText(t.result)} />
-                {t.result.issues && t.result.verification && (
-                  <AgentIssues issues={t.result.issues} verification={t.result.verification} />
+            {t.result.kind === 'proposal' && t.result.candidateGuide ? (
+              <AgentCandidateGuide
+                guide={t.result.candidateGuide}
+                conversationId={conversation.id}
+                turnId={t.turnId}
+              >
+                {proposal?.turnId === t.turnId && (
+                  <div className="agent-candidate-actions">
+                    <Button
+                      variant="secondary"
+                      disabled={disabled || locked}
+                      onClick={() => setReview(true)}
+                    >
+                      对比并应用候选
+                    </Button>
+                    <Button variant="text" disabled={disabled || locked} onClick={clearProposal}>
+                      放弃候选
+                    </Button>
+                  </div>
                 )}
+              </AgentCandidateGuide>
+            ) : (
+              <AgentMessage text={assistantText(t.result)}>
+                <div data-speaker="assistant">
+                  <b>表单助手</b>
+                  <AgentReply text={assistantText(t.result)} />
+                  {t.result.issues && t.result.verification && (
+                    <AgentIssues issues={t.result.issues} verification={t.result.verification} />
+                  )}
+                </div>
                 {t.result.kind === 'proposal' && (
-                  <AgentCandidateCard>已生成候选</AgentCandidateCard>
+                  <AgentCandidateCard>
+                    <strong>表单候选配置</strong>
+                    {proposal?.turnId === t.turnId && (
+                      <div className="agent-candidate-actions">
+                        <Button
+                          variant="secondary"
+                          disabled={disabled || locked}
+                          onClick={() => setReview(true)}
+                        >
+                          对比并应用候选
+                        </Button>
+                        <Button
+                          variant="text"
+                          disabled={disabled || locked}
+                          onClick={clearProposal}
+                        >
+                          放弃候选
+                        </Button>
+                      </div>
+                    )}
+                  </AgentCandidateCard>
                 )}
-              </div>
-            </AgentMessage>
+              </AgentMessage>
+            )}
           </section>
         ))}
         {!sent &&
@@ -294,16 +339,6 @@ export function FormAgentSidebar({
           />
         )}
         {error && <p role="alert">{error}</p>}
-        {proposal && (
-          <AgentCandidateCard>
-            <button disabled={disabled || locked} onClick={() => setReview(true)}>
-              对比并应用候选
-            </button>{' '}
-            <button disabled={disabled || locked} onClick={clearProposal}>
-              放弃候选
-            </button>
-          </AgentCandidateCard>
-        )}
         {needsPreview && <p>请在配置预览中试填并确认，再保存。</p>}
       </AgentPanel>
       {review && proposal && (

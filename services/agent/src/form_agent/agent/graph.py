@@ -48,7 +48,7 @@ def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
         graph.add_node(name, action_node(name, step(name, run)))
         graph.add_edge(name, "observe")
     graph.add_node("observe", step("observe", observe))
-    graph.add_node("deliver", step("deliver", deliver))
+    graph.add_node("deliver", step("deliver", partial(deliver, model=model)))
     graph.add_edge(START, "load_context")
     graph.add_edge("load_context", "route")
     graph.add_conditional_edges("route", lambda s: s["action"], [*actions, "deliver"])

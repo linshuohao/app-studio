@@ -1,17 +1,15 @@
 'use client';
+
+import { PageHeading } from './page-heading';
+import { CodeBlock } from '../components/code-block';
 import { AttemptHistory, useRunningConversation } from './agent-attempt';
-import { AgentDraftIssues } from './agent-draft-issues';
 import { AgentIssues } from './agent-issues';
+import { AgentDraftIssues } from './agent-draft-issues';
 import { AgentInteractionCard } from './agent-interaction';
 import { studioUrl, writeLocation } from './studio-location';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEventHandler } from 'react';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
-import {
-  Button,
-  Feedback,
-  IconButton,
-  Input,
-} from '@form-engine/studio-design-components/controls';
+import { Button, Feedback, Input } from '@form-engine/studio-design-components/controls';
 import { Modal } from './modal';
 import { semanticModel } from './semantic-model';
 import { JsonSource, type SourceFocus } from './json-source';
@@ -29,6 +27,7 @@ import {
   type TurnResponse,
 } from './agent-conversation';
 import { AgentMessage, AgentReply } from './agent-reply';
+import { AgentCandidateGuide } from './agent-candidate-guide';
 import { AgentPanel, AgentUserMessage, ConversationTitle } from './agent-panel';
 import { AgentDockButton } from './agent-dock-button';
 import { AgentMerge } from './agent-merge';
@@ -68,6 +67,8 @@ export function AgentCreation({
   presentation,
   initialPanelPosition,
   openAgentPage,
+  onOpenDraft,
+  draftOpenedFromAgent,
   initialDockPosition,
   panelOpen,
   onPanelPosition,
@@ -88,6 +89,8 @@ export function AgentCreation({
   presentation: 'page' | 'draft' | 'dock';
   initialPanelPosition?: PanelPosition;
   openAgentPage?: () => void;
+  onOpenDraft: (id: string, conversation?: string) => void;
+  draftOpenedFromAgent: boolean;
   initialDockPosition?: PanelPosition;
   panelOpen: boolean;
   onPanelPosition?: (position: PanelPosition) => void;
@@ -202,6 +205,10 @@ export function AgentCreation({
     [showPreview, setShowPreview] = useState(false),
     [ready, setReady] = useState(false),
     [confirmed, setConfirmed] = useState(false);
+  const [workingIntegration, setWorkingIntegration] = useState<{
+    prepared: ReadonlyPreparedForm;
+    trigger: HTMLElement;
+  }>();
   const [sent, setSent] = useState('');
   const submitting = useRef(false);
   const [sendFailure, setSendFailure] = useState<{
@@ -683,23 +690,34 @@ export function AgentCreation({
       if (!result.success && first) locateDiagnostic(first.sourcePointer);
     });
   }
+  async function compileWorkingDraft() {
+    const stored = await checkpoint();
+    const next = await platform<{ digest: string; prepared: ReadonlyPreparedForm }>(
+      draftPath + '/preview',
+      {
+        body: {
+          revision: stored.revision,
+          digest,
+          workingText: draft.text,
+          profile: selectedProfile,
+        },
+      },
+    );
+    return { ...next, text: draft.text, candidateDigest: digest!, revision: stored.revision };
+  }
   function prepare() {
     void perform('正在编译工作稿', async () => {
-      const stored = await checkpoint();
-      const target = selectedProfile;
-      const next = await platform<{ digest: string; prepared: ReadonlyPreparedForm }>(
-        draftPath + '/preview',
-        { body: { revision: stored.revision, digest, workingText: draft.text, profile: target } },
-      );
+      const next = await compileWorkingDraft();
       setReady(false);
       setConfirmed(false);
-      setPreview({
-        ...next,
-        text: draft.text,
-        candidateDigest: digest!,
-        revision: stored.revision,
-      });
+      setPreview(next);
       setShowPreview(true);
+    });
+  }
+  function openWorkingIntegration(trigger: HTMLElement) {
+    void perform('正在准备工作稿接入示例', async () => {
+      const { prepared } = await compileWorkingDraft();
+      setWorkingIntegration({ prepared, trigger });
     });
   }
   function enterEditor(formId: string, workId: string) {
@@ -755,11 +773,33 @@ export function AgentCreation({
     resource?.formId && resource.versionId
       ? studioUrl({ form: resource.formId, work: resource.versionId })
       : resource
-        ? studioUrl({ page: 'draft', draft: resource.id, conversation: session?.id })
+        ? studioUrl({
+            page: 'draft',
+            draft: resource.id,
+            conversation: session?.id,
+            from: presentation === 'page' ? 'agent' : undefined,
+          })
         : undefined;
-  const backLabel = !isDraftPage ? '返回对话' : '返回表单列表';
+  const openDraftPage: MouseEventHandler<HTMLAnchorElement> | undefined =
+    resource && !resource.formId
+      ? (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          if (draftId !== resource.id) onOpenDraft(resource.id, session?.id);
+        }
+      : undefined;
+  const backLabel = !isDraftPage || draftOpenedFromAgent ? '返回对话' : '返回表单列表';
+  const draftTitle = draft.name || '表单草稿';
   const nameLocked = !editingActive || !!busy;
+  if (nameLocked && editingNameOf) setEditingNameOf(undefined);
   const occupiedByOther = !!editingStatus?.holder && !editingActive;
+  const editingLabel = !editingStatus?.holder
+    ? undefined
+    : editingActive
+      ? '你正在编辑这份草稿。'
+      : editingStatus.holder === 'agent'
+        ? 'Agent 正在修改此草稿。'
+        : '这份草稿正在另一个窗口编辑。';
   const editingNotice =
     editingStatus?.blocked === 'human'
       ? '有一次人工编辑请求因草稿正在被占用而未开始。'
@@ -775,141 +815,142 @@ export function AgentCreation({
       data-presentation={presentation}
     >
       {!isDock && (
-        <header className="toolbar page-title">
-          <div>
-            {(isDraftPage || draftId) && (
-              <IconButton
-                icon="ChevronLeft"
-                aria-label={backLabel}
-                title={backLabel}
-                disabled={(!!busy && !!resource) || pending}
-                onClick={leave}
-              />
-            )}
-            <h1
-              className={!showDraftEditor ? 'agent-page-title' : undefined}
-              aria-label={showDraftEditor ? draft.name || '表单草稿' : undefined}
-            >
-              {showDraftEditor && resource && !archived ? (
-                editingNameOf === resource.id ? (
-                  <Input
-                    aria-label="表单名称"
-                    maxLength={120}
-                    autoFocus
-                    onFocus={(event) => event.currentTarget.select()}
-                    value={draft.name}
-                    disabled={nameLocked}
-                    onChange={(event) => {
-                      const name = event.currentTarget.value;
-                      setDraft((current) => ({ ...current, name }));
-                    }}
-                    onBlur={() => setEditingNameOf(undefined)}
-                    onKeyDown={(event) => {
-                      if (event.nativeEvent.isComposing || !['Enter', 'Escape'].includes(event.key))
-                        return;
-                      event.preventDefault();
-                      if (event.key === 'Escape')
-                        setDraft((current) => ({ ...current, name: originalName.current }));
-                      setEditingNameOf(undefined);
-                      requestAnimationFrame(() => titleButton.current?.focus());
-                    }}
-                  />
-                ) : (
-                  <Button
-                    ref={titleButton}
-                    variant="text"
-                    className="draft-name-trigger"
-                    aria-label="编辑表单名称"
-                    title={draft.name || '表单草稿'}
-                    disabled={nameLocked}
-                    onClick={() => {
-                      originalName.current = draft.name;
-                      setEditingNameOf(resource.id);
-                    }}
-                  >
-                    {draft.name || '表单草稿'}
-                  </Button>
-                )
-              ) : showDraftEditor ? (
-                draft.name || '表单草稿'
-              ) : session ? (
-                <ConversationTitle title={savedTitle || '新对话'} onRename={renameSession} />
+        <PageHeading
+          title={
+            showDraftEditor && resource && !archived && !nameLocked ? (
+              editingNameOf === resource.id ? (
+                <Input
+                  aria-label="表单名称"
+                  maxLength={120}
+                  autoFocus
+                  onFocus={(event) => event.currentTarget.select()}
+                  value={draft.name}
+                  onChange={(event) => {
+                    const name = event.currentTarget.value;
+                    setDraft((current) => ({ ...current, name }));
+                  }}
+                  onBlur={() => setEditingNameOf(undefined)}
+                  onKeyDown={(event) => {
+                    if (event.nativeEvent.isComposing || !['Enter', 'Escape'].includes(event.key))
+                      return;
+                    event.preventDefault();
+                    if (event.key === 'Escape')
+                      setDraft((current) => ({ ...current, name: originalName.current }));
+                    setEditingNameOf(undefined);
+                    requestAnimationFrame(() => titleButton.current?.focus());
+                  }}
+                />
               ) : (
-                savedTitle || '新对话'
-              )}
-            </h1>
-            <small>
-              {archived
-                ? '已保存'
-                : showDraftEditor
-                  ? hasDraftIssues
+                <Button
+                  ref={titleButton}
+                  variant="text"
+                  className="draft-name-trigger"
+                  aria-label="编辑表单名称"
+                  title={draftTitle}
+                  onClick={() => {
+                    originalName.current = draft.name;
+                    setEditingNameOf(resource.id);
+                  }}
+                >
+                  {draftTitle}
+                </Button>
+              )
+            ) : showDraftEditor ? (
+              draftTitle
+            ) : session ? (
+              <ConversationTitle title={savedTitle || '新对话'} onRename={renameSession} />
+            ) : (
+              savedTitle || '新对话'
+            )
+          }
+          className={!showDraftEditor ? 'agent-chat-heading' : undefined}
+          headingClassName={!showDraftEditor ? 'agent-page-title' : undefined}
+          headingLabel={showDraftEditor ? draftTitle : undefined}
+          headingTooltip={showDraftEditor && (nameLocked || archived) ? draftTitle : undefined}
+          back={
+            isDraftPage || draftId
+              ? { label: backLabel, disabled: (!!busy && !!resource) || pending, onClick: leave }
+              : undefined
+          }
+          description={
+            showDraftEditor && (
+              <small>
+                {archived
+                  ? '已保存'
+                  : hasDraftIssues
                     ? '部分草稿 · 待处理'
-                    : '已生成草稿 · 待试填保存'
-                  : '对话'}
-            </small>
-          </div>
-          <div className="action-row">
-            {showDraftEditor && (
-              <>
-                {!archived && (
-                  <>
-                    <label>
-                      版本名称{' '}
-                      <Input
-                        value={draft.versionName}
-                        maxLength={80}
-                        disabled={nameLocked}
-                        onChange={(e) => setDraft((d) => ({ ...d, versionName: e.target.value }))}
-                      />
-                    </label>
-                  </>
-                )}
+                    : '已生成草稿 · 待试填保存'}
+              </small>
+            )
+          }
+        >
+          {showDraftEditor && (
+            <>
+              {!archived && (
+                <>
+                  <label>
+                    版本名称{' '}
+                    <Input
+                      value={draft.versionName}
+                      maxLength={80}
+                      disabled={nameLocked}
+                      onChange={(e) => setDraft((d) => ({ ...d, versionName: e.target.value }))}
+                    />
+                  </label>
+                </>
+              )}
 
-                {!archived &&
-                  (editingActive ? (
-                    <>
-                      <Button
-                        variant="secondary"
-                        disabled={!!busy || pending}
-                        onClick={() => finishEditing()}
-                      >
-                        完成编辑
-                      </Button>
-                      <Button
-                        variant="text"
-                        disabled={!!busy || pending}
-                        onClick={() => setDiscardEditing(true)}
-                      >
-                        放弃编辑
-                      </Button>
-                    </>
-                  ) : (
-                    <Button variant="secondary" disabled={!!busy} onClick={startEditing}>
-                      开始编辑
+              {!archived &&
+                (editingActive ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      disabled={!!busy || pending}
+                      onClick={() => finishEditing()}
+                    >
+                      完成编辑
                     </Button>
-                  ))}
-                <Button
-                  variant="secondary"
-                  disabled={!!busy || pending || !!archived}
-                  onClick={inspect}
-                >
-                  检查配置
-                </Button>
-                <Button variant="secondary" disabled={!canPreview} onClick={prepare}>
-                  预览试填
-                </Button>
-                <Button
-                  disabled={
-                    !canPreview || occupiedByOther || !confirmed || !isCurrent || !!message.trim()
-                  }
-                  onClick={save}
-                >
-                  保存配置
-                </Button>
-              </>
-            )}
-          </div>
-        </header>
+                    <Button
+                      variant="text"
+                      disabled={!!busy || pending}
+                      onClick={() => setDiscardEditing(true)}
+                    >
+                      放弃编辑
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="secondary" disabled={!!busy} onClick={startEditing}>
+                    开始编辑
+                  </Button>
+                ))}
+              <Button
+                variant="secondary"
+                disabled={!!busy || pending || !!archived}
+                onClick={inspect}
+              >
+                检查配置
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={!canPreview}
+                onClick={(event) => openWorkingIntegration(event.currentTarget)}
+              >
+                接入说明与 JSX
+              </Button>
+              <Button variant="secondary" disabled={!canPreview} onClick={prepare}>
+                预览试填
+              </Button>
+              <Button
+                disabled={
+                  !canPreview || occupiedByOther || !confirmed || !isCurrent || !!message.trim()
+                }
+                onClick={save}
+              >
+                保存配置
+              </Button>
+            </>
+          )}
+        </PageHeading>
       )}
       {editing && !editingActive && pending && (
         <Modal
@@ -945,21 +986,13 @@ export function AgentCreation({
           <p>尚未保存的修改会丢弃，草稿会恢复到最近一次保存的内容。</p>
         </Modal>
       )}
-      {editingStatus?.holder && (
-        <p role="status">
-          {editingActive
-            ? '你正在编辑这份草稿。'
-            : editingStatus.holder === 'agent'
-              ? 'Agent 正在修改此草稿。'
-              : '这份草稿正在另一个窗口编辑。'}
-        </p>
-      )}
-      {editingNotice && (
+      {isDraftPage && editingLabel && <p role="status">{editingLabel}</p>}
+      {isDraftPage && editingNotice && (
         <p key={editingStatus?.blockedAt} role="status">
           {editingNotice}
         </p>
       )}
-      {editing && !editingActive && !editingStatus?.holder && (
+      {isDraftPage && editing && !editingActive && !editingStatus?.holder && (
         <p role="status">编辑权已过期。本机修改仍保留，继续前请重新开始编辑。</p>
       )}
       {recovery && resource && (
@@ -990,13 +1023,13 @@ export function AgentCreation({
             <summary>
               本机编辑 · {recovery.name} · {recovery.versionName}
             </summary>
-            <pre>{recovery.text}</pre>
+            <CodeBlock language="json" source={recovery.text} />
           </details>
           <details>
             <summary>
               服务器草稿 · {resource.name} · {resource.versionName}
             </summary>
-            <pre>{resource.text}</pre>
+            <CodeBlock language="json" source={resource.text} />
           </details>
         </Modal>
       )}
@@ -1078,13 +1111,7 @@ export function AgentCreation({
               onPanelPosition?.(p);
             }}
             initialPosition={initialPanelPosition}
-            open={
-              presentation === 'page'
-                ? true
-                : isDock
-                  ? panelOpen
-                  : panelOpen || (presentation !== 'draft' && !showDraftEditor)
-            }
+            open={!floatingPanel || panelOpen}
             floating={floatingPanel}
             jumpToLatest
             onCollapse={() => onPanelOpenChange(false)}
@@ -1175,7 +1202,8 @@ export function AgentCreation({
                                 label: t.result.draftIssues?.length
                                   ? '打开部分草稿'
                                   : '打开关联工作稿',
-                                newTab: true,
+                                newTab: !openDraftPage,
+                                onClick: openDraftPage,
                               },
                             ]
                           : undefined
@@ -1197,6 +1225,20 @@ export function AgentCreation({
                       )}
                     </AgentInteractionCard>
                   </AgentMessage>
+                ) : t.result.kind === 'proposal' && t.result.candidateGuide ? (
+                  <AgentCandidateGuide
+                    guide={t.result.candidateGuide}
+                    pendingApplication={
+                      t.draftId === resource?.id &&
+                      t.result.candidateGuide.candidateDigest === resource?.candidateDigest &&
+                      draft.appliedDigest !== resource?.candidateDigest
+                    }
+                    conversationId={session.id}
+                    turnId={t.turnId}
+                    draftLink={t.draftId === resource?.id ? draftLink : undefined}
+                    onOpenDraft={openDraftPage}
+                    name={t.draftId === resource?.id ? resource?.name : undefined}
+                  />
                 ) : (
                   <AgentMessage text={assistantText(t.result)}>
                     <div data-speaker="assistant">
@@ -1214,7 +1256,8 @@ export function AgentCreation({
                             href: draftLink,
                             label: resource.name || '打开工作稿',
                             detail: resource.formId ? '表单编辑页' : '草稿页',
-                            newTab: true,
+                            newTab: !openDraftPage,
+                            onClick: openDraftPage,
                           },
                         ]}
                       />
@@ -1298,6 +1341,16 @@ export function AgentCreation({
             setReview(false);
           }}
         />
+      )}
+      {workingIntegration && (
+        <Modal
+          title="工作稿接入说明"
+          size="wide"
+          returnFocus={workingIntegration.trigger}
+          onClose={() => setWorkingIntegration(undefined)}
+        >
+          <AgentCandidateGuide name={draft.name} workingPrepared={workingIntegration.prepared} />
+        </Modal>
       )}
       {showPreview && preview && (
         <Modal title="工作稿试填" size="wide" onClose={() => setShowPreview(false)}>

@@ -92,6 +92,7 @@ export default function Studio() {
   const [agentRevision, setAgentRevision] = useState(0);
   const [activeConversationId, setActiveConversationId] = useState<string>();
   const [draftPageId, setDraftPageId] = useState<string>();
+  const [draftOpenedFromAgent, setDraftOpenedFromAgent] = useState(false);
   const [agentPanelPosition, setAgentPanelPosition] = useState<PanelPosition>();
   const [agentDockPosition, setAgentDockPosition] = useState<PanelPosition>();
   const [agentPanelOpen, setAgentPanelOpen] = useState(true);
@@ -273,6 +274,7 @@ export default function Studio() {
     const page = query.get('page');
     const routeDraft = page === 'draft' ? (query.get('draft') ?? undefined) : undefined;
     setDraftPageId(routeDraft);
+    setDraftOpenedFromAgent(!!routeDraft && query.get('from') === 'agent');
     setCatalog(kind === 'materials' || kind === 'functions' ? kind : undefined);
     setSettings(page === 'account');
     setMembers(page === 'members');
@@ -303,9 +305,14 @@ export default function Studio() {
       if (routeDraft !== openedDraft.current) {
         openedDraft.current = routeDraft;
         draftConversation.current = query.get('conversation') ?? undefined;
-        setResumeResource({ kind: 'drafts', id: routeDraft });
+        setResumeResource(
+          draftConversation.current
+            ? { kind: 'conversations', id: draftConversation.current }
+            : { kind: 'drafts', id: routeDraft },
+        );
         setActiveConversationId(draftConversation.current);
-        resetAgentInstance();
+        if (!preserveAgentInstance || draftConversation.current !== activeConversationId)
+          resetAgentInstance();
       } else if (draftConversation.current !== (query.get('conversation') ?? undefined)) {
         resetAgentInstance();
         draftConversation.current = query.get('conversation') ?? undefined;
@@ -979,10 +986,16 @@ export default function Studio() {
     </ListFilterBar>
   );
 
-  function openDraft(id: string) {
+  function openDraft(id: string, conversation?: string) {
     setDraftBoxOpen(false);
-    writeLocation({ page: 'draft', draft: id });
-    void readRoute();
+    if (conversation) setAgentPanelOpen(true);
+    writeLocation({
+      page: 'draft',
+      draft: id,
+      conversation,
+      from: conversation && agentOpen ? 'agent' : undefined,
+    });
+    void readRoute({ preserveAgentInstance: !!conversation });
   }
 
   function openConversation(entry: { id: string }) {
@@ -992,7 +1005,15 @@ export default function Studio() {
     if (draftPageId) {
       if (draftConversation.current !== entry.id) resetAgentInstance();
       draftConversation.current = entry.id;
-      writeLocation({ page: 'draft', draft: draftPageId, conversation: entry.id }, true);
+      writeLocation(
+        {
+          page: 'draft',
+          draft: draftPageId,
+          conversation: entry.id,
+          from: draftOpenedFromAgent ? 'agent' : undefined,
+        },
+        true,
+      );
       return;
     }
     setContinuation(undefined);
@@ -1042,6 +1063,8 @@ export default function Studio() {
         presentation={presentation}
         initialPanelPosition={agentPanelPosition}
         openAgentPage={openAgentPage}
+        onOpenDraft={openDraft}
+        draftOpenedFromAgent={draftOpenedFromAgent}
         initialDockPosition={agentDockPosition}
         panelOpen={agentPanelOpen}
         onPanelPosition={setAgentPanelPosition}
@@ -1059,6 +1082,10 @@ export default function Studio() {
           setAgentRevision((current) => current + 1);
         }}
         close={() => {
+          if (showDraftWorkspace && draftOpenedFromAgent) {
+            openAgentPage();
+            return;
+          }
           if (showDraftWorkspace) {
             openedDraft.current = undefined;
             draftConversation.current = undefined;

@@ -181,13 +181,16 @@ def test_rename_changes_only_the_owned_conversation_title(tmp_path):
     engine = database(tmp_path)
     cid = str(uuid4())
     url = "/internal/v1/conversations/" + cid
-    body = message()
+    body = message(text="请介绍我在工作台上可以创建和维护哪些表单，以及从哪里开始。")
     steps = [
         decision("chat"),
         tool_call("ChatReply", "reply", message="可以讨论。"),
+        decision("chat"),
+        tool_call("ChatReply", "follow-up", message="可以继续完善表单。"),
     ]
     with TestClient(app(engine, steps)) as client:
         original = client.post(url + "/turns", headers=AUTH, json=body).json()
+        assert original["conversation"]["title"] == "表单协作"
         other = {**AUTH, "X-Agent-Space": "other"}
         assert (
             client.patch(url, headers=other, json={"title": "不允许"}).status_code
@@ -202,6 +205,10 @@ def test_rename_changes_only_the_owned_conversation_title(tmp_path):
             **original,
             "conversation": renamed,
         }
+        follow_up = client.post(
+            url + "/turns", headers=AUTH, json=message(revision=1, text="继续讨论")
+        ).json()
+        assert follow_up["conversation"]["title"] == "请假表讨论"
 
 
 def test_import_preserves_private_state_and_durable_delivery(tmp_path):
@@ -502,7 +509,9 @@ def test_partial_reply_checkpoint_reset_and_final_suffix(tmp_path, monkeypatch):
     resume = url + "/turns/" + body["turnId"] + "/resume"
     calls = 0
 
-    async def interrupted_then_recovered(graph, request, trace, recursion_limit):
+    async def interrupted_then_recovered(
+        graph, request, trace, recursion_limit, **_options
+    ):
         nonlocal calls
         calls += 1
         yield {"type": "text_reset"}

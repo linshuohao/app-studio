@@ -114,3 +114,18 @@ def test_understanding_keeps_validation_and_reports_timings(monkeypatch, caplog)
     assert first["outcome"] == "validated"
     assert rejected["fallback_ms"] is not None
     assert rejected["outcome"] == "failed"
+
+
+def test_compose_model_events_include_the_progress_stage():
+    from form_agent.api.events import project_public_event
+
+    assert project_public_event(
+        {"name": "compose.SchemaCases", "event": "on_chain_start"}
+    ) == {
+        "type": "progress",
+        "stage": "schema",
+        "message": "正在生成数据 Schema 的验收用例",
+    }
+    assert project_public_event(
+        {"name": "read_protocol", "event": "on_tool_start"}
+    ) == {"type": "progress", "message": "正在读取配置手册"}

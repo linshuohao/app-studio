@@ -1,8 +1,8 @@
 'use client';
-import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
+import { AttemptHistory, useRunningConversation } from './agent-attempt';
 import { AgentDraftIssues } from './agent-draft-issues';
 import { AgentIssues } from './agent-issues';
-import { AgentInteractionCard, AgentTurnProgress } from './agent-interaction';
+import { AgentInteractionCard } from './agent-interaction';
 import { studioUrl, writeLocation } from './studio-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
@@ -32,13 +32,7 @@ import { AgentMessage, AgentReply } from './agent-reply';
 import { AgentPanel, AgentUserMessage, ConversationTitle } from './agent-panel';
 import { AgentDockButton } from './agent-dock-button';
 import { AgentMerge } from './agent-merge';
-import {
-  type ComposePhase,
-  type UnderstandingItem,
-  failureMessage,
-  platform,
-  PlatformError,
-} from './platform-api';
+import { type TurnEvent, failureMessage, platform, PlatformError } from './platform-api';
 import { installedWebCapabilities } from './web-capabilities';
 import { PreviewRuntime } from './preview-runtime';
 import './agent-creation.css';
@@ -208,7 +202,6 @@ export function AgentCreation({
     [showPreview, setShowPreview] = useState(false),
     [ready, setReady] = useState(false),
     [confirmed, setConfirmed] = useState(false);
-  const [replyText, setReplyText] = useState('');
   const [sent, setSent] = useState('');
   const submitting = useRef(false);
   const [sendFailure, setSendFailure] = useState<{
@@ -399,12 +392,11 @@ export function AgentCreation({
   useRunningConversation(session, '', setSession, !sent && !busy);
   function resumeTurn(turnId: string) {
     void perform('正在继续处理', async () => {
-      setPhases([]);
+      setTurnEvents([]);
       setResumingTurn(turnId);
       try {
         const next = await platform<TurnResponse>(path + '/turns/' + turnId + '/resume', {
-          progress: setOperation,
-          phase: recordPhase,
+          onTurnEvent: recordTurnEvent,
         });
         setSession(next.conversation);
         onConversationChange?.(next.conversation);
@@ -523,11 +515,10 @@ export function AgentCreation({
     setConfirmed(false);
     setPreview(undefined);
   }
-  const [items, setItems] = useState<UnderstandingItem[]>([]);
-  const [phases, setPhases] = useState<ComposePhase[]>([]);
+  const [turnEvents, setTurnEvents] = useState<TurnEvent[]>([]);
   const [resumingTurn, setResumingTurn] = useState<string>();
-  function recordPhase(event: ComposePhase) {
-    setPhases((previous) => [...previous, event]);
+  function recordTurnEvent(event: TurnEvent) {
+    setTurnEvents((previous) => [...previous, event]);
   }
   const retry = useRef<{ id: string; input: string } | null>(null);
   function receive() {
@@ -557,10 +548,8 @@ export function AgentCreation({
           ),
         );
     };
-    setReplyText('');
     setSendFailure(undefined);
-    setItems([]);
-    setPhases([]);
+    setTurnEvents([]);
     setSent(input);
     if (fromComposer) setMessage('');
     let accepted = false;
@@ -594,14 +583,7 @@ export function AgentCreation({
         const turnId = retry.current.id;
         if (presentation === 'page') writeLocation({ page: 'agent', conversation: id }, true);
         const next = await platform<TurnResponse>(path + '/turns', {
-          progress: setOperation,
-          phase: recordPhase,
-          text: setReplyText,
-          reset: () => {
-            setItems([]);
-            setOperation('正在重新核对需求');
-          },
-          item: (value) => setItems((previous) => [...previous, value]),
+          onTurnEvent: recordTurnEvent,
           body: { ...payload, turnId },
         });
         if (!next.conversation.turns.some((t) => t.turnId === turnId))
@@ -1257,7 +1239,7 @@ export function AgentCreation({
                         : attempt
                     }
                     disabled={!!busy || pending}
-                    livePhases={resumingTurn === attempt.turnId ? phases : undefined}
+                    liveEvents={resumingTurn === attempt.turnId ? turnEvents : undefined}
                     resume={() => resumeTurn(attempt.turnId)}
                   />
                 );
@@ -1271,7 +1253,12 @@ export function AgentCreation({
                 对比并应用
               </Button>
             )}
-            {sent && <AgentUserMessage text={sent} />}
+            {sent && (
+              <AttemptHistory
+                attempt={{ message: sent, status: 'running', resumable: false, events: turnEvents }}
+                disabled
+              />
+            )}
             {sendFailure && !unfinished.length && (
               <AgentInteractionCard title="本轮发送失败">
                 <Feedback kind="error">{sendFailure.description}</Feedback>
@@ -1294,12 +1281,7 @@ export function AgentCreation({
                 )}
               </AgentInteractionCard>
             )}
-            <AgentTurnProgress
-              label={busy}
-              text={sent ? replyText : ''}
-              items={sent ? items : []}
-            />
-            {!!sent && <ComposeProgress events={phases} />}
+            {!sent && !resumingTurn && busy && <p role="status">{busy}…</p>}
           </AgentPanel>
         </div>
       )}

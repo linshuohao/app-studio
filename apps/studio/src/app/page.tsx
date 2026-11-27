@@ -1187,6 +1187,7 @@ export default function Studio() {
         }
         data-studio-list-shell={
           formList ||
+          (assetRepairs && !assetRepairs.task && canEdit) ||
           (activePage === 'diagnostics' && !diagnosticRoute?.group && !diagnosticRoute?.event) ||
           undefined
         }

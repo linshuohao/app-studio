@@ -499,3 +499,22 @@ def test_diagnostic_reference_uses_read_only_graph_without_model_or_compiler():
     assert lock["id"] == "travel.personPremium"
     assert lock["artifact"]["digest"] == "sha256:artifact"
     assert not (checks or catalog or model_inputs)
+
+
+def test_repair_summary_includes_syntax_location_and_keeps_unstructured_diagnostics():
+    from form_agent.agent.nodes.repair import diagnostic_summary
+
+    assert (
+        diagnostic_summary(
+            [
+                {
+                    "code": "JSON_SYNTAX",
+                    "message": "缺少逗号",
+                    "location": {"line": 3, "column": 4},
+                },
+                {"sourcePointer": "/data"},
+                {"additional": "详情"},
+            ]
+        )
+        == 'JSON_SYNTAX 缺少逗号 （第 3 行，第 4 列）；/data；{"additional": "详情"}'
+    )

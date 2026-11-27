@@ -736,8 +736,6 @@ def test_view_deferral_without_pointer_requires_unavailable_host(
 
     async def ask(model, output, instructions, payload):
         attempts.append(payload.get("diagnostics", []))
-        if len(attempts) == 1 and not request_available:
-            return output(blocker="渠道核保未接入。")
         return output(
             fragment_text='{"views":{"default":{"material":"section"}}}',
             deferred={"R53": "实际渠道尚未接入。"},
@@ -756,8 +754,7 @@ def test_view_deferral_without_pointer_requires_unavailable_host(
         assert gap is not None
         assert "Unmapped deferrals: R53." in attempts[-1]
     else:
-        assert len(attempts) == 2
-        assert "locally executable fragment" in attempts[-1][-1]
+        assert len(attempts) == 1
         assert deferred == {"R53": "实际渠道尚未接入。"}
         assert gap is None
 

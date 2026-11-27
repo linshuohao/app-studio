@@ -776,7 +776,6 @@ async def generate_fragment(
     notes = {}
     if previous:
         notes = {"previous_fragment": previous[0], "diagnostics": previous[1]}
-    previous_blocker = None
     for attempt in range(1, 4):
         if attempt > 1:
             await emit_compose_phase(
@@ -906,19 +905,7 @@ async def generate_fragment(
                     "成员删除入口需要由视图配置：" + "、".join(view_transfers),
                 )
         if result.blocker:
-            if result.blocker == previous_blocker or attempt == 3:
-                return {}, {}, {}, result.blocker
-            previous_blocker = result.blocker
-            notes = {
-                "previous_fragment": result.fragment_text,
-                "diagnostics": [
-                    result.blocker,
-                    "Recheck whether this is only production Host integration. "
-                    "If so, return the locally executable fragment with real coverage "
-                    "and explicitly defer the production behavior.",
-                ],
-            }
-            continue
+            return {}, {}, {}, result.blocker
         fragment = object_from(result.fragment_text)
         coverage = result.coverage
         if module == "view":

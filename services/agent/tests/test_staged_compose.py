@@ -736,6 +736,8 @@ def test_view_deferral_without_pointer_requires_unavailable_host(
 
     async def ask(model, output, instructions, payload):
         attempts.append(payload.get("diagnostics", []))
+        if len(attempts) == 1 and not request_available:
+            return output(blocker="渠道核保未接入。")
         return output(
             fragment_text='{"views":{"default":{"material":"section"}}}',
             deferred={"R53": "实际渠道尚未接入。"},
@@ -754,9 +756,41 @@ def test_view_deferral_without_pointer_requires_unavailable_host(
         assert gap is not None
         assert "Unmapped deferrals: R53." in attempts[-1]
     else:
-        assert len(attempts) == 1
+        assert len(attempts) == 2
+        assert "locally executable fragment" in attempts[-1][-1]
         assert deferred == {"R53": "实际渠道尚未接入。"}
         assert gap is None
+
+
+def test_host_deferral_cannot_replace_local_member_id_validation(monkeypatch):
+    from form_agent.agent.nodes.compose import staged
+    from form_agent.business.form_authoring.contracts import BindingEvidence
+    from form_agent.business.form_authoring.requirements import StandardRequirements
+
+    facts = standard_requirements()
+    facts["requirements"].append(
+        {
+            "id": "R12",
+            "kind": "validation",
+            "subject": "同行人标识",
+            "behavior": "检查已有同行人标识是否重复",
+            "sources": [{"source_id": "document", "quote": "同行人标识不得重复"}],
+        }
+    )
+    standard = StandardRequirements.model_validate(facts)
+    evidence = BindingEvidence(
+        target="web", capabilities={}, remaining_validation={"R12": "标识的本地唯一性"}
+    )
+
+    async def ask(model, output, instructions, payload):
+        return output(deferred={"R12": "等 Host 分配标识后再校验。"})
+
+    monkeypatch.setattr(staged, "ask", ask)
+    _, _, deferred, gap = asyncio.run(
+        staged.generate_fragment(None, standard, "validation", {}, evidence, {}, None)
+    )
+    assert deferred == {}
+    assert "Missing local requirement coverage: R12" in gap
 
 
 def test_schema_initializes_only_typed_editable_parents_and_preserves_business_defaults():

@@ -18,10 +18,23 @@ from form_agent.business.form_authoring.requirements import (
 from form_agent.execution.model_calls import stream, structured
 from form_agent.integrations.models import text_model
 
+COMPACT_OUTPUT = (
+    "Use compact JSON records and omit fields whose values equal their schema defaults. "
+    "Keep every independently enforceable field, behavior, threshold, exception, and "
+    "source. For each field, use a short behavior label and put its specific meaning "
+    "in the required field.description without repeating the label or separate rules. "
+    "If a separate sourced rule already states a validation, use its rule_id on the "
+    "field and do not restate the rule in field.validation. Keep field-local rules that "
+    "have no separate rule. Use the smallest exact source excerpt(s) that support "
+    "the whole record, including its conditions and exceptions. Keep additional excerpts "
+    "when one alone is insufficient. Do not repeat previously emitted facts in finish."
+)
 
-async def read_document(model, messages, sources, *, task_intent=False):
+
+async def read_document(model, messages, sources, *, task_intent=False, compact=False):
     started = monotonic()
     timing = {
+        "profile": "compact" if compact else "baseline",
         "first_requirement_ms": None,
         "last_requirement_ms": None,
         "finish_record_ms": None,
@@ -55,6 +68,7 @@ async def read_document(model, messages, sources, *, task_intent=False):
                     model,
                     messages,
                     sources,
+                    compact=compact,
                     timing=timing,
                     started=started,
                 )
@@ -86,6 +100,7 @@ async def stream_document(
     messages,
     sources,
     *,
+    compact=False,
     timing=None,
     started: float | None = None,
 ):
@@ -97,6 +112,8 @@ async def stream_document(
         "and issues; they are assembled from prior lines. Use Chinese. Follow this schema: "
         + json.dumps(DocumentUnderstanding.model_json_schema(), ensure_ascii=False)
     )
+    if compact:
+        instruction += "\n" + COMPACT_OUTPUT
 
     messages = [*messages, HumanMessage(content=instruction)]
 

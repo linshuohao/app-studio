@@ -139,7 +139,8 @@ def test_public_answer_survives_mid_stream_provider_failure(tmp_path, monkeypatc
         assert attempt["status"] == "interrupted" and attempt["resumable"]
         assert attempt["interruptionReason"] == failure["reason"]
         interrupted_ms = attempt["elapsedMs"]
-        assert {"type": "text_delta", "delta": "已经发送的半句"} in attempt["events"]
+        before_restart = attempt["events"]
+        assert {"type": "text_delta", "delta": "已经发送的半句"} in before_restart
     with TestClient(app(engine, [])) as client:
         res = client.post(url + "/turns/" + body["turnId"] + "/resume", headers=AUTH)
         assert res.status_code == 200, res.text
@@ -148,8 +149,16 @@ def test_public_answer_survives_mid_stream_provider_failure(tmp_path, monkeypatc
         assert "interruptionReason" not in saved["attempts"][0]
         assert saved["attempts"][0]["elapsedMs"] >= interrupted_ms
         assert "interruptionTraceId" not in saved["attempts"][0]
+        events = saved["attempts"][0]["events"]
+        assert events[: len(before_restart)] == before_restart
+        resumed_text_events = [
+            event["type"]
+            for event in events[len(before_restart) :]
+            if event["type"] in {"text_reset", "text_delta"}
+        ]
+        assert resumed_text_events[0] == "text_reset"
         projected = ""
-        for event in saved["attempts"][0]["events"]:
+        for event in events:
             if event["type"] == "text_reset":
                 projected = ""
             elif event["type"] == "text_delta":

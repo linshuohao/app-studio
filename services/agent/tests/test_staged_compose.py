@@ -787,7 +787,7 @@ def test_host_deferral_cannot_replace_local_member_id_validation(monkeypatch):
         staged.generate_fragment(None, standard, "validation", {}, evidence, {}, None)
     )
     assert deferred == {}
-    assert "Missing local requirement coverage: R12" in gap
+    assert gap is not None and "Missing local requirement coverage: R12" in gap
 
 
 def test_schema_initializes_only_typed_editable_parents_and_preserves_business_defaults():

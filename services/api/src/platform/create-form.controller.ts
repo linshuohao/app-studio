@@ -9,20 +9,12 @@ import {
   HttpCode,
   Post,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { catalogDocumentation } from './catalog-documentation.js';
 import { isUtf8ConfigText, maxConfigTextBytes } from './forms.js';
 import { ReleaseBuild } from './release-build.js';
-import { checkEnvironment, previewInputs, serviceToken } from './create-form-agent.js';
-
-function requireAgent(token?: string) {
-  const expected = Buffer.from(serviceToken());
-  const actual = Buffer.from(token ?? '');
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
-    throw new UnauthorizedException();
-}
+import { checkEnvironment, previewInputs, requireAgent } from './create-form-agent.js';
 
 @Controller()
 export class CreateFormController {

@@ -41,6 +41,7 @@ from form_agent.business.conversations.model import (
 )
 from form_agent.business.conversations.references import FormReference
 from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
+from form_agent.execution.journal import COMPILER_REPLAY_PREFIX
 from form_agent.integrations.protocol_store import DRIVER, connection_args
 
 metadata = MetaData()
@@ -166,7 +167,13 @@ class TurnJournal:
 
         return await self.write(lookup)
 
-    async def completed_repair_rounds(self) -> int:
+    async def completed_repair_rounds(self, compiler_scope: str = "") -> int:
+        key = journal_entries.c.step_key
+        scope = (
+            key.startswith(compiler_scope)
+            if compiler_scope
+            else ~key.startswith(COMPILER_REPLAY_PREFIX)
+        )
         return await self.write(
             lambda: self.conn.execute(
                 select(func.count())
@@ -175,7 +182,8 @@ class TurnJournal:
                     journal_entries.c.conversation_id == self.cid,
                     journal_entries.c.turn_id == self.tid,
                     journal_entries.c.kind == "result",
-                    journal_entries.c.step_key.endswith(":repair"),
+                    key.endswith(":repair"),
+                    scope,
                 )
             ).scalar_one()
         )
@@ -563,7 +571,12 @@ class ConversationStore:
             await db_step(remove)
 
     def prepare(
-        self, conn: Connection, cid: str, owner: Owner, message: Message
+        self,
+        conn: Connection,
+        cid: str,
+        owner: Owner,
+        message: Message,
+        check_environment: str | None = None,
     ) -> dict[str, Any]:
         tid = str(message.turnId)
         request = message.model_dump(mode="json", exclude_none=True)
@@ -644,7 +657,7 @@ class ConversationStore:
                     raise ConversationConflict("Turn key reused with different input")
                 if record["status"] == "done":
                     return {"replay": self.envelope(conn, row, record["delivery"])}
-                # Retries use the original execution context and input checkpoint.
+                # Resume uses the original user input and pinned draft.
                 message = Message.model_validate(record["request"])
             if (
                 row["form_id"] != message.context.formId
@@ -701,7 +714,23 @@ class ConversationStore:
                 )
             ):
                 raise ConversationConflict("Open the bound draft to request changes")
+            compiler_scope = ""
+            if (
+                check_environment
+                and check_environment != message.context.check_environment
+            ):
+                compiler_scope = (
+                    COMPILER_REPLAY_PREFIX + fingerprint(check_environment) + ":"
+                )
+                message = message.model_copy(
+                    update={
+                        "context": message.context.model_copy(
+                            update={"check_environment": check_environment}
+                        )
+                    }
+                )
             return {
+                "compiler_scope": compiler_scope,
                 "message": message,
                 "facts": facts,
                 "input": facts.graph_input(cid, message, history_for(conn, cid)),

@@ -320,7 +320,11 @@ export class AgentConversationsController {
           const { conversation, delivery } = await conversationRequest<TurnResponse>(
             actor,
             path + '/turns/' + resourceId(turnId) + '/resume',
-            { method: 'POST', stream },
+            {
+              method: 'POST',
+              stream,
+              body: { check_environment: checkEnvironment(this.builds) },
+            },
           );
           await this.reauthorize(cookie, actor);
           const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);

@@ -2,6 +2,7 @@ import httpx
 from langchain_core.runnables.config import ensure_config
 
 from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.execution.errors import CompilerEnvironmentUnavailable
 from form_agent.integrations.compiler import CheckReceipt
 
 
@@ -18,7 +19,21 @@ def platform_tools(base, token, reader):
             trust_env=False,
         ) as client:
             response = await client.post("/internal/agent-tools/" + action, json=body)
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as error:
+                if response.status_code == 503:
+                    try:
+                        failure = response.json()
+                    except ValueError:
+                        failure = None
+                    if (
+                        isinstance(failure, dict)
+                        and failure.get("message")
+                        == "Requested compiler environment unavailable"
+                    ):
+                        raise CompilerEnvironmentUnavailable(action) from error
+                raise
             return response.json()
 
     async def query_capabilities(context, kind, query):

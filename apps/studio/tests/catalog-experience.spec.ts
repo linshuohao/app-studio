@@ -292,7 +292,9 @@ test('working-version authoring formats text on entry and preserves edits on can
   await page.getByLabel('版本名称').fill('配置名称验收');
   await page.getByRole('button', { name: '创建并编辑' }).click();
   await expect(
-    page.getByRole('navigation', { name: '主导航' }).getByRole('button', { name: '表单' }),
+    page
+      .getByRole('navigation', { name: '主导航' })
+      .getByRole('button', { name: '表单', exact: true }),
   ).toHaveAttribute('aria-current', 'page');
   const source = await schemaSource(page);
   await source.fill('{"precise":9007199254740993,"nested":{"enabled":true}}');

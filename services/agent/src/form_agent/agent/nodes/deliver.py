@@ -274,7 +274,13 @@ async def deliver(state: TurnGraphState, *, model: BaseChatModel):
         if digest not in checks.failed_text:
             digest = next(reversed(checks.failed_text))
         receipt = checks.receipts[digest]
-        if isinstance(result, Blocked) and not state["request"].context.get("formId"):
+        if isinstance(result, Blocked) and result.partial_draft is not None:
+            # Composition may already have produced a newer, partially assembled draft.
+            # An older compiler receipt cannot authorize repair against that text.
+            if result.partial_draft.candidate_text != checks.failed_text[digest]:
+                limit_partial_draft(result)
+                return {**updates, "conversation_title": title}
+        elif isinstance(result, Blocked) and not state["request"].context.get("formId"):
             text = checks.failed_text[digest]
             # Only object-shaped definitions can be opened as editable form drafts.
             try:

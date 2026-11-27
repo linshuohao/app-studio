@@ -33,6 +33,8 @@ test('material directory uses the width freed by collapsing the main navigation'
     right: expanded.right,
     width: expanded.width + 112,
   });
+  await page.getByRole('button', { name: '纯函数', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '每页条数' })).toHaveValue('10');
 });
 
 test('filters real catalog categories and renders isolated interactive material previews', async ({
@@ -255,7 +257,6 @@ test('filters real catalog categories and renders isolated interactive material 
     }
   }
   await page.getByRole('button', { name: '纯函数', exact: true }).click();
-  await expect(page.getByRole('combobox', { name: '每页条数' })).toHaveValue('10');
   await page.getByLabel('用途分类').click();
   await page.getByRole('option', { name: '日期', exact: true }).click();
   await page.getByLabel('实现技术').click();

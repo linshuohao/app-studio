@@ -55,6 +55,78 @@ def stable_id(kind: str, conversation: str, key: str) -> str:
     return str(uuid5(NAMESPACE_URL, f"form-agent/{kind}/{conversation}/{key}"))
 
 
+UNMAPPED_DEFERRALS = re.compile(
+    r"Unmapped deferrals: (R[1-9][0-9]*(?:, R[1-9][0-9]*)*)\."
+)
+
+
+def has_unmapped_deferrals(result: dict):
+    return any(
+        UNMAPPED_DEFERRALS.search(issue["message"])
+        for issue in (result.get("draftIssues") or [])
+    )
+
+
+def explain_draft_issues(result: dict, trace: dict | None):
+    if not trace or not has_unmapped_deferrals(result):
+        return result
+    requirements = {
+        item["id"]: item
+        for item in (trace.get("standard") or {}).get("requirements", [])
+    }
+    rows = []
+    for issue in result["draftIssues"]:
+        match = UNMAPPED_DEFERRALS.search(issue["message"])
+        if not match:
+            rows.append(issue)
+            continue
+        remaining = (
+            issue["message"][: match.start()] + issue["message"][match.end() :]
+        ).strip()
+        if (
+            remaining
+            and remaining.split("未完整纳入草稿。", 1)[-1]
+            != "片段未通过写入范围或需求映射检查。"
+        ):
+            rows.append({**issue, "message": remaining})
+        for requirement_id in sorted(
+            set(match[1].split(", ")), key=lambda key: int(key[1:])
+        ):
+            requirement = requirements.get(requirement_id)
+            if requirement is None:
+                message = "延期说明没有对应本轮的需求编号。"
+            elif requirement["kind"] == "host":
+                message = (
+                    f"{requirement['subject']}。{requirement['behavior']} "
+                    "本轮未接受该项 Host 待接入声明。"
+                )
+            else:
+                message = (
+                    f"{requirement['subject']}。{requirement['behavior']} "
+                    "该项延期说明缺少对应的本地配置。"
+                )
+            rows.append(
+                {
+                    "sourcePointer": issue["sourcePointer"],
+                    "requirementIds": [requirement_id],
+                    "message": message,
+                }
+            )
+    return {
+        **result,
+        **(
+            {
+                "reason": UNMAPPED_DEFERRALS.sub(
+                    "部分需求的延期说明未通过检查，具体问题见下方。", result["reason"]
+                )
+            }
+            if UNMAPPED_DEFERRALS.search(result.get("reason") or "")
+            else {}
+        ),
+        "draftIssues": rows,
+    }
+
+
 def diagnostic_actions(result: dict, references) -> dict:
     if result.get("kind") != "answer" or not isinstance(references, list):
         return {}
@@ -139,7 +211,7 @@ def public_result(result: dict, references=None) -> dict:
             "candidateDigest": check["candidate_digest"],
             "hostRequirements": check["host_requirements"],
         }
-    return public
+    return explain_draft_issues(public, result.get("requirements_trace"))
 
 
 def make_delivery(
@@ -156,6 +228,13 @@ def make_delivery(
 ):
     partial = result.get("partial_draft")
     check = result.get("check") or {}
+    issues = (
+        explain_draft_issues(
+            {"draftIssues": partial["issues"]}, result.get("requirements_trace")
+        )["draftIssues"]
+        if partial
+        else None
+    )
     text = partial["candidate_text"] if partial else result["candidate_text"]
     return {
         k: v
@@ -171,7 +250,7 @@ def make_delivery(
             "digest": "sha256:" + sha256(text.encode("utf-8")).hexdigest()
             if partial
             else check["candidate_digest"],
-            "draftIssues": partial["issues"] if partial else None,
+            "draftIssues": issues,
             "checkId": check.get("check_id"),
             "checkEnvironment": environment
             if partial

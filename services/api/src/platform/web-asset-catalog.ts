@@ -80,7 +80,7 @@ export class WebAssetCatalog {
   private readonly retainOnly = new Set<string>();
 
   constructor(
-    private readonly installed: Snapshot,
+    readonly installed: Snapshot,
     private readonly retained: readonly Snapshot[],
     policies: readonly SelectionPolicy[] = [],
   ) {

@@ -27,7 +27,15 @@ class TurnModel(ScriptedModel):
             json.loads(str(next(m.content for m in messages if m.type == "human")))
         )
         payload = self._inputs[-1]
-        if "available" in payload:
+        if "first_message" in payload:
+            message = tool_call("ConversationTitle", "title", title="表单协作")
+        elif "host_pending" in payload:
+            message = tool_call(
+                "IntegrationExample",
+                "integration-example",
+                code="validateCandidate(snapshot)",
+            )
+        elif "available" in payload:
             message = tool_call(
                 "CapabilitySelection", "caps", material=["text-input"], pure_function=[]
             )
@@ -440,3 +448,73 @@ def test_repair_stops_after_ten_failed_rounds():
     assert result["kind"] == "blocked"
     assert "本次已完成 10 轮修复" in result["reason"]
     assert checked == [f'{{"value":"bad-{i}"}}' for i in range(11)]
+
+
+def test_diagnostic_reference_uses_read_only_graph_without_model_or_compiler():
+    result, checks, catalog, model_inputs = invoke(
+        [],
+        {
+            "message": "定位并修复这条错误",
+            "references": [
+                {
+                    "kind": "diagnostic",
+                    "diagnosticId": "diagnostic-id",
+                    "formId": "form-id",
+                    "versionId": "original-version",
+                    "releaseId": "original-release",
+                    "name": "试点表单",
+                    "errorCode": "reaction.error",
+                    "phase": "when",
+                    "targetId": "estimate-total",
+                    "evidenceStatus": "captured",
+                    "assetCandidates": [
+                        {
+                            "kind": "function",
+                            "lock": {
+                                "id": "travel.personPremium",
+                                "version": "0.1.0",
+                                "manifestDigest": "sha256:contract",
+                                "artifact": {
+                                    "id": "pure-functions",
+                                    "platform": "web",
+                                    "digest": "sha256:artifact",
+                                },
+                            },
+                        },
+                    ],
+                }
+            ],
+        },
+    )
+    assert result["kind"] == "answer"
+    assert "original-release" in result["message"]
+    assert "original-version" in result["message"]
+    assert "estimate-total" in result["message"]
+    assert "尚未复现" in result["message"]
+    from form_agent.business.conversations.model import public_result
+
+    assert "assetRepair" not in public_result(result)
+    assert result["assetRepair"]["diagnosticId"] == "diagnostic-id"
+    lock = result["assetRepair"]["candidates"][0]["lock"]
+    assert lock["id"] == "travel.personPremium"
+    assert lock["artifact"]["digest"] == "sha256:artifact"
+    assert not (checks or catalog or model_inputs)
+
+
+def test_repair_summary_includes_syntax_location_and_keeps_unstructured_diagnostics():
+    from form_agent.agent.nodes.repair import diagnostic_summary
+
+    assert (
+        diagnostic_summary(
+            [
+                {
+                    "code": "JSON_SYNTAX",
+                    "message": "缺少逗号",
+                    "location": {"line": 3, "column": 4},
+                },
+                {"sourcePointer": "/data"},
+                {"additional": "详情"},
+            ]
+        )
+        == 'JSON_SYNTAX 缺少逗号 （第 3 行，第 4 列）；/data；{"additional": "详情"}'
+    )

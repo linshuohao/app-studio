@@ -84,6 +84,8 @@ try {
     assert.equal(functions.dateAgeInYearsManifest.id, 'date.ageInYears');
     assert.equal(functions.travelPersonPremiumManifest.parameters[0].schema, true);
     assert.equal(functions.dateInclusiveDaysManifest.returns.type.includes('null'), true);
+    const { webAssetCompatibility } = await import('@form-engine/materials-react/web-asset-compatibility');
+    assert.equal(typeof webAssetCompatibility, 'function');
     const materials = await import('@form-engine/materials-react/manifests');
     verifyManifestExports('materials-react', materials, ${JSON.stringify(expected.material)});
     assert.equal(materials.arrayEditorManifest.id, 'array-editor');

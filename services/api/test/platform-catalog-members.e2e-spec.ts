@@ -65,6 +65,7 @@ it('serves installed catalogs and atomically manages members with current author
       const asset = (await get(`/catalog/materials/${row.id}`, 'v').expect(200)).body;
       expect(asset.preview, row.id).toBeDefined();
       expect(asset.preview.prepared.definition.id).toBe('material-gallery');
+      expect(asset.preview.prepared.capabilityLock.materials[row.id].version).toBe(row.version);
     }
     expect((await get('/catalog/functions?q=JavaScript').expect(200)).body.length).toBeGreaterThan(
       10,

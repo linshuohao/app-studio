@@ -98,13 +98,17 @@ export class CatalogController {
     const documentation = Object.hasOwn(catalogDocumentation, entry.manifest.id)
       ? catalogDocumentation[entry.manifest.id]
       : undefined;
+    const preview =
+      kind === 'materials' && this.build.assets.isInstalled(assetKind, entry)
+        ? materialPreview(id)
+        : undefined;
     return {
       ...entry,
       documentation: documentation?.version === entry.manifest.version ? documentation : null,
-      ...(kind === 'materials' &&
-        entry.manifest.version === '0.1.0' && {
-          preview: materialPreview(entry.manifest.id),
-          previewVariants: materialPreviewVariants(entry.manifest.id),
+      ...(preview &&
+        preview.prepared.capabilityLock.materials[id]?.version === entry.manifest.version && {
+          preview,
+          previewVariants: materialPreviewVariants(id),
         }),
     };
   }

@@ -1,13 +1,15 @@
 'use client';
 import type { LayoutAssetContext } from './layout-check';
 import { useEffect, useRef, useState } from 'react';
-import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
+import { Button } from '@form-engine/studio-design-components';
+import { AttemptHistory, useRunningConversation } from './agent-attempt';
 import { AgentIssues } from './agent-issues';
 import { AgentReply, AgentCandidateCard, AgentMessage } from './agent-reply';
+import { AgentCandidateGuide } from './agent-candidate-guide';
 import { renameConversation } from './agent-conversation';
 import { AgentPanel, AgentUserMessage } from './agent-panel';
 import { AgentMerge } from './agent-merge';
-import { platform, failureMessage, PlatformError, type ComposePhase } from './platform-api';
+import { platform, failureMessage, PlatformError, type TurnEvent } from './platform-api';
 import {
   assistantText,
   addReference,
@@ -54,15 +56,13 @@ export function FormAgentSidebar({
   const [message, setMessage] = useState(''),
     [error, setError] = useState(''),
     [proposal, setProposal] = useState<EditorProposal>();
-  const [progress, setProgress] = useState(''),
-    [replyText, setReplyText] = useState(''),
-    [sent, setSent] = useState('');
+  const [sent, setSent] = useState('');
   const [references, setReferences] = useState<MessageReference[]>([]);
   const submitting = useRef(false);
-  const [phases, setPhases] = useState<ComposePhase[]>([]);
+  const [turnEvents, setTurnEvents] = useState<TurnEvent[]>([]);
   const [resumingTurn, setResumingTurn] = useState<string>();
-  function recordPhase(event: ComposePhase) {
-    setPhases((previous) => [...previous, event]);
+  function recordTurnEvent(event: TurnEvent) {
+    setTurnEvents((previous) => [...previous, event]);
   }
   const [review, setReview] = useState(false),
     [loaded, setLoaded] = useState(false);
@@ -143,14 +143,12 @@ export function FormAgentSidebar({
     if (!conversation || locked || disabled) return;
     setLocked(true);
     setError('');
-    setProgress('正在继续处理');
-    setPhases([]);
-    setReplyText('');
+    setTurnEvents([]);
     setResumingTurn(turnId);
     try {
       const next = await platform<TurnResponse>(
         '/agent-conversations/' + conversation.id + '/turns/' + turnId + '/resume',
-        { progress: setProgress, phase: recordPhase },
+        { onTurnEvent: recordTurnEvent },
       );
       setConversation(next.conversation);
       if (next.editorProposal) setProposal(next.editorProposal);
@@ -185,16 +183,12 @@ export function FormAgentSidebar({
       retry.current = { id: crypto.randomUUID(), fingerprint };
     setSent(content);
     setMessage('');
-    setProgress('正在处理消息');
-    setPhases([]);
-    setReplyText('');
+    setTurnEvents([]);
     setError('');
     setLocked(true);
     try {
       const result = await platform<TurnResponse>('/agent-conversations/' + id + '/turns', {
-        text: setReplyText,
-        progress: setProgress,
-        phase: recordPhase,
+        onTurnEvent: recordTurnEvent,
         body: { ...payload, turnId: retry.current.id },
       });
       setConversation(result.conversation);
@@ -249,6 +243,7 @@ export function FormAgentSidebar({
         }
         initialPosition={initialChat?.position}
         open={open}
+        jumpToLatest
         onCollapse={onCollapse}
         onPosition={(p) => {
           position.current = p;
@@ -275,18 +270,61 @@ export function FormAgentSidebar({
               .map((a) => (
                 <AttemptHistory key={a.turnId} attempt={a} disabled />
               ))}
-            <AgentMessage text={assistantText(t.result)}>
-              <div data-speaker="assistant">
-                <b>表单助手</b>
-                <AgentReply text={assistantText(t.result)} />
-                {t.result.issues && t.result.verification && (
-                  <AgentIssues issues={t.result.issues} verification={t.result.verification} />
+            {t.result.kind === 'proposal' && t.result.candidateGuide ? (
+              <AgentCandidateGuide
+                guide={t.result.candidateGuide}
+                conversationId={conversation.id}
+                turnId={t.turnId}
+              >
+                {proposal?.turnId === t.turnId && (
+                  <div className="agent-candidate-actions">
+                    <Button
+                      variant="secondary"
+                      disabled={disabled || locked}
+                      onClick={() => setReview(true)}
+                    >
+                      对比并应用候选
+                    </Button>
+                    <Button variant="text" disabled={disabled || locked} onClick={clearProposal}>
+                      放弃候选
+                    </Button>
+                  </div>
                 )}
+              </AgentCandidateGuide>
+            ) : (
+              <AgentMessage text={assistantText(t.result)}>
+                <div data-speaker="assistant">
+                  <b>表单助手</b>
+                  <AgentReply text={assistantText(t.result)} />
+                  {t.result.issues && t.result.verification && (
+                    <AgentIssues issues={t.result.issues} verification={t.result.verification} />
+                  )}
+                </div>
                 {t.result.kind === 'proposal' && (
-                  <AgentCandidateCard>已生成候选</AgentCandidateCard>
+                  <AgentCandidateCard>
+                    <strong>表单候选配置</strong>
+                    {proposal?.turnId === t.turnId && (
+                      <div className="agent-candidate-actions">
+                        <Button
+                          variant="secondary"
+                          disabled={disabled || locked}
+                          onClick={() => setReview(true)}
+                        >
+                          对比并应用候选
+                        </Button>
+                        <Button
+                          variant="text"
+                          disabled={disabled || locked}
+                          onClick={clearProposal}
+                        >
+                          放弃候选
+                        </Button>
+                      </div>
+                    )}
+                  </AgentCandidateCard>
                 )}
-              </div>
-            </AgentMessage>
+              </AgentMessage>
+            )}
           </section>
         ))}
         {!sent &&
@@ -295,32 +333,17 @@ export function FormAgentSidebar({
               key={attempt.turnId}
               attempt={attempt}
               disabled={locked || disabled}
-              livePhases={resumingTurn === attempt.turnId ? phases : undefined}
+              liveEvents={resumingTurn === attempt.turnId ? turnEvents : undefined}
               resume={() => void resumeTurn(attempt.turnId)}
             />
           ))}
-        {sent && <AgentUserMessage text={sent} />}
-        {locked && <p role="status">{progress}</p>}
-        {!!sent && <ComposeProgress events={phases} />}
-        {locked && replyText && (
-          <AgentMessage text={replyText}>
-            <section data-speaker="assistant">
-              <b>表单助手</b>
-              <AgentReply text={replyText} streaming />
-            </section>
-          </AgentMessage>
+        {sent && (
+          <AttemptHistory
+            attempt={{ message: sent, status: 'running', resumable: false, events: turnEvents }}
+            disabled
+          />
         )}
         {error && <p role="alert">{error}</p>}
-        {proposal && (
-          <AgentCandidateCard>
-            <button disabled={disabled || locked} onClick={() => setReview(true)}>
-              对比并应用候选
-            </button>{' '}
-            <button disabled={disabled || locked} onClick={clearProposal}>
-              放弃候选
-            </button>
-          </AgentCandidateCard>
-        )}
         {needsPreview && <p>请在配置预览中试填并确认，再保存。</p>}
       </AgentPanel>
       {review && proposal && (

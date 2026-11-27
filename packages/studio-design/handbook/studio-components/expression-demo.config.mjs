@@ -5,6 +5,9 @@ export default {
   ...base,
   resolve: {
     alias: {
+      '@studio-retained/web-capabilities': local(
+        '../../../../apps/studio/src/app/web-retained-capabilities.ts',
+      ),
       '@form-engine/runtime/devtools': local('../../../runtime/dist/devtools/index.js'),
       ...base.resolve.alias,
       ...Object.fromEntries(

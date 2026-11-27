@@ -2,13 +2,20 @@ import httpx
 from langchain_core.runnables.config import ensure_config
 
 from form_agent.agent.tools.dependencies import AgentToolDependencies
+from form_agent.execution.errors import CompilerEnvironmentUnavailable
 from form_agent.integrations.compiler import CheckReceipt
+from form_agent.integrations.diagnostic_replay import (
+    BlockedReplay,
+    Reproduced,
+    VerifiedConditionRepair,
+    replay_outcome,
+)
 
 
 def platform_tools(base, token, reader):
-    async def post(action, body):
+    async def post(action, body, actor_headers=None):
         trace = (ensure_config().get("metadata") or {}).get("creation_trace_id")
-        headers = {"X-Agent-Service-Token": token}
+        headers = {"X-Agent-Service-Token": token, **(actor_headers or {})}
         if trace:
             headers["X-Trace-Id"] = trace
         async with httpx.AsyncClient(
@@ -18,7 +25,21 @@ def platform_tools(base, token, reader):
             trust_env=False,
         ) as client:
             response = await client.post("/internal/agent-tools/" + action, json=body)
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as error:
+                if response.status_code == 503:
+                    try:
+                        failure = response.json()
+                    except ValueError:
+                        failure = None
+                    if (
+                        isinstance(failure, dict)
+                        and failure.get("message")
+                        == "Requested compiler environment unavailable"
+                    ):
+                        raise CompilerEnvironmentUnavailable(action) from error
+                raise
             return response.json()
 
     async def query_capabilities(context, kind, query):
@@ -66,6 +87,28 @@ def platform_tools(base, token, reader):
             )
         )
 
+    async def replay_diagnostic(reference, user, space):
+        try:
+            receipt = await post(
+                "replay-diagnostic",
+                {
+                    "diagnosticId": reference.diagnosticId,
+                    "releaseId": reference.releaseId,
+                    "proposeRepair": True,
+                },
+                {"X-Agent-User": user, "X-Agent-Space": space},
+            )
+            outcome = replay_outcome.validate_python(receipt)
+            if (
+                isinstance(outcome, Reproduced)
+                and isinstance(outcome.repair, VerifiedConditionRepair)
+                and outcome.repair.versionId != reference.versionId
+            ):
+                return outcome.model_copy(update={"repair": None})
+            return outcome
+        except (httpx.HTTPError, ValueError):
+            return BlockedReplay(status="blocked", reason="executor_unavailable")
+
     return AgentToolDependencies(
-        reader, query_capabilities, check_candidate, check_schema
+        reader, query_capabilities, check_candidate, check_schema, replay_diagnostic
     )

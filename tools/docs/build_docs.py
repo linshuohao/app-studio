@@ -18,7 +18,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.util import ClassNotFound
 
-from reader import render_document, section_heading, set_catalog
+from reader import READING_HOME, render_document, section_heading, set_catalog
 from diagrams import render_diagram
 from knowledge import load_source, sanitize, build_catalog, index_outputs, relocated_sections, ROW_ID
 from audit_architecture import inventory as source_inventory, INVENTORY, check_reading_links
@@ -32,6 +32,7 @@ READING_PLAN = L1 / "README.md"
 PROTOCOL = READING / "l1-definition-protocol.html"
 SOURCES = sorted(L1.glob("[0-9][0-9]-*.md"))
 PAGES = [
+    (DOCS / "design/handbook/README.md", READING_HOME, "ASSEMBLE STUDIO · HANDBOOK"),
     (DOCS / "design/usage-guide.md", READING / "usage-guide.html", "FORM ENGINE · USAGE & DEVELOPMENT GUIDE"),
     (DOCS / "design/architecture.md", READING / "architecture.html", "FORM ENGINE · ARCHITECTURE"),
     (DOCS / "design/engineering.md", READING / "engineering.html", "FORM ENGINE · ENGINEERING"),
@@ -168,7 +169,8 @@ def main() -> None:
     pages[INVENTORY] = json.dumps(inventory, ensure_ascii=False, indent=2) + "\n"
     legacy_links = [entry for entry in catalog["redirects"] if entry["from"].startswith("l1-definition-protocol-v1.html#")]
     pages[READING / "l1-definition-protocol-v1.html"] = GENERATED + '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>L1 协议阅读入口</title></head><body><p>协议已按能力拆分，旧书签将跳转到对应主题。</p><a href="l1-definition-protocol.html">L1 协议设计</a>' + ''.join('<span id="' + html.escape(item['from'].split('#')[1], quote=True) + '"></span>' for item in legacy_links) + '<script>const routes=' + json.dumps({item['from'].split('#')[1]: item['url'] for item in legacy_links}, ensure_ascii=False) + ';location.replace(routes[decodeURIComponent(location.hash.slice(1))] || "l1-definition-protocol.html");</script></body></html>\n'
-    pages[READING / "index.html"] = GENERATED + '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=architecture.html"><title>整体架构 · 动态表单引擎</title></head><body><a href="architecture.html">阅读整体架构</a></body></html>\n'
+    home = READING_HOME.relative_to(READING).as_posix()
+    pages[READING / "index.html"] = GENERATED + f'<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url={home}"><title>Assemble Studio 项目手册</title></head><body><a href="{home}">阅读项目手册</a></body></html>\n'
     stale = []
     for path, content in pages.items():
         if args.check:

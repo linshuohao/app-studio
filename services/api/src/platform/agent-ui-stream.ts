@@ -42,7 +42,10 @@ export function sendAgentStream<T>(
               writer.write({ type: 'data-text-reset', data: true });
             },
             traceId,
-            progress: (message) => writer.write({ type: 'data-progress', data: message }),
+            progress: (message, stage) => {
+              if (stage) writer.write({ type: 'data-stage-progress', data: { message, stage } });
+              else writer.write({ type: 'data-progress', data: message });
+            },
             phase: (value) => writer.write({ type: 'data-compose-phase', data: value }),
             reset: () => writer.write({ type: 'data-reset', data: true }),
             item: (item) => writer.write({ type: 'data-item', data: item }),

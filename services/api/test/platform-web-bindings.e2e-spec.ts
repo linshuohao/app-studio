@@ -159,72 +159,77 @@ it('keeps asset choices with immutable revisions and requires explicit binding f
   }
 });
 
-it('upgrades an existing 0008 schema without rewriting older imported publications', async () => {
-  const options = {
-    databaseUrl: process.env.PLATFORM_DATABASE_URL!,
-    dir: fileURLToPath(new URL('../migrations/', import.meta.url)),
-    migrationsTable: 'platform_schema_migrations',
-    count: 1,
-    log: () => {},
-  };
-  // Vitest gives this case a new disposable database. Roll back only the feature
-  // migration before inserting rows in precisely the pre-upgrade schema.
-  await runner({ ...options, direction: 'down' });
-  const database = new PlatformDatabase();
-  const db = database.executor;
-  try {
-    const migrations = await db.many<{ name: string }>(
-      'SELECT name FROM platform_schema_migrations ORDER BY id',
-    );
-    expect(migrations).toHaveLength(9);
-    expect(migrations.at(-1)?.name).toBe('1780000000008-draft-editing');
-    await db.execute('INSERT INTO platform_spaces VALUES ($1)', [defaultSpaceId]);
-    await db.execute("INSERT INTO platform_users VALUES ('legacy-user', 1)");
-    await db.execute(
-      "INSERT INTO platform_members VALUES ('legacy-member', 'legacy-user', $1, 1)",
-      [defaultSpaceId],
-    );
-    await db.execute(
-      `INSERT INTO platform_forms(form_id, space_id, name, created_by, created_at)
+it.each([
+  [3, '1780000000008-draft-editing'],
+  [1, '1780000000010-asset-repair-tasks'],
+] as const)(
+  'upgrades from %i migrations back (%s) without rewriting imported publications',
+  async (count, last) => {
+    const options = {
+      databaseUrl: process.env.PLATFORM_DATABASE_URL!,
+      dir: fileURLToPath(new URL('../migrations/', import.meta.url)),
+      migrationsTable: 'platform_schema_migrations',
+      count,
+      log: () => {},
+    };
+    // Recreate the requested pre-upgrade schema in this disposable test database.
+    await runner({ ...options, direction: 'down' });
+    const database = new PlatformDatabase();
+    const db = database.executor;
+    try {
+      const migrations = await db.many<{ name: string }>(
+        'SELECT name FROM platform_schema_migrations ORDER BY id',
+      );
+      expect(migrations).toHaveLength(12 - count);
+      expect(migrations.at(-1)?.name).toBe(last);
+      await db.execute('INSERT INTO platform_spaces VALUES ($1)', [defaultSpaceId]);
+      await db.execute("INSERT INTO platform_users VALUES ('legacy-user', 1)");
+      await db.execute(
+        "INSERT INTO platform_members VALUES ('legacy-member', 'legacy-user', $1, 1)",
+        [defaultSpaceId],
+      );
+      await db.execute(
+        `INSERT INTO platform_forms(form_id, space_id, name, created_by, created_at)
       VALUES ('legacy-form', $1, '迁移前表单', 'legacy-user', '2026-11-01')`,
-      [defaultSpaceId],
-    );
-    await db.execute(
-      `INSERT INTO platform_versions(version_id, form_id, text, saved_by, saved_at)
+        [defaultSpaceId],
+      );
+      await db.execute(
+        `INSERT INTO platform_versions(version_id, form_id, text, saved_by, saved_at)
       VALUES ('legacy-revision', 'legacy-form', $1, 'legacy-user', '2026-11-01')`,
-      [Buffer.from(text)],
-    );
-    await db.execute(
-      `INSERT INTO platform_release_requests
+        [Buffer.from(text)],
+      );
+      await db.execute(
+        `INSERT INTO platform_release_requests
       (request_id, space_id, user_id, member_id, request_key, fingerprint, form_id, version_id, build_input)
       VALUES ('legacy-request', $1, 'legacy-user', 'legacy-member', 'request', 'fp', 'legacy-form', 'legacy-revision', '{}')`,
-      [defaultSpaceId],
-    );
-    const preparedText = '{"raw": true}';
-    const digest = 'sha256:' + createHash('sha256').update(preparedText).digest('hex');
-    await db.execute(
-      `INSERT INTO platform_releases
+        [defaultSpaceId],
+      );
+      const preparedText = '{"raw": true}';
+      const digest = 'sha256:' + createHash('sha256').update(preparedText).digest('hex');
+      await db.execute(
+        `INSERT INTO platform_releases
       (release_id, request_id, form_id, version_id, target, prepared_text, digest, diagnostics)
       VALUES ('legacy-release', 'legacy-request', 'legacy-form', 'legacy-revision', $1, $2, $3, '[]')`,
-      [JSON.stringify({ platform: 'web', profile: 'default' }), preparedText, digest],
-    );
-    await runner({ ...options, direction: 'up' });
-    await database.onModuleInit();
-    expect(
-      await db.one('SELECT prepared_text, digest FROM platform_releases WHERE release_id=$1', [
-        'legacy-release',
-      ]),
-    ).toEqual({ prepared_text: preparedText, digest });
-    expect(
-      await db.one('SELECT text, web_asset_bindings FROM platform_versions WHERE version_id=$1', [
-        'legacy-revision',
-      ]),
-    ).toEqual({ text: Buffer.from(text), web_asset_bindings: null });
-    expect(await legacyAssetBindingEvidence(db, 'legacy-form', 'legacy-revision')).toEqual({
-      unobserved: 'pending',
-      profiles: [],
-    });
-  } finally {
-    await database.onModuleDestroy();
-  }
-});
+        [JSON.stringify({ platform: 'web', profile: 'default' }), preparedText, digest],
+      );
+      await runner({ ...options, direction: 'up' });
+      await database.onModuleInit();
+      expect(
+        await db.one('SELECT prepared_text, digest FROM platform_releases WHERE release_id=$1', [
+          'legacy-release',
+        ]),
+      ).toEqual({ prepared_text: preparedText, digest });
+      expect(
+        await db.one('SELECT text, web_asset_bindings FROM platform_versions WHERE version_id=$1', [
+          'legacy-revision',
+        ]),
+      ).toEqual({ text: Buffer.from(text), web_asset_bindings: null });
+      expect(await legacyAssetBindingEvidence(db, 'legacy-form', 'legacy-revision')).toEqual({
+        unobserved: 'pending',
+        profiles: [],
+      });
+    } finally {
+      await database.onModuleDestroy();
+    }
+  },
+);

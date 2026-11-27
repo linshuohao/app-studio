@@ -6,4 +6,3 @@ export type * from './validation.js';
 export type * from './view.js';
 export type * from './requirements.js';
 export type * from './form.js';
-export { webAssetCompatibility } from './web-asset-compatibility.js';

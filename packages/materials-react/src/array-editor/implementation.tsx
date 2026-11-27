@@ -21,11 +21,35 @@ type Props = {
 };
 const contract = defineMaterialContract<Props, 'value'>(manifest);
 function ArrayEditor() {
-  const a = useMaterialAdapter(contract),
-    binding = useArrayBinding('value'),
-    p = a.props;
-  const read = a.values.value,
-    values = read.kind === 'value' && Array.isArray(read.value) ? (read.value as Row[]) : [];
+  const { props, values } = useMaterialAdapter(contract);
+  const binding = useArrayBinding('value', { allowUnbound: true });
+  if (!binding.bound)
+    return (
+      <section className="fe-array-editor" aria-label={props.title}>
+        <header>
+          <strong>{props.title}</strong>{' '}
+          <button type="button" disabled>
+            新增成员
+          </button>
+        </header>
+        <p role="alert">请绑定对象数组后再编辑成员。</p>
+      </section>
+    );
+
+  const read = values.value;
+  const rows = read.kind === 'value' && Array.isArray(read.value) ? (read.value as Row[]) : [];
+  return <BoundArrayEditor materialProps={props} values={rows} binding={binding} />;
+}
+
+function BoundArrayEditor({
+  materialProps: p,
+  values,
+  binding,
+}: {
+  materialProps: Readonly<Props>;
+  values: Row[];
+  binding: Extract<ReturnType<typeof useArrayBinding>, { bound: true }>;
+}) {
   const [edit, setEdit] = useState<{ id: string | null; value: Row; base: Row } | null>(null),
     [remove, setRemove] = useState<string | null>(null),
     [error, setError] = useState('');

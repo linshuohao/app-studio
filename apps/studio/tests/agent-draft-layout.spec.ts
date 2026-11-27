@@ -52,7 +52,8 @@ test('draft title edits in place and only the tab content scrolls', async ({ pag
   const title = page.getByRole('button', { name: '编辑表单名称' });
   const input = page.getByRole('textbox', { name: '表单名称', exact: true });
   await expect(input).toHaveCount(0);
-  await expect(title).toBeDisabled();
+  await expect(title).toHaveCount(0);
+  await expect(page.getByRole('heading', { name, exact: true })).toHaveText(name);
   await page.getByRole('button', { name: '开始编辑', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: '你正在编辑这份草稿' })).toBeVisible();
   await title.focus();
@@ -88,8 +89,8 @@ test('draft title edits in place and only the tab content scrolls', async ({ pag
   await expect(back.locator('svg')).toBeVisible();
   await page.getByRole('button', { name: '放弃编辑', exact: true }).click();
   await page.getByRole('button', { name: '确认放弃', exact: true }).click();
-  await expect(title).toHaveText(name);
-  await expect(title).toBeDisabled();
+  await expect(title).toHaveCount(0);
+  await expect(page.getByRole('heading', { name, exact: true })).toHaveText(name);
   expect(holding).toBe(false);
 });
 
@@ -144,7 +145,7 @@ test('floating chat wraps long messages and edits its conversation title indepen
         turns: [
           {
             turnId: 'one',
-            message: long.repeat(10),
+            message: Array.from({ length: 40 }, () => long).join('\n'),
             result: { kind: 'answer', message: 'LongToken'.repeat(100) },
           },
         ],
@@ -164,6 +165,16 @@ test('floating chat wraps long messages and edits its conversation title indepen
   for (const area of [panel, panel.getByRole('log')]) {
     expect(await area.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   }
+  const history = panel.getByRole('log');
+  const latest = panel.getByRole('button', { name: '回到最新消息' });
+  await expect.poll(() => history.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await history.evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await expect(latest).toBeVisible();
+  await latest.press('Enter');
+  await expect(latest).toBeHidden();
+  await expect(history).toBeFocused();
   const before = await panel.boundingBox();
   await title.click();
   const input = panel.getByRole('textbox', { name: '对话标题' });
@@ -203,6 +214,11 @@ test('opens the affected editor when an incomplete rule has no JSON node', async
     data: { schema: { type: 'object' } },
     views: { default: { material: 'section' } },
   });
+  const remaining = {
+    message: 'R26 联动待补齐',
+    sourcePointer: '/reactions',
+    requirementIds: ['R26'],
+  };
   await page.route('**/form-drafts/' + id, (route) =>
     route.fulfill({
       json: {
@@ -214,14 +230,18 @@ test('opens the affected editor when an incomplete rule has no JSON node', async
         appliedDigest: 'initial',
         candidateDigest: 'initial',
         revision: 1,
-        draftIssues: [
-          { message: 'R26 联动待补齐', sourcePointer: '/reactions', requirementIds: ['R26'] },
+        draftIssues: [remaining],
+        appliedDraftIssues: [
+          remaining,
+          { message: 'R27 旧问题', sourcePointer: '/views', requirementIds: ['R27'] },
         ],
       },
     }),
   );
   await page.goto('/?page=draft&draft=' + id);
-  const issue = page.getByRole('button', { name: /R26 联动待补齐/ });
+  const issues = page.getByRole('region', { name: '当前工作稿待处理项' });
+  await expect(issues.getByText('R27 旧问题')).toHaveCount(0);
+  const issue = issues.getByRole('button', { name: '定位问题 R26' });
   await expect(issue).toBeVisible();
   await issue.focus();
   await issue.press('Enter');
@@ -362,7 +382,9 @@ test('finishing draft editing saves the local change before releasing the grant'
   await name.press('Enter');
   await page.getByRole('button', { name: '完成编辑', exact: true }).click();
   await expect(page.getByRole('button', { name: '开始编辑', exact: true })).toBeEnabled();
-  await expect(title).toBeDisabled();
-  await expect(title).toHaveText('修改后的草稿');
+  await expect(title).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '修改后的草稿', exact: true })).toHaveText(
+    '修改后的草稿',
+  );
   expect(writes).toEqual(['save', 'release']);
 });

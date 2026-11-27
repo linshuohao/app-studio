@@ -50,6 +50,8 @@ class ScriptedModel(BaseChatModel):
                 {"SchemaDraft"},
                 {"CapabilitySelection"},
                 {"RepairDecision"},
+                {"SyntaxRepairDecision"},
+                {"IntegrationExample"},
             )
             or names <= allowed
         )
@@ -62,7 +64,13 @@ class ScriptedModel(BaseChatModel):
             json.loads(str(next(m.content for m in messages if m.type == "human")))
         )
         payload = self._inputs[-1]
-        if "available" in payload:
+        if "host_pending" in payload:
+            message = tool_call(
+                "IntegrationExample",
+                "integration-example",
+                code=f"validateCandidate({payload['candidate_text']})",
+            )
+        elif "available" in payload:
             message = tool_call(
                 "CapabilitySelection",
                 "selection",
@@ -225,6 +233,7 @@ def test_framework_calls_tools_and_repairs_after_check():
     assert checked == [original, revised]
     assert response.json()["check"]["check_id"] == "check-2"
     assert response.json()["candidate_text"] == revised
+    assert response.json()["guide"]["exampleCode"] == f"validateCandidate({revised})"
 
 
 def test_stream_includes_nested_tools_before_committed_candidate():
@@ -1035,6 +1044,87 @@ def test_failed_receipt_without_diagnostic_stops_before_repair():
     assert not checks.failed_text and checks.tool_failure is not None
 
 
+def test_repairs_invalid_json_at_compiler_offset_despite_repeated_text():
+    import asyncio
+
+    from form_agent.agent.authoring_state import (
+        ChatReady,
+        CheckEvidence,
+        Composition,
+        FormAuthoringState,
+        Understanding,
+    )
+    from form_agent.agent.nodes.repair import repair
+    from form_agent.agent.tools.candidate_checks import compile_candidate
+    from form_agent.business.form_authoring.contracts import TurnInput
+
+    original = '{"note":"🎯,}","value":1,}'
+    expected = '{"note":"🎯,}","value":1}'
+
+    async def exercise():
+        checks = CheckEvidence()
+        offset = len(original[:-1].encode("utf-16-le")) // 2
+
+        async def compiler(context, text):
+            try:
+                json.loads(text)
+                diagnostics = []
+            except ValueError:
+                diagnostics = [{"code": "JSON_SYNTAX", "location": {"offset": offset}}]
+            return CheckReceipt(
+                check_id="syntax",
+                candidate_digest=candidate_digest(text),
+                success=not diagnostics,
+                diagnostics=diagnostics,
+            )
+
+        await compile_candidate(original, {}, compiler, checks, 1)
+        requirement = "修复配置语法"
+        state: FormAuthoringState = {
+            "composition": Composition(
+                None, checks, failed_digest=candidate_digest(original)
+            ),
+            "understanding": Understanding(
+                decision=ChatReady(kind="ready", requirements=[requirement])
+            ),
+            "request": TurnInput(message=requirement, context={"target": "web"}),
+        }
+        model = ScriptedModel(
+            [
+                tool_call(
+                    "SyntaxRepairDecision",
+                    "choose",
+                    action={
+                        "kind": "syntax_edit",
+                        "delete_before": 1,
+                        "delete_after": 0,
+                        "replacement": "",
+                        "summary": "删除尾随逗号",
+                    },
+                )
+            ]
+        )
+
+        async def unexpected_read(*_args: object) -> JsonValue:
+            raise AssertionError("syntax repair should not query protocol or catalog")
+
+        await repair(
+            state,
+            model=model,
+            tools=AgentToolDependencies(unexpected_read, unexpected_read, compiler),
+            max_checks=4,
+        )
+        assert model._inputs[-1]["syntax_anchor"] == {
+            "before": original[:-1],
+            "after": "}",
+        }
+        assert checks.pending_candidate == expected
+        await compile_candidate(expected, {}, compiler, checks, 2)
+        assert checks.receipts[candidate_digest(expected)].success
+
+    asyncio.run(exercise())
+
+
 @pytest.mark.parametrize("requires_string", [False, True])
 def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
     requires_string,
@@ -1162,7 +1252,9 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
             from typing import cast
 
             from form_agent.agent.nodes.check import check
+            from form_agent.agent.nodes.deliver import deliver_creation
             from form_agent.agent.state import TurnGraphState
+            from form_agent.business.form_authoring.contracts import Proposal
 
             checked_state = cast(
                 TurnGraphState,
@@ -1183,5 +1275,11 @@ def test_city_binding_guide_uses_target_manifest_and_preserves_host_obligation(
             assert isinstance(draft, CheckedDraft) and len(texts) == 2
             assert draft.candidate_digest == candidate_digest(texts[-1])
             assert "生产提交需把城市对象映射成城市 ID" in draft.summary
+            delivery = deliver_creation({**state, "composition": verified_composition})
+            proposal = delivery["result"]
+            assert isinstance(proposal, Proposal) and proposal.guide
+            assert proposal.guide.hostPending[0].details == [
+                "生产提交需把城市对象映射成城市 ID"
+            ]
 
     asyncio.run(exercise())

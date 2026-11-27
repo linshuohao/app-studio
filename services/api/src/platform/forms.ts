@@ -256,6 +256,76 @@ export class PlatformForms {
       return { versionId };
     });
   }
+  async applyDiagnosticRepair(
+    token: string | undefined,
+    key: string | undefined,
+    input: {
+      formId: string;
+      workId: string;
+      expectedHead: string | null;
+      diagnosticId: string;
+      releaseId: string;
+      versionId: string;
+      candidateDigest: string;
+    },
+    verify: () => Promise<{ text: string; originalText: string }>,
+  ) {
+    const authorize = async (db: QueryExecutor) => {
+      const actor = await this.access.authenticate(token, 'form:edit', db);
+      if (!actor.permissions.includes('diagnostic:view')) throw new ForbiddenException();
+      return actor;
+    };
+    const { formId, workId, expectedHead } = input;
+    const request = [input];
+    const operation = 'apply-diagnostic-repair';
+    const id = requestIdentity(key, request);
+    const actor = await authorize(this.storage.executor);
+    await this.findForm(actor.spaceId, formId, this.storage.executor);
+    const saved = await this.readReceipt(actor, operation, id, this.storage.executor);
+    if (saved) return { versionId: saved };
+    // Recompile and replay outside the transaction-wide Platform write lock.
+    const candidate = await verify();
+    return this.storage.transaction(async (db) => {
+      const writer = await authorize(db);
+      const form = await this.findForm(writer.spaceId, formId, db);
+      const versionId = await this.writeOnce(
+        writer,
+        operation,
+        key,
+        request,
+        async () => {
+          if (form.archived) throw new ConflictException('表单已归档。');
+          const work = await this.workRow(formId, workId, db);
+          if (work.published || work.head !== expectedHead)
+            throw new ConflictException('工作版本已更新或发布，请重新选择。');
+          const current = work.head
+            ? (await this.readVersion(writer.spaceId, formId, work.head, db)).text
+            : Buffer.from(
+                (await db.one<{ seed: Buffer }>(
+                  'SELECT seed FROM platform_working_versions WHERE form_id=$1 AND work_id=$2',
+                  [formId, workId],
+                ))!.seed,
+              ).toString('utf8');
+          if (current !== candidate.originalText)
+            throw new ConflictException('工作版本的配置与候选基线不同。');
+          return this.insertVersion(
+            writer,
+            formId,
+            configText(candidate.text),
+            work.head ?? work.source,
+            null,
+            '应用表单错误 ' + input.diagnosticId + ' 的修复候选',
+            null,
+            db,
+            workId,
+          );
+        },
+        db,
+      );
+      return { versionId };
+    });
+  }
+
   private workQuery = `SELECT w.work_id AS id,w.name,w.source_version_id AS source,head.version_id AS head,coalesce(head.saved_at,w.created_at) AS updated,
     EXISTS(SELECT 1 FROM platform_releases r JOIN platform_versions v ON v.version_id=r.version_id WHERE v.work_id=w.work_id) AS published
     FROM platform_working_versions w LEFT JOIN LATERAL (SELECT version_id,saved_at FROM platform_versions WHERE work_id=w.work_id ORDER BY sequence DESC LIMIT 1) head ON true WHERE w.form_id=$1`;
@@ -686,6 +756,25 @@ export class PlatformForms {
     db: QueryExecutor = this.storage.executor,
   ) {
     const request = requestIdentity(key, input);
+    const saved = await this.readReceipt(context, operation, request, db);
+    if (saved) return saved;
+    const identity = [context.spaceId, context.userId, operation, request.key];
+    const result = await write();
+    await db.execute(
+      `
+      INSERT INTO platform_receipts (space_id, user_id, operation, request_key, fingerprint, result_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `,
+      [...identity, request.fingerprint, result],
+    );
+    return result;
+  }
+  private async readReceipt(
+    context: AccessContext,
+    operation: string,
+    request: ReturnType<typeof requestIdentity>,
+    db: QueryExecutor,
+  ) {
     const { fingerprint } = request;
     const identity = [context.spaceId, context.userId, operation, request.key] as const;
     const existing = await db.one(
@@ -700,14 +789,5 @@ export class PlatformForms {
         throw new ConflictException('Request key already used');
       return String(existing.result_id);
     }
-    const result = await write();
-    await db.execute(
-      `
-      INSERT INTO platform_receipts (space_id, user_id, operation, request_key, fingerprint, result_id)
-      VALUES ($1, $2, $3, $4, $5, $6)
-    `,
-      [...identity, fingerprint, result],
-    );
-    return result;
   }
 }

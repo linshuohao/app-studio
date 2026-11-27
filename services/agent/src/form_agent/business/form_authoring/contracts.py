@@ -2,7 +2,10 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, JsonValue, model_validator
 
-from form_agent.business.conversations.references import MessageReference
+from form_agent.business.conversations.references import (
+    DiagnosticAssetCandidate,
+    MessageReference,
+)
 from form_agent.business.form_authoring.requirements import (
     ConfigurationMapping,
     RequirementsDocument,
@@ -92,7 +95,22 @@ class Clarification(CreateFormBusinessResult):
     questions: list[str] = Field(min_length=1)
 
 
+class DiagnosticRepairReview(BaseModel, extra="forbid"):
+    diagnosticId: str
+    formId: str
+    releaseId: str
+    versionId: str
+    candidateDigest: str
+
+
+class AssetRepairReview(BaseModel, extra="forbid"):
+    diagnosticId: str
+    candidates: list[DiagnosticAssetCandidate]
+
+
 class Answer(CreateFormBusinessResult):
+    assetRepair: AssetRepairReview | None = None
+    diagnosticRepair: DiagnosticRepairReview | None = None
     repair_context: RepairContext | None = None
     check: CheckReceipt | None = None
     kind: Literal["answer"]
@@ -172,12 +190,27 @@ class CheckedDraft(BaseModel):
     summary: str
 
 
+class CandidatePendingItem(BaseModel):
+    title: str
+    details: list[str]
+    requirementIds: list[str]
+
+
+class CandidateGuide(BaseModel):
+    title: str | None = None
+    hostPending: list[CandidatePendingItem] = Field(default_factory=list)
+    previewPending: list[CandidatePendingItem] = Field(default_factory=list)
+    exampleCode: str | None = None
+    exampleUnavailable: bool = False
+
+
 class Proposal(CreateFormBusinessResult):
     binding_evidence: BindingEvidence | None = None
     kind: Literal["proposal"]
     candidate_text: str = Field(min_length=1)
     summary: str
     check: CheckReceipt
+    guide: CandidateGuide | None = None
 
 
 CreateFormResult = Annotated[

@@ -31,6 +31,10 @@ class ConversationTitle(BaseModel):
     title: str = Field(min_length=1, max_length=60, pattern=r"^[^\x00\r\n]+$")
 
 
+class ResumeContext(BaseModel, extra="forbid"):
+    check_environment: str | None = Field(default=None, min_length=1)
+
+
 def conversation_router(
     *,
     model,
@@ -77,8 +81,16 @@ def conversation_router(
         formId: str | None = None,
         workId: str | None = None,
         linkedDraftId: str | None = None,
+        includeCheckEnvironment: bool = False,
     ):
-        return await store.get(str(id), owner, formId, workId, linkedDraftId)
+        return await store.get(
+            str(id),
+            owner,
+            formId,
+            workId,
+            linkedDraftId,
+            include_check_environment=includeCheckEnvironment,
+        )
 
     @router.get("/{id}/deliveries/{turn_id}")
     async def delivery(
@@ -107,7 +119,9 @@ def conversation_router(
     ):
         return await run_turn(id, message, owner, accept, trace_id, resume=False)
 
-    async def run_turn(id, message, owner, accept, trace_id, *, resume: bool):
+    async def run_turn(
+        id, message, owner, accept, trace_id, *, resume: bool, check_environment=None
+    ):
         cid, trace = str(id), trace_id or uuid4()
         callbacks = trace_callback_factory(trace) if trace_callback_factory else []
         archive = next(
@@ -130,6 +144,7 @@ def conversation_router(
                         cid,
                         trace,
                         resume=resume,
+                        check_environment=check_environment,
                         timeout_seconds=timeout_seconds,
                         callbacks=callbacks,
                         archive=archive,
@@ -158,7 +173,11 @@ def conversation_router(
                     else 502
                 )
                 logging.getLogger("uvicorn.error").warning(
-                    "Agent turn failed trace=%s type=%s", trace, type(error).__name__
+                    "Agent turn failed trace=%s conversation=%s turn=%s type=%s",
+                    trace,
+                    cid,
+                    message.turnId,
+                    type(error).__name__,
                 )
                 yield {
                     "type": "error",
@@ -190,10 +209,19 @@ def conversation_router(
         id: UUID,
         turn_id: UUID,
         owner: Annotated[Owner, Depends(actor)],
+        context: ResumeContext | None = None,
         accept: Annotated[str, Header()] = "",
         trace_id: Annotated[UUID | None, Header(alias="X-Trace-Id")] = None,
     ):
         message = await store.saved_request(str(id), str(turn_id), owner)
-        return await run_turn(id, message, owner, accept, trace_id, resume=True)
+        return await run_turn(
+            id,
+            message,
+            owner,
+            accept,
+            trace_id,
+            resume=True,
+            check_environment=context.check_environment if context else None,
+        )
 
     return router

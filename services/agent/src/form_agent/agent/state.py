@@ -34,6 +34,8 @@ ActionObservation = Observation
 
 
 class TurnGraphState(FormAuthoringState):
+    generate_conversation_title: NotRequired[bool]
+    conversation_title: NotRequired[str | None]
     action: NotRequired[Action]
     observation: NotRequired[ActionObservation]
     observed: NotRequired[int]

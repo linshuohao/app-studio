@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { FormRenderer } from '@form-engine/renderer-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createDiagnosticUpload, resumeDiagnosticUploads } from './diagnostic-upload';
 import { loadRelease, startRelease, stages, type LoadedRelease } from './load-release';
 
 import { Requirements } from './requirements';
@@ -25,7 +26,13 @@ type Loaded = {
   instance: Instance;
 };
 
-export function ReleaseHost({ initialId }: { initialId: string }) {
+export function ReleaseHost({
+  initialId,
+  diagnosticOwner,
+}: {
+  initialId: string;
+  diagnosticOwner?: string;
+}) {
   const [releaseId, setReleaseId] = useState(initialId);
   const [instances, setInstances] = useState<Loaded[]>([]);
   const [messages, setMessages] = useState<Record<number, string>>({});
@@ -40,79 +47,87 @@ export function ReleaseHost({ initialId }: { initialId: string }) {
   const pending = useRef<AbortController | null>(null);
   const active = useRef(new Map<number, Instance>());
 
-  const load = useCallback(async (id: string, duplicate = false) => {
-    if (!id) return;
-    pending.current?.abort();
-    pending.current = null;
-    setLoading(false);
-    setError('');
-    const existing = loaded.current.find((item) => item.releaseId === id);
-    if (existing && !duplicate) {
-      setTrace({
-        id,
-        stage: stages.length,
-        prepared: existing.prepared,
-        name: existing.name,
-        available: existing.instance.available,
-        instance: existing.instance,
-      });
-      setCurrentId(existing.instanceId);
-      setNotice(`已切换到实例 ${existing.instanceId}，保留当前填写内容。`);
-      history.replaceState(null, '', `/host?releaseId=${encodeURIComponent(id)}`);
-      document
-        .getElementById(`host-instance-${existing.instanceId}`)
-        ?.scrollIntoView({ block: 'start' });
-      return;
-    }
-    setNotice('');
-    const request = new AbortController();
-    pending.current = request;
-    setError('');
-    setLoading(true);
-    let progress: Trace = { id, stage: 0 };
-    function advance(stage: number, extra: Partial<Trace> = {}) {
-      progress = { ...progress, ...extra, stage };
-      if (!request.signal.aborted) setTrace(progress);
-    }
-    advance(0);
-    try {
-      const { prepared, name, capabilities } = await loadRelease(id, request.signal, advance);
-      if (request.signal.aborted) return;
-      advance(3, { prepared, name });
-      const instanceId = ++next.current;
-      const instance = startRelease(
-        prepared,
-        capabilities,
-        (message) => {
-          if (active.current.has(instanceId))
-            setMessages((current) => ({ ...current, [instanceId]: message }));
-        },
-        () => advance(4),
-        (available) => advance(3, { available }),
-      );
-      advance(stages.length, { instance });
-      active.current.set(instanceId, instance);
-      loaded.current = [...loaded.current, { instanceId, releaseId: id, prepared, instance, name }];
-      setInstances(loaded.current);
-      setCurrentId(instanceId);
-      history.replaceState(null, '', `/host?releaseId=${encodeURIComponent(id)}`);
-    } catch (reason) {
-      if (!request.signal.aborted) {
-        const failure = reason instanceof Error ? reason.message : '无法装载发布。';
-        setError(failure);
-        advance(progress.stage, { failure });
+  const load = useCallback(
+    async (id: string, duplicate = false) => {
+      if (!id) return;
+      pending.current?.abort();
+      pending.current = null;
+      setLoading(false);
+      setError('');
+      const existing = loaded.current.find((item) => item.releaseId === id);
+      if (existing && !duplicate) {
+        setTrace({
+          id,
+          stage: stages.length,
+          prepared: existing.prepared,
+          name: existing.name,
+          available: existing.instance.available,
+          instance: existing.instance,
+        });
+        setCurrentId(existing.instanceId);
+        setNotice(`已切换到实例 ${existing.instanceId}，保留当前填写内容。`);
+        history.replaceState(null, '', `/host?releaseId=${encodeURIComponent(id)}`);
+        document
+          .getElementById(`host-instance-${existing.instanceId}`)
+          ?.scrollIntoView({ block: 'start' });
+        return;
       }
-    } finally {
-      if (pending.current === request) {
-        pending.current = null;
-        setLoading(false);
+      setNotice('');
+      const request = new AbortController();
+      pending.current = request;
+      setError('');
+      setLoading(true);
+      let progress: Trace = { id, stage: 0 };
+      function advance(stage: number, extra: Partial<Trace> = {}) {
+        progress = { ...progress, ...extra, stage };
+        if (!request.signal.aborted) setTrace(progress);
       }
-    }
-  }, []);
+      advance(0);
+      try {
+        const { prepared, name, capabilities } = await loadRelease(id, request.signal, advance);
+        if (request.signal.aborted) return;
+        advance(3, { prepared, name });
+        const instanceId = ++next.current;
+        const instance = startRelease(
+          prepared,
+          capabilities,
+          (message) => {
+            if (active.current.has(instanceId))
+              setMessages((current) => ({ ...current, [instanceId]: message }));
+          },
+          () => advance(4),
+          (available) => advance(3, { available }),
+          diagnosticOwner ? createDiagnosticUpload(id, diagnosticOwner) : undefined,
+        );
+        advance(stages.length, { instance });
+        active.current.set(instanceId, instance);
+        loaded.current = [
+          ...loaded.current,
+          { instanceId, releaseId: id, prepared, instance, name },
+        ];
+        setInstances(loaded.current);
+        setCurrentId(instanceId);
+        history.replaceState(null, '', `/host?releaseId=${encodeURIComponent(id)}`);
+      } catch (reason) {
+        if (!request.signal.aborted) {
+          const failure = reason instanceof Error ? reason.message : '无法装载发布。';
+          setError(failure);
+          advance(progress.stage, { failure });
+        }
+      } finally {
+        if (pending.current === request) {
+          pending.current = null;
+          setLoading(false);
+        }
+      }
+    },
+    [diagnosticOwner],
+  );
 
   useEffect(() => {
     const mounted = active.current;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 挂载后按 URL 装载外部 release，load 同时管理加载状态与取消。
+    if (diagnosticOwner) resumeDiagnosticUploads();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 按 URL 装载外部 release，load 同时管理加载状态与取消。
     if (initialId) void load(initialId);
     return () => {
       pending.current?.abort();
@@ -121,7 +136,7 @@ export function ReleaseHost({ initialId }: { initialId: string }) {
       mounted.clear();
       loaded.current = [];
     };
-  }, [initialId, load]);
+  }, [initialId, load, diagnosticOwner]);
 
   return (
     <main className="host-page">

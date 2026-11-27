@@ -139,3 +139,24 @@ node tools/engineering/migrations/split-agent-conversations.mjs
 ```
 
 该命令持有 Agent 会话迁移锁及 Platform 源表事务锁，逐行读回 Agent 数据，逐笔核对草稿和交付标识后切换结构。发生差异会停止；源表仍存在时，解决差异后可重跑。部署前可用 `node tools/engineering/migrations/test-split-agent-conversations.mjs` 在两个临时 PostgreSQL 库演练。离线切分完成后运行 `pnpm --filter @form-engine/api db:migrate` 应用后续迁移。再按运行角色检查草稿读写权限，并核对工作稿、预览及正式版本关联。
+
+## 表单错误上报
+
+部署 API 前运行 `pnpm --filter @form-engine/api db:migrate`，应用
+`1780000000009-form-diagnostics`。数据库迁移角色和 API 角色分离时，API 角色需要访问错误索引、证据和读取审计三张表及审计序列。
+
+受信 Host 在 API 配置 `PLATFORM_DIAGNOSTICS_HOST_ID`、`PLATFORM_DIAGNOSTICS_HOST_FORM_ID` 和
+`PLATFORM_DIAGNOSTICS_HOST_TOKEN` 后，可用 Bearer 凭证向 `POST /api/platform/diagnostics/events` 上报获准表单的发布事件。
+在 Studio 和 API 同时设置 `PLATFORM_DIAGNOSTICS_STUDIO_PILOT=1` 可开启示例 Host 试点。上报要求管理员会话及受信 Origin。Host 首次获取有效会话身份后才暂存现场；试点身份查询最长等待一秒，失败时可继续使用示例。浏览器按上报会话隔离 IndexedDB 队列，在线后重试最多 24 小时。
+
+版本 1 的上报包括事件 ID、Release ID、发生时间、来源、阶段、错误码和证据状态。有可靠定位时须同时提供
+`targetKind` 和 `targetId`，定位必须存在于该发布的配置中。错误列表与单次证据均要求诊断读取权限，
+读取有原始证据的详情会写入访问审计。详见[表单错误采集与定位](../../docs/design/platform-studio.md#platform-diagnostic-mapping)。
+
+### 诊断调查与资产修复
+
+部署此版本前继续应用 `1780000000010-asset-repair-tasks`。数据库角色分离时，确保 API 运行角色可读写资产任务、关联发生记录和操作历史三张表。
+
+开发者可先创建和认领资产修复任务。提交审查前，在 API 进程设置 `PLATFORM_ASSET_REPAIR_REPOSITORY`（`owner/repo`）。认领人登记该仓库的 PR 地址、40 位提交 SHA 和拟发布的资产版本，再由另一位具有表单管理权限的维护者记录审查结果。
+
+为 API 配置可读取该仓库 Pull Requests 的 `PLATFORM_ASSET_REPAIR_GITHUB_TOKEN` 后，审查列表和任务详情会显示 PR 的草稿、开启、关闭或合并状态。缺少令牌或 GitHub 查询失败时，状态显示为不可用。Studio 单独保存人工审查记录，GitHub 合并和资产发布仍由各自的工程流程完成。

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { PlatformDatabase } from '../src/platform/database.js';
 import { checkEnvironment } from '../src/platform/create-form-agent.js';
+import { pinAgentAssetEnvironment } from '../src/platform/agent-asset-environments.js';
 import { ReleaseBuild } from '../src/platform/release-build.js';
 import type { Delivery } from '../src/platform/form-drafts.js';
 import { maxConfigTextBytes } from '../src/platform/forms.js';
@@ -68,6 +69,10 @@ function proposal(candidateText: string, overrides: Partial<Delivery> = {}): Del
     ...overrides,
   };
 }
+function mockHistory(id: string) {
+  upstream.mockResolvedValueOnce(Response.json({ id, turns: [] }));
+}
+
 function mockTurn(id: string, delivery: Delivery) {
   const turns = Array.from({ length: delivery.sourceRevision }, (_, idx) => ({
     turnId: idx === delivery.sourceRevision - 1 ? delivery.turnId : randomUUID(),
@@ -75,6 +80,7 @@ function mockTurn(id: string, delivery: Delivery) {
     result: { kind: 'proposal', summary: '候选就绪' },
     draftId: delivery.draftId,
   }));
+  if (delivery.sourceRevision > 1) mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: { id, title: '会话', revision: turns.length, updatedAt: '2026-11-23', turns },
@@ -92,12 +98,44 @@ function mockTurn(id: string, delivery: Delivery) {
   });
 }
 function fetchDelivery(id: string, delivery: Delivery) {
+  mockHistory(id);
   upstream.mockResolvedValueOnce(Response.json(delivery));
   return setup(
     'post',
     '/agent-conversations/' + id + '/deliveries/' + delivery.turnId + '/receive',
   );
 }
+it('prepares the exact checked delivery for its JSX guide without creating or rewriting a draft', async () => {
+  const id = randomUUID();
+  const original = proposal(config('original-candidate'));
+  const path = `/agent-conversations/${id}/deliveries/${original.turnId}/integration`;
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(original));
+  const guide = await setup('get', path).expect(200);
+  expect(guide.body.candidateDigest).toBe(original.digest);
+  expect(guide.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, candidateText: config('other') }));
+  await setup('get', path).expect(502);
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, checkEnvironment: 'other' }));
+  const regenerated = await setup('get', path).expect(200);
+  expect(regenerated.body.regenerated).toBe(true);
+  expect(regenerated.body.candidateDigest).toBe(original.digest);
+  expect(regenerated.body.prepared.definition.id).toBe('original-candidate');
+  await setup('get', '/form-drafts/' + original.draftId).expect(404);
+
+  const invalid = proposal('{}', { checkEnvironment: 'other' });
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(invalid));
+  const failure = await setup('get', path).expect(409);
+  expect(failure.body.message).toContain('当前编译环境中未通过检查');
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json({ ...original, draftIssues: [] }));
+  await setup('get', path).expect(404);
+});
 it('proxies Agent conversations under authenticated identity and never creates a draft for chat', async () => {
   const id = randomUUID(),
     turnId = randomUUID();
@@ -151,6 +189,7 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
     initial = proposal(config('initial'));
   const first = await mockTurn(id, initial).expect(201);
   const presentId = randomUUID();
+  mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: {
@@ -221,6 +260,10 @@ it('keeps delivered draft editable after deleting the conversation, preserves ma
   const preview = await setup('post', base + '/preview')
     .send(action)
     .expect(201);
+  const inspected = await setup('post', base + '/editor/preview')
+    .send({ text: mergedText })
+    .expect(201);
+  expect(inspected.body.prepared.capabilityLock).toEqual(preview.body.prepared.capabilityLock);
   const saved = await setup('post', base + '/save')
     .send({ ...action, previewDigest: preview.body.digest })
     .expect(201);
@@ -419,6 +462,25 @@ it('keeps partial draft issues through replay and only clears applied issues wit
   expect(applied.appliedDraftIssues).toEqual([]);
 });
 
+it('refreshes applied draft issues when a new candidate confirms the same working text', async () => {
+  const conversationId = randomUUID();
+  const fixed = { message: '缺少删除绑定', sourcePointer: '/views', requirementIds: ['R26'] };
+  const remaining = { message: '缺少联动', sourcePointer: '/reactions', requirementIds: ['R30'] };
+  const text = config('partial');
+  const initial = proposal(text, { checkId: undefined, draftIssues: [fixed, remaining] });
+  const first = (await mockTurn(conversationId, initial).expect(201)).body.draft;
+  const updated = proposal(text, {
+    draftId: first.id,
+    baseRevision: first.revision,
+    sourceRevision: 2,
+    checkId: undefined,
+    draftIssues: [remaining],
+  });
+  const latest = (await mockTurn(conversationId, updated).expect(201)).body.draft;
+  expect(latest.draftIssues).toEqual([remaining]);
+  expect(latest.appliedDraftIssues).toEqual([remaining]);
+});
+
 it('forwards the saved working text for the exact draft revision and rejects an unpersisted override', async () => {
   const id = randomUUID();
   const initial = proposal(config('partial'), {
@@ -454,6 +516,7 @@ it('forwards the saved working text for the exact draft revision and rejects an 
     })
     .expect(409);
   expect(upstream.mock.calls).toHaveLength(before);
+  mockHistory(id);
   upstream.mockResolvedValueOnce(
     Response.json({
       conversation: {
@@ -517,11 +580,11 @@ it('accepts only one concurrent candidate against the same draft revision', asyn
   const candidates = ['candidate-a', 'candidate-b'].map((id) =>
     proposal(config(id), { draftId: first.id, baseRevision: first.revision, sourceRevision: 2 }),
   );
-  upstream.mockImplementation((url: URL) =>
-    Promise.resolve(
-      Response.json(candidates.find((candidate) => url.pathname.endsWith(candidate.turnId))),
-    ),
-  );
+  upstream.mockImplementation(async (url: URL) => {
+    if (url.pathname.endsWith('/' + conversation))
+      return Response.json({ id: conversation, turns: [] });
+    return Response.json(candidates.find((candidate) => url.pathname.endsWith(candidate.turnId)));
+  });
   const replies = await Promise.all(
     candidates.map((candidate) =>
       setup(
@@ -643,6 +706,7 @@ it('holds one draft editing slot and rejects competing changes before Agent gene
   const running = new Promise<void>((resolve) => {
     started = resolve;
   });
+  mockHistory(id);
   upstream.mockImplementationOnce(() => {
     started();
     return new Promise<Response>((resolve) => {
@@ -720,4 +784,193 @@ it('expires a human grant without letting it save or release the next grant', as
   await setup('patch', base)
     .send({ ...edit, editingToken: next })
     .expect(200);
+});
+
+it('preserves the checked asset environment on resume and when preparing a candidate guide', async () => {
+  const id = randomUUID();
+  const db = app.get(PlatformDatabase).executor;
+  const builds = app.get(ReleaseBuild);
+  // With no bound section the candidate must fail compilation, even though the default catalog has it.
+  const bindings = [
+    { profile: 'default', selections: [{ kind: 'materials' as const, id: 'section', lock: null }] },
+  ];
+  const pinned = await pinAgentAssetEnvironment(db, builds, bindings);
+  const original = proposal(config('pinned-candidate'), { checkEnvironment: pinned });
+  mockHistory(id);
+  upstream.mockResolvedValueOnce(Response.json(original));
+  await setup('get', `/agent-conversations/${id}/deliveries/${original.turnId}/integration`).expect(
+    409,
+  );
+
+  // Simulate a previous compiler's environment for the same asset choices.
+  const historical = '1'.repeat(64);
+  await db.execute(
+    'INSERT INTO platform_agent_asset_environments(id, baseline, web_asset_bindings) VALUES ($1,$2,$3)',
+    [historical, 'previous-compiler', JSON.stringify(bindings)],
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      id,
+      attempts: [{ turnId: original.turnId, status: 'interrupted', checkEnvironment: historical }],
+    }),
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id,
+        turns: [{ turnId: original.turnId, result: { kind: 'answer', message: '恢复' } }],
+      },
+    }),
+  );
+  await setup('post', `/agent-conversations/${id}/turns/${original.turnId}/resume`)
+    .send({})
+    .expect(201);
+  expect(upstream.mock.calls.at(-2)![0].searchParams.get('includeCheckEnvironment')).toBe('true');
+  expect(JSON.parse(upstream.mock.calls.at(-1)![1].body)).toEqual({ check_environment: pinned });
+});
+
+it('supplies the installed compiler environment when resuming a saved Agent turn', async () => {
+  const id = randomUUID();
+  const turnId = randomUUID();
+  upstream.mockResolvedValueOnce(
+    Response.json({ id, attempts: [{ turnId, status: 'interrupted' }] }),
+  );
+  upstream.mockResolvedValueOnce(
+    Response.json({
+      conversation: {
+        id,
+        turns: [{ turnId, message: '原始需求', result: { kind: 'answer', message: '继续完成' } }],
+      },
+    }),
+  );
+  const path = '/agent-conversations/' + id + '/turns/' + turnId + '/resume';
+  await setup('post', path).send({ check_environment: 'client-supplied' }).expect(201);
+  const [url, request] = upstream.mock.calls[1]!;
+  expect(url.pathname).toBe('/internal/v1/conversations/' + id + '/turns/' + turnId + '/resume');
+  expect(JSON.parse(request.body)).toEqual({
+    check_environment: checkEnvironment(app.get(ReleaseBuild)),
+  });
+});
+
+it('relays scoped progress and reply chunks before the turn result', async () => {
+  const id = randomUUID();
+  const turnId = randomUUID();
+  upstream.mockImplementationOnce((_url, request) => {
+    const traceId = request.headers['X-Trace-Id'];
+    const turn = { turnId, result: { kind: 'answer', message: '编译通过' } };
+    const frames = [
+      { type: 'progress', stage: 'schema', message: '正在生成数据 Schema' },
+      { type: 'text_delta', delta: '编译通过' },
+      { type: 'result', result: { conversation: { id, turns: [turn] } } },
+    ];
+    return new Response(
+      frames.map((frame) => JSON.stringify({ traceId, ...frame }) + '\n').join(''),
+      {
+        headers: { 'Content-Type': 'application/x-ndjson' },
+      },
+    );
+  });
+  const response = await setup('post', '/agent-conversations/' + id + '/turns')
+    .set('Accept', 'text/event-stream')
+    .send({ turnId, revision: 0, message: '检查表单' })
+    .buffer(true)
+    .expect(200);
+  const frames = response.text
+    .split('\n')
+    .filter((line) => line.startsWith('data: {'))
+    .map((line) => JSON.parse(line.slice(6)));
+  const progressIndex = frames.findIndex(({ type }) => type === 'data-stage-progress');
+  const textIndex = frames.findIndex(({ type }) => type === 'text-delta');
+  const resultIndex = frames.findIndex(({ type }) => type === 'data-result');
+  expect(frames[progressIndex]?.data).toEqual({ stage: 'schema', message: '正在生成数据 Schema' });
+  expect(textIndex).toBeGreaterThan(progressIndex);
+  expect(resultIndex).toBeGreaterThan(textIndex);
+});
+
+it('resolves an error ID into read-only Agent metadata and never forwards original values', async () => {
+  vi.stubEnv('PLATFORM_DIAGNOSTICS_STUDIO_PILOT', '1');
+  const { formId } = (
+    await setup('post', '/forms')
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: '错误引用试点' })
+      .expect(201)
+  ).body;
+  const { versionId } = (
+    await setup('post', `/forms/${formId}/versions`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ text: config('diagnostic-reference') })
+      .expect(201)
+  ).body;
+  const { releaseId } = (
+    await setup('post', `/forms/${formId}/releases`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ versionId })
+      .expect(201)
+  ).body;
+  const { owner } = (await setup('get', '/diagnostics/pilot').expect(200)).body;
+  const original = 'original-business-value-must-not-be-forwarded';
+  const { diagnosticId } = (
+    await setup('post', '/diagnostics/pilot/events')
+      .set('X-Diagnostic-Owner', owner)
+      .send({
+        eventId: randomUUID(),
+        schemaVersion: 1,
+        releaseId,
+        occurredAt: new Date().toISOString(),
+        source: 'runtime',
+        phase: 'flush',
+        errorCode: 'flush.aborted',
+        evidenceStatus: 'captured',
+        evidence: { snapshot: { value: original } },
+      })
+      .expect(201)
+  ).body;
+  const reference = { kind: 'diagnostic', diagnosticId };
+  const id = randomUUID(),
+    turnId = randomUUID();
+  const turn = {
+    turnId,
+    message: '定位错误',
+    result: { kind: 'answer', message: '已定位到发布' },
+  };
+  const conversation = {
+    id,
+    title: '错误调查',
+    revision: 1,
+    updatedAt: '2026-11-25',
+    turns: [turn],
+  };
+  const metadata = (await setup('get', `/diagnostics/events/${diagnosticId}/reference`).expect(200))
+    .body;
+  expect(metadata).toMatchObject({
+    ...reference,
+    formId,
+    releaseId,
+    versionId,
+    evidenceStatus: 'captured',
+  });
+  expect(metadata).not.toHaveProperty('evidence');
+
+  upstream.mockResolvedValueOnce(Response.json({ conversation }));
+  await setup('post', `/agent-conversations/${id}/turns`)
+    .send({
+      turnId,
+      revision: 0,
+      message: turn.message,
+      references: [{ ...reference, evidence: original }],
+    })
+    .expect(201);
+  const body = upstream.mock.calls[0]![1].body as string;
+  expect(body).not.toContain(original);
+  expect(JSON.parse(body)).toMatchObject({ readOnly: true, references: [metadata] });
+
+  await setup('post', `/agent-conversations/${id}/turns`)
+    .send({
+      turnId,
+      revision: 0,
+      message: turn.message,
+      references: [{ ...reference, diagnosticId: randomUUID() }],
+    })
+    .expect(404);
+  expect(upstream).toHaveBeenCalledTimes(1);
 });

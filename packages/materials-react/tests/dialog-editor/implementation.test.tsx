@@ -75,7 +75,7 @@ it('keeps the single-date calendar inside its containing dialog', async () => {
   );
   fireEvent.click(screen.getByRole('button', { name: '编辑' }));
   const modal = screen.getByRole('dialog', { name: '编辑成员' });
-  fireEvent.click(within(modal).getByRole('button', { name: '打开日期日历' }));
+  fireEvent.click(within(modal).getByRole('button', { name: '测试字段' }));
   const grid = await within(modal).findByRole('grid');
   const day = grid.querySelector('[data-day="2028-02-29"] button');
   expect(day).toBeEnabled();

@@ -16,7 +16,7 @@
     "@form-engine/runtime": "workspace:*",
     "@form-engine/studio-design-components": "workspace:*",
     "@form-engine/studio-design-tokens": "workspace:*",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "sucrase": "3.35.1",

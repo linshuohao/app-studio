@@ -1,4 +1,4 @@
-import type { ReadonlyPreparedForm } from './form.js';
+import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 
 const fieldControls = new Set([
   'checkbox',

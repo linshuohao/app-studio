@@ -1,8 +1,8 @@
 import { createRuntime } from '@form-engine/runtime';
 import { isCoreBinding } from '@form-engine/pure-functions';
 import type { ArtifactIdentity } from '@form-engine/protocol';
-import type { LockedCapability } from '@form-engine/protocol/prepared';
-import type { LoadedRelease } from './read-delivery';
+import { webAssetCompatibility } from '@form-engine/materials-react/web-asset-compatibility';
+import type { LockedCapability, ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { canonical, digest } from './read-delivery';
 import type { createWebCapabilities } from '../web-capabilities';
 
@@ -47,7 +47,7 @@ async function resolveBindings<T extends { artifact: ArtifactIdentity }>(
 }
 
 export async function resolveWebCapabilities(
-  lock: LoadedRelease['capabilityLock'],
+  lock: ReadonlyPreparedForm['capabilityLock'],
   available: readonly WebCapabilities[],
 ) {
   const [materials, functions] = await Promise.all([
@@ -76,4 +76,13 @@ export async function resolveWebCapabilities(
     throw new Error(`当前 Runtime 无法执行发布锁定的内置函数：${requirements}。`);
   }
   return { materials: Object.freeze(materials), functions: Object.freeze(functions), runtime };
+}
+
+export async function resolvePreparedWebCapabilities(
+  prepared: ReadonlyPreparedForm,
+  available: readonly WebCapabilities[],
+) {
+  const compatibility = webAssetCompatibility(prepared);
+  if (compatibility) throw new Error(compatibility.message);
+  return resolveWebCapabilities(prepared.capabilityLock, available);
 }

@@ -140,7 +140,7 @@
     "title": "日期选择",
     "category": "输入",
     "implementation": "React",
-    "summary": "键入或从日历选择单个日期。",
+    "summary": "从日期框弹出的日历选择单个日期。",
     "annotations": {
       "/propsSchema/properties/min": "可选日期的下限，包含当天。",
       "/propsSchema/properties/max": "可选日期的上限，包含当天。",

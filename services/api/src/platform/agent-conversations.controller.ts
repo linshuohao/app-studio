@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   Body,
   ConflictException,
   Controller,
@@ -25,12 +26,18 @@ import {
   PlatformDrafts,
   type Delivery,
   type Draft,
+  type DraftPreview,
   digestText,
   resourceId,
 } from './form-drafts.js';
 import { configText, PlatformForms } from './forms.js';
-import { pinAgentAssetEnvironment } from './agent-asset-environments.js';
+import {
+  agentCompileInputs,
+  currentAgentAssetEnvironment,
+  pinAgentAssetEnvironment,
+} from './agent-asset-environments.js';
 import { ReleaseBuild } from './release-build.js';
+import { readDiagnosticReference } from './diagnostic-reference.js';
 import { requireStudioOrigin, session } from './session-http.js';
 
 import {
@@ -62,12 +69,27 @@ type Reply = {
   summary?: string;
   reason?: string;
 };
-type Conversation = {
+type ConversationReferences = {
+  attempts?: { references?: ReferenceKey[] }[];
+  turns?: { references?: ReferenceKey[] }[];
+};
+function hasDiagnosticHistory(conversation: ConversationReferences) {
+  return [...(conversation.attempts ?? []), ...(conversation.turns ?? [])].some((entry) =>
+    entry.references?.some((reference) => 'kind' in reference && reference.kind === 'diagnostic'),
+  );
+}
+type Conversation = Pick<ConversationReferences, 'attempts'> & {
   id: string;
   title: string;
   revision: number;
   updatedAt: string;
-  turns: { turnId: string; message: string; result: Reply; draftId?: string }[];
+  turns: {
+    turnId: string;
+    message: string;
+    result: Reply;
+    draftId?: string;
+    references?: ReferenceKey[];
+  }[];
 };
 type TurnResponse = { conversation: Conversation; delivery?: Delivery | null };
 type TurnView = { conversation: Conversation; draft?: Draft | null; editorProposal?: Delivery };
@@ -78,7 +100,6 @@ export class AgentConversationsController {
     private readonly access: PlatformAccess,
     private readonly drafts: PlatformDrafts,
     private readonly builds: ReleaseBuild,
-    private readonly assetStorage: PlatformDatabase,
     private readonly forms: PlatformForms,
     private readonly db: PlatformDatabase,
   ) {}
@@ -109,11 +130,21 @@ export class AgentConversationsController {
     const references = [];
     const seen = new Set<string>();
     let bytes = 0;
+    let hasDiagnostic = false;
     for (const item of input) {
       const key = referenceKey(item);
       const identity = JSON.stringify(referenceIdentity(key));
       if (seen.has(identity)) throw new BadRequestException('消息引用重复。');
       seen.add(identity);
+      if ('kind' in key && key.kind === 'diagnostic') {
+        if (hasDiagnostic) throw new BadRequestException('一条消息只支持调查一个错误。');
+        if (!actor.permissions.includes('diagnostic:view')) throw new ForbiddenException();
+        hasDiagnostic = true;
+        references.push(
+          await readDiagnosticReference(this.db.executor, actor.spaceId, key.diagnosticId, true),
+        );
+        continue;
+      }
       const reference = await resolveReference(key, actor.spaceId, this.forms, this.builds);
       bytes += Buffer.byteLength(reference.text);
       if (bytes > 16 * 1024)
@@ -129,11 +160,29 @@ export class AgentConversationsController {
     );
     return saved?.id;
   }
-  private async reauthorize(cookie: string, owner: AccessContext) {
+  private async reauthorize(cookie: string, owner: AccessContext, diagnostic = false) {
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
     if (actor.userId !== owner.userId || actor.spaceId !== owner.spaceId)
       throw new ConflictException('会话所属空间已改变');
+    if (diagnostic && !actor.permissions.includes('diagnostic:view'))
+      throw new ForbiddenException();
     return actor;
+  }
+  private async authorizeDiagnosticHistory(
+    cookie: string,
+    owner: AccessContext,
+    id: string,
+    optional = false,
+  ): Promise<boolean> {
+    const conversation = await conversationRequest<Conversation>(owner, '/' + resourceId(id)).catch(
+      (error: unknown) => {
+        if (optional && error instanceof NotFoundException) return undefined;
+        throw error;
+      },
+    );
+    if (!conversation || !hasDiagnosticHistory(conversation)) return false;
+    await this.reauthorize(cookie, owner, true);
+    return true;
   }
   private async conversationScope(actor: AccessContext, formId?: string, workId?: string) {
     if (workId && !formId) throw new BadRequestException();
@@ -170,9 +219,11 @@ export class AgentConversationsController {
     @Query('workId') workId?: string,
   ) {
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
-    return conversationRequest(actor, '/' + resourceId(id), {
+    const conversation = await conversationRequest<Conversation>(actor, '/' + resourceId(id), {
       query: await this.conversationScope(actor, formId, workId),
     });
+    if (hasDiagnosticHistory(conversation)) await this.reauthorize(cookie, actor, true);
+    return conversation;
   }
   @Patch(':id')
   @Header('Cache-Control', 'no-store')
@@ -252,6 +303,49 @@ export class AgentConversationsController {
   ) {
     return this.readDelivery(cookie, id, turnId, { formId, workId }, false);
   }
+  @Get(':id/deliveries/:turnId/integration')
+  @Header('Cache-Control', 'no-store')
+  async integration(
+    @Headers('cookie') cookie: string,
+    @Param('id') id: string,
+    @Param('turnId') turnId: string,
+  ): Promise<{
+    candidateDigest: string;
+    prepared: DraftPreview['prepared'];
+    regenerated: boolean;
+  }> {
+    const actor = await this.access.authenticate(session(cookie), 'form:edit');
+    const diagnostic = await this.authorizeDiagnosticHistory(cookie, actor, id);
+    const delivery = await conversationRequest<Delivery>(
+      actor,
+      '/' + resourceId(id) + '/deliveries/' + resourceId(turnId),
+    );
+    if (delivery.draftIssues !== undefined || !delivery.checkId) throw new NotFoundException();
+    const current = await this.reauthorize(cookie, actor, diagnostic);
+    if (delivery.formId) await this.checkForm(current, delivery.formId, delivery.workId);
+    const text = configText(delivery.candidateText);
+    if (digestText(text) !== delivery.digest) throw new BadGatewayException('Invalid candidate');
+    const environment = await currentAgentAssetEnvironment(
+      this.db.executor,
+      this.builds,
+      delivery.checkEnvironment,
+    );
+    const regenerated = delivery.checkEnvironment !== environment.id;
+    const checked = await this.builds.compile(
+      text,
+      agentCompileInputs(this.builds, text, environment.bindings),
+    );
+    await this.reauthorize(cookie, actor, diagnostic);
+    if (!checked.success) {
+      const diagnostic = checked.diagnostics.find((item) => item.severity === 'error');
+      throw new ConflictException(
+        diagnostic
+          ? `这版候选在当前编译环境中未通过检查：${diagnostic.message}`
+          : '这版候选在当前编译环境中未通过检查。',
+      );
+    }
+    return { candidateDigest: delivery.digest, prepared: checked.prepared, regenerated };
+  }
   @Post(':id/deliveries/:turnId/receive')
   async receiveDelivery(
     @Headers('origin') origin: string,
@@ -270,11 +364,15 @@ export class AgentConversationsController {
     apply: boolean,
   ) {
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
+    const diagnostic = await this.authorizeDiagnosticHistory(cookie, actor, id);
     const delivery = await conversationRequest<Delivery>(
       actor,
       '/' + resourceId(id) + '/deliveries/' + resourceId(turnId),
     );
-    return this.receive(cookie, actor, delivery, expected, apply);
+    const current = await this.reauthorize(cookie, actor, diagnostic);
+    const result = await this.receive(cookie, current, delivery, expected, apply);
+    if (diagnostic) await this.reauthorize(cookie, actor, true);
+    return result;
   }
   @Post(':id/turns/:turnId/resume')
   async resume(
@@ -296,11 +394,17 @@ export class AgentConversationsController {
         draftId?: string;
         draftRevision?: number;
         status: string;
+        checkEnvironment?: string;
         readOnly?: boolean;
         references?: ReferenceKey[];
       }[];
-    }>(actor, path);
+    }>(actor, path, { query: new URLSearchParams({ includeCheckEnvironment: 'true' }) });
+    const diagnosticHistory = hasDiagnosticHistory(target);
+    if (diagnosticHistory) await this.reauthorize(cookie, actor, true);
     const attempt = target.attempts?.find((entry) => entry.turnId === turnId);
+    const hasDiagnostic = attempt?.references?.some(
+      (reference) => 'kind' in reference && reference.kind === 'diagnostic',
+    );
     const draftId = target.formId ? undefined : attempt?.draftId;
     if (draftId && attempt?.readOnly && attempt.status !== 'done') {
       const draft = await this.drafts.get(session(cookie), draftId);
@@ -308,7 +412,9 @@ export class AgentConversationsController {
         throw new ConflictException('草稿已更新，请重新打开。');
     }
     if (attempt?.references?.length) {
-      const savedForms = attempt.references.filter((reference) => 'formId' in reference);
+      const savedForms = attempt.references.filter(
+        (reference) => !('kind' in reference) || reference.kind === 'diagnostic',
+      );
       if (savedForms.length) await this.resolveReferences(cookie, actor, savedForms);
       else await this.authorizeReferenceRead(cookie, actor);
     }
@@ -324,9 +430,26 @@ export class AgentConversationsController {
           const { conversation, delivery } = await conversationRequest<TurnResponse>(
             actor,
             path + '/turns/' + resourceId(turnId) + '/resume',
-            { method: 'POST', stream },
+            {
+              method: 'POST',
+              // Diagnostic replies follow the post-run permission check before reaching the browser.
+              stream: diagnosticHistory ? undefined : stream,
+              body: {
+                check_environment: (
+                  await currentAgentAssetEnvironment(
+                    this.db.executor,
+                    this.builds,
+                    attempt?.checkEnvironment,
+                  )
+                ).id,
+              },
+            },
           );
-          await this.reauthorize(cookie, actor);
+          await this.reauthorize(
+            cookie,
+            actor,
+            diagnosticHistory || hasDiagnosticHistory(conversation),
+          );
           const turnIndex = conversation.turns.findIndex((turn) => turn.turnId === turnId);
           if (
             conversation.id !== id ||
@@ -338,7 +461,7 @@ export class AgentConversationsController {
             throw new BadGatewayException('Invalid resumed conversation');
           return {
             conversation,
-            ...(delivery
+            ...(delivery && !hasDiagnostic && !attempt?.readOnly
               ? await this.receive(cookie, actor, delivery, { ...target, draftId }, true, editorId)
               : {}),
           };
@@ -381,6 +504,10 @@ export class AgentConversationsController {
       throw new BadRequestException('无效的会话输入');
     const actor = await this.access.authenticate(session(cookie), 'form:edit');
     const references = await this.resolveReferences(cookie, actor, body.references);
+    const hasDiagnostic = references.some(
+      (reference) => 'kind' in reference && reference.kind === 'diagnostic',
+    );
+    const readOnly = body.readOnly || hasDiagnostic;
     const run = async (stream?: TurnStream): Promise<TurnView> => {
       let environment = checkEnvironment(this.builds);
       let workingText = body.workingText === undefined ? undefined : configText(body.workingText);
@@ -392,7 +519,7 @@ export class AgentConversationsController {
         } catch (e) {
           if (!(e instanceof NotFoundException)) throw e;
         }
-        if (draft && !draft.formId && !body.readOnly && body.draftRevision !== undefined)
+        if (draft && !draft.formId && !readOnly && body.draftRevision !== undefined)
           editingDraft = { id: draft.id, revision: body.draftRevision };
         if (!draft || draft.formId || body.draftRevision !== draft.revision) {
           // A previously committed command may be retried after its own delivery changed the draft.
@@ -425,11 +552,7 @@ export class AgentConversationsController {
           'check',
         );
         workingText = input.text;
-        environment = await pinAgentAssetEnvironment(
-          this.assetStorage.executor,
-          this.builds,
-          input.bindings,
-        );
+        environment = await pinAgentAssetEnvironment(this.db.executor, this.builds, input.bindings);
       }
       const requestFingerprint = digestText(
         JSON.stringify([
@@ -441,7 +564,7 @@ export class AgentConversationsController {
           body.formId,
           body.workId,
           body.workingText,
-          ...(body.readOnly ? ['read-only'] : []),
+          ...(readOnly ? ['read-only'] : []),
           ...(body.basedOnVersionId || body.assetChoices
             ? [[body.basedOnVersionId, body.assetChoices]]
             : []),
@@ -449,12 +572,15 @@ export class AgentConversationsController {
         ]),
       );
       return this.drafts.whileAgentEdits(session(cookie), editingDraft, id, async (editorId) => {
+        const diagnosticHistory =
+          (body.revision > 0 || !actor.permissions.includes('diagnostic:view')) &&
+          (await this.authorizeDiagnosticHistory(cookie, actor, id, true));
         const { conversation, delivery } = await conversationRequest<TurnResponse>(
           actor,
           '/' + id + '/turns',
           {
             method: 'POST',
-            stream,
+            stream: hasDiagnostic || diagnosticHistory ? undefined : stream,
             body: {
               turnId: body.turnId,
               revision: body.revision,
@@ -465,7 +591,7 @@ export class AgentConversationsController {
               draftId: linkedDraftId,
               draftRevision: body.draftRevision,
               requestFingerprint,
-              ...(body.readOnly ? { readOnly: true } : {}),
+              ...(readOnly ? { readOnly: true } : {}),
               context: {
                 target: 'web',
                 knowledge_version:
@@ -477,7 +603,6 @@ export class AgentConversationsController {
             },
           },
         );
-        await this.reauthorize(cookie, actor);
         const turn = conversation?.turns?.[body.revision];
         if (
           conversation?.id !== id ||
@@ -487,9 +612,14 @@ export class AgentConversationsController {
               conversation.turns[delivery.sourceRevision - 1]?.turnId !== delivery.turnId))
         )
           throw new BadGatewayException('Invalid conversation result');
+        await this.reauthorize(
+          cookie,
+          actor,
+          hasDiagnostic || diagnosticHistory || hasDiagnosticHistory(conversation),
+        );
         return {
           conversation,
-          ...(delivery && !body.readOnly
+          ...(delivery && !readOnly
             ? await this.receive(cookie, actor, delivery, body, true, editorId)
             : {}),
         };

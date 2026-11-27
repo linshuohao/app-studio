@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { webAssetCompatibility } from '@form-engine/protocol/prepared';
+import { webAssetCompatibility } from '@form-engine/materials-react/web-asset-compatibility';
 import { createHash } from 'node:crypto';
 import type { CapabilityReference, CompileInput, CompileResult } from '@form-engine/compiler';
 import type { QueryExecutor } from './database.js';
@@ -32,7 +32,7 @@ export type AssetChoice = {
 const keyOf = ({ kind, id }: Pick<Selection, 'kind' | 'id'>) => JSON.stringify([kind, id]);
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
 
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
   if (value !== null && typeof value === 'object') {
     const object = value as Record<string, unknown>;

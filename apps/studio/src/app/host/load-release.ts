@@ -1,15 +1,16 @@
+import type { RendererDiagnostic } from '@form-engine/renderer-react';
+import type { createDiagnosticUpload } from './diagnostic-upload';
 import { checkPassportDuplicates, travelPassportValidator } from './passport-validator';
 import { travelEligibilityValidator } from './validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
 import { readDelivery, type LoadedRelease } from './read-delivery';
 export type { LoadedRelease } from './read-delivery';
-import { webAssetCompatibility } from '@form-engine/protocol/prepared';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests } from '@form-engine/renderer-react';
 import { type createRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { goldenData } from '../../../../playground/src/demos/travel/policy';
 import { releaseWebCapabilities } from './available-capabilities';
-import { resolveWebCapabilities } from './resolve-capabilities';
+import { resolvePreparedWebCapabilities } from './resolve-capabilities';
 
 export const stages = [
   '获取发布',
@@ -25,10 +26,8 @@ export async function loadRelease(
 ) {
   const release = await readDelivery(releaseId, signal, () => stage(1));
   stage(2, release);
-  const compatibility = webAssetCompatibility(release.prepared);
-  if (compatibility) throw new Error(compatibility.message);
-  const capabilities = await resolveWebCapabilities(
-    release.prepared.capabilityLock,
+  const capabilities = await resolvePreparedWebCapabilities(
+    release.prepared,
     releaseWebCapabilities,
   );
   signal.throwIfAborted();
@@ -37,7 +36,11 @@ export async function loadRelease(
 const cities = ['北京', '上海', '广州', '深圳', '成都'];
 export function startRelease(
   prepared: LoadedRelease,
-  { materials, functions, runtime: engine }: Awaited<ReturnType<typeof resolveWebCapabilities>>,
+  {
+    materials,
+    functions,
+    runtime: engine,
+  }: Awaited<ReturnType<typeof resolvePreparedWebCapabilities>>,
   show: (message: string) => void,
   onCreate: () => void,
   onRegistrations: (available: {
@@ -45,6 +48,7 @@ export function startRelease(
     events: string[];
     validators: string[];
   }) => void,
+  upload?: ReturnType<typeof createDiagnosticUpload>,
 ) {
   const calls = { requests: 0, events: 0, validators: 0 };
   const requests = defineHostRequests(
@@ -147,7 +151,9 @@ export function startRelease(
     runtime = engine.create({
       prepared,
       functions,
+      captureErrorTrace: upload !== undefined,
       onDiagnostic: (report) => {
+        upload?.runtime(report);
         const entries = report.kind === 'runtime' ? [report.entry] : report.entries;
         for (const entry of entries)
           if (entry.kind.endsWith('.error') || entry.kind.endsWith('.abort'))
@@ -164,8 +170,10 @@ export function startRelease(
     calls,
     available,
     errors,
-    diagnostic: (report: { code: string; phase: string }) =>
-      recordError(report.phase + ' · ' + report.code),
+    diagnostic: (report: RendererDiagnostic) => {
+      recordError(report.phase + ' · ' + report.code);
+      upload?.renderer(report);
+    },
     materials,
     requests,
     restoreDraft() {

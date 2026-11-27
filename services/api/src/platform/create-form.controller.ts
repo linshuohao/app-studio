@@ -1,5 +1,5 @@
 import { PlatformDatabase } from './database.js';
-import { readAgentAssetEnvironment } from './agent-asset-environments.js';
+import { agentCompileInputs, readAgentAssetEnvironment } from './agent-asset-environments.js';
 import { captureAssetBindings } from './version-web-bindings.js';
 import { withTravelPreviewHost } from './web-check.js';
 import { checkDataSchema } from '@form-engine/compiler';
@@ -12,20 +12,12 @@ import {
   Headers,
   HttpCode,
   Post,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { catalogDocumentation } from './catalog-documentation.js';
 import { isUtf8ConfigText, maxConfigTextBytes } from './forms.js';
 import { ReleaseBuild } from './release-build.js';
-import { previewInputs, serviceToken } from './create-form-agent.js';
-
-function requireAgent(token?: string) {
-  const expected = Buffer.from(serviceToken());
-  const actual = Buffer.from(token ?? '');
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
-    throw new UnauthorizedException();
-}
+import { previewInputs, requireAgent } from './create-form-agent.js';
 
 @Controller()
 export class CreateFormController {
@@ -163,22 +155,11 @@ export class CreateFormController {
     if (!isUtf8ConfigText(text)) throw new BadRequestException('Config must be UTF-8 text');
     const environment = await this.environment(body.check_environment);
     const bytes = Buffer.byteLength(text);
-    const input = previewInputs(this.builds);
-    const selected =
-      environment.bindings.length && bytes <= maxConfigTextBytes
-        ? captureAssetBindings(this.builds.assets, text, input.target.profile, environment.bindings)
-        : undefined;
     const checked =
       bytes <= maxConfigTextBytes
         ? await this.builds.compile(
             text,
-            selected
-              ? {
-                  ...input,
-                  catalog: withTravelPreviewHost(selected.catalog),
-                  selections: selected.selections,
-                }
-              : input,
+            agentCompileInputs(this.builds, text, environment.bindings),
           )
         : {
             success: false as const,

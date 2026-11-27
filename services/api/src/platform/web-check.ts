@@ -124,6 +124,7 @@ export function withTravelPreviewHost(source: CompileInput['catalog']): CompileI
       events: {
         ...source.host?.events,
         'travel.previewUnderwritingSubmit': {},
+        'business.addExpense': {},
       },
       validators: {
         ...source.host?.validators,

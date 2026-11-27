@@ -51,6 +51,14 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
   await chooseWorkingVersionAction(page, '查看本次发布', firstRow);
   const hostLink = page.getByRole('link', { name: '在示例 Host 中打开' });
   await expect(hostLink).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('#studio-main').evaluate((element) => {
+        const style = getComputedStyle(element);
+        return parseFloat(style.paddingBlockEnd);
+      }),
+    )
+    .toBeGreaterThan(0);
   const first = await hostLink.getAttribute('href');
   expect(publishRequests.map((r) => r.versionId)).toEqual([firstVersion]);
   await page.getByRole('button', { name: '返回版本列表', exact: true }).click();
@@ -90,6 +98,11 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
   await expect(hostLink).toBeVisible();
   const second = await hostLink.getAttribute('href');
   expect(second).not.toBe(first);
+  await page.getByRole('tab', { name: 'Host 接入', exact: true }).click();
+  const snippet = page.getByRole('group', { name: 'Host 接入 JSX' });
+  await expect(snippet).toContainText('<FormRenderer');
+  await snippet.focus();
+  await expect(snippet).toBeFocused();
   await page.getByRole('tab', { name: '所需宿主能力', exact: true }).click();
   await page.getByRole('button', { name: '查看契约 travel.searchCities', exact: true }).click();
   await expect(

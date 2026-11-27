@@ -20,9 +20,13 @@ import {
   createValueDisplay,
 } from '@form-engine/materials-react';
 import {
+  createArrayCountNormalizedText,
+  createArraySumProducts,
   createCoreFunctions,
   createDateAgeInYears,
   createDateInclusiveDays,
+  createExpenseCountInvoiceMatches,
+  createExpenseHotelStandardStatus,
   createTextIsNonBlank,
   createTravelIsEligibleAge,
   createTravelIsTripRangeAllowed,
@@ -62,8 +66,12 @@ export function createWebCapabilities(
     ].map((create) => create(materialArtifact)),
   );
   const businessFunctions = [
+    createArrayCountNormalizedText,
+    createArraySumProducts,
     createDateAgeInYears,
     createDateInclusiveDays,
+    createExpenseCountInvoiceMatches,
+    createExpenseHotelStandardStatus,
     createTextIsNonBlank,
     createTravelIsEligibleAge,
     createTravelIsTripRangeAllowed,

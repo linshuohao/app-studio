@@ -54,24 +54,24 @@ export async function importSqlite(sourcePath, connectionString) {
     await client.query('SELECT pg_advisory_xact_lock(17017,1)');
     const versions = (await client.query('SELECT name FROM platform_schema_migrations ORDER BY id'))
       .rows;
+    const destinationMigrations = [
+      '1780000000000-platform',
+      '1780000000001-scenarios',
+      '1780000000002-working-versions',
+      '1780000000003-create-form-sessions',
+      '1780000000004-agent-drafts',
+      '1780000000005-independent-form-drafts',
+      '1780000000006-remove-retired-studio-storage',
+      '1780000000007-agent-partial-draft-issues',
+      '1780000000008-draft-editing',
+      '1780000000009-form-diagnostics',
+      '1780000000010-asset-repair-tasks',
+      '1780000000011-version-web-bindings',
+    ];
     if (
-      (versions.length !== 6 &&
-        !(
-          versions[6]?.name === '1780000000006-remove-retired-studio-storage' &&
-          (versions.length === 7 ||
-            (versions[7]?.name === '1780000000007-agent-partial-draft-issues' &&
-              (versions.length === 8 ||
-                (versions[8]?.name === '1780000000008-draft-editing' &&
-                  (versions.length === 9 ||
-                    (versions.length === 10 &&
-                      versions[9]?.name === '1780000000011-version-web-bindings'))))))
-        )) ||
-      versions[0]?.name !== '1780000000000-platform' ||
-      versions[1]?.name !== '1780000000001-scenarios' ||
-      versions[2]?.name !== '1780000000002-working-versions' ||
-      versions[3]?.name !== '1780000000003-create-form-sessions' ||
-      versions[4]?.name !== '1780000000004-agent-drafts' ||
-      versions[5]?.name !== '1780000000005-independent-form-drafts'
+      versions.length < 6 ||
+      versions.length > destinationMigrations.length ||
+      versions.some(({ name }, i) => name !== destinationMigrations[i])
     )
       throw new Error('Unsupported destination schema');
     for (const { name } of tables) {

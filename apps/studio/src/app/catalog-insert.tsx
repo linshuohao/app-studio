@@ -1,4 +1,5 @@
 'use client';
+import { CodeBlock } from '../components/code-block';
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from './modal';
 import { FieldPickerControl, fieldReferenceId, referenceFieldRows } from './field-picker';
@@ -223,7 +224,12 @@ function InsertFields({
   const detail = useCatalog<Detail>(
     !path || (binding && !profiles) || error
       ? undefined
-      : catalogAssetPath(kind, asset.id, locked?.version ?? asset.version, locked?.artifact.digest),
+      : catalogAssetPath(
+          kind,
+          asset.id,
+          locked?.version ?? asset.version,
+          locked?.artifact.digest ?? asset.artifact.digest,
+        ),
   );
   const manifest = detail?.value?.manifest;
   function put(k: string, v: string) {
@@ -436,10 +442,10 @@ function InsertFields({
                 {input('req' + n, 'Host 请求 ' + n + '（必填）')}
                 <details>
                   <summary>请求参数与返回值</summary>
-                  <pre>
-                    传入 {schemaType(r.payloadSchema)}
-                    {'\n'}返回 {schemaType(r.resultSchema)}
-                  </pre>
+                  <CodeBlock
+                    language="typescript"
+                    source={`传入 ${schemaType(r.payloadSchema)}\n返回 ${schemaType(r.resultSchema)}`}
+                  />
                 </details>
               </div>
             );

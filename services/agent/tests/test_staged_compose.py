@@ -218,6 +218,11 @@ def test_prd_schema_is_checked_and_modules_receive_only_relevant_requirements(
     assert response.status_code == 200, response.text
     frames = [json.loads(line) for line in response.iter_lines()]
     result = frames[-1]["result"]
+    progress = [event["message"] for event in frames if event["type"] == "progress"]
+    assert progress.index("正在生成数据 Schema 的验收用例") < progress.index(
+        "正在生成数据 Schema"
+    )
+    assert "正在生成视图片段" in progress
     milestones = [
         (e["stage"], e["status"]) for e in frames if e["type"] == "compose_phase"
     ]
@@ -759,6 +764,37 @@ def test_view_deferral_without_pointer_requires_unavailable_host(
         assert gap is None
 
 
+def test_host_deferral_cannot_replace_local_member_id_validation(monkeypatch):
+    from form_agent.agent.nodes.compose import staged
+    from form_agent.business.form_authoring.contracts import BindingEvidence
+    from form_agent.business.form_authoring.requirements import StandardRequirements
+
+    facts = standard_requirements()
+    facts["requirements"].append(
+        {
+            "id": "R12",
+            "kind": "validation",
+            "subject": "同行人标识",
+            "behavior": "检查已有同行人标识是否重复",
+            "sources": [{"source_id": "document", "quote": "同行人标识不得重复"}],
+        }
+    )
+    standard = StandardRequirements.model_validate(facts)
+    evidence = BindingEvidence(
+        target="web", capabilities={}, remaining_validation={"R12": "标识的本地唯一性"}
+    )
+
+    async def ask(model, output, instructions, payload):
+        return output(deferred={"R12": "等 Host 分配标识后再校验。"})
+
+    monkeypatch.setattr(staged, "ask", ask)
+    _, _, deferred, gap = asyncio.run(
+        staged.generate_fragment(None, standard, "validation", {}, evidence, {}, None)
+    )
+    assert deferred == {}
+    assert gap is not None and "Missing local requirement coverage: R12" in gap
+
+
 def test_schema_initializes_only_typed_editable_parents_and_preserves_business_defaults():
     from form_agent.agent.nodes.compose.staged import seed_editable_objects
 
@@ -1120,3 +1156,58 @@ def test_member_delete_moves_from_reaction_to_view_without_losing_the_page(
             assert partial.issues[0].requirementIds == ["R26"]
             assert partial.issues[0].sourcePointer == "/views"
         assert calls.count(("reaction", ["R26"])) == 1
+
+
+@pytest.mark.parametrize("same_candidate", [True, False])
+def test_delivery_preserves_staged_partial_and_attaches_only_its_own_failure(
+    same_candidate,
+):
+    from form_agent.agent.authoring_state import (
+        CheckEvidence,
+        Composition,
+        ReadyToCompose,
+        Understanding,
+    )
+    from form_agent.agent.nodes.deliver import deliver
+    from form_agent.business.form_authoring.contracts import (
+        Blocked,
+        CreateFormInput,
+        DraftIssue,
+        PartialDraft,
+    )
+
+    failed = '{"data":{"schema":{"type":"object"}}}'
+    digest = candidate_digest(failed)
+    checks = CheckEvidence(
+        failed_text={digest: failed},
+        receipts={
+            digest: CheckReceipt(
+                check_id="compiler",
+                candidate_digest=digest,
+                success=False,
+                diagnostics=[{"message": "旧编译错误"}],
+            )
+        },
+    )
+    partial = PartialDraft(
+        candidate_text=failed
+        if same_candidate
+        else '{"data":{"schema":{"type":"object"}},"reactions":[]}',
+        issues=[DraftIssue(message="本轮片段的业务规则缺失", requirementIds=["R1"])],
+    )
+    result = asyncio.run(
+        deliver(
+            {
+                "request": CreateFormInput(message="继续", context={}),
+                "understanding": Understanding(decision=ReadyToCompose(kind="ready")),
+                "composition": Composition(
+                    Blocked(kind="blocked", reason="片段不完整", partial_draft=partial),
+                    checks,
+                ),
+            },
+            model=ScriptedModel([]),
+        )
+    )["result"]
+    assert isinstance(result, Blocked)
+    assert result.partial_draft == partial
+    assert (result.repair_context is not None) == same_candidate

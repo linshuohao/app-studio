@@ -1,6 +1,42 @@
 import { expect, test } from '@playwright/test';
 import { schemaSource } from './data-schema-fixture';
 
+test('material directory uses the width freed by collapsing the main navigation', async ({
+  page,
+  baseURL,
+}) => {
+  await page.setViewportSize({ width: 1418, height: 827 });
+  await page.addInitScript(() => localStorage.setItem('studio-navigation-expanded', 'true'));
+  const login = await page.request.post('/api/platform/login', {
+    headers: { Origin: baseURL! },
+    data: { username: 'studio-test', password: 'local-browser-test-password' },
+  });
+  expect(login.ok()).toBeTruthy();
+  await page.goto('/?catalog=materials');
+  await expect(page.getByRole('heading', { name: '物料目录', exact: true })).toBeVisible();
+
+  const main = page.locator('#studio-main');
+  const measure = () =>
+    main.evaluate((element) => {
+      const { left, right, width } = element.getBoundingClientRect();
+      return { left, right, width };
+    });
+  const expanded = await measure();
+  const toggle = page.getByRole('button', { name: '收起导航', exact: true });
+  await toggle.focus();
+  await toggle.press('Enter');
+
+  const reopen = page.getByRole('button', { name: '展开导航', exact: true });
+  await expect(reopen).toBeFocused();
+  await expect.poll(measure).toEqual({
+    left: 56,
+    right: expanded.right,
+    width: expanded.width + 112,
+  });
+  await page.getByRole('button', { name: '纯函数', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '每页条数' })).toHaveText('10');
+});
+
 test('filters real catalog categories and renders isolated interactive material previews', async ({
   page,
 }) => {
@@ -256,7 +292,9 @@ test('working-version authoring formats text on entry and preserves edits on can
   await page.getByLabel('版本名称').fill('配置名称验收');
   await page.getByRole('button', { name: '创建并编辑' }).click();
   await expect(
-    page.getByRole('navigation', { name: '主导航' }).getByRole('button', { name: '表单' }),
+    page
+      .getByRole('navigation', { name: '主导航' })
+      .getByRole('button', { name: '表单', exact: true }),
   ).toHaveAttribute('aria-current', 'page');
   const source = await schemaSource(page);
   await source.fill('{"precise":9007199254740993,"nested":{"enabled":true}}');
@@ -317,18 +355,22 @@ test('all installed assets expose complete API structures, field meanings and ex
       if (kind === 'materials') {
         await api.getByRole('button', { name: '查看类型定义与值示例' }).click();
         const types = page.getByRole('dialog', { name: '类型定义与值示例' });
-        await expect(types.locator('.contract-type').first()).toBeVisible();
+        await expect(
+          types.locator('.studio-code-block [data-code-token="keyword"]').first(),
+        ).toBeVisible();
         await page.keyboard.press('Escape');
         await expect(types).toBeHidden();
       } else {
-        await expect(api.locator('.contract-type').first()).toBeVisible();
+        await expect(
+          api.locator('.studio-code-block code[data-language="typescript"]').first(),
+        ).toBeVisible();
         await expect(page.getByLabel('调用参数示例', { exact: true })).toBeVisible();
         await expect(page.getByLabel('返回值示例', { exact: true })).toBeVisible();
       }
       for (const width of [1440, 1024, 390]) {
         await page.setViewportSize({ width, height: 900 });
         const overflow = await page
-          .locator('.contract-signature, .contract-type, .contract-columns .table-scroll')
+          .locator('.studio-code-block, .contract-columns .table-scroll')
           .evaluateAll((nodes) =>
             nodes
               .filter((node) => node.scrollWidth > node.clientWidth + 1)
@@ -393,9 +435,11 @@ test('在 Studio 物料目录预览五项表单控件', async ({ page }) => {
     [
       'date-picker',
       async () => {
-        await preview.getByRole('button', { name: '打开日期日历' }).click();
+        await preview.getByRole('button', { name: '出生日期', exact: true }).click();
         await page.locator('[data-day="1990-06-16"] button').click();
-        await expect(preview.getByRole('textbox', { name: '出生日期' })).toHaveValue('1990-06-16');
+        await expect(preview.getByRole('button', { name: '出生日期', exact: true })).toHaveText(
+          '1990-06-16',
+        );
       },
     ],
     [
@@ -403,7 +447,15 @@ test('在 Studio 物料目录预览五项表单控件', async ({ page }) => {
       async () => {
         await preview.getByRole('button', { name: '选择日期', exact: true }).click();
         const range = page.getByRole('dialog', { name: '出行日期' });
-        await range.getByRole('button', { name: '打开开始日期日历' }).click();
+        const trigger = range.getByRole('button', { name: '打开开始日期日历' });
+        const bounds = await range.boundingBox();
+        await trigger.click();
+        await expect(range.getByRole('grid')).toBeVisible();
+        expect(await range.boundingBox()).toEqual(bounds);
+        await page.keyboard.press('Escape');
+        await expect(range.getByRole('grid')).toBeHidden();
+        await expect(trigger).toBeFocused();
+        await trigger.click();
         await range.locator('[data-day="2026-12-02"] button').click();
         await range.getByRole('button', { name: '确认日期' }).click();
         await expect(preview.getByText('2026-12-02', { exact: true })).toBeVisible();

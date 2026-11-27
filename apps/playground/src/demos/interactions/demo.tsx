@@ -14,7 +14,7 @@ export default function InteractionsVerification() {
     <main className="mx-auto max-w-3xl space-y-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">日期与城市</h1>
       <p>
-        单日期可输入或从日历选择，日期范围在确认后写入。搜索由本地 Host
+        单日期和日期范围都从日历浮层选择，日期范围在确认后写入。搜索由本地 Host
         返回，可手动制造成功、失败、空列表与迟到结果。
       </p>
       {session ? (

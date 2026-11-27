@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { chooseRangeDay } from './calendar';
 test('家庭出行：非法工作值、监护人、双 Profile、日期和城市贯通到有效提交', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -41,7 +42,7 @@ test('家庭出行：非法工作值、监护人、双 Profile、日期和城市
   );
   await page.getByRole('button', { name: '选择日期', exact: true }).click();
   const dates = page.getByRole('dialog', { name: '出行日期' });
-  await dates.getByRole('textbox', { name: '结束日期', exact: true }).fill('2028-03-01');
+  await chooseRangeDay(dates, '结束日期', '2028-03-01');
   await dates.getByRole('button', { name: '确认日期', exact: true }).click();
   await expect(snapshot).toContainText('"estimatedTotalMinor": 750');
   await page

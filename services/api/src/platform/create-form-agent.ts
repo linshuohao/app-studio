@@ -1,8 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createInterface } from 'node:readline';
 import { Readable } from 'node:stream';
 import {
   BadGatewayException,
+  UnauthorizedException,
   BadRequestException,
   ConflictException,
   NotFoundException,
@@ -29,7 +30,7 @@ export class AgentTurnFailure extends HttpException {
 }
 export type TurnStream = {
   traceId: string;
-  progress: (message: string) => void;
+  progress: (message: string, stage?: ComposePhase['stage']) => void;
   phase?: (value: ComposePhase) => void;
   text?: (delta: string) => void;
   resetText?: () => void;
@@ -40,6 +41,12 @@ export function serviceToken() {
   const token = process.env.AGENT_SERVICE_TOKEN;
   if (!token) throw new ServiceUnavailableException('CreateForm service is not configured');
   return token;
+}
+export function requireAgent(token?: string) {
+  const expected = Buffer.from(serviceToken());
+  const actual = Buffer.from(token ?? '');
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+    throw new UnauthorizedException();
 }
 export async function conversationRequest<T>(
   actor: { userId: string; spaceId: string },
@@ -108,7 +115,7 @@ export async function conversationRequest<T>(
         else if (event.type === 'understanding_reset') stream.reset();
         else if (event.type === 'text_delta' && typeof event.delta === 'string')
           stream.text?.(event.delta);
-        else if (event.type === 'progress') stream.progress(event.message);
+        else if (event.type === 'progress') stream.progress(event.message, event.stage);
         else if (event.type === 'compose_phase') {
           stream.phase?.({
             stage: event.stage,

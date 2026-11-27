@@ -34,13 +34,17 @@ from sqlalchemy.pool import NullPool
 from form_agent.business.conversations.model import (
     Message,
     Owner,
+    diagnostic_actions,
+    explain_draft_issues,
     fingerprint,
+    has_unmapped_deferrals,
     make_delivery,
     public_result,
     stable_id,
 )
 from form_agent.business.conversations.references import FormReference
 from form_agent.business.form_authoring.task_facts import FormAuthoringTaskFacts
+from form_agent.execution.journal import COMPILER_REPLAY_PREFIX
 from form_agent.integrations.protocol_store import DRIVER, connection_args
 
 metadata = MetaData()
@@ -166,7 +170,13 @@ class TurnJournal:
 
         return await self.write(lookup)
 
-    async def completed_repair_rounds(self) -> int:
+    async def completed_repair_rounds(self, compiler_scope: str = "") -> int:
+        key = journal_entries.c.step_key
+        scope = (
+            key.startswith(compiler_scope)
+            if compiler_scope
+            else ~key.startswith(COMPILER_REPLAY_PREFIX)
+        )
         return await self.write(
             lambda: self.conn.execute(
                 select(func.count())
@@ -175,7 +185,8 @@ class TurnJournal:
                     journal_entries.c.conversation_id == self.cid,
                     journal_entries.c.turn_id == self.tid,
                     journal_entries.c.kind == "result",
-                    journal_entries.c.step_key.endswith(":repair"),
+                    key.endswith(":repair"),
+                    scope,
                 )
             ).scalar_one()
         )
@@ -192,7 +203,7 @@ class TurnJournal:
     async def event(self, event):
         await self.write(lambda: self.append("public", None, event))
 
-    async def interrupt(self, reason):
+    async def interrupt(self, reason, *, trace_id=None, elapsed_ms=None):
         def save():
             changed = self.conn.execute(
                 update(turns)
@@ -204,7 +215,12 @@ class TurnJournal:
                 .values(status="failed")
             )
             if changed.rowcount:
-                self.append("public", None, {"type": "interruption", "reason": reason})
+                if elapsed_ms is not None:
+                    self.append("duration", None, {"elapsedMs": elapsed_ms})
+                event = {"type": "interruption", "reason": reason}
+                if trace_id is not None:
+                    event["traceId"] = trace_id
+                self.append("public", None, event)
 
         await self.write(save)
 
@@ -272,12 +288,24 @@ def view(row, history):
 
 
 def history_for(conn: Connection, cid: str, revision: int | None = None):
-    q = select(turns.c.public_turn).where(
+    q = select(turns.c.public_turn, turns.c.request["references"]).where(
         turns.c.conversation_id == cid, turns.c.status == "done"
     )
     if revision is not None:
         q = q.where(turns.c.revision <= revision)
-    return list(conn.execute(q.order_by(turns.c.revision)).scalars())
+    history = []
+    for turn, references in conn.execute(q.order_by(turns.c.revision)):
+        result = turn["result"]
+        if "diagnosticRepair" in result or "assetRepair" in result:
+            validated = diagnostic_actions(result, references)
+            result = {
+                k: v
+                for k, v in result.items()
+                if k not in ("diagnosticRepair", "assetRepair")
+            }
+            turn = {**turn, "result": {**result, **validated}}
+        history.append(turn)
+    return history
 
 
 def required(conn: Connection, cid: str, owner: Owner):
@@ -353,6 +381,8 @@ class ConversationStore:
         form: str | None = None,
         work: str | None = None,
         linked_draft: str | None = None,
+        *,
+        include_check_environment: bool = False,
     ):
         def query(conn):
             row = required(conn, cid, owner)
@@ -366,25 +396,49 @@ class ConversationStore:
                     and row["task"].get("draft_id") == linked_draft
                 ):
                     raise MissingConversation()
-            return self.detail(conn, row)
+            return self.detail(
+                conn, row, include_check_environment=include_check_environment
+            )
 
         return await self.read(query)
 
-    def detail(self, conn, row):
+    def detail(self, conn, row, *, include_check_environment=False):
         cid = row["id"]
         detail = view(row, history_for(conn, cid, row["revision"]))
+        legacy_turns = {
+            turn["turnId"]: turn
+            for turn in detail["turns"]
+            if has_unmapped_deferrals(turn["result"])
+        }
+        if legacy_turns:
+            for turn_id, trace in conn.execute(
+                select(
+                    turns.c.turn_id, turns.c.private_result["requirements_trace"]
+                ).where(
+                    turns.c.conversation_id == cid, turns.c.turn_id.in_(legacy_turns)
+                )
+            ):
+                turn = legacy_turns[turn_id]
+                turn["result"] = explain_draft_issues(turn["result"], trace)
         events = {}
         interruptions = {}
-        for tid, event in conn.execute(
-            select(journal_entries.c.turn_id, journal_entries.c.payload)
+        elapsed = {}
+        for tid, kind, event in conn.execute(
+            select(
+                journal_entries.c.turn_id,
+                journal_entries.c.kind,
+                journal_entries.c.payload,
+            )
             .where(
                 journal_entries.c.conversation_id == cid,
-                journal_entries.c.kind == "public",
+                journal_entries.c.kind.in_(("public", "duration")),
             )
             .order_by(journal_entries.c.id)
         ):
-            if event["type"] == "interruption":
-                interruptions[tid] = event["reason"]
+            if kind == "duration":
+                elapsed[tid] = elapsed.get(tid, 0) + event["elapsedMs"]
+            elif event["type"] == "interruption":
+                interruptions[tid] = event
             else:
                 events.setdefault(tid, []).append(event)
         attempts = []
@@ -393,7 +447,7 @@ class ConversationStore:
             .where(turns.c.conversation_id == cid)
             .order_by(turns.c.revision, turns.c.turn_id)
         ):
-            if status == "done" and tid not in events:
+            if status == "done" and tid not in events and tid not in elapsed:
                 continue
             if status == "running" and conn.dialect.name == "postgresql":
                 idle = conn.execute(
@@ -411,8 +465,9 @@ class ConversationStore:
                 if idle:
                     status = "interrupted"
             interrupted = status in ("interrupted", "failed")
+            interruption = interruptions.get(tid, {}) if status == "failed" else {}
             reason = (
-                interruptions.get(tid, "执行进程已结束，未留下具体原因。")
+                interruption.get("reason", "执行进程已结束，未留下具体原因。")
                 if status == "failed"
                 else "执行进程已停止，未留下结束记录。"
             )
@@ -438,9 +493,19 @@ class ConversationStore:
                     "status": "interrupted" if interrupted else status,
                     "resumable": interrupted and req.get("revision") == row["revision"],
                     **({"interruptionReason": reason} if interrupted else {}),
+                    **({"elapsedMs": elapsed[tid]} if tid in elapsed else {}),
+                    **(
+                        {"interruptionTraceId": interruption["traceId"]}
+                        if "traceId" in interruption
+                        else {}
+                    ),
                     "events": events.get(tid, []),
                 }
             )
+            if include_check_environment:
+                environment = (req.get("context") or {}).get("check_environment")
+                if isinstance(environment, str):
+                    attempts[-1]["checkEnvironment"] = environment
         detail["attempts"] = attempts
         return detail
 
@@ -544,7 +609,12 @@ class ConversationStore:
             await db_step(remove)
 
     def prepare(
-        self, conn: Connection, cid: str, owner: Owner, message: Message
+        self,
+        conn: Connection,
+        cid: str,
+        owner: Owner,
+        message: Message,
+        check_environment: str | None = None,
     ) -> dict[str, Any]:
         tid = str(message.turnId)
         request = message.model_dump(mode="json", exclude_none=True)
@@ -610,7 +680,7 @@ class ConversationStore:
                         id=cid,
                         user_id=owner.user,
                         space_id=owner.space,
-                        title=message.message.strip()[:60],
+                        title="新对话",
                         revision=0,
                         task={},
                         form_id=message.context.formId,
@@ -625,7 +695,7 @@ class ConversationStore:
                     raise ConversationConflict("Turn key reused with different input")
                 if record["status"] == "done":
                     return {"replay": self.envelope(conn, row, record["delivery"])}
-                # Retries use the original execution context and input checkpoint.
+                # Resume uses the original user input and pinned draft.
                 message = Message.model_validate(record["request"])
             if (
                 row["form_id"] != message.context.formId
@@ -682,9 +752,27 @@ class ConversationStore:
                 )
             ):
                 raise ConversationConflict("Open the bound draft to request changes")
+            compiler_scope = ""
+            if (
+                check_environment
+                and check_environment != message.context.check_environment
+            ):
+                compiler_scope = (
+                    COMPILER_REPLAY_PREFIX + fingerprint(check_environment) + ":"
+                )
+                message = message.model_copy(
+                    update={
+                        "context": message.context.model_copy(
+                            update={"check_environment": check_environment}
+                        )
+                    }
+                )
             return {
+                "compiler_scope": compiler_scope,
                 "message": message,
                 "facts": facts,
+                "generate_conversation_title": row["revision"] == 0
+                and row["title"] == "新对话",
                 "input": facts.graph_input(cid, message, history_for(conn, cid)),
             }
 
@@ -703,6 +791,8 @@ class ConversationStore:
         facts: FormAuthoringTaskFacts,
         base: str | None,
         result: dict,
+        elapsed_ms: int | None = None,
+        suggested_title: str | None = None,
     ):
         revision = message.revision + 1
         tid = str(message.turnId)
@@ -714,7 +804,7 @@ class ConversationStore:
             "createdAt": committed_at.isoformat(),
             "turnId": tid,
             "message": message.message,
-            "result": public_result(result),
+            "result": public_result(result, message.references),
         }
         if message.references:
             public["references"] = [
@@ -775,6 +865,8 @@ class ConversationStore:
                 ):
                     delivery = latest
             journal = TurnJournal(conn, cid, tid)
+            if elapsed_ms is not None:
+                journal.append("duration", None, {"elapsedMs": elapsed_ms})
             batches = reply_batches(result)
             chunks = []
             for event in conn.execute(
@@ -819,6 +911,13 @@ class ConversationStore:
                 .where(owned(cid, owner))
                 .values(
                     revision=revision,
+                    title=(
+                        suggested_title
+                        if message.revision == 0
+                        and row["title"] == "新对话"
+                        and suggested_title
+                        else row["title"]
+                    ),
                     task=facts.model_dump(mode="json", exclude_none=True),
                     updated_at=committed_at,
                 )

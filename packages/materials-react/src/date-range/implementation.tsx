@@ -6,9 +6,7 @@ import {
   defineMaterialContract,
   useMaterialAdapter,
 } from '@form-engine/renderer-react';
-import { Button } from '@base-ui/react/button';
-import { Calendar } from '../_internal/shadcn/calendar.js';
-import { CalendarIcon, DateTextInput } from '../_internal/shadcn/date-controls.js';
+import { CalendarTrigger } from '../_internal/shadcn/date-controls.js';
 import { Modal } from '../_internal/modal.js';
 import { ValidationMessages } from '../_internal/validation-messages.js';
 import { draftText, displayDate, isDate } from '../_internal/date.js';
@@ -38,7 +36,7 @@ interface Draft {
 }
 function validateStart(value: string, { startMin, startMax }: DateRangeProps) {
   if (value === '') return undefined;
-  if (!isDate(value)) return '请输入有效公历日期（YYYY-MM-DD）';
+  if (!isDate(value)) return '请选择有效公历日期';
   if (startMin && value < startMin) return `开始日期不得早于 ${startMin}`;
   if (startMax && value > startMax) return `开始日期不得晚于 ${startMax}`;
   return undefined;
@@ -56,7 +54,6 @@ export function DateRange() {
     baseStart: start,
     baseEnd: end,
   });
-  const calendarTrigger = useRef<HTMLButtonElement>(null);
   const [calendar, setCalendar] = useState<'start' | 'end' | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null),
     [notice, setNotice] = useState<string | null>(null),
@@ -96,7 +93,7 @@ export function DateRange() {
     if (!draft || p.disabled) return;
     const invalid = {
       start: validateStart(draft.start, p),
-      end: draft.end !== '' && !isDate(draft.end) ? '请输入有效公历日期（YYYY-MM-DD）' : undefined,
+      end: draft.end !== '' && !isDate(draft.end) ? '请选择有效公历日期' : undefined,
     };
     setErrors(invalid);
     if (invalid.start || invalid.end) return;
@@ -116,6 +113,10 @@ export function DateRange() {
     }
     close();
   };
+  function updateDraft(name: 'start' | 'end', value: string) {
+    setDraft((current) => current && { ...current, [name]: value });
+    setErrors((current) => ({ ...current, [name]: undefined }));
+  }
   const startLabel = p.startLabel ?? '开始日期',
     endLabel = p.endLabel ?? '结束日期';
   return (
@@ -176,34 +177,25 @@ export function DateRange() {
                   <label htmlFor={`${id}-${name}`}>
                     {name === 'start' ? startLabel : endLabel}
                   </label>
-                  <div className="fe-date-input">
-                    <DateTextInput
-                      id={`${id}-${name}`}
-                      value={draft[name]}
-                      disabled={p.disabled}
-                      aria-invalid={Boolean(errors[name])}
-                      aria-describedby={errors[name] ? `${id}-${name}-error` : undefined}
-                      onChange={(event) => {
-                        setDraft({ ...draft, [name]: event.currentTarget.value });
-                        setErrors({ ...errors, [name]: undefined });
-                      }}
-                    />
-                    <Button
-                      className="fe-button fe-date-trigger"
-                      disabled={p.disabled}
-                      aria-label={`打开${name === 'start' ? startLabel : endLabel}日历`}
-                      aria-expanded={calendar === name && !p.disabled}
-                      aria-controls={
-                        calendar === name && !p.disabled ? `${id}-calendar` : undefined
-                      }
-                      onClick={(event) => {
-                        calendarTrigger.current = event.currentTarget;
-                        setCalendar(calendar === name ? null : name);
-                      }}
-                    >
-                      <CalendarIcon />
-                    </Button>
-                  </div>
+                  <CalendarTrigger
+                    label={`${name === 'start' ? startLabel : endLabel}日历`}
+                    triggerProps={{
+                      id: `${id}-${name}`,
+                      'aria-label': `打开${name === 'start' ? startLabel : endLabel}日历`,
+                      'aria-invalid': Boolean(errors[name]),
+                      'aria-describedby': errors[name] ? `${id}-${name}-error` : undefined,
+                    }}
+                    disabled={p.disabled}
+                    value={draft[name]}
+                    min={name === 'start' ? p.startMin : undefined}
+                    max={name === 'start' ? p.startMax : undefined}
+                    open={calendar === name}
+                    onOpenChange={(next) =>
+                      setCalendar((current) => (next ? name : current === name ? null : current))
+                    }
+                    onSelect={(value) => updateDraft(name, value)}
+                    onClear={draft[name] ? () => updateDraft(name, '') : undefined}
+                  />
                   {errors[name] ? (
                     <p id={`${id}-${name}-error`} className="fe-feedback">
                       {errors[name]}
@@ -212,23 +204,6 @@ export function DateRange() {
                 </div>
               ))}
             </div>
-            {calendar && !p.disabled && (
-              <div id={`${id}-calendar`} className="fe-range-calendar">
-                <Calendar
-                  key={calendar}
-                  focusOnOpen
-                  value={draft[calendar]}
-                  min={calendar === 'start' ? p.startMin : undefined}
-                  max={calendar === 'start' ? p.startMax : undefined}
-                  onSelect={(value) => {
-                    setDraft({ ...draft, [calendar]: value });
-                    setErrors({ ...errors, [calendar]: undefined });
-                    setCalendar(null);
-                    calendarTrigger.current?.focus();
-                  }}
-                />
-              </div>
-            )}
             {notice ? (
               <p role="status" className="fe-help">
                 {notice}

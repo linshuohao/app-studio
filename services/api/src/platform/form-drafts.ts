@@ -447,6 +447,7 @@ export class PlatformDrafts {
           `UPDATE platform_form_drafts SET candidate_text=$2,candidate_base_text=$3,candidate_digest=$4,
         source_revision=$5,revision=revision+$6,draft_issues=$7,
         applied_draft_issues=CASE
+          WHEN applied_digest=$4 AND working_text=$2 THEN $7::jsonb
           WHEN applied_digest=$4 AND $7::jsonb <> '[]'::jsonb THEN (
             SELECT jsonb_agg(DISTINCT item)
             FROM jsonb_array_elements(applied_draft_issues || $7::jsonb) AS issues(item)
@@ -498,11 +499,8 @@ export class PlatformDrafts {
       throw new ConflictException('请先对比并应用最新候选');
     return body.workingText === undefined ? row.text : configText(body.workingText);
   }
-  async preview(token: string | undefined, id: string, body: DraftAction): Promise<DraftPreview> {
-    const row = await this.get(token, id);
-    const text = this.text(row, body);
-    if (row.formId) throw new ConflictException();
-    const target = previewInputs(this.builds, body.profile).target;
+  private checkDraftText(text: string, profile: unknown) {
+    const target = previewInputs(this.builds, profile).target;
     const bindings = reviseAssetBindings(this.builds.assets, text, [], []);
     const { catalog, selections } = captureAssetBindings(
       this.builds.assets,
@@ -511,6 +509,21 @@ export class PlatformDrafts {
       bindings,
     );
     const result = checkAssetBindings(text, catalog, target, selections, true);
+    return { bindings, result };
+  }
+  async inspect(
+    token: string | undefined,
+    id: string,
+    body: { text?: unknown; profile?: unknown },
+  ) {
+    await this.get(token, id);
+    return this.checkDraftText(configText(body?.text), body?.profile).result;
+  }
+  async preview(token: string | undefined, id: string, body: DraftAction): Promise<DraftPreview> {
+    const row = await this.get(token, id);
+    const text = this.text(row, body);
+    if (row.formId) throw new ConflictException();
+    const { result, bindings } = this.checkDraftText(text, body.profile);
     if (!result.success)
       throw new BadRequestException({
         message: '工作稿未通过编译',

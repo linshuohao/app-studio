@@ -1499,3 +1499,9 @@ A2UI 定义声明式 UI 消息、Catalog 与渐进更新，不能直接视作本
 初次讨论提出以 PostgreSQL 查错误事件，并将允许集中上传的复现现场放入私有对象存储。用户收敛首期范围，完整现场留 Host，Platform 只接收脱敏事件。审阅采集链路、表结构、查询和保留方案后，用户确认受信 Host 转发、管理员查看、平台事件 30 天、Host 现场默认 7 天、上报最多重试 24 小时。见 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md)和[现行专题](platform-studio.md#platform-diagnostic-events)。此次授权限于归档。
 
 同日审阅 Runtime / Renderer 上报映射后，用户确认按[白名单](platform-studio.md#platform-diagnostic-mapping)执行。原先示例 Host 的后缀筛选未覆盖 `flush.aborted`，首期方案采用精确事件匹配并合并双诊断出口重复条目。Schema 异常、Validator 缺注册和 Reaction 叶命令异常留 Host，Renderer 现场以现有回调字段为限。作为 ADR-FE-034 的增量归档。
+
+## 2026-11-25：错误中心与 Agent 辅助修复联合推进 {#diagnostics-evolution-confirmed}
+
+用户确认先归档[整体阶段蓝图](architecture.md#blueprint-diagnostics-evolution)，优先联合设计错误接入和修复。现有 Trace 已历经多次迭代，先复核采集证据与关联能力，再设计 Host 上报时机、中心端校验清洗、Studio 查询及 Agent 分流。用户明确范围是表单错误，业务配置需要业务方判断、确定性配置缺陷可进行修复、物料或纯函数走工程修复。知识和 PRD 生成经验回流保留在后续阶段。本轮归档和草案讨论不改变 [ADR-FE-034](decisions/ADR-FE-034-platform-diagnostic-events.md) 的接收边界或赋予生产写入权限。
+
+同一专题随后确认中心保留原始错误现场、后端聚合、单次错误引用和独立修复 Graph。首期 Agent 侧原始值只交给复现工具。现行生效范围见 [ADR-FE-039](decisions/ADR-FE-039-form-error-evidence.md)。

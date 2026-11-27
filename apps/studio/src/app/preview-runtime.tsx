@@ -1,17 +1,18 @@
 'use client';
 
+import { addPreviewExpense } from './host/expense-preview';
 import { checkPassportDuplicates, travelPassportValidator } from './host/passport-validator';
 import { projectUnderwritingSubmission } from './host/underwriting-projection';
 import { travelEligibilityValidator } from './host/validator-registration';
 import { remoteSelectRequests } from '@form-engine/materials-react';
-import { webAssetCompatibility, type ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
+import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import type { JsonValue } from '@form-engine/protocol';
 import { defineHostRequests, FormRenderer } from '@form-engine/renderer-react';
 import { type FormRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { goldenData } from '../../../playground/src/demos/travel/policy';
 import { previewWebCapabilities } from './host/available-capabilities';
-import { resolveWebCapabilities, type WebCapabilities } from './host/resolve-capabilities';
+import { resolvePreparedWebCapabilities, type WebCapabilities } from './host/resolve-capabilities';
 
 function simulate<T>(value: T) {
   let settle: (value: T) => void;
@@ -111,6 +112,9 @@ export function PreviewRuntime({
           'travel.saveDraft': () => show('模拟保存草稿完成。'),
           'travel.submit': () => submit(false),
           'travel.previewUnderwritingSubmit': () => submit(true),
+          'business.addExpense': () => {
+            if (active && instance) show(addPreviewExpense(instance));
+          },
         },
       };
       const requirements = prepared.hostRequirements;
@@ -133,14 +137,12 @@ export function PreviewRuntime({
       }
       setSession(undefined);
       try {
-        const compatibility = webAssetCompatibility(prepared);
-        if (compatibility) throw new Error(compatibility.message);
         const {
           materials,
           functions,
           runtime: engine,
-        } = await resolveWebCapabilities(
-          prepared.capabilityLock,
+        } = await resolvePreparedWebCapabilities(
+          prepared,
           capabilities ? [capabilities] : previewWebCapabilities,
         );
         if (!active) return;

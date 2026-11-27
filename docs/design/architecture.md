@@ -52,7 +52,45 @@ reading_next: MAP-CAPABILITIES
 
 # 整体架构设计
 
-这是一个面向复杂动态表单与数据录入的声明式引擎。先看系统怎样分层、各层如何协作，再沿[能力图谱](capability-map.md)进入具体设计。当前仍处于设计讨论与规范细化阶段，已有共识、候选机制与未决问题分别标明。
+Assemble Studio 以声明式引擎承载复杂表单的创作、发布和填写。先从现有系统了解应用与引擎如何协作，再沿[能力图谱](capability-map.md)进入分层与跨层机制。已实现的行为、建设蓝图与待验收项以各主题及[治理进展](governance.md#layer-progress)为准。
+
+第一次阅读可以从[项目手册](handbook/README.md)沿旅险表单了解架构、编辑和开发流程。
+
+## 现有系统一览 {#current-system}
+
+按「创作 → 发布 → 运行」阅读这张图。创作侧编辑的是定义，发布侧交付的是锁定能力版本的准备制品，运行侧处理的是某一次填写的数据。
+
+```diagram
+{
+  "id": "figure-current-system",
+  "title": "现有系统的三段交接",
+  "rows": [
+    [{"title": "Studio · 可视化创作", "body": "编辑定义、检查诊断、预览与确认发布"}, {"title": "Agent · 辅助创作", "body": "理解需求、生成候选、编译检查与修复，候选交付到平台草稿"}],
+    [{"title": "Platform API · 创作与发布", "body": "授权、保存草稿与版本；用 Compiler 和 Catalog 检查确定定义，发布不可变制品", "major": true}],
+    [{"title": "Host · 装载与提交", "body": "按 releaseId 获取制品，注册物料、纯函数与业务能力"}, {"title": "Runtime + React Renderer", "body": "用 Prepared 和初始数据创建实例，经物料交互与订阅更新表单"}]
+  ],
+  "arrows": ["保存定义或交付候选", "发布制品与接入要求"],
+  "note": "图示的是交付链。Studio 试填在浏览器复用 Runtime 和 Renderer；Playground 也可直接装配引擎与示例 Host。"
+}
+```
+
+| 代码位置 | 当前组成与状态归属 |
+| --- | --- |
+| `apps/studio` | Next.js 创作与管理应用。持有当前编辑会话的选择、暂存和撤销，包含受控试填及按发布版本装载的示例 Host。 |
+| `services/api` | NestJS 平台服务。持有权限、表单、已交付草稿、版本和发布记录，复用 Compiler。 |
+| `services/agent` | Python / FastAPI 服务。持有会话、轮次、生成候选与执行恢复记录，通过受权接口同 Platform 协作。 |
+| `packages/` | Protocol、Compiler、Runtime 和 React Renderer，以及物料、纯函数和 DevTools。Studio Design 也在此维护，服务于创作界面。 |
+| `apps/playground` | 开发者参考应用。用可控 Host 重现字段、联动、重复项及诊断。 |
+
+平台与 Agent 的数据库归属见[会话与平台草稿](platform-studio.md#agent-conversation-draft-ownership)。真实业务 Host、跨端与生产验收的状态见[治理进展](governance.md#layer-progress)。
+
+| 读者的问题 | 入口 |
+| --- | --- |
+| 每层拥有什么状态，怎样协作？ | [四层职责与横向机制](capability-map.md#vertical-capabilities) |
+| 用户改一个成员年龄，联动和校验怎样推进？ | [旅险运行链](#flow)与[Runtime 调度全景](l3-reactive-engine.md#runtime-overview) |
+| 字段、布局、联动、校验与 JSON 怎样共享草稿？ | [Studio 可视化编辑](platform-studio.md#studio-visual-editing-boundary) |
+| Agent 怎样从需求走到候选交付？ | [统一助手 Graph](platform-studio.md#agent-turn-graph)与[分阶段生成](platform-agent-compose.md) |
+| 怎样新增物料或纯函数？ | [资产开发实战](usage-guide.md#usage-asset-development) |
 
 ## 整体产品与建设蓝图（分项确认） {#product-blueprint}
 
@@ -201,7 +239,19 @@ flowchart LR
 
 Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处置逐步展开。分析须区分事实、推断与证据缺失；发布、回滚、业务重试等动作沿用既有权限与执行流程，纳入规划不等于授权自动操作生产。Agent 的工具调用、变更与结果本身也需要观测和审计。具体自动化范围与人工交接策略后续确认。
 
-**建设节奏：**完整监控、告警聚合、问题治理入口以及 Agent 诊断 / 修复 / 自动处置可后续分阶段建设，不要求首个纵切具备完整运维平台。已有错误隔离、必要诊断与 Host 错误报告要求继续有效；首期按核心契约提供必要出口，具体采集接口随模块契约固化。现有 Trace 的预算、截断、敏感数据限制与复现边界保持不变，不能因 Agent 分析而默认长期保存全部填写数据。详见 [L3 诊断与 Trace](l3-observability.md)。
+已有错误隔离、必要诊断与 Host 错误报告要求继续有效。现有 Trace 的预算、截断、敏感数据限制与复现边界继续约束问题调查，原始诊断现场沿用已确认的错误上报和访问边界。详见 [L3 诊断与 Trace](l3-observability.md)。
+
+#### 运维与创作演进的建设顺序 {#blueprint-diagnostics-evolution}
+
+2026-11-25 用户确认优先设计两项相连的能力，以一条链路验证表单错误从发生、上报到定位和修复。源于[本轮确认](source-map.md#src-diagnostics-evolution)。
+
+| 顺序 | 能力与交付方向 |
+| --- | --- |
+| 1 · 表单错误中心 | 复核现有 Runtime / Renderer Trace、现场采集和 Host 接入。Host 上报 SDK 负责错误采集到受信转发之间的时机和交付；Platform 在现有 PostgreSQL 里接收、校验并分别存储错误索引与原始现场；Studio 展示发布、错误位置和现场引用。范围限于表单执行和呈现错误，常规填表反馈、页面级错误及全量运行日志分别沿用各自渠道。后端设计按低量结构化事件规划。 |
+| 2 · 基于错误的 Agent 辅助定位与修复 | 与错误中心共同验收。Agent 根据发布与证据定位问题。业务规则或口径需要业务方判断；可证实的配置缺陷进入可验证的配置修复；物料或纯函数缺陷进入代码修复、PR、人审和版本交付。合并、发布和旧发布精确装载继续沿用[资产版本契约](extension-integration.md#first-assets-organization)。 |
+| 后续 · 经验回流和创作提效 | 从验证过的问题形成可检索案例和回归样本；从已验收的 PRD 生成过程沉淀确认后的需求、可复用片段与业务断言。受权限、来源和版本约束的复用用于减少重复诊断与生成，实际收益由同基线评测衡量。主动发现、跨表单复用和更高自动化程度分阶段展开。 |
+
+首期原始现场只供授权维护者和复现工具，Agent 模型读取结构化证据与复现结果。按[错误事件契约](platform-studio.md#platform-diagnostic-events)先落地上报、聚合与下钻，再接入错误引用及独立修复 Graph。
 
 ### 建设顺序与成果（建议） {#blueprint-roadmap}
 
@@ -258,7 +308,7 @@ Agent 的候选能力按只读诊断、生成修复候选 / 验证、受控处�
 | 核心与 Host 首个纵切 | 整合必要契约，按库组织并贯穿实现四层、基础能力与业务接入 | 一个真实场景从定义到提交可运行，关键失败路径有验证 |
 | 最小平台闭环 | 将已验证能力纳入资产、构建与发布治理 | 可复用、可追踪、可回滚地交付表单 |
 | 创作体验深化 | 从最小编辑 / 预览发展 Studio | 作者高效完成编辑、诊断、预览与交付 |
-| 运行保障深化（可后置） | 监控告警、问题处理闭环及 Agent 辅助，按场景集成或建设 | 问题可定位、处置可追踪、恢复可验证；不作为核心纵切前置 |
+| 运行保障深化 | 先联合设计[表单错误中心与 Agent 辅助修复](#blueprint-diagnostics-evolution)，再推进监控告警、经验回流和更高自动化程度 | 问题可定位、处置可追踪、恢复可验证；不作为核心纵切前置 |
 | Agent 场景落地 | 选择有价值场景，决定集成 / 自建及配套治理 | 一个辅助工作流产生可检查结果，再逐步扩展 |
 
 这是价值与依赖顺序，不要求上一阶段全部结束才允许下一阶段探索。预览和诊断从首个纵切就需要，完整 Studio 可后续深化；Agent 蓝图与首期已确认，当前仅归档，具体范围见 Agent 专题。不等所有库全部完成才接 Host。首期已选 Web/TS + React 及六包目录；具体业务场景、公共 API、存储与部署后续确定；工具组合与初始化流程已在[工程方案](engineering.md)确认并完成工程底座本地验证。
@@ -467,7 +517,7 @@ Platform API 的业务元数据与不可变制品分别拥有存储边界。业�
 
 ### 4. 已建立的目录与后续预留 {#project-directory}
 
-采用浅层组织：TS 包直接位于 packages，未来 Dart / Flutter 位于同级 packages-flutter，不增加 ts / web / flutter 的统一嵌套层。packages 中的 Compiler、Runtime、Protocol、纯函数也可供 CLI / 服务端使用，目录不限制其运行环境。
+采用浅层组织：TS 包直接位于 packages，未来 Dart / Flutter 位于同级 packages-flutter，不增加 ts / web / flutter 的统一嵌套层。packages 中的 Compiler、Runtime、Protocol、纯函数也可供 CLI / 服务端使用，目录不限制其运行环境。下图记录初始交付的目录与预留，当前应用、服务与包的关系见[现有系统一览](#current-system)。
 
 ```text
 项目根目录/
@@ -555,6 +605,13 @@ TS Runtime 与 React Renderer 完成本期实现；未来 Dart Runtime 遵守同
 | Pure Function Catalog | 如何统一检查和绑定内置、领域纯计算能力？ | L2、Runtime、能力开发者 |
 | Host | 如何连接请求、业务与服务端权威状态？ | 宿主应用、业务服务、自定义物料 |
 | Tooling | 如何配置、诊断、验证、调试和发布？ | 配置者、开发者、交付团队 |
+
+| 核心层 | 主要模块 | 交接物 |
+| --- | --- | --- |
+| L1 | `definition` 声明数据、引用、规则和视图；`capability` 定义能力契约；`prepared` 定义编译后结构。 | [Definition 和协议主题](l1/README.md) |
+| L2 | `pipeline` 接收输入并编排分析；`analysis`、`rules`、`view` 检查引用、表达式、规则和目标视图；`output` 组装制品。 | [PreparedForm、诊断与能力锁](l2-preparation.md#l2-compile) |
+| L3 | `data`、`scope` 保存数据和身份；`commands`、`observation`、`reactions` 推动变化；`validation` 管理校验任务与结果。 | [快照、命令、订阅和校验](l3-reactive-engine.md#runtime) |
+| L4 | `renderer`、`composition` 组装视图；`adapter`、`requests` 连接绑定、局部交互和 Host 请求。 | [物料装配、订阅与释放](l4-renderer.md#renderer) |
 
 **状态归属只有一个权威源。**每个 Form Instance 只有一份 Working Data。Renderer 不保存第二份权威业务数据，也不另行解释业务规则。
 

@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/manifests.ts'],
+  entry: ['src/index.ts', 'src/manifests.ts', 'src/web-asset-compatibility.ts'],
   copy: ['src/styles.css'],
   format: 'esm',
   platform: 'neutral',

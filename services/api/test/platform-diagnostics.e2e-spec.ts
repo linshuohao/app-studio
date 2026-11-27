@@ -184,7 +184,7 @@ it('deduplicates delivery, groups actual occurrences, and restricts raw evidence
       turnId,
       references: [{ kind: 'diagnostic', diagnosticId: first.diagnosticId }],
     };
-    const upstream = vi.fn(async () =>
+    const upstream = vi.fn(async (_url: URL, _options?: RequestInit) =>
       Response.json({
         id: conversationId,
         turns: [turn],
@@ -195,10 +195,47 @@ it('deduplicates delivery, groups actual occurrences, and restricts raw evidence
     try {
       const path = '/api/platform/agent-conversations/' + conversationId;
       await http.get(path).set('Cookie', cookies.get('admin')!).expect(200);
-      await db.execute('UPDATE platform_member_roles SET role=$1 WHERE member_id=$2', [
-        'editor',
-        'admin',
-      ]);
+      const followUpId = randomUUID();
+      const privateMessage = '诊断历史中的受限信息';
+      const followUpConversation = {
+        id: conversationId,
+        turns: [turn, { turnId: followUpId, result: { kind: 'answer', message: privateMessage } }],
+      };
+      upstream.mockImplementationOnce(async () =>
+        Response.json({ id: conversationId, turns: [turn] }),
+      );
+      let agentAccept: string | null = null;
+      upstream.mockImplementationOnce(async (_url: URL, options?: RequestInit) => {
+        const headers = new Headers(options?.headers);
+        agentAccept = headers.get('Accept');
+        await db.execute('UPDATE platform_member_roles SET role=$1 WHERE member_id=$2', [
+          'editor',
+          'admin',
+        ]);
+        if (agentAccept === 'application/x-ndjson') {
+          const traceId = headers.get('X-Trace-Id');
+          return new Response(
+            [
+              { type: 'text_delta', traceId, delta: privateMessage },
+              { type: 'result', traceId, result: { conversation: followUpConversation } },
+            ]
+              .map((entry) => JSON.stringify(entry))
+              .join('\n') + '\n',
+            { headers: { 'Content-Type': 'application/x-ndjson' } },
+          );
+        }
+        return Response.json({ conversation: followUpConversation });
+      });
+      const blockedStream = await http
+        .post(path + '/turns')
+        .set('Cookie', cookies.get('admin')!)
+        .set('Origin', origin)
+        .set('Accept', 'text/event-stream')
+        .send({ turnId: followUpId, revision: 1, message: '解释一下之前的结果' })
+        .expect(200);
+      expect(agentAccept).toBeNull();
+      expect(blockedStream.text).not.toContain(privateMessage);
+      expect(blockedStream.text).toContain('"type":"data-failure","data":403');
       await http.get(path).set('Cookie', cookies.get('admin')!).expect(403);
       await http
         .post(path + '/turns/' + turnId + '/resume')
@@ -211,7 +248,18 @@ it('deduplicates delivery, groups actual occurrences, and restricts raw evidence
         .set('Origin', origin)
         .send({ turnId: randomUUID(), revision: 1, message: '继续分析' })
         .expect(403);
-      expect(upstream).toHaveBeenCalledTimes(4);
+      const delivery = path + '/deliveries/' + followUpId;
+      await http.get(delivery).set('Cookie', cookies.get('admin')!).expect(403);
+      await http
+        .get(delivery + '/integration')
+        .set('Cookie', cookies.get('admin')!)
+        .expect(403);
+      await http
+        .post(delivery + '/receive')
+        .set('Cookie', cookies.get('admin')!)
+        .set('Origin', origin)
+        .expect(403);
+      expect(upstream).toHaveBeenCalledTimes(9);
     } finally {
       vi.unstubAllGlobals();
     }

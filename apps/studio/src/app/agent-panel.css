@@ -243,6 +243,9 @@
 .agent-message > .agent-interaction-card {
   margin-block: 0;
 }
+.agent-message > * + .agent-interaction-card {
+  margin-block-start: var(--studio-space-12);
+}
 .agent-message-actions {
   display: flex;
   align-items: center;
@@ -472,7 +475,8 @@
   overflow: visible;
   overflow-wrap: anywhere;
 }
-.agent-thread[data-floating] .agent-history :is(pre, code) {
+.agent-thread[data-floating] .agent-history pre:not(.studio-code-block),
+.agent-thread[data-floating] .agent-history code:not(.studio-code-block > code) {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

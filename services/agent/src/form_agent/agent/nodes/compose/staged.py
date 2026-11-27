@@ -372,9 +372,16 @@ async def schema_stage(
             "belong in the view. Compiler binding proof accepts this form. "
             "Use explicit object/null anyOf branches for nullable objects. A label, visibility, UI, "
             "missing default, Host action and data mutation never belong in remaining_validation. "
+            "Keep local field and uniqueness checks independent of any missing production Host. "
+            "Whole-row uniqueItems does not enforce uniqueness of one property across rows; "
+            "send such checks to remaining_validation. Keep Host-owned quote and response "
+            "lifecycle out of editable data unless a sourced local rule needs that data. "
             "When a sourced default or initial member is required, define the JSON Schema "
             "default on the owning property; Runtime fills it on initialization. Read view_facts "
-            "for explicitly sourced first-render behavior. For a fixed self roster initialize "
+            "for explicitly sourced first-render behavior. For an editable array that must exist "
+            "before its first array.insert, use a property default of [] unless an initial row "
+            "is required; minItems validates count and does not fabricate rows. "
+            "For a fixed self roster initialize "
             "the roster property with one self marker; do not duplicate the applicant identity "
             "in Working Data. A tolerant field pattern can validate the trimmed interpretation "
             "of an email using optional leading/trailing whitespace. Forbid internal whitespace. "
@@ -477,7 +484,11 @@ async def catalog_stage(model, standard, context, query):
         model,
         CapabilitySelection,
         "Select real material and pure_function IDs for these requirements. Include compatible "
-        "view containers, conditional layout and controls. Never invent IDs.",
+        "view containers, conditional layout and controls. If listed, select date.inclusiveDays "
+        "for strict single-date or date-range validation, array.countNormalizedText for "
+        "trimmed case-insensitive duplicate checks (including canonical text identifiers such "
+        "as member IDs when their comparison is compatible), and array.sumProducts for summing quantity "
+        "times unit price over all rows when those behaviors are required. Never invent IDs.",
         {
             "requirements": [req.behavior for req in standard.requirements],
             "available": available,
@@ -787,7 +798,12 @@ async def generate_fragment(
             "ID, the exact dependency and the preview limit in deferred. A production Host "
             "requirement with no local configuration may be deferred without a coverage pointer. "
             "View and Validation may record production-only gaps where no target request exists. Do not "
-            "invent a Host name or store its verdict in user data. Missing required local "
+            "invent a Host name or store its verdict in user data. Missing production Host values "
+            "or implementations are never fragment blockers. Build local controls, validation "
+            "and reactions with the target catalog, and list Host-owned effects separately in deferred. "
+            "If the input names a missing quote, cancellation or ID allocation service, retain "
+            "the editable form and local safeguards. Do not simulate a successful remote result. "
+            "Missing required local "
             "material/function or unproven implementation is a blocker. Complete the locally "
             "supported part before deferring a specifically identified production dependency. "
             "For a validation needing an unavailable Host input, map the local field or rule "
@@ -797,11 +813,29 @@ async def generate_fragment(
             "verification service; preserve the stated eligibility and format. "
             "In the view use declared button events with protocol array commands when a specialized "
             "list material lacks controls, and check property-level Schema defaults before reporting "
-            "missing startup data. Shared edit bindings and validation reads are owned by their "
+            "missing startup data. Runtime initializes missing data from those defaults, without "
+            "overwriting explicit values. Disable the declared add button with core.gte(core.length(array), "
+            "maxItems) when the UI must prevent adding past the limit; array.insert does not enforce it. "
+            "A stable Runtime member Scope handle supports remove and move but is not a persistent "
+            "business ID. Source persistent business row IDs from a declared Host capability if required. "
+            "If unavailable, keep local member editing and removal, and allow local row creation "
+            "without a business ID only where the checked schema allows it. Record the actual "
+            "preview limit. Uniqueness of already populated IDs is a local check. For canonical "
+            "text IDs and compatible comparison, use array.countNormalizedText with the full "
+            "member list, the ID property name and the scoped ID; skip absent values and target "
+            "the scoped ID. Do not conflate passport or whole-row uniqueness with ID uniqueness. "
+            "Shared edit bindings and validation reads are owned by their "
             "modules; do not duplicate them as copy-on-change reactions. Date expiry validation "
             "asserts date.inclusiveDays(endDate, passportExpiry) is non-null, allowing the same "
             "day and watching both reads through the assertion. Use the person's passportExpiry "
-            "as target. Array commands belong in a declared button activate intent. Insert at "
+            "as target. For one strict Gregorian date, assert date.inclusiveDays(date, date) is not "
+            "null instead of relying on Schema format. Respect Schema-required and optional input. "
+            "For normalized duplicate validation, use the full array and current scoped field "
+            "with array.countNormalizedText; assert count <= 1 for nonblank values and target the "
+            "scoped field so every duplicate row is marked. Use array.sumProducts over the entire "
+            "array to compare computed total against the budget. For both functions guard null in "
+            "the same core.and as the numeric comparison so the Compiler can narrow the value. "
+            "Array commands belong in a declared button activate intent. Insert at "
             "{kind: index, index: 1} after a guaranteed first member and use the member Scope "
             "handle for array.remove. The render scope is distinct from the value of its row. "
             "For an underwriting preview event use the declared no-payload event and record "
@@ -1014,7 +1048,7 @@ def compose_inputs(request, standard):
     return candidate_digest(
         json_text(
             [
-                1,
+                2,  # Rebuild fragments using the updated local validation guidance.
                 environment(request),
                 candidate_digest(document.markdown) if document else None,
                 document.version if document else None,

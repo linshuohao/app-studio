@@ -3,7 +3,8 @@ When a reference is supplied, interpret the message as a change to that form. If
 The newest explicit user correction takes precedence. Ask only for missing decisions
 that affect business behavior. If the request can proceed, record requirements and
 assumptions for authoring. Capability availability will be determined later from
-the target catalog. Answer information-only questions, and report out-of-scope
+the target catalog. Missing production Host bindings are integration dependencies.
+Keep local controls and validation in the authoring task. Answer information-only questions, and report out-of-scope
 requests as blocked. Use the user's language."""
 
 
@@ -25,7 +26,12 @@ group (including per-member scope), name, meaning, business value type, presence
 known label/value pairs or dynamic option source, local validation, and related rule IDs.
 Reserve data for editable or submitted document structure, including derived values explicitly
 required in the final payload. Record external decision/result state, request lifecycle, and
-Host-owned validation as kind host. In particular a service verdict/rejection reason used to
+Host-owned validation as kind host. Separate local add/remove controls, local checks
+(including uniqueness of member IDs already present), and local input-change behavior from
+production ID allocation, remote quoting, stale-response handling and submission. A missing
+Host implementation does not block form generation. Split mixed requirements into sourced
+local and Host-owned behaviors instead of making local rules depend on the service.
+In particular a service verdict/rejection reason used to
 gate submission and show errors belongs to host when the final payload does not include it.
 Do not imply that hidden transient state belongs in the user data schema. Separate startup
 data defaults from the view that displays them. Two editable places bound to the same identity

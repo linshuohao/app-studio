@@ -627,7 +627,14 @@ test('keeps an incompatible expression out of the draft even when an unrelated d
 }) => {
   const padding = ' '.repeat(17 * 1024);
   const raw = padding + source.replace('"protocolVersion":"1",', '') + padding;
-  await openLayout(page, raw);
+  await openLayout(page);
+  const saved = page.waitForResponse(
+    (response) => response.url().endsWith('/versions') && response.request().method() === 'POST',
+  );
+  await click(page, '保存配置');
+  expect((await saved).status()).toBe(201);
+  await (await schemaSource(page)).fill(raw);
+  await click(page, '布局');
   await outline(page)
     .getByRole('button', { name: /^存为草稿/ })
     .click();

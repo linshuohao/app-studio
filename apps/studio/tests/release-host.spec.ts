@@ -226,7 +226,7 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
       { times: 1 },
     );
     await load.click();
-    await expect(loader.getByRole('alert')).toHaveText(/缺少兼容的物料/);
+    await expect(loader.getByRole('alert')).toHaveText(/缺少匹配的物料：.+ @ .+（制品 sha256:/);
     await expect(instances).toHaveCount(2);
 
     for (const failure of [
@@ -268,8 +268,8 @@ test('publishes two versions and opens the exact releases in an unauthenticated 
           structure: /制品结构无效/,
           format: /格式或目标不受支持/,
           host: /缺少必要能力/,
-          manifest: /缺少兼容的物料/,
-          version: /需要版本 9.9.9/,
+          manifest: /缺少匹配的物料：.+ @ .+（制品 sha256:/,
+          version: /缺少匹配的函数：date\.inclusiveDays @ 9\.9\.9/,
         }[failure],
       );
       if (failure === 'host') await checkStages(['通过', '通过', '通过', '失败', '未检查']);

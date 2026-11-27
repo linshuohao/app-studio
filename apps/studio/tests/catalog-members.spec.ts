@@ -165,7 +165,7 @@ test('pages the pure function table and restores its place after viewing details
     '技术',
     '操作',
   ]);
-  await expect(functions.locator('tbody tr')).toHaveCount(5);
+  await expect(functions.locator('tbody tr')).toHaveCount(10);
   await pagination.getByRole('button', { name: '下一页' }).click();
   await expect(pagination.locator('output')).toContainText('第 2 /');
   const name = await functions.getByRole('button').first().getAttribute('aria-label');

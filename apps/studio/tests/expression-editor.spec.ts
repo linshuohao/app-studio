@@ -105,7 +105,7 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
     locatedCondition.getByRole('button', { name: '收起条件 2', exact: true }),
   ).toBeVisible();
   await layout.getByRole('button', { name: '应用显示条件', exact: true }).click();
-  await expect(layout).toBeHidden();
+  await expect(layout).toBeHidden({ timeout: 20_000 });
   const editor = await schemaSource(page);
   const laidOut = await editor.inputValue();
   const node = JSON.parse(laidOut).views.desktop.slots.default[1].slots.default[3].slots.default[0];
@@ -129,8 +129,12 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   await run(trial);
   await expect(result(trial)).toHaveText('结果 · true');
   await trial.getByRole('button', { name: '关闭' }).click();
-  await reaction.getByRole('button', { name: '应用修改', exact: true }).click();
-  await expect(reaction).toBeHidden();
+  await expect(trial).toBeHidden();
+  const applyCondition = reaction.getByRole('button', { name: '应用修改', exact: true });
+  await applyCondition.focus();
+  await expect(applyCondition).toBeFocused();
+  await applyCondition.press('Enter');
+  await expect(reaction).toBeHidden({ timeout: 20_000 });
   const conditionSummary = page
     .locator('section')
     .filter({

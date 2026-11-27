@@ -321,16 +321,29 @@ export function describeAssetBindings(
       string,
       { kind: WebAssetKind; id: string; locations: Set<string> }
     >();
-    compileWebConfig(text, { catalog, target: { platform: 'web', profile } }, (reference) => {
-      const key = keyOf(reference);
-      const item = references.get(key) ?? {
-        kind: reference.kind,
-        id: reference.id,
-        locations: new Set<string>(),
-      };
-      item.locations.add(reference.sourcePointer);
-      references.set(key, item);
-    });
+    const checked = compileWebConfig(
+      text,
+      { catalog, target: { platform: 'web', profile } },
+      (reference) => {
+        const key = keyOf(reference);
+        const item = references.get(key) ?? {
+          kind: reference.kind,
+          id: reference.id,
+          locations: new Set<string>(),
+        };
+        item.locations.add(reference.sourcePointer);
+        references.set(key, item);
+      },
+    );
+    // A document-level error can stop the compiler before it visits the view.
+    // Keep known revision locks usable by the editor while the document is repaired.
+    if (!checked.success) {
+      for (const selection of selections) {
+        const key = keyOf(selection);
+        if (selection.lock && !references.has(key))
+          references.set(key, { kind: selection.kind, id: selection.id, locations: new Set() });
+      }
+    }
     return {
       profile,
       dependencies: [...references].map(([key, { kind, id, locations }]) => {

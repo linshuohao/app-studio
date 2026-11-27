@@ -53,6 +53,7 @@ test('shows linked PR information without local review controls', async ({ page 
       errorCode: 'MATERIAL_UNAVAILABLE',
       phase: 'render',
       targetId: artifact.definition.views.main.id,
+      targetKind: 'material_node',
       evidenceStatus: 'captured',
       evidence: { message: 'synthetic material failure, with private host context' },
     },

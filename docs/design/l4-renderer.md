@@ -47,6 +47,25 @@ L4 完整方案与四批实施已于 2026-10-26 经用户确认，已确认以�
 
 Renderer 应当轻量，但不能薄到只有 `componentMap[name]`。真实接入还包括值适配、输入事件、校验展示、订阅、焦点、平台与组件生命周期。
 
+### 呈现与输入交付 {#renderer-assembly-flow}
+
+```diagram
+{
+  "id": "figure-renderer-assembly-flow",
+  "title": "React Renderer 如何连接已编译视图、Runtime 和物料",
+  "rows": [
+    [{"title": "Prepared 的目标视图", "body": "提供 MaterialNode、ScopeNode、TemplateUse 和已准备的依赖"}, {"title": "Host 提供实例与注册表", "body": "提供 Runtime、物料实现与请求处理器"}],
+    [{"title": "FormRenderer 装配视图树", "body": "按目标视图展开节点与插槽，关联 Scope、解析物料身份并建立错误隔离"}],
+    [{"title": "共享 Adapter 与物料", "body": "Adapter 订阅读取当前值、动态属性与校验；物料处理输入、焦点与本地交互", "major": true}],
+    [{"title": "数据交付", "body": "可写绑定通过 Command 回到 Runtime，再经订阅读回最新数据"}, {"title": "外部请求", "body": "声明的请求交给 Host，已卸载或改绑的接入不消费迟到结果"}]
+  ],
+  "arrows": ["装配输入", "按当前 Scope 连接", "用户操作"],
+  "note": "挂载时建立订阅，改绑时替换旧订阅，卸载时释放。以确认型日期范围为例，浮层中的临时日期在确认后才交付。"
+}
+```
+
+实现入口见 [FormRenderer](../../packages/renderer-react/src/renderer/form-renderer.tsx)与 [共用 Adapter](../../packages/renderer-react/src/adapter/use-material-adapter.ts)。日期范围的完整契约与验证见[开发者指南](usage-guide.md#usage-material-example)。
+
 ### 已确认的组件接入原则
 
 本节表达式粒度按 [ADR-FE-017](decisions/ADR-FE-017-compiler-io.md)修订，组件仍是生命周期接入单位；旧“不新增属性级准备”限制不再阻止完整 $expr 的独立 watch。其余状态归属、物料 / Adapter 分责、事件和错误隔离原则继续有效。

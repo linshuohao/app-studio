@@ -168,6 +168,26 @@ L3 管理唯一 Working Data、真实 Scope 身份、统一变化匹配、Comman
 
 局部机制继续见[整体领域骨架](#l3-domain-model)、[状态所有权](#l3-ownership)、[Flush 生命周期](#l3-flush)、[校验与结果](l3-validation.md#validation-round)及[物料 / Host 接入](extension-integration.md#materials)。总图不替代这些完整设计，也不表示生产 Runtime / SDK 已实现。
 
+### 一次字段输入跨过哪些执行时点 {#runtime-input-timeline}
+
+```diagram
+{
+  "id": "figure-runtime-input-timeline",
+  "title": "旅险示例：修改一个被保人的年龄",
+  "rows": [
+    [{"title": "输入交付", "body": "Renderer 的绑定适配器提交 Command，由 Runtime 定位具体成员并即时更新 Working Data"}],
+    [{"title": "匹配变化", "body": "观察机制比较有效值，将受影响的 Reaction 实例登记到待执行队列"}],
+    [{"title": "同步 Flush", "body": "微任务启动调度，合并同一待执行实例，用最新状态计算保费或执行其他已声明动作", "major": true}],
+    [{"title": "校验与后续交互", "body": "联动队列排空后推进 Schema 与 Constraint 校验；Renderer 通过订阅读取当前状态"}],
+    [{"title": "外部工作与提交", "body": "适用的外部校验由 Host 执行，Runtime 核对结果的有效性；Host 按完整校验及对应快照决定提交"}]
+  ],
+  "arrows": ["同一条 Command", "同步写入后", "联动收敛", "按需等待外部结果"],
+  "note": "Renderer 可在数据、属性或校验状态变化时更新。Flush 表示本轮同步调度的结果，外部校验另有生命周期。"
+}
+```
+
+这条路径的三个反例适合走查。表达式读了保障计划，只有显式观察它才会因计划变化常规入队。被保人换序后仍按原逻辑身份写入与接收适用的校验结果。执行预算耗尽时结束当前 Flush，保留已经写入的数据。进一步参见[成员身份](l3-data-scope.md#l3-scope-index)、[异步校验](l3-validation.md#validation-async)和[执行保护](#l3-protection)。
+
 ## L3 · Runtime：状态、身份与内部执行 {#runtime}
 
 核心投入集中在复杂表单的状态一致性、动态数组、依赖传播和时序边界。Runtime 拥有唯一可写 Working Data；不拥有业务网络请求、Resource Store 或通用外部动作执行器。

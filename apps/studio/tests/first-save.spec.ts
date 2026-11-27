@@ -152,7 +152,7 @@ test('creates a form, resolves an unknown save and reopens exact saved text', as
   await page.getByRole('button', { name: '退出登录' }).click();
   await expect(page.getByRole('button', { name: '退出登录' })).toBeDisabled();
   finishLogout();
-  await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
 });
 
 test('retries creation with its original key and keeps a confirmed form visible if opening fails', async ({

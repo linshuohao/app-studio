@@ -22,8 +22,12 @@ const {
   layoutFieldsLimited,
   layoutPositions,
   insertLayoutNode,
+  insertedLayoutPath,
   moveLayoutNode,
   movedLayoutPath,
+  planLayoutMaterialReplacement,
+  removeLayoutNode,
+  replaceLayoutMaterial,
 } = await import('../src/app/layout-structure.ts');
 const { checkWebConfig } = await import('../../../services/api/src/platform/web-check.ts');
 const { travelDefinition } = await import('../../playground/src/demos/travel/definition.ts');
@@ -188,6 +192,7 @@ test('shorthand binding counts, ambiguous scope moves and conflicting default sl
   const def = form(each('left', input('/name', 'row')), {
     material: 'section',
     children: [{ material: 'text-input', bind: '/read' }],
+    slots: { default: [] },
   });
   const text = JSON.stringify(def).replace('"scope":"row"', '"scope":"absent","scope":"row"');
   const m = semanticModel(text);
@@ -200,7 +205,10 @@ test('shorthand binding counts, ambiguous scope moves and conflicting default sl
       (p) => p.parent === direct + '/1' && p.slot === 'default',
     ),
   );
-  assert.ok(bindingCoverage(m, m.byPath.get(main)).has('/data/schema/properties/read'));
+  const unambiguous = semanticModel(text.replace(',"slots":{"default":[]}', ''));
+  assert.ok(
+    bindingCoverage(unambiguous, unambiguous.byPath.get(main)).has('/data/schema/properties/read'),
+  );
 });
 test('real travel Catalog compiles both profiles after moving a container without expanding template uses', () => {
   const text = JSON.stringify(travelDefinition),
@@ -295,5 +303,53 @@ test('shorthand children appear in the outline with their original source paths'
   assert.deepEqual(
     m.items.filter((i) => i.group === '视图控件').map((i) => i.node.path),
     ['/views/web', '/views/web/children/0', '/views/web/children/0/children/0'],
+  );
+});
+
+test('deletes a scoped component and its wrapper without touching neighbouring raw tokens', () => {
+  const source =
+    '{"views":{"main":{"material":"section","children":[{"material":"grid","props":{"columns":1e0}},' +
+    JSON.stringify(each('left', input('/name', 'row'))) +
+    ',{"$use":"summary"}]},"second":{"material":"section"}},"data":{"schema":{"type":"object"}}}';
+  const m = semanticModel(source);
+  const next = removeLayoutNode(m, m.byPath.get('/views/main/children/1/node'));
+  assert.equal(next, source.replace(JSON.stringify(each('left', input('/name', 'row'))) + ',', ''));
+  const remaining = semanticModel(next);
+  const last = removeLayoutNode(remaining, remaining.byPath.get('/views/main/children/1'));
+  assert.deepEqual(JSON.parse(last).views.main.children, [
+    { material: 'grid', props: { columns: 1 } },
+  ]);
+});
+
+test('preserves shorthand children and named slot contents when replacing a container', () => {
+  const original =
+    '{ "views":{"web":{"material":"section","children":[{"material":"grid"}],"slots":{"actions":[{"material":"button","props":{"label":"\\u0061"}}]}}}}';
+  const m = semanticModel(original);
+  const root = m.byPath.get('/views/web');
+  const position = pos(root.path, 1);
+  const inserted = insertLayoutNode(m, position, '{"material":"section"}', slots);
+  assert.equal(insertedLayoutPath(m, position), '/views/web/children/1');
+  assert.ok(inserted.includes('{"material":"grid"},{"material":"section"}'));
+  assert.ok(inserted.includes('"label":"\\u0061"'));
+  const replacement =
+    '{"material":"dialog-editor","props":{"title":"详情"},"slots":{"summary":[],"content":[]}}';
+  const plan = planLayoutMaterialReplacement(m, root, ['summary', 'content']);
+  assert.equal(plan.removed, 0);
+  assert.deepEqual(plan.moves, [
+    { from: 'default', to: 'content' },
+    { from: 'actions', to: 'content' },
+  ]);
+  const replaced = replaceLayoutMaterial(m, root, replacement, false);
+  assert.ok(replaced.includes('"label":"\\u0061"'));
+  assert.deepEqual(JSON.parse(replaced).views.web.slots, {
+    summary: [],
+    content: [{ material: 'grid' }, { material: 'button', props: { label: 'a' } }],
+  });
+  const leaf = '{"material":"button","props":{"label":"替换后"}}';
+  assert.equal(planLayoutMaterialReplacement(m, root, []).removed, 2);
+  assert.throws(() => replaceLayoutMaterial(m, root, leaf, false), /确认清空/);
+  assert.deepEqual(
+    JSON.parse(replaceLayoutMaterial(m, root, leaf, true)).views.web,
+    JSON.parse(leaf),
   );
 });

@@ -2,7 +2,7 @@
 export const catalogDocumentation: Record<string, { version: string; description: string; source: string; title?: string; summary?: string; displayTemplate?: string; displayLines?: string[]; parameterLabels?: Record<string, string>; annotations?: Record<string, string>; valueExamples?: { title: string; description: string; value: unknown }[]; callExamples?: { args: unknown[]; result: unknown; description: string }[]; requestExamples?: Record<string, { title: string; description: string; value: unknown }[]>; category: string; implementation: string; examples: { source: string; value: unknown }[] }> = {
   "array-editor": {
     "version": "0.1.0",
-    "description": "# 对象数组编辑器\n\n将 value 绑定到对象数组，title 设置标题，initial 定义新增成员的初始对象。控件以 Runtime 分配的成员身份定位移动、删除与编辑操作。编辑副本在保存时写回更改的字段；取消会丢弃副本。删除需确认。\n",
+    "description": "# 对象数组编辑器\n\n将 value 绑定到对象数组，title 设置标题，initial 定义新增成员的初始对象。控件以 Runtime 分配的成员身份定位移动、删除与编辑操作。编辑副本在保存时写回更改的字段；取消会丢弃副本。删除需确认。\n\n未绑定 value 时显示配置提示，禁用新增成员。视图解除绑定时关闭成员抽屉并丢弃其中未保存的编辑。已绑定但工作值尚未创建的数组仍可新增首个成员。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/array-editor/README.md",
     "examples": [
@@ -64,7 +64,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "button": {
     "version": "0.1.0",
-    "description": "# button · 操作按钮\n\nManifest 是本目录的机器契约唯一来源。Props、Bindings、Events、Requests、Slots 见 [manifest.ts](manifest.ts)；实现和 Props 类型见 [implementation.tsx](implementation.tsx)。\n\n静态 Binding 预期：无 Binding；实际工作值仍须按 Adapter 的 ReadResult 读取，不能据静态契约断言合法。\n\n只发一个无 Payload 的 activate 事件；使用 type=button，不隐式提交 HTML form。失败提示不伪造业务 Issue。\n\n运行装配调用 `createButton(artifact)`，将返回值交给 Renderer 的 createMaterialRegistry；Compiler Catalog 使用同一 Manifest 和制品身份。编译端从 `@form-engine/materials-react/manifests` 导入契约。样式显式导入 `@form-engine/materials-react/styles.css`，不由静态入口加载。\n\n真实输入、非法态及 Host 改值回归在 `../../tests/button/implementation.test.tsx`，浏览器验收页为 Playground 的 /materials。完整已确认契约见仓库 docs/design/extension-integration.md#first-assets-materials。\n",
+    "description": "# button · 操作按钮\n\nManifest 是本目录的机器契约唯一来源。Props、Bindings、Events、Requests、Slots 见 [manifest.ts](manifest.ts)；实现和 Props 类型见 [implementation.tsx](implementation.tsx)。\n\n静态 Binding 预期：无 Binding；实际工作值仍须按 Adapter 的 ReadResult 读取，不能据静态契约断言合法。\n\n只发一个无 Payload 的 activate 事件；使用 type=button，不隐式提交 HTML form。失败提示不伪造业务 Issue。\n\n删除当前数组成员时，将按钮放在该数组 `scope.mode: \"each\"` 的 `node` 内。下面的按钮位于 `/insureds` 的成员 Scope 内，该 Scope 的别名为 `member`。Renderer 使用按钮所在的渲染 Scope 执行命令，`item.$scope` 解析到当前成员的稳定身份。事件仍无 Payload。\n\n```json\n{\n  \"material\": \"button\",\n  \"props\": { \"label\": \"删除家人\", \"variant\": \"danger\" },\n  \"on\": {\n    \"activate\": {\n      \"type\": \"form.command\",\n      \"command\": {\n        \"op\": \"array.remove\",\n        \"target\": { \"source\": \"data\", \"path\": \"/insureds\" },\n        \"item\": { \"$scope\": \"member\" }\n      }\n    }\n  }\n}\n```\n\n运行装配调用 `createButton(artifact)`，将返回值交给 Renderer 的 createMaterialRegistry；Compiler Catalog 使用同一 Manifest 和制品身份。编译端从 `@form-engine/materials-react/manifests` 导入契约。样式显式导入 `@form-engine/materials-react/styles.css`，不由静态入口加载。\n\n真实输入、非法态及 Host 改值回归在 `../../tests/button/implementation.test.tsx`，浏览器验收页为 Playground 的 /materials。完整已确认契约见仓库 docs/design/extension-integration.md#first-assets-materials。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/button/README.md",
     "examples": [
@@ -417,7 +417,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date-range": {
     "version": "0.1.0",
-    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入或打开日历选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
+    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入，或者用各自的日历按钮打开锚定浮层选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/date-range/README.md",
     "examples": [
@@ -2218,6 +2218,129 @@ export const catalogDocumentation: Record<string, { version: string; description
       }
     ]
   },
+  "array.countNormalizedText": {
+    "version": "0.1.0",
+    "description": "# array.countNormalizedText\n\n按顺序传入行数组、行对象的直接属性名和待比较值。统计该属性经 ECMAScript `trim().toLowerCase()` 后与待比较值相同的行数，包含当前行。非空值的行级唯一性校验要求计数等于 1，将 Issue 绑定到当前 Scope 的字段。所有重复行都能收到自己的 Issue，移动行不改变比较结果。\n\n空白或非字符串比较值计数为 0，行中缺失、空白或非字符串的属性不参与比较。非数组输入返回 null，错误参数个数或空属性名抛错。属性名是直接键，不是 JSON Pointer。函数无副作用，不改写物品编码。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/array-count-normalized-text/README.md",
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.countNormalizedText",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/items"
+              }
+            },
+            "sku",
+            {
+              "ref": {
+                "source": "data",
+                "scope": "row",
+                "path": "/sku"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "统计归一化文本匹配行数",
+    "category": "数组",
+    "summary": "去除首尾空白并忽略大小写，统计同一字段的匹配行，用于逐行判重。",
+    "parameterLabels": {
+      "rows": "全部行",
+      "key": "字段键",
+      "value": "待比较文本"
+    },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "行对象的直接字段键。",
+      "/parameters/2": "待比较值，空白及非字符串返回 0。",
+      "/returns": "匹配行数；非数组返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "sku": " B-2 "
+            },
+            {
+              "sku": "b-2"
+            },
+            {
+              "sku": "B-20"
+            }
+          ],
+          "sku",
+          "B-2"
+        ],
+        "result": 2,
+        "description": "大小写和首尾空白不同的两行均匹配。"
+      }
+    ]
+  },
+  "array.sumProducts": {
+    "version": "0.1.0",
+    "description": "# array.sumProducts\n\n按顺序传入行数组、左因子属性名和右因子属性名。对每行两个非负安全整数相乘后求和，空数组得到 0。每行都重新计算，不依赖已存小计或当前画面显示的行。\n\n行、属性值非法或乘加超出安全整数区间时返回 null，避免把缺失值当作零或部分统计冒充总额。参数个数错误或属性名为空时抛错。属性名是直接键，不是 JSON Pointer。函数不修改输入。\n\n## 用全量合计校验预算\n\n`core.lte` 的两个参数都必须是数值。在同一个短路 `core.and` 中，先用 `core.ne` 判断合计非 null，再将结构相同的合计表达式传给 `core.lte`。编译器会按这个顺序收窄类型。写在约束 `when` 中的守卫只决定规则是否适用，收窄范围到 `when` 为止。\n\n以下是采购预算约束的 `assert`。约束的 `when` 应在预算缺失或合计为 null 时跳过规则，由字段校验处理缺失值；`issue.target` 指向 `/budgetMinor`。\n\n```json\n{\n  \"op\": \"core.and\",\n  \"args\": [\n    {\n      \"op\": \"core.ne\",\n      \"args\": [\n        {\n          \"op\": \"array.sumProducts\",\n          \"args\": [{ \"ref\": { \"source\": \"data\", \"path\": \"/items\" } }, \"quantity\", \"unitPriceMinor\"]\n        },\n        null\n      ]\n    },\n    {\n      \"op\": \"core.lte\",\n      \"args\": [\n        {\n          \"op\": \"array.sumProducts\",\n          \"args\": [{ \"ref\": { \"source\": \"data\", \"path\": \"/items\" } }, \"quantity\", \"unitPriceMinor\"]\n        },\n        { \"ref\": { \"source\": \"data\", \"path\": \"/budgetMinor\" } }\n      ]\n    }\n  ]\n}\n```\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/array-sum-products/README.md",
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.sumProducts",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/items"
+              }
+            },
+            "quantity",
+            "unitPriceMinor"
+          ]
+        }
+      }
+    ],
+    "title": "汇总各行两字段乘积",
+    "category": "数组",
+    "summary": "用各行数量乘整数分单价后求全量合计；工作行不完整或金额溢出时返回 null。",
+    "parameterLabels": {
+      "rows": "全部行",
+      "leftKey": "左因子字段键",
+      "rightKey": "右因子字段键"
+    },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "左因子的直接字段键。",
+      "/parameters/2": "右因子的直接字段键。",
+      "/returns": "非负安全整数合计；任一行无法计算或金额溢出时返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "quantity": 2,
+              "unitPriceMinor": 150000
+            },
+            {
+              "quantity": 3,
+              "unitPriceMinor": 100000
+            }
+          ],
+          "quantity",
+          "unitPriceMinor"
+        ],
+        "result": 600000,
+        "description": "按整数分汇总两个采购行。"
+      }
+    ]
+  },
   "date.ageInYears": {
     "version": "0.1.0",
     "description": "# date.ageInYears\n\n`date.ageInYears(birthDate, asOfDate)` 返回截至指定日期已经满的周岁数。两个参数按顺序传入，均为严格的公历日期字符串 `YYYY-MM-DD`，年份范围为 0001–9999。调用方显式选择业务基准日，例如用起保日判断起保时年龄。函数不读取当前时间或时区。\n\n到达当年生日当天即增加一岁。2 月 29 日出生者在非闰年按 2 月 28 日为当年生日，在闰年按 2 月 29 日。出生当天返回 `0`。缺参、空值、格式或日期无效、计算日期早于出生日期时返回 `null`。比较年龄阈值前先处理 `null`。\n\n| 出生日期 | 截至日期 | 返回值 |\n| --- | --- | --- |\n| 2008-02-29 | 2026-02-27 | 17 |\n| 2008-02-29 | 2026-02-28 | 18 |\n| 2008-02-29 | 2028-02-28 | 19 |\n| 2008-02-29 | 2028-02-29 | 20 |\n| 2009-02-29 | 2026-02-28 | `null` |\n\n函数只计算年龄。年龄区间、监护人要求、计划资格和错误字段由调用方的业务规则决定。如果业务采用不同的闰日生日规则，应选择符合该规则的能力。\n",
@@ -2271,7 +2394,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date.inclusiveDays": {
     "version": "0.1.0",
-    "description": "# date.inclusiveDays\n\n有序参数：start: JSON、end: JSON。输出：integer | null。\n\n严格公历 YYYY-MM-DD，0001–9999 年；含首尾，同日 1。无效、空值、倒序均 null。不读时钟、时区或经过毫秒数。\n\n`invoke(args)` 为同步纯计算，无网络、Runtime 修改或 Promise；普通非法工作值按上述 false / null 退化，配置错误、错误参数个数或溢出抛求值错误。Missing 由 Definition 的 core.exists / core.if 显式处理。输入不修改，制品身份由对应 create 工厂的 Host 参数提供。\n\n示例：`[\"2028-02-28\", \"2028-03-01\"] → 3`。\n\n政策结构、费率与注册方式见[包说明](../../README.md)；Manifest 是机器契约唯一源，测试位于 tests/date-inclusive-days/。\n",
+    "description": "# date.inclusiveDays\n\n有序参数：start: JSON、end: JSON。输出：integer | null。\n\n严格公历 YYYY-MM-DD，0001–9999 年；含首尾，同日 1。无效、空值、倒序均 null。不读时钟、时区或经过毫秒数。\n\n`invoke(args)` 为同步纯计算，无网络、Runtime 修改或 Promise；普通非法工作值返回 null，参数个数错误抛求值错误。Missing 由 Definition 的 core.exists / core.if 显式处理。输入不修改，制品身份由对应 create 工厂的 Host 参数提供。\n\n校验单个公历日期时，把同一个字段传给两个参数。真实日期返回 1，非法日期（包括非闰年 2 月 29 日）返回 null。可用 `core.ne(结果, null)` 作断言；可选字段或 Missing 先按 Schema 必填语义在表达式层处理。\n\n示例：`[\"2028-02-28\", \"2028-03-01\"] → 3`。\n\n政策结构、费率与注册方式见[包说明](../../README.md)；Manifest 是机器契约唯一源，测试位于 tests/date-inclusive-days/。\n",
     "implementation": "JavaScript",
     "source": "packages/pure-functions/src/date-inclusive-days/README.md",
     "examples": [
@@ -2360,6 +2483,124 @@ export const catalogDocumentation: Record<string, { version: string; description
     "parameterLabels": {
       "start": "出发日期",
       "end": "返程日期"
+    }
+  },
+  "expense.countInvoiceMatches": {
+    "version": "0.1.0",
+    "description": "# expense.countInvoiceMatches\n\n按去除所有 ECMAScript 空白字符并转为大写后的票据编号比较。返回费用数组中的匹配个数，包含当前行。非数组输入、非字符串或空白票号返回 `0`，由字段规则处理必填和类型错误。数组中的非对象行及非字符串票号不参与匹配。\n\n例如 `[[{\"invoiceId\":\"ab 1234\"},{\"invoiceId\":\"AB1234\"}],\"ab1234\"]` 返回 `2`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+        "value": {
+          "op": "expense.countInvoiceMatches",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/expenses"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/invoiceId"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "统计报销单内匹配票号",
+    "category": "报销",
+    "summary": "去除全部空白并统一大写后，统计同一报销单内的匹配票号。",
+    "parameterLabels": {
+      "expenses": "费用行",
+      "invoiceId": "当前票号"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "invoiceId": "AB 1234"
+            },
+            {
+              "invoiceId": "ab1234"
+            }
+          ],
+          "ab 1234"
+        ],
+        "result": 2,
+        "description": "忽略票号内部空白与大小写。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "本报销单费用行数组。",
+      "/parameters/1": "当前行原始票号。",
+      "/returns": "归一化后相同的票号数量。"
+    }
+  },
+  "expense.hotelStandardStatus": {
+    "version": "0.1.0",
+    "description": "# expense.hotelStandardStatus\n\n判断住宿申报金额（分）与晚数。金额须为 1 至 5,000,000 分之间的整数，晚数须为 1 至 30 之间的整数，每晚标准为 45,000 分。输入超出范围时返回 `invalid`，金额超过晚数乘以标准时返回 `over`，其余有效输入返回 `within`。\n\n例如 `[90000, 2]` 返回 `within`，`[90001, 2]` 返回 `over`，`[90000.5, 2]` 返回 `invalid`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+        "value": {
+          "op": "expense.hotelStandardStatus",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/claimMinor"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/nights"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "判断住宿金额是否超标",
+    "category": "报销",
+    "summary": "按每晚 45,000 分判断，金额或晚数为非法值时返回 invalid。",
+    "parameterLabels": {
+      "claimMinor": "申报金额（分）",
+      "nights": "晚数"
+    },
+    "callExamples": [
+      {
+        "args": [
+          90000,
+          2
+        ],
+        "result": "within",
+        "description": "两晚恰好等于标准。"
+      },
+      {
+        "args": [
+          90000.5,
+          2
+        ],
+        "result": "invalid",
+        "description": "申报金额必须为整数分。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "申报金额，单位为分。",
+      "/parameters/1": "住宿晚数。",
+      "/returns": "标准内、超标或输入非法。"
     }
   },
   "text.isNonBlank": {

@@ -89,9 +89,13 @@ test('isolates Compiler diagnostics, preserves adjacent tokens and routes ambigu
     .filter({ hasText: 'editable' })
     .getByRole('button', { name: '在 JSON 中定位' })
     .click();
-  const repair = await schemaSource(page);
+  const repair = page
+    .getByRole('dialog', { name: '编辑局部 JSON' })
+    .getByRole('textbox', { name: '局部 JSON' });
   await expect(repair).toBeVisible();
-  expect(compactJson(await repair.inputValue())).toBe(compactJson(ambiguous));
+  expect(compactJson(await repair.inputValue())).toBe(
+    compactJson(valid.replace('"as":"covered"', '"as":"first","as":"covered"')),
+  );
 });
 
 test('edits a data-independent rule in an empty draft and drags repeated actions without losing their order', async ({

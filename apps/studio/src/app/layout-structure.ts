@@ -1,7 +1,8 @@
 import { jsonTokens } from '../components/json/format';
 import type { JsonNode } from '../components/json/model';
 import { ancestorBinders } from './layout-bindings';
-import { child, escapeKey, type Model } from './semantic-model';
+import { emptyRoot } from './layout-keys';
+import { child, escapeKey, semanticModel, type Model } from './semantic-model';
 
 export {
   bindingCandidates,
@@ -20,6 +21,20 @@ function viewRoot(m: Model, path: string) {
 function viewOwner(m: Model, path: string) {
   return m.items.find((i) => i.group === '视图控件' && i.node.path === path);
 }
+export function layoutSlotList(parent: JsonNode | undefined, slot: string) {
+  return (
+    child(child(parent, 'slots'), slot) ??
+    (slot === 'default' ? child(parent, 'children') : undefined)
+  );
+}
+export function insertedLayoutPath(m: Model, position: LayoutPosition) {
+  return (
+    (layoutSlotList(m.byPath.get(position.parent), position.slot)?.path ??
+      position.parent + '/slots/' + escapeKey(position.slot)) +
+    '/' +
+    position.index
+  );
+}
 function legalSlot(m: Model, parent: JsonNode, slot: string, slots: Slots) {
   const material = m.str(child(parent, 'material')),
     container = child(parent, 'slots');
@@ -31,8 +46,8 @@ function legalSlot(m: Model, parent: JsonNode, slot: string, slots: Slots) {
   )
     return false;
   if (container && (container.kind !== 'object' || m.ambiguous.has(container.path))) return false;
-  if (slot === 'default' && child(parent, 'children')) return false;
-  const list = child(container, slot);
+  if (slot === 'default' && child(parent, 'children') && child(container, slot)) return false;
+  const list = layoutSlotList(parent, slot);
   return !list || (list.kind === 'array' && !m.ambiguous.has(list.path));
 }
 export function layoutPositions(m: Model, root: JsonNode, slots: Slots): LayoutPosition[] {
@@ -41,7 +56,7 @@ export function layoutPositions(m: Model, root: JsonNode, slots: Slots): LayoutP
     if (group !== '视图控件' || !inside(node.path, root.path)) continue;
     for (const slot of slots.get(m.str(child(node, 'material')) ?? '') ?? []) {
       if (!legalSlot(m, node, slot, slots)) continue;
-      const length = child(child(node, 'slots'), slot)?.children?.length ?? 0;
+      const length = layoutSlotList(node, slot)?.children?.length ?? 0;
       for (let index = 0; index <= length; index++)
         positions.push({ parent: node.path, slot, index });
     }
@@ -53,7 +68,7 @@ function target(m: Model, p: LayoutPosition, slots: Slots) {
   if (!parent || !viewRoot(m, parent.path) || !legalSlot(m, parent, p.slot, slots))
     throw Error('目标容器没有可写的已声明插槽。');
   const container = child(parent, 'slots'),
-    list = child(container, p.slot);
+    list = layoutSlotList(parent, p.slot);
   if (!Number.isInteger(p.index) || p.index < 0 || p.index > (list?.children?.length ?? 0))
     throw Error('插入位置已变化，请重新选择。');
   return { parent, container, list };
@@ -236,12 +251,121 @@ export function insertLayoutNode(m: Model, p: LayoutPosition, raw: string, slots
   JSON.parse(raw);
   return edit(m, [insertion(m, p, raw, slots)]);
 }
+
+export function layoutRemovalTarget(m: Model, source: JsonNode) {
+  const root = viewRoot(m, source.path);
+  if (!root || m.ambiguous.has(source.path)) return;
+  let node = source;
+  // A scope wrapper owns exactly one view node. Remove the wrapper with that node.
+  while (node !== root && node.path.endsWith('/node')) {
+    const wrapper = m.byPath.get(node.path.slice(0, -'/node'.length));
+    if (!wrapper || !child(wrapper, 'scope') || child(wrapper, 'node') !== node) break;
+    node = wrapper;
+  }
+  if (m.ambiguous.has(node.path)) return;
+  if (node === root) return { node, parent: root, root: true as const };
+  const siblings = viewOwner(m, node.path)?.parent;
+  if (!siblings || m.ambiguous.has(siblings.path)) return;
+  const ownerPath = siblings.path.slice(0, siblings.path.lastIndexOf('/'));
+  const parent =
+    viewOwner(m, ownerPath)?.node ??
+    viewOwner(m, ownerPath.slice(0, ownerPath.lastIndexOf('/')))?.node;
+  if (parent) return { node, parent, siblings, root: false as const };
+}
+
+function removal(node: JsonNode, siblings: JsonNode, index: number): Splice {
+  const previous = siblings.children![index - 1];
+  const next = siblings.children![index + 1];
+  return {
+    start: !next && previous ? node.start - 1 : node.start,
+    end: next ? node.end + 1 : node.end,
+    value: '',
+  };
+}
+
+export function removeLayoutNode(m: Model, source: JsonNode): string {
+  const target = layoutRemovalTarget(m, source);
+  if (!target) throw Error('无法唯一定位要删除的组件。');
+  if (target.root) return m.replace(target.node, emptyRoot);
+  const { node, siblings } = target;
+  return edit(m, [removal(node, siblings, siblings.children!.indexOf(node))]);
+}
+
+function materialSlots(m: Model, node: JsonNode) {
+  const oldSlots = child(node, 'slots');
+  const children = child(node, 'children');
+  if (
+    (oldSlots && (oldSlots.kind !== 'object' || m.ambiguous.has(oldSlots.path))) ||
+    (children && child(oldSlots, 'default'))
+  )
+    throw Error('子节点的插槽配置无法唯一确定，请先核对局部 JSON。');
+  const preserved = new Map<string, JsonNode>();
+  for (const list of [...(oldSlots?.children ?? []), ...(children ? [children] : [])]) {
+    if (list.kind !== 'array' || m.ambiguous.has(list.path))
+      throw Error('子节点的插槽配置无法唯一确定，请先核对局部 JSON。');
+    const name = list === children ? 'default' : list.key!;
+    preserved.set(name, list);
+  }
+  return preserved;
+}
+
+export function planLayoutMaterialReplacement(m: Model, node: JsonNode, slots: readonly string[]) {
+  const sources = [...materialSlots(m, node)].filter(([, list]) => list.children?.length);
+  const bySlot = new Map(slots.map((name) => [name, [] as JsonNode[]]));
+  const moves: { from: string; to: string }[] = [];
+  const main = bySlot.has('content') ? 'content' : bySlot.has('default') ? 'default' : slots[0];
+  if (main === undefined) {
+    const removed = sources.reduce((count, [, list]) => count + list.children!.length, 0);
+    return { bySlot, moves, removed };
+  }
+
+  // Preserve matching slots first, then append the old main content and other unmatched slots.
+  const order = (name: string) => {
+    if (bySlot.has(name)) return 0;
+    return name === 'default' || name === 'content' ? 1 : 2;
+  };
+  for (const [name, list] of sources.sort(([a], [b]) => order(a) - order(b))) {
+    const target = bySlot.get(name);
+    if (target) target.push(list);
+    else {
+      bySlot.get(main)!.push(list);
+      moves.push({ from: name, to: main });
+    }
+  }
+  return { bySlot, moves, removed: 0 };
+}
+
+export function replaceLayoutMaterial(
+  m: Model,
+  node: JsonNode,
+  raw: string,
+  clearChildren: boolean,
+): string {
+  const configuration = semanticModel(raw);
+  const nextSlots = child(configuration.root, 'slots');
+  const slots = nextSlots?.children?.map((slot) => slot.key!) ?? [];
+  const { bySlot, removed } = planLayoutMaterialReplacement(m, node, slots);
+  if (!clearChildren && removed) throw Error('新组件缺少原有插槽，请先确认清空受影响的子节点。');
+  const slotsRaw = [...bySlot]
+    .map(([name, lists]) => {
+      const content = lists.map((list) => m.raw(list).slice(1, -1)).join(',');
+      return JSON.stringify(name) + ':[' + content + ']';
+    })
+    .join(',');
+  return m.replace(node, nextSlots ? configuration.replace(nextSlots, '{' + slotsRaw + '}') : raw);
+}
 /** The destination is chosen in the original tree. Removing a preceding sibling may
  * renumber either the slot position itself or an ancestor of the destination container. */
-export function movedLayoutPath(sourcePath: string, position: LayoutPosition): string {
+export function movedLayoutPath(
+  sourcePath: string,
+  position: LayoutPosition,
+  model?: Model,
+): string {
   const sourceSlot = sourcePath.slice(0, sourcePath.lastIndexOf('/'));
   const removed = Number(sourcePath.slice(sourceSlot.length + 1));
-  const dest = position.parent + '/slots/' + escapeKey(position.slot) + '/' + position.index;
+  const dest = model
+    ? insertedLayoutPath(model, position)
+    : position.parent + '/slots/' + escapeKey(position.slot) + '/' + position.index;
   if (!dest.startsWith(sourceSlot + '/')) return dest;
   const segments = dest.slice(sourceSlot.length + 1).split('/');
   const sibling = Number(segments[0]);
@@ -255,12 +379,5 @@ export function moveLayoutNode(
   slots: Slots,
 ): string {
   const { node, siblings, index } = checkMove(m, sourcePath, p, slots);
-  const previous = siblings.children![index - 1],
-    next = siblings.children![index + 1];
-  const remove: Splice = {
-    start: !next && previous ? node.start - 1 : node.start,
-    end: next ? node.end + 1 : node.end,
-    value: '',
-  };
-  return edit(m, [remove, insertion(m, p, m.raw(node), slots)]);
+  return edit(m, [removal(node, siblings, index), insertion(m, p, m.raw(node), slots)]);
 }

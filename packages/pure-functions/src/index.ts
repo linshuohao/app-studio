@@ -90,8 +90,12 @@ export function createCoreFunctions(artifact: ArtifactIdentity): FunctionRegistr
 }
 
 // <generated-assets>
+export { createArrayCountNormalizedText } from './array-count-normalized-text/implementation.js';
+export { createArraySumProducts } from './array-sum-products/implementation.js';
 export { createDateAgeInYears } from './date-age-in-years/implementation.js';
 export { createDateInclusiveDays } from './date-inclusive-days/implementation.js';
+export { createExpenseCountInvoiceMatches } from './expense-count-invoice-matches/implementation.js';
+export { createExpenseHotelStandardStatus } from './expense-hotel-standard-status/implementation.js';
 export { createTextIsNonBlank } from './text-is-non-blank/implementation.js';
 export { createTravelIsEligibleAge } from './travel-is-eligible-age/implementation.js';
 export { createTravelIsTripRangeAllowed } from './travel-is-trip-range-allowed/implementation.js';

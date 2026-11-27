@@ -1,4 +1,128 @@
 {
+  "array.countNormalizedText": {
+    "title": "统计归一化文本匹配行数",
+    "category": "数组",
+    "summary": "去除首尾空白并忽略大小写，统计同一字段的匹配行，用于逐行判重。",
+    "parameterLabels": { "rows": "全部行", "key": "字段键", "value": "待比较文本" },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "行对象的直接字段键。",
+      "/parameters/2": "待比较值，空白及非字符串返回 0。",
+      "/returns": "匹配行数；非数组返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [[{ "sku": " B-2 " }, { "sku": "b-2" }, { "sku": "B-20" }], "sku", "B-2"],
+        "result": 2,
+        "description": "大小写和首尾空白不同的两行均匹配。"
+      }
+    ],
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.countNormalizedText",
+          "args": [
+            { "ref": { "source": "data", "path": "/items" } },
+            "sku",
+            { "ref": { "source": "data", "scope": "row", "path": "/sku" } }
+          ]
+        }
+      }
+    ]
+  },
+  "array.sumProducts": {
+    "title": "汇总各行两字段乘积",
+    "category": "数组",
+    "summary": "用各行数量乘整数分单价后求全量合计；工作行不完整或金额溢出时返回 null。",
+    "parameterLabels": { "rows": "全部行", "leftKey": "左因子字段键", "rightKey": "右因子字段键" },
+    "annotations": {
+      "/parameters/0": "全部工作行，非数组返回 null。",
+      "/parameters/1": "左因子的直接字段键。",
+      "/parameters/2": "右因子的直接字段键。",
+      "/returns": "非负安全整数合计；任一行无法计算或金额溢出时返回 null。"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            { "quantity": 2, "unitPriceMinor": 150000 },
+            { "quantity": 3, "unitPriceMinor": 100000 }
+          ],
+          "quantity",
+          "unitPriceMinor"
+        ],
+        "result": 600000,
+        "description": "按整数分汇总两个采购行。"
+      }
+    ],
+    "examples": [
+      {
+        "source": "tests/integration/procurement-rules.test.ts",
+        "value": {
+          "op": "array.sumProducts",
+          "args": [{ "ref": { "source": "data", "path": "/items" } }, "quantity", "unitPriceMinor"]
+        }
+      }
+    ]
+  },
+  "expense.countInvoiceMatches": {
+    "title": "统计报销单内匹配票号",
+    "category": "报销",
+    "summary": "去除全部空白并统一大写后，统计同一报销单内的匹配票号。",
+    "parameterLabels": { "expenses": "费用行", "invoiceId": "当前票号" },
+    "callExamples": [
+      {
+        "args": [[{ "invoiceId": "AB 1234" }, { "invoiceId": "ab1234" }], "ab 1234"],
+        "result": 2,
+        "description": "忽略票号内部空白与大小写。"
+      }
+    ],
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+        "value": {
+          "op": "expense.countInvoiceMatches",
+          "args": [
+            { "ref": { "source": "data", "path": "/expenses" } },
+            { "ref": { "source": "data", "scope": "expense", "path": "/invoiceId" } }
+          ]
+        }
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "本报销单费用行数组。",
+      "/parameters/1": "当前行原始票号。",
+      "/returns": "归一化后相同的票号数量。"
+    }
+  },
+  "expense.hotelStandardStatus": {
+    "title": "判断住宿金额是否超标",
+    "category": "报销",
+    "summary": "按每晚 45,000 分判断，金额或晚数为非法值时返回 invalid。",
+    "parameterLabels": { "claimMinor": "申报金额（分）", "nights": "晚数" },
+    "callExamples": [
+      { "args": [90000, 2], "result": "within", "description": "两晚恰好等于标准。" },
+      { "args": [90000.5, 2], "result": "invalid", "description": "申报金额必须为整数分。" }
+    ],
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+        "value": {
+          "op": "expense.hotelStandardStatus",
+          "args": [
+            { "ref": { "source": "data", "scope": "expense", "path": "/claimMinor" } },
+            { "ref": { "source": "data", "scope": "expense", "path": "/nights" } }
+          ]
+        }
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "申报金额，单位为分。",
+      "/parameters/1": "住宿晚数。",
+      "/returns": "标准内、超标或输入非法。"
+    }
+  },
   "core.eq": {
     "displayTemplate": "{arg0} 等于 {arg1}",
     "title": "相等比较",

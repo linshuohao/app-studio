@@ -439,35 +439,40 @@ it('根装配失败仍登记 DevTools 视图并展示诊断，不要求内部执
   form.runtime.dispose();
 });
 
-it('初次提交超过工具显示容量的物料错误全部交付 Host，上报不静默截断', async () => {
-  vi.spyOn(console, 'error').mockImplementation(() => undefined);
-  const contract = defineMaterialContract({ id: 'many-broken', version: '1' });
-  function Broken(): never {
-    throw Error('initial failure');
-  }
-  const form = setup(
-    {
-      material: 'box',
-      slots: { default: Array.from({ length: 101 }, () => ({ material: 'many-broken' })) },
-    },
-    { extraMaterials: [contract.manifest] },
-  );
-  const reports: unknown[] = [];
-  const page = render(
-    <FormRenderer
-      {...form}
-      materials={createMaterialRegistry([
-        ...definitions,
-        defineMaterial(contract, artifact, Broken),
-      ])}
-      onDiagnostic={(entry) => reports.push(entry)}
-    />,
-  );
-  expect(reports).toHaveLength(101);
-  await act(() => form.runtime.flush());
-  page.unmount();
-  form.runtime.dispose();
-});
+// Mounting 101 error boundaries can exceed Vitest's default timeout on CI runners.
+it(
+  '初次提交超过工具显示容量的物料错误全部交付 Host，上报不静默截断',
+  { timeout: 15_000 },
+  async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const contract = defineMaterialContract({ id: 'many-broken', version: '1' });
+    function Broken(): never {
+      throw Error('initial failure');
+    }
+    const form = setup(
+      {
+        material: 'box',
+        slots: { default: Array.from({ length: 101 }, () => ({ material: 'many-broken' })) },
+      },
+      { extraMaterials: [contract.manifest] },
+    );
+    const reports: unknown[] = [];
+    const page = render(
+      <FormRenderer
+        {...form}
+        materials={createMaterialRegistry([
+          ...definitions,
+          defineMaterial(contract, artifact, Broken),
+        ])}
+        onDiagnostic={(entry) => reports.push(entry)}
+      />,
+    );
+    expect(reports).toHaveLength(101);
+    await act(() => form.runtime.flush());
+    page.unmount();
+    form.runtime.dispose();
+  },
+);
 
 it('工具与呈现读取同一接管的 Prepared，不随 Host 修改原始对象改变树', async () => {
   const { getDevtoolsHook } = await import('@form-engine/runtime/devtools');

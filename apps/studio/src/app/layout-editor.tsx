@@ -1,7 +1,15 @@
 'use client';
 import { JsonEditor } from '../components/json/json-editor';
-import { type CSSProperties, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Button, Drawer, Field, Icon, Input, Tabs } from '@form-engine/studio-design-components';
+import { createPortal } from 'react-dom';
+import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Button,
+  Drawer,
+  Icon,
+  Input,
+  IconButton,
+  Tabs,
+} from '@form-engine/studio-design-components';
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 import * as manifests from '@form-engine/materials-react/manifests';
 import { compactJson } from '../components/json/format';
@@ -16,10 +24,15 @@ import {
   layoutFields,
   layoutFieldsLimited,
   layoutPositions,
+  layoutRemovalTarget,
+  layoutSlotList,
   insertLayoutNode,
+  insertedLayoutPath,
   moveLayoutNode,
   movedLayoutPath,
   moveProblem,
+  removeLayoutNode,
+  replaceLayoutMaterial,
   type LayoutPosition,
 } from './layout-structure';
 import {
@@ -32,6 +45,7 @@ import { layoutExpressionContext } from './layout-expression';
 import { LayoutScopeInspector } from './layout-scope-inspector';
 import { LayoutLivePreview } from './layout-live-preview';
 import { useSchemaNavigation } from './schema-navigation';
+import { Modal } from './modal';
 import './layout-editor.css';
 
 // The Platform Compiler builds its Web Catalog from the same installed manifest entry point.
@@ -48,14 +62,24 @@ type Props = {
   profile: string;
   onProfile: (key: string) => void;
 };
-type Picker = { source: string; root?: boolean; position?: LayoutPosition; preferred?: string };
+type Picker = {
+  source: string;
+  position?: LayoutPosition;
+  replacement?: JsonNode;
+  preferred?: string;
+  trigger?: HTMLElement;
+};
 const nodeName = (m: Model, n: JsonNode) =>
-  m.str(child(child(n, 'props'), 'title')) ??
-  m.str(child(child(n, 'props'), 'label')) ??
+  (m.str(child(child(n, 'props'), 'title'))?.trim() ||
+    m.str(child(child(n, 'props'), 'label'))?.trim()) ??
   m.str(child(n, 'material')) ??
   m.str(child(n, '$use')) ??
   m.str(child(child(n, 'scope'), 'as')) ??
   '未知节点';
+function contentNode(node?: JsonNode) {
+  while (child(node, 'scope') && child(node, 'node')) node = child(node, 'node');
+  return node;
+}
 function errorText(e: unknown) {
   return e instanceof PlatformError
     ? failureMessage(e)
@@ -100,7 +124,13 @@ function LayoutWorkspace({
   const [draftKey, setKey] = useState(''),
     [name, setName] = useState('');
   const [picker, setPicker] = useState<Picker>();
-  const [destination, setDestination] = useState('');
+  const [deletion, setDeletion] = useState<{
+    source: string;
+    path: string;
+    trigger: HTMLElement;
+  }>();
+  const [deleting, setDeleting] = useState(false);
+  const paper = useRef<HTMLDivElement>(null);
   const [narrowPane, setNarrowPane] = useState<'outline' | 'paper'>('outline');
   const [structureTab, setStructureTab] = useState<'fields' | 'outline'>('outline');
   const [inspecting, setInspecting] = useState(false);
@@ -121,55 +151,61 @@ function LayoutWorkspace({
     setDropHint('');
   }
   const activePicker = picker?.source === text ? picker : undefined;
+  const completedInsertion = useRef<{ trigger?: HTMLElement } | undefined>(undefined);
+  useEffect(() => {
+    if (activePicker || !completedInsertion.current) return;
+    const { trigger } = completedInsertion.current;
+    completedInsertion.current = undefined;
+    if (!trigger?.isConnected) paper.current?.focus({ preventScroll: true });
+  }, [activePicker]);
+  const pickerNode = activePicker?.position
+    ? m.byPath.get(activePicker.position.parent)
+    : activePicker?.replacement;
+  const pendingDeletion = deletion?.source === text ? deletion : undefined;
+  const deletionNode = pendingDeletion && m.byPath.get(pendingDeletion.path);
+  const deletionTarget = deletionNode && layoutRemovalTarget(m, deletionNode);
   const node = root && (path.startsWith(root.path + '/') ? (m.byPath.get(path) ?? root) : root);
   const fields = layoutFields(m);
   const fieldParents: string[] = [];
   const limited = layoutFieldsLimited(m);
   const coverage = root && !limited ? bindingCoverage(m, root) : new Set<string>();
   const positions = root ? layoutPositions(m, root, slots) : [];
+  const rootMaterial = contentNode(root);
   const items = m.items.filter(
     (i) =>
       root &&
       i.group === '视图控件' &&
       (i.node === root || i.node.path.startsWith(root.path + '/')),
   );
-  const item = items.find((i) => i.node === node);
   const materialId = m.str(child(node, 'material'));
   const inspectorMaterial = useLayoutMaterial(inspecting ? materialId : undefined);
   const parentNode =
     node && items.findLast(({ node: ancestor }) => node.path.startsWith(ancestor.path + '/'))?.node;
   const itemTitle = node ? nodeName(m, node) : '';
   const materialTitle = inspectorMaterial?.data?.documentation?.title;
-  const destinations = item?.parent
-    ? positions.flatMap((pos) => {
-        const problem = moveProblem(m, item.node.path, pos, slots);
-        return !problem || problem.startsWith('作用域 ') || problem.includes('同名作用域')
-          ? [{ pos, problem, id: JSON.stringify(pos) }]
-          : [];
-      })
-    : [];
-  const target = destinations.find((p) => p.id === destination);
-  const destinationName = (pos: LayoutPosition) =>
-    nodeName(m, m.byPath.get(pos.parent)!) + ' · ' + pos.slot + ' · 第 ' + (pos.index + 1) + ' 位';
   const current = useRef<object | null>(null);
   useLayoutEffect(() => {
     current.current = {};
     return () => {
       current.current = null;
     };
-  }, [text, key, path, picker, inspecting]);
+  }, [text, key, path, picker, deletion, inspecting]);
   function selectNode(p: string) {
     setPath(p);
-    setFieldPath('');
-    setDestination('');
     setError('');
     setDrawerPreview(false);
-    setInspecting(true);
   }
   function inspectNode(p: string, from: HTMLElement) {
     beforeLeave(() => {
       setInspectorTrigger(from);
       selectNode(p);
+      setInspecting(true);
+    });
+  }
+  function switchMode(next: 'preview' | 'arrange') {
+    beforeLeave(() => {
+      setMode(next);
+      setNarrowPane('paper');
     });
   }
   function selectLayout(k: string) {
@@ -177,7 +213,7 @@ function LayoutWorkspace({
     setPath('');
     setError('');
     setPicker(undefined);
-    setDestination('');
+    setDeletion(undefined);
     setFieldPath('');
     setNarrowPane('outline');
     setInspecting(false);
@@ -202,10 +238,9 @@ function LayoutWorkspace({
     try {
       const next = moveLayoutNode(m, source, pos, slots);
       setMoving(true);
-      await check(next, movedLayoutPath(source, pos));
+      await check(next, movedLayoutPath(source, pos, m));
       apply(next);
       setPath('');
-      setDestination('');
       setInspecting(false);
       setError('');
     } catch (e) {
@@ -214,7 +249,7 @@ function LayoutWorkspace({
       setMoving(false);
     }
   }
-  function openPicker(pos: LayoutPosition, preferred?: string) {
+  function openPicker(pos: LayoutPosition, preferred?: string, trigger?: HTMLElement) {
     const parent = m.byPath.get(pos.parent);
     if (
       preferred &&
@@ -224,7 +259,36 @@ function LayoutWorkspace({
       return;
     }
     setError('');
-    setPicker({ source: text, position: pos, preferred });
+    setPicker({ source: text, position: pos, preferred, trigger });
+  }
+  function replaceMaterial(n: JsonNode, trigger: HTMLElement) {
+    beforeLeave(() => setPicker({ source: text, replacement: n, trigger }));
+  }
+  function askToDelete(n: JsonNode, trigger: HTMLElement) {
+    beforeLeave(() => {
+      setError('');
+      setDeletion({ source: text, path: n.path, trigger });
+    });
+  }
+  async function deleteComponent() {
+    if (deleting || !deletionNode || !deletionTarget) return;
+    setDeleting(true);
+    setError('');
+    try {
+      const next = removeLayoutNode(m, deletionNode);
+      const parentPath = deletionTarget.parent.path;
+      await check(next, parentPath);
+      apply(next);
+      setDeletion(undefined);
+      setPath(parentPath);
+      setInspecting(false);
+      setOverlay(undefined);
+      requestAnimationFrame(() => paper.current?.focus({ preventScroll: true }));
+    } catch (error) {
+      setError(errorText(error));
+    } finally {
+      setDeleting(false);
+    }
   }
   const candidatesFor = (n: JsonNode) =>
     bindingCandidates(m, n).map((f) => ({ ...f, schema: JSON.parse(m.raw(f.schema)) }));
@@ -245,14 +309,17 @@ function LayoutWorkspace({
         type="button"
         className="layout-gap"
         aria-label={label}
-        disabled={moving}
+        disabled={moving || deleting}
         aria-disabled={!!problem || undefined}
         title={problem}
-        onClick={() => !problem && beforeLeave(() => openPicker(pos, fieldPath || undefined))}
+        onClick={(event) => {
+          const trigger = event.currentTarget;
+          if (!problem) beforeLeave(() => openPicker(pos, fieldPath || undefined, trigger));
+        }}
         onDragEnter={() => setDropHint(problem ?? '')}
         onDragLeave={() => setDropHint('')}
         onDragOver={(e) => {
-          if (drag) {
+          if (drag && !moving) {
             e.preventDefault();
             e.dataTransfer.dropEffect = problem ? 'none' : drag.kind === 'node' ? 'move' : 'copy';
           }
@@ -277,28 +344,40 @@ function LayoutWorkspace({
     const repeat = child(n, 'scope');
     return (
       <section className={'layout-block' + (node === n ? ' selected' : '')} key={n.start}>
-        <button
-          className="layout-node-name"
-          data-reference-path={n.path}
-          data-reference-label={'控件 · ' + label}
-          draggable={items.some((i) => i.node === n && !!i.parent)}
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/plain', n.path);
-            e.dataTransfer.effectAllowed = 'move';
-            setDrag({ kind: 'node', path: n.path });
-          }}
-          onDragEnd={endDrag}
-          onClick={(event) => inspectNode(n.path, event.currentTarget)}
-        >
-          <strong>{label}</strong>
-          {repeat ? (
-            <small>重复区 · {label}</small>
-          ) : material === 'condition' ? (
-            <small>显示条件</small>
-          ) : (
-            material !== label && <small>{material}</small>
+        <div className="layout-block-header">
+          <button
+            className="layout-node-name"
+            data-reference-path={n.path}
+            data-reference-label={'控件 · ' + label}
+            draggable={items.some((i) => i.node === n && !!i.parent)}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', n.path);
+              e.dataTransfer.effectAllowed = 'move';
+              setDrag({ kind: 'node', path: n.path });
+            }}
+            onDragEnd={endDrag}
+            aria-pressed={node === n}
+            onClick={(event) => inspectNode(n.path, event.currentTarget)}
+          >
+            <strong>{label}</strong>
+            {repeat ? (
+              <small>重复区 · {label}</small>
+            ) : material === 'condition' ? (
+              <small>显示条件</small>
+            ) : (
+              material !== label && <small>{material}</small>
+            )}
+          </button>
+          {layoutRemovalTarget(m, n) && (
+            <IconButton
+              icon="Minus"
+              aria-label={'删除组件 · ' + label}
+              title="删除组件"
+              disabled={moving || deleting}
+              onClick={(event) => askToDelete(n, event.currentTarget)}
+            />
           )}
-        </button>
+        </div>
         {scoped && canvas(scoped)}
         {shorthand &&
           (shorthand.kind !== 'array' ||
@@ -309,8 +388,7 @@ function LayoutWorkspace({
             </button>
           )}
         {(slots.get(material ?? '') ?? []).map((slot) => {
-          const list =
-            child(child(n, 'slots'), slot) ?? (slot === 'default' ? shorthand : undefined);
+          const list = layoutSlotList(n, slot);
           const children = list?.kind === 'array' ? (list.children ?? []) : [];
           const gaps = positions.filter((p) => p.parent === n.path && p.slot === slot);
           const columnsProp = child(child(n, 'props'), 'columns');
@@ -351,7 +429,11 @@ function LayoutWorkspace({
   const selectedField = fields.find((f) => f.schemaPath === fieldPath);
   return (
     <LayoutFieldStructure.Provider value={fieldRows}>
-      <section className="visual-layout" data-pane={narrowPane} aria-label="布局编辑器">
+      <section
+        className="visual-layout"
+        data-pane={empty ? 'paper' : narrowPane}
+        aria-label="布局编辑器"
+      >
         <header className="layout-bar">
           <div className="layout-selection">
             <strong>布局</strong>
@@ -368,6 +450,26 @@ function LayoutWorkspace({
             </StudioSelect>
             <code>{key}</code>
           </div>
+          {!readOnly && root && !empty && (
+            <div className="layout-view-switch" role="group" aria-label="画布模式">
+              <Button
+                type="button"
+                variant="text"
+                aria-pressed={!arranging}
+                onClick={() => switchMode('preview')}
+              >
+                真实预览
+              </Button>
+              <Button
+                type="button"
+                variant="text"
+                aria-pressed={arranging}
+                onClick={() => switchMode('arrange')}
+              >
+                编排
+              </Button>
+            </div>
+          )}
           <div className="layout-operations" aria-label="布局操作">
             {!readOnly && (
               <>
@@ -395,12 +497,14 @@ function LayoutWorkspace({
                 )}
               </>
             )}
-            <Button variant="text" onClick={() => beforeLeave(() => locate(views?.path ?? ''))}>
-              {readOnly ? '在 JSON 中定位' : '在 JSON 中编辑'}
-            </Button>
+            {root && (
+              <Button variant="text" onClick={() => locate(root.path)}>
+                {readOnly ? '查看布局 JSON' : '在 JSON 中编辑'}
+              </Button>
+            )}
           </div>
         </header>
-        {root && (
+        {root && !empty && (
           <div className="layout-narrow-navigation" role="group" aria-label="布局工作区">
             <Button
               variant={narrowPane === 'outline' ? 'secondary' : 'text'}
@@ -421,7 +525,10 @@ function LayoutWorkspace({
         {error && !dialog && !inspecting && <p role="alert">{error}</p>}
         {readOnly && !root && <p>尚未配置布局。</p>}
         {root && (
-          <div className="layout-panes" inert={inspecting || !!dialog || !!activePicker}>
+          <div
+            className="layout-panes"
+            inert={inspecting || !!dialog || !!activePicker || !!pendingDeletion}
+          >
             <aside className="layout-outline" aria-label="布局结构">
               <Tabs.Root
                 value={readOnly ? 'outline' : structureTab}
@@ -531,51 +638,32 @@ function LayoutWorkspace({
                 </Tabs.Panel>
               </Tabs.Root>
             </aside>
-            <div className="layout-paper" aria-label="布局画布">
-              <div className="layout-paper-bar">
-                <h3>
-                  {layoutName(m, key)} <small>{key}</small>
-                </h3>
-                {!readOnly && !empty && (
-                  <div className="layout-view-switch" role="group" aria-label="画布模式">
-                    <Button
-                      type="button"
-                      variant="text"
-                      aria-pressed={!arranging}
-                      onClick={() => setMode('preview')}
-                    >
-                      真实预览
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="text"
-                      aria-pressed={arranging}
-                      onClick={() => setMode('arrange')}
-                    >
-                      编排
-                    </Button>
-                  </div>
-                )}
-              </div>
+            <div className="layout-paper" aria-label="布局画布" ref={paper} tabIndex={-1}>
               {arranging ? (
                 <div className={'layout-arrangement' + (drag ? ' layout-dragging' : '')}>
-                  {selectedField && (
-                    <p>
-                      {selectedField.label} · 选择插入位置{' '}
-                      <button onClick={() => setFieldPath('')}>取消选择</button>
-                    </p>
-                  )}
                   {dropHint && (
                     <p className="layout-move-reason" role="status">
                       {dropHint}
                     </p>
                   )}
-                  {empty && (
-                    <button onClick={() => setPicker({ source: text, root: true })}>
-                      选择根容器
-                    </button>
+                  {selectedField && (
+                    <Button variant="text" onClick={() => setFieldPath('')}>
+                      取消绑定 {selectedField.label}
+                    </Button>
                   )}
-                  {canvas(root)}
+                  {empty ? (
+                    <div className="layout-empty">
+                      <IconButton
+                        icon="Plus"
+                        aria-label="添加根组件"
+                        title="添加根组件"
+                        onClick={(event) => replaceMaterial(root, event.currentTarget)}
+                      />
+                      <span>添加根组件</span>
+                    </div>
+                  ) : (
+                    canvas(root)
+                  )}
                 </div>
               ) : (
                 <section className="layout-live" aria-label="真实表单预览">
@@ -599,17 +687,16 @@ function LayoutWorkspace({
           onOpenChange={(open, details) => {
             if (open) return;
             details.cancel();
-            if (moving) return;
+            if (moving || deleting) return;
             beforeLeave(() => {
               setInspecting(false);
               setDrawerPreview(false);
-              setDestination('');
               setError('');
             });
           }}
         >
           <Drawer.Portal>
-            <Drawer.Backdrop />
+            <Drawer.Backdrop className="layout-property-backdrop" />
             <Drawer.Viewport>
               <Drawer.Popup
                 className="layout-editor-drawer layout-property-drawer"
@@ -629,12 +716,18 @@ function LayoutWorkspace({
                         </Drawer.Description>
                       </div>
                       <div className="layout-drawer-actions">
-                        <Button
-                          variant="text"
-                          disabled={moving}
-                          onClick={() => beforeLeave(() => locate(node.path))}
-                        >
-                          <Icon name="FileText" />在 JSON 中定位
+                        {!readOnly && materialId && !m.ambiguous.has(node.path) && (
+                          <Button
+                            variant="text"
+                            disabled={moving}
+                            onClick={(event) => replaceMaterial(node, event.currentTarget)}
+                          >
+                            替换组件
+                          </Button>
+                        )}
+                        <Button variant="text" disabled={moving} onClick={() => locate(node.path)}>
+                          <Icon name="FileText" />
+                          {readOnly ? '查看 JSON' : '编辑 JSON'}
                         </Button>
                         <Drawer.Close
                           render={<Button ref={drawerClose} variant="text" disabled={moving} />}
@@ -702,55 +795,6 @@ function LayoutWorkspace({
                               className="layout-structure-settings"
                               disabled={pendingOwner !== null}
                             >
-                              {item?.parent && (
-                                <section className="layout-inspector-group" aria-label="节点位置">
-                                  <h4>节点位置</h4>
-                                  <div className="layout-move">
-                                    <Field.Root>
-                                      <Field.Label htmlFor="layout-move-target">移动到</Field.Label>
-                                      <StudioSelect
-                                        id="layout-move-target"
-                                        aria-label="移动到"
-                                        disabled={pendingOwner !== null || moving}
-                                        value={target ? destination : ''}
-                                        onValueChange={setDestination}
-                                      >
-                                        <option value="">选择位置</option>
-                                        {destinations
-                                          .filter(({ problem }) => !problem)
-                                          .map(({ pos, id }) => (
-                                            <option key={id} value={id}>
-                                              {destinationName(pos)}
-                                            </option>
-                                          ))}
-                                        {destinations
-                                          .filter(({ problem }) => problem)
-                                          .map(({ pos, id }) => (
-                                            <option key={id} value={id}>
-                                              {destinationName(pos)} · 受限
-                                            </option>
-                                          ))}
-                                      </StudioSelect>
-                                    </Field.Root>
-                                    <Button
-                                      variant="secondary"
-                                      disabled={!target || !!target.problem || moving}
-                                      onClick={() =>
-                                        target &&
-                                        !target.problem &&
-                                        void move(node.path, target.pos)
-                                      }
-                                    >
-                                      移动节点
-                                    </Button>
-                                    {target?.problem && (
-                                      <p role="status" className="layout-move-reason">
-                                        {target.problem}
-                                      </p>
-                                    )}
-                                  </div>
-                                </section>
-                              )}
                               {!m.ambiguous.has(node.path) && (
                                 <LayoutScopeInspector
                                   key={'scope:' + node.path + text}
@@ -848,33 +892,64 @@ function LayoutWorkspace({
             </Drawer.Viewport>
           </Drawer.Portal>
         </Drawer.Root>
-        {activePicker && root && (
-          <LayoutMaterialPicker
-            fields={candidatesFor(
-              activePicker.position ? m.byPath.get(activePicker.position.parent)! : root,
-            )}
-            verification={layoutExpressionContext(
-              formPath,
-              m,
-              activePicker.position ? m.byPath.get(activePicker.position.parent)! : root,
-            )}
-            rootOnly={activePicker.root}
-            preferredField={activePicker.preferred}
-            onClose={() => setPicker(undefined)}
-            onInsert={async (raw) => {
-              const p = activePicker.position;
-              const next = p ? insertLayoutNode(m, p, raw, slots) : m.replace(root, raw);
-              const inserted = p
-                ? p.parent + '/slots/' + escapeKey(p.slot) + '/' + p.index
-                : root.path;
-              await check(next, inserted);
-              apply(next);
-              setPicker(undefined);
-              setInspectorTrigger(undefined);
-              selectNode(inserted);
-            }}
-          />
-        )}
+        {activePicker &&
+          root &&
+          pickerNode &&
+          createPortal(
+            <LayoutMaterialPicker
+              fields={candidatesFor(pickerNode)}
+              verification={layoutExpressionContext(formPath, m, pickerNode)}
+              rootOnly={!!activePicker.replacement && pickerNode === rootMaterial}
+              replacement={activePicker.replacement && !empty ? m.raw(pickerNode) : undefined}
+              materialSlots={slots}
+              trigger={activePicker.trigger}
+              preferredField={activePicker.preferred}
+              onClose={() => setPicker(undefined)}
+              onInsert={async (raw, clearChildren) => {
+                const p = activePicker.position;
+                const next = p
+                  ? insertLayoutNode(m, p, raw, slots)
+                  : replaceLayoutMaterial(m, pickerNode, raw, clearChildren);
+                const inserted = p ? insertedLayoutPath(m, p) : pickerNode.path;
+                await check(next, inserted);
+                completedInsertion.current = { trigger: activePicker.trigger };
+                if (empty) setNarrowPane('paper');
+                apply(next);
+                setPicker(undefined);
+                setFieldPath('');
+                selectNode(inserted);
+              }}
+            />,
+            activePicker.trigger?.closest('[role="dialog"]') ?? document.body,
+          )}
+        {pendingDeletion &&
+          deletionNode &&
+          deletionTarget &&
+          createPortal(
+            <Modal
+              title="删除组件"
+              closeLabel="取消"
+              closeDisabled={deleting}
+              returnFocus={pendingDeletion.trigger}
+              onClose={() => {
+                setDeletion(undefined);
+                setError('');
+              }}
+              actions={
+                <Button disabled={deleting} onClick={() => void deleteComponent()}>
+                  {deleting ? '正在删除' : '确认删除'}
+                </Button>
+              }
+            >
+              <p>
+                删除「{nodeName(m, deletionNode)}」会同时移除其子组件。字段定义和其他布局会保留。
+              </p>
+              {deletionTarget.root && <p>当前布局会恢复为空布局，并保留名称和 key。</p>}
+              {deletionTarget.node !== deletionNode && <p>包裹该组件的重复区也会移除。</p>}
+              {error && <p role="alert">{error}</p>}
+            </Modal>,
+            pendingDeletion.trigger.closest('[role="dialog"]') ?? document.body,
+          )}
       </section>
     </LayoutFieldStructure.Provider>
   );

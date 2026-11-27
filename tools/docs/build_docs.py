@@ -168,7 +168,7 @@ def main() -> None:
     pages[INVENTORY] = json.dumps(inventory, ensure_ascii=False, indent=2) + "\n"
     legacy_links = [entry for entry in catalog["redirects"] if entry["from"].startswith("l1-definition-protocol-v1.html#")]
     pages[READING / "l1-definition-protocol-v1.html"] = GENERATED + '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>L1 协议阅读入口</title></head><body><p>协议已按能力拆分，旧书签将跳转到对应主题。</p><a href="l1-definition-protocol.html">L1 协议设计</a>' + ''.join('<span id="' + html.escape(item['from'].split('#')[1], quote=True) + '"></span>' for item in legacy_links) + '<script>const routes=' + json.dumps({item['from'].split('#')[1]: item['url'] for item in legacy_links}, ensure_ascii=False) + ';location.replace(routes[decodeURIComponent(location.hash.slice(1))] || "l1-definition-protocol.html");</script></body></html>\n'
-    pages[READING / "index.html"] = GENERATED + '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=architecture.html"><title>整体架构 · 动态表单引擎</title></head><body><a href="architecture.html">阅读整体架构</a></body></html>\n'
+    pages[READING / "index.html"] = GENERATED + '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=architecture.html"><title>整体架构 · Assemble Studio</title></head><body><a href="architecture.html">阅读整体架构</a></body></html>\n'
     stale = []
     for path, content in pages.items():
         if args.check:

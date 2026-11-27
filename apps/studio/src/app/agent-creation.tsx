@@ -565,8 +565,10 @@ export function AgentCreation({
     await perform('正在处理消息', async () => {
       try {
         const attached = resource;
+        const readOnlyTurn =
+          readOnlyChat || attachments.some((reference) => reference.kind === 'diagnostic');
         if (
-          !readOnlyChat &&
+          !readOnlyTurn &&
           attached &&
           !editingActive &&
           Object.entries(workingCopy(attached)).some(
@@ -583,7 +585,7 @@ export function AgentCreation({
           ...(attached && {
             draftId: attached.id,
             draftRevision: attached.revision,
-            ...(readOnlyChat && { readOnly: true }),
+            ...(readOnlyTurn && { readOnly: true }),
           }),
         };
         const fingerprint = JSON.stringify(payload);

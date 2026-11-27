@@ -3,6 +3,7 @@ from contextlib import aclosing
 from typing import Any
 
 from form_agent.agent.budgets import TURN_RECURSION_LIMIT
+from form_agent.business.conversations.model import Owner
 
 LABELS = {
     "route": "正在判断下一步",
@@ -40,7 +41,7 @@ async def stream_graph_events(
     callbacks=(),
     trace_metadata=None,
     generate_conversation_title=False,
-    actor=None,
+    actor: Owner | None = None,
 ) -> AsyncGenerator[dict[str, Any], None]:
     config: dict[str, Any] = {
         "run_id": trace,

@@ -23,7 +23,7 @@ from form_agent.execution.model_calls import structured
 
 
 async def understand_request(
-    request: TurnInput, model: BaseChatModel, *, task_intent=False
+    request: TurnInput, model: BaseChatModel, *, task_intent=False, compact=False
 ) -> Understanding:
     payload = request.model_dump(
         mode="json", exclude={"context", "previous_review", "previous_compose"}
@@ -106,7 +106,7 @@ async def understand_request(
     ]
     if request.requirements_document:
         return await read_document(
-            model, messages, source_texts, task_intent=task_intent
+            model, messages, source_texts, task_intent=task_intent, compact=compact
         )
     result = await structured(model, ChatUnderstanding, messages)
     reading = validate_understanding(result, source_texts)
@@ -132,6 +132,7 @@ async def understand(
     *,
     model: BaseChatModel,
     task_intent: bool = False,
+    compact: bool = False,
 ) -> dict:
     request = state["request"]
     revised = identify_placeholder_edit(request)
@@ -145,6 +146,6 @@ async def understand(
         }
     return {
         "understanding": await understand_request(
-            request, model, task_intent=task_intent
+            request, model, task_intent=task_intent, compact=compact
         )
     }

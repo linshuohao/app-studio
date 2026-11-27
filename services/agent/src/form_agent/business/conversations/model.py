@@ -5,9 +5,16 @@ import re
 from hashlib import sha256
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
-from form_agent.business.conversations.references import MessageReference
+from form_agent.business.conversations.references import (
+    DiagnosticReference,
+    MessageReference,
+)
+from form_agent.business.form_authoring.contracts import (
+    AssetRepairReview,
+    DiagnosticRepairReview,
+)
 
 
 class Owner(BaseModel, frozen=True):
@@ -120,12 +127,57 @@ def explain_draft_issues(result: dict, trace: dict | None):
     }
 
 
-def public_result(result: dict) -> dict:
+def diagnostic_actions(result: dict, references) -> dict:
+    if result.get("kind") != "answer" or not isinstance(references, list):
+        return {}
+    if (
+        result.get("diagnosticRepair") is not None
+        and result.get("assetRepair") is not None
+    ):
+        return {}
+    reference = next(
+        (
+            item
+            for item in references
+            if (
+                isinstance(item, DiagnosticReference)
+                or isinstance(item, dict)
+                and item.get("kind") == "diagnostic"
+            )
+        ),
+        None,
+    )
+    if reference is None:
+        return {}
+    try:
+        reference = DiagnosticReference.model_validate(reference)
+        if result.get("diagnosticRepair") is not None:
+            action = DiagnosticRepairReview.model_validate(result["diagnosticRepair"])
+            if all(
+                getattr(reference, key) == getattr(action, key)
+                for key in ("diagnosticId", "formId", "releaseId", "versionId")
+            ) and re.fullmatch(r"[a-f0-9]{64}", action.candidateDigest):
+                return {"diagnosticRepair": action.model_dump()}
+        elif result.get("assetRepair") is not None:
+            asset = AssetRepairReview.model_validate(result["assetRepair"])
+            if (
+                asset.diagnosticId == reference.diagnosticId
+                and asset.candidates
+                and asset.candidates == reference.assetCandidates
+            ):
+                return {"assetRepair": asset.model_dump()}
+    except ValidationError:
+        pass
+    return {}
+
+
+def public_result(result: dict, references=None) -> dict:
     public = {
         k: result[k]
         for k in ("kind", "message", "summary", "reason", "questions")
         if k in result
     }
+    public.update(diagnostic_actions(result, references))
     if "issues" in result:
         public["issues"] = [
             {

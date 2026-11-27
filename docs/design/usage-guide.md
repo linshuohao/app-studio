@@ -174,6 +174,89 @@ Host 真正提交前需要显式完整校验，覆盖全部适用规则，由 Ho
 
 发生安全预算停止时中止整个 Flush，保留已写数据并报告；不要自动无限重启同一批待执行任务。已替代局部 Health 与失败下游禁用方案，Trace 只解释实际过程。当前实现清空本轮剩余 Reaction Pending，不自动续跑；后续新有效变化建立新轮。独立完整校验仍可进行，Host 只交付当前 valid 证明对应快照；真实提交服务待接入。记录内容与复现能力见 [Trace](l3-observability.md#l3-trace) 和 [三档复现](l3-observability.md#l3-devtools)。
 
+## 开发物料与纯函数 {#usage-asset-development}
+
+这两个例子来自现有资产。`date-range` 把两端日期交给 Runtime，`text.isNonBlank` 在投保字段校验中区分空白输入与有效文本。用新的练习 ID 查看或生成模板，用真实资产核对实现、装配与验收。以下命令从仓库根目录运行，开发环境按[日常命令](engineering.md#engineering-implementation)准备。
+
+### 从 CLI 到模板
+
+```bash
+pnpm asset:new material --id date-range-example --dry-run
+pnpm asset:new function --id text.hasVisibleText --dry-run
+```
+
+输出列出计划生成和修改的文件。要在练习分支生成骨架，确认 ID 未使用后去掉 `--dry-run`。模板同时生成 `manifest.ts`、实现、README、镜像测试，以及集中汇总和公开导出的更新。生成的实现与待补测试需要按真实行为完成。现有资产可直接阅读和运行其用例。模板、生成约束及失败处理见[资产 CLI 手册](../../tools/engineering/assets/README.md)。
+
+### 物料例子 · date-range {#usage-material-example}
+
+1. **声明。** [Manifest](../../packages/materials-react/src/date-range/manifest.ts) 闭合 Props Schema，声明必填 `label`、可选起始范围和两个独立的可空字符串端口 `start`、`end`。放到表单时，两个端口分别指向日期字段；同一布局还可以包含其他物料。
+2. **实现。** [日期范围组件](../../packages/materials-react/src/date-range/implementation.tsx) 在弹窗内保留本地编辑值，确认后经共享 Adapter 分别交付开始和结束日期。取消时保留 Runtime 原值；第一端成功、第二端失败时显示部分成功并读回实际值。起止顺序等业务规则配置为 Constraint。
+3. **装配。** Compiler 读取 `@form-engine/materials-react/manifests` 的静态契约；运行侧通过 `createDateRange(artifact)` 加载确定制品下的实现。下面的视图节点使用两端绑定，Schema 需提供对应字段。
+4. **验证。** 跑物料包测试，再在 Playground 打开 `/demos/interactions` 的日期交互，分别确认提交、取消和部分写入。真实业务 Host 的接入另沿该物料及宿主的集成契约验证。
+
+```ts
+const dateRangeView = {
+  material: 'date-range',
+  props: { label: '出行日期' },
+  bindings: {
+    start: { source: 'data', path: '/travel/startDate' },
+    end: { source: 'data', path: '/travel/endDate' },
+  },
+} as const;
+```
+
+```bash
+pnpm --filter @form-engine/materials-react test date-range
+pnpm --filter @form-engine/playground dev
+```
+
+参见[物料说明](../../packages/materials-react/src/date-range/README.md)、[行为测试](../../packages/materials-react/tests/date-range/implementation.test.tsx)和[交互演示源码](../../apps/playground/src/demos/interactions/definition.ts)。
+
+### 纯函数例子 · text.isNonBlank {#usage-function-example}
+
+1. **声明。** [Manifest](../../packages/pure-functions/src/text-is-non-blank/manifest.ts) 接受一个 JSON 值并返回布尔值。需要兼顾字段不存在的表达式可先通过 `core.exists` 判断。
+2. **实现。** [函数实现](../../packages/pure-functions/src/text-is-non-blank/implementation.ts) 要求一个参数。对字符串按 ECMAScript `trim` 规则判定，空白和非字符串返回 `false`。函数保留输入值，Runtime 快照中的姓名仍可包含原来的空格。
+3. **装配。** 将静态 Manifest 和对应制品身份放进编译 Catalog，用 `createTextIsNonBlank(artifact)` 得到运行实现，按 `text.isNonBlank` 注册到 Runtime。编译侧和运行侧使用相同的资产与制品身份。下面是约束中的 `assert` 表达式，完整定义和字段 Issue 归属见集成用例。
+4. **验证。** 包测试覆盖正常字符串、空白、非字符串和参数数量。跨包用例用空白姓名编译并运行校验，写入 `" 张三 "` 后再次完整校验，断言结果变为有效且快照保留原文。
+
+```json
+{
+  "op": "text.isNonBlank",
+  "args": [{ "ref": { "source": "data", "path": "/name" } }]
+}
+```
+
+```bash
+pnpm --filter @form-engine/pure-functions test text-is-non-blank
+pnpm exec vitest run tests/integration/business-functions.test.ts
+```
+
+参见[函数说明](../../packages/pure-functions/src/text-is-non-blank/README.md)、[边界测试](../../packages/pure-functions/tests/text-is-non-blank/implementation.test.ts)和[编译到校验的集成用例](../../tests/integration/business-functions.test.ts)。
+
+### 目录资料、变更声明与版本计划 {#usage-asset-delivery}
+
+补齐资产的用法、参数和例子后，生成 Studio 使用的目录资料并检查同步。对于准备交付的资产行为变更，用 `asset:change --id` 记录兼容影响。示例命令中的环境变量由调用者指定，`ASSET_BASE_REF` 表示所选检查基线，`RELEASE_BASE_REF` 表示上次交付对应的提交或标签。
+
+```bash
+node tools/engineering/catalog-docs.mjs
+node tools/engineering/catalog-docs.mjs --check
+```
+
+例如对确认为兼容修复的物料改动，单独记录一条声明：
+
+```bash
+pnpm asset:change --id date-range --bump patch --summary '修复日历焦点回到触发字段'
+```
+
+该命令会写入待发布声明。实际升级级别按改动对公开行为的影响确定；新资产的初始 Manifest 版本按现有发布规则处理。随后检查资产并生成版本计划。
+
+```bash
+pnpm assets:check --base "${ASSET_BASE_REF:?指定检查基线}"
+pnpm release:plan --base "${RELEASE_BASE_REF:?指定上次交付基线}"
+```
+
+版本计划应能追溯到具体资产、包与依赖影响。资产版本描述能力兼容性，包版本描述分发单元，Manifest 和实际制品另有摘要。计划用于审阅；版本应用及制品发布沿[现有交付流程](engineering.md#asset-tooling)执行。需要验证发布包确实能被独立项目消费时，运行 `pnpm packages:check`。
+
 ## 参与开发：从一个业务链路进入对应契约 {#usage-contributing}
 
 先用“改年龄 → 保费联动 → 监护人校验 → 视图更新 → 外部核验 → 提交”解释职责，再进入负责的层。共享词汇在设计者指南中查阅，正式声明与状态以专题为准。

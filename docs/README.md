@@ -6,6 +6,8 @@
 
 **整体架构 → 纵向与横向能力图谱 → 每层 / 每项能力的独立设计。**
 
+首次阅读从[项目手册](design/handbook/README.md)进入，沿一张旅险表单了解创作、发布、运行和资产扩展；需要设计细节时从下方进入相应专题。
+
 - [整体架构](design/architecture.md)：产品全貌与平台蓝图状态、系统边界、完整逻辑架构图、双工作流、建设路径、责任与贯穿案例，以及已确认的 TS / React 首期包与目录。
 - [工程工具链与初始化](design/engineering.md)：已确认选型、比较、pnpm latest 安装、官方脚手架、Git 与质量门禁，以及初始化后的实际命令 / 版本 / 本地验收。远端 CI 已通过，[主分支保护已启用](design/engineering.md#engineering-git)。
 - [能力图谱](design/capability-map.md)：先定位产品能力，再看纵向四层与横向协作，进入对应主题。
@@ -112,7 +114,7 @@ python3 -m venv --system-site-packages .venv-docs
 .venv-docs/bin/python docs/validation/run_validation.py
 ```
 
-阅读页共用 `tools/docs/reader.py`、`tools/docs/templates/document.html` 及 `docs/reading/assets/documentation.css` / `documentation.js`。`examples.css` 只补充样例布局；历史快照保留原有呈现，纯函数术语已统一，原始字节见历史来源包。仅改呈现时重新生成页面即可，无需重建协议数据。旧首页 `reading/index.html` 直接转到整体架构，不另维护一份首页正文。
+阅读页共用 `tools/docs/reader.py`、`tools/docs/templates/document.html` 及 `docs/reading/assets/documentation.css` / `documentation.js`。`examples.css` 只补充样例布局；历史快照保留原有呈现，纯函数术语已统一，原始字节见历史来源包。仅改呈现时重新生成页面即可，无需重建协议数据。阅读首页 `reading/index.html` 直接进入项目手册。
 
 L1 阅读入口在 `design/l1/README.md` 维护，编号 Markdown 各自生成独立 HTML。页面分组由 `navigation.group / order` 派生，下一步由 `reading_next` 引用文档 ID；顺序不依赖文件扫描。迁移章节在目标 Markdown 声明 `relocated_sections`，构建保留旧书签并检查原锚点、代码与图示能在原文件或声明目标找到。旧 L1 合并页只作按章节路由，不维护第二份正文。
 
@@ -130,7 +132,7 @@ L1 阅读入口在 `design/l1/README.md` 维护，编号 Markdown 各自生成�
 .venv-docs/bin/python tools/docs/serve.py
 ```
 
-打开 [架构首页](http://127.0.0.1:8765/docs/reading/architecture.html)。默认只监听本机 127.0.0.1；端口被占用可用 `--port 8766`，需要启动前重建可加 `--build`，Ctrl+C 停止。验收使用本地 HTTP；直接 file:// 是否允许本地脚本取决于浏览器策略，不作为已验证的跨浏览器承诺。搜索使用本地经典脚本索引，不依赖 fetch、后端或外部 CDN。
+打开 [项目手册](http://127.0.0.1:8765/docs/reading/handbook/index.html)。默认只监听本机 127.0.0.1；端口被占用可用 `--port 8766`，需要启动前重建可加 `--build`，Ctrl+C 停止。验收使用本地 HTTP；直接 file:// 是否允许本地脚本取决于浏览器策略，不作为已验证的跨浏览器承诺。搜索使用本地经典脚本索引，不依赖 fetch、后端或外部 CDN。
 
 阅读页、验证图鉴、历史入口、索引、构建报告和来源清单在本地或 CI 生成，Git 保留 Markdown、验证输入、原始历史与阅读器静态资源。新检出先生成再检查，`pnpm check` 会执行这两步。生成位置继续沿用 `docs/reading/`、`docs/validation/index.html` 和 `docs/history/index.html`。静态图、Mermaid、代码高亮、宽表格、打印、浅 / 深色与窄屏导航均由共享外壳处理。
 

@@ -29,7 +29,9 @@ from form_agent.agent.tools.turn_reads import cached_tools
 from form_agent.execution.journal import step
 
 
-def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
+def build_turn_graph(
+    model: BaseChatModel, tools: AgentToolDependencies, *, compact_understanding=False
+):
     tool_dependencies = journal_tools(tools)
     graph = StateGraph(TurnGraphState)
     restore_context = step("load_context", load_context)
@@ -54,7 +56,9 @@ def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
     actions: dict[Action, Callable[[TurnGraphState], Awaitable[dict]]] = {
         "chat": partial(chat, model=model),
         "lookup": lookup,
-        "understand": partial(understand, model=model, task_intent=True),
+        "understand": partial(
+            understand, model=model, task_intent=True, compact=compact_understanding
+        ),
         "compose": partial(compose_candidate, model=model),
         "check": partial(check, tools=tool_dependencies, max_checks=MAX_CHECKS),
         "repair": partial(repair_candidate, model=model, max_checks=MAX_CHECKS),

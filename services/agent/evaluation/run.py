@@ -141,7 +141,15 @@ async def bridge(operation, archive=None, **inputs):
     return json.loads(output)
 
 
-async def run_case(case, mode, callbacks=(), archive=None, *, compose="staged"):
+async def run_case(
+    case,
+    mode,
+    callbacks=(),
+    archive=None,
+    *,
+    compose="staged",
+    compact_understanding=False,
+):
     started = monotonic()
     checks, turns, routes = [], [], []
     candidate = None
@@ -180,6 +188,7 @@ async def run_case(case, mode, callbacks=(), archive=None, *, compose="staged"):
                     compile_candidate,
                     check_schema if compose == "staged" else None,
                 ),
+                compact_understanding=compact_understanding,
             )
             clarification = case.get("clarification")
             messages = ["请按这份 PRD 创建表单。"]
@@ -414,7 +423,14 @@ def save_report(output, metadata, results, experiment_url=None):
 
 
 async def run_item(
-    case, mode, callbacks=(), archive_path=None, trace_id=None, *, compose="staged"
+    case,
+    mode,
+    callbacks=(),
+    archive_path=None,
+    trace_id=None,
+    *,
+    compose="staged",
+    compact_understanding=False,
 ):
     label = f"{case['id']} #{case['trial']}"
     print(f"Running {label}", flush=True)
@@ -430,7 +446,14 @@ async def run_item(
     )
     if archive:
         archive.record("evaluation.start", case=case, mode=mode)
-    result = await run_case(case, mode, callbacks, archive, compose=compose)
+    result = await run_case(
+        case,
+        mode,
+        callbacks,
+        archive,
+        compose=compose,
+        compact_understanding=compact_understanding,
+    )
     if archive:
         archive.record("evaluation.end", output=result)
     print(f"{label}: {result['failure_at']} ({result['elapsed_ms']} ms)", flush=True)
@@ -457,6 +480,7 @@ def run_langfuse(items, args, metadata, archive_path):
             archive_path=archive_path,
             trace_id=client.get_current_trace_id(),
             compose=args.compose,
+            compact_understanding=args.compact_understanding,
         )
 
     def evaluate(*, output, **kwargs):
@@ -554,6 +578,11 @@ def main():
         "--mode", choices=["agent", "reference", "reference-broken"], default="agent"
     )
     parser.add_argument("--case", action="append")
+    parser.add_argument(
+        "--compact-understanding",
+        action="store_true",
+        help="Use the experimental compact PRD reading prompt during agent evaluation",
+    )
     parser.add_argument("--compose", choices=["legacy", "staged"], default="staged")
     parser.add_argument(
         "--jobs",
@@ -575,6 +604,8 @@ def main():
         help="Read local Langfuse/model settings",
     )
     args = parser.parse_args()
+    if args.compact_understanding and args.mode != "agent":
+        parser.error("--compact-understanding requires --mode agent")
     if args.jobs != 1 and not args.offline:
         parser.error("--jobs requires --offline")
     for env_file in args.env_file:
@@ -608,6 +639,9 @@ def main():
         "scorer": SCORER,
         "mode": args.mode,
         "compose": args.compose,
+        "understanding_profile": "compact"
+        if args.compact_understanding
+        else "baseline",
         "jobs": args.jobs,
         "environment": ENVIRONMENT,
         "model": os.getenv("CREATE_FORM_MODEL", "") if args.mode == "agent" else "",
@@ -638,6 +672,7 @@ def main():
                         args.mode,
                         archive_path=archive_path,
                         compose=args.compose,
+                        compact_understanding=args.compact_understanding,
                     )
 
             return await asyncio.gather(*(run(item) for item in items))

@@ -1359,17 +1359,6 @@ button.material-card-open:focus-visible {
   min-width: 160px;
 }
 
-.contract-signature,
-.contract-type {
-  margin: 12px 0;
-  padding: 14px 16px;
-  background: #f7f8fa;
-  border: 1px solid #e9eaee;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 1.7;
-  overflow: auto;
-}
 .contract-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1425,9 +1414,6 @@ button.material-card-open:focus-visible {
 .asset-api .contract-panel {
   min-width: 0;
 }
-.asset-api .contract-type {
-  max-height: 560px;
-}
 .catalog-metadata .surface {
   padding: 14px 18px;
 }
@@ -1459,9 +1445,6 @@ button.material-card-open:focus-visible {
 .asset-api .contract-columns .catalog-properties th {
   white-space: nowrap;
 }
-.contract-panel .contract-type code {
-  white-space: pre;
-}
 @media (max-width: 650px) {
   .catalog-metadata dl {
     grid-template-columns: auto minmax(0, 1fr);
@@ -1477,13 +1460,6 @@ button.material-card-open:focus-visible {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* API references wrap at available width; identifiers break at field boundaries. */
-.contract-signature,
-.contract-type,
-.contract-panel .contract-type code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .contract-columns .catalog-properties td:first-child code {
   overflow-wrap: normal;
   word-break: normal;
@@ -1510,11 +1486,6 @@ button.material-card-open:focus-visible {
   }
   .asset-api .contract-columns .catalog-properties td:nth-child(3) {
     white-space: normal;
-  }
-  .contract-signature,
-  .contract-type {
-    padding: 10px;
-    font-size: 11px;
   }
 }
 
@@ -1653,12 +1624,6 @@ button.material-card-open:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-.diff-pair pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: #f7f7f8;
-  padding: 8px;
-}
 @media (max-width: 640px) {
   .diff-pair {
     grid-template-columns: minmax(0, 1fr);
@@ -1705,6 +1670,35 @@ dialog.catalog-drawer {
   border-radius: 0;
   overflow: auto;
 }
+dialog.layout-material-picker[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-12);
+  overflow: hidden;
+}
+.layout-material-picker > .toolbar {
+  flex: none;
+  margin-block-end: 0;
+}
+.layout-material-filters {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 0.45fr);
+  align-items: end;
+  gap: var(--studio-space-12);
+}
+.layout-material-results {
+  min-block-size: 0;
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.layout-material-picker .layout-material-other-types {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-8);
+}
 .catalog-drawer .insert-fields,
 .insert-functions {
   display: grid;
@@ -1722,8 +1716,7 @@ dialog.catalog-drawer {
   gap: 4px;
   min-width: 0;
 }
-.catalog-drawer small,
-.catalog-drawer pre {
+.catalog-drawer small {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }

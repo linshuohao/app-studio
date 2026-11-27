@@ -1,5 +1,5 @@
 import { beforeEach, expect, it } from 'vitest';
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { setup, ref } from '../fixtures.js';
 beforeEach(() => {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
@@ -263,10 +263,10 @@ it('applies inclusive bounds to the start picker and rejects out-of-range drafts
   expect(form.runtime.snapshot()).toMatchObject({ start: '2028-02-29', end: '2028-03-01' });
 });
 
-it('opens a calendar for the start date inside the confirmation panel', () => {
+it('opens a calendar for the start date inside the confirmation panel', async () => {
   const form = dateForm();
   const modal = open();
   fireEvent.click(within(modal).getByRole('button', { name: '打开开始日期日历' }));
-  expect(within(modal).getByRole('grid')).toBeVisible();
+  await waitFor(() => expect(within(modal).getByRole('grid')).toBeVisible());
   expect(form.runtime.dispatch).not.toHaveBeenCalled();
 });

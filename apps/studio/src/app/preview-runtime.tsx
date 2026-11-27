@@ -1,5 +1,6 @@
 'use client';
 
+import { addPreviewExpense } from './host/expense-preview';
 import { checkPassportDuplicates, travelPassportValidator } from './host/passport-validator';
 import { projectUnderwritingSubmission } from './host/underwriting-projection';
 import { travelEligibilityValidator } from './host/validator-registration';
@@ -110,6 +111,9 @@ export function PreviewRuntime({
           'travel.saveDraft': () => show('模拟保存草稿完成。'),
           'travel.submit': () => submit(false),
           'travel.previewUnderwritingSubmit': () => submit(true),
+          'business.addExpense': () => {
+            if (active && instance) show(addPreviewExpense(instance));
+          },
         },
       };
       const requirements = prepared.hostRequirements;

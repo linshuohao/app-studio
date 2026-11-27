@@ -1,5 +1,6 @@
 'use client';
 import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
+import { AgentDraftIssues } from './agent-draft-issues';
 import { AgentIssues } from './agent-issues';
 import { AgentInteractionCard, AgentTurnProgress } from './agent-interaction';
 import { studioUrl, writeLocation } from './studio-location';
@@ -425,15 +426,14 @@ export function AgentCreation({
     });
   }
   const revision = session?.revision ?? 0;
-  const draftIssues = Array.from(
-    new Map(
-      [...(resource?.appliedDraftIssues ?? []), ...(resource?.draftIssues ?? [])].map((issue) => [
-        JSON.stringify([issue.sourcePointer, issue.requirementIds, issue.message]),
-        issue,
-      ]),
-    ).values(),
-  );
-  const hasDraftIssues = draftIssues.length > 0;
+  const candidateIssues = resource?.draftIssues ?? [];
+  const appliedIssues =
+    resource &&
+    resource.appliedDigest === resource.candidateDigest &&
+    resource.text === resource.candidateText
+      ? candidateIssues
+      : (resource?.appliedDraftIssues ?? []);
+  const hasDraftIssues = appliedIssues.length > 0 || candidateIssues.length > 0;
   const candidate = resource?.candidateText;
   const digest = resource?.candidateDigest;
   const isCurrent =
@@ -1031,30 +1031,18 @@ export function AgentCreation({
         <div inert={busy === '正在保存' || busy === '正在保存草稿'} className="agent-workbench">
           {showDraftEditor && resource && (
             <div className="agent-canvas surface" inert={!!editing && !editingActive && pending}>
-              {hasDraftIssues && (
-                <section aria-label="生成时待处理项" className="surface">
-                  <strong>生成时待处理项</strong>
-                  <ul>
-                    {draftIssues.map((issue, index) => (
-                      <li key={index}>
-                        <Button
-                          variant="text"
-                          onClick={() =>
-                            locateDiagnostic(
-                              issue.sourcePointer,
-                              draft.text === resource.candidateText,
-                            )
-                          }
-                        >
-                          {[
-                            ...issue.requirementIds.filter((id) => !issue.message.includes(id)),
-                            issue.message,
-                          ].join(' · ')}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+              {appliedIssues.length > 0 && (
+                <AgentInteractionCard title="当前工作稿待处理项" tone="warning">
+                  {draft.appliedDigest !== resource.candidateDigest && (
+                    <p>有新候选待应用。应用后，这里的待处理项会随工作稿更新。</p>
+                  )}
+                  <AgentDraftIssues
+                    issues={appliedIssues}
+                    onLocate={(pointer) =>
+                      locateDiagnostic(pointer, draft.text === resource.candidateText)
+                    }
+                  />
+                </AgentInteractionCard>
               )}
               {inspection && (
                 <section aria-label="配置检查结果" className="surface">
@@ -1211,18 +1199,13 @@ export function AgentCreation({
                           : undefined
                       }
                     >
-                      <AgentReply text={assistantText(t.result)} />
-                      {!!t.result.draftIssues?.length && (
-                        <ul aria-label="草稿待处理项">
-                          {t.result.draftIssues.map((issue, index) => (
-                            <li key={index}>
-                              {[
-                                ...issue.requirementIds.filter((id) => !issue.message.includes(id)),
-                                issue.message,
-                              ].join(' · ')}
-                            </li>
-                          ))}
-                        </ul>
+                      {t.result.draftIssues?.length ? (
+                        <AgentDraftIssues
+                          summary={assistantText(t.result)}
+                          issues={t.result.draftIssues}
+                        />
+                      ) : (
+                        <AgentReply text={assistantText(t.result)} />
                       )}
                       {t.result.issues && t.result.verification && (
                         <AgentIssues

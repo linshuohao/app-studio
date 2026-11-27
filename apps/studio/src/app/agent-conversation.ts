@@ -1,4 +1,4 @@
-import { platform, type ComposePhase } from './platform-api';
+import { platform, type TurnEvent } from './platform-api';
 import { studioUrl } from './studio-location';
 import type { IssueReport } from './agent-issues';
 
@@ -132,14 +132,7 @@ export type TurnAttempt = {
   interruptionReason?: string;
   interruptionTraceId?: string;
   elapsedMs?: number;
-  events: (
-    | { type: 'progress'; message: string }
-    | ({ type: 'compose_phase' } & ComposePhase)
-    | { type: 'understanding_item'; kind: 'requirement' | 'question'; text: string }
-    | { type: 'understanding_reset' }
-    | { type: 'text_reset' }
-    | { type: 'text_delta'; delta: string }
-  )[];
+  events: TurnEvent[];
 };
 export type AssistantConversation = {
   attempts?: TurnAttempt[];

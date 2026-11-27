@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { AttemptHistory, ComposeProgress, useRunningConversation } from './agent-attempt';
+import { AttemptHistory, useRunningConversation } from './agent-attempt';
 import { AgentIssues } from './agent-issues';
 import { AgentReply, AgentCandidateCard, AgentMessage } from './agent-reply';
 import { renameConversation } from './agent-conversation';
 import { AgentPanel, AgentUserMessage } from './agent-panel';
 import { AgentMerge } from './agent-merge';
-import { platform, failureMessage, PlatformError, type ComposePhase } from './platform-api';
+import { platform, failureMessage, PlatformError, type TurnEvent } from './platform-api';
 import {
   assistantText,
   addReference,
@@ -51,15 +51,13 @@ export function FormAgentSidebar({
   const [message, setMessage] = useState(''),
     [error, setError] = useState(''),
     [proposal, setProposal] = useState<EditorProposal>();
-  const [progress, setProgress] = useState(''),
-    [replyText, setReplyText] = useState(''),
-    [sent, setSent] = useState('');
+  const [sent, setSent] = useState('');
   const [references, setReferences] = useState<MessageReference[]>([]);
   const submitting = useRef(false);
-  const [phases, setPhases] = useState<ComposePhase[]>([]);
+  const [turnEvents, setTurnEvents] = useState<TurnEvent[]>([]);
   const [resumingTurn, setResumingTurn] = useState<string>();
-  function recordPhase(event: ComposePhase) {
-    setPhases((previous) => [...previous, event]);
+  function recordTurnEvent(event: TurnEvent) {
+    setTurnEvents((previous) => [...previous, event]);
   }
   const [review, setReview] = useState(false),
     [loaded, setLoaded] = useState(false);
@@ -140,14 +138,12 @@ export function FormAgentSidebar({
     if (!conversation || locked || disabled) return;
     setLocked(true);
     setError('');
-    setProgress('正在继续处理');
-    setPhases([]);
-    setReplyText('');
+    setTurnEvents([]);
     setResumingTurn(turnId);
     try {
       const next = await platform<TurnResponse>(
         '/agent-conversations/' + conversation.id + '/turns/' + turnId + '/resume',
-        { progress: setProgress, phase: recordPhase },
+        { onTurnEvent: recordTurnEvent },
       );
       setConversation(next.conversation);
       if (next.editorProposal) setProposal(next.editorProposal);
@@ -181,16 +177,12 @@ export function FormAgentSidebar({
       retry.current = { id: crypto.randomUUID(), fingerprint };
     setSent(content);
     setMessage('');
-    setProgress('正在处理消息');
-    setPhases([]);
-    setReplyText('');
+    setTurnEvents([]);
     setError('');
     setLocked(true);
     try {
       const result = await platform<TurnResponse>('/agent-conversations/' + id + '/turns', {
-        text: setReplyText,
-        progress: setProgress,
-        phase: recordPhase,
+        onTurnEvent: recordTurnEvent,
         body: { ...payload, turnId: retry.current.id },
       });
       setConversation(result.conversation);
@@ -291,20 +283,15 @@ export function FormAgentSidebar({
               key={attempt.turnId}
               attempt={attempt}
               disabled={locked || disabled}
-              livePhases={resumingTurn === attempt.turnId ? phases : undefined}
+              liveEvents={resumingTurn === attempt.turnId ? turnEvents : undefined}
               resume={() => void resumeTurn(attempt.turnId)}
             />
           ))}
-        {sent && <AgentUserMessage text={sent} />}
-        {locked && <p role="status">{progress}</p>}
-        {!!sent && <ComposeProgress events={phases} />}
-        {locked && replyText && (
-          <AgentMessage text={replyText}>
-            <section data-speaker="assistant">
-              <b>表单助手</b>
-              <AgentReply text={replyText} streaming />
-            </section>
-          </AgentMessage>
+        {sent && (
+          <AttemptHistory
+            attempt={{ message: sent, status: 'running', resumable: false, events: turnEvents }}
+            disabled
+          />
         )}
         {error && <p role="alert">{error}</p>}
         {proposal && (

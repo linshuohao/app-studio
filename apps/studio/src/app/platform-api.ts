@@ -56,6 +56,13 @@ export type ComposePhase = {
   attempt?: number;
   detail?: string;
 };
+export type TurnEvent =
+  | { type: 'progress'; message: string; stage?: ComposePhase['stage'] }
+  | ({ type: 'compose_phase' } & ComposePhase)
+  | ({ type: 'understanding_item' } & UnderstandingItem)
+  | { type: 'understanding_reset' }
+  | { type: 'text_reset' }
+  | { type: 'text_delta'; delta: string };
 export class PlatformError extends Error {
   constructor(
     readonly status: number,
@@ -73,11 +80,7 @@ export async function platform<T>(
     method?: 'POST' | 'PATCH' | 'DELETE';
     key?: string;
     signal?: AbortSignal;
-    text?: (value: string) => void;
-    reset?: () => void;
-    item?: (value: UnderstandingItem) => void;
-    progress?: (message: string) => void;
-    phase?: (value: ComposePhase) => void;
+    onTurnEvent?: (event: TurnEvent) => void;
   },
 ): Promise<T> {
   const response = await fetch(`/api/platform${path}`, {
@@ -86,7 +89,7 @@ export async function platform<T>(
     method: request?.method ?? (request ? 'POST' : 'GET'),
     headers: request && {
       'Content-Type': 'application/json',
-      ...(request.progress && { Accept: 'text/event-stream' }),
+      ...(request.onTurnEvent && { Accept: 'text/event-stream' }),
       ...(request.key && { 'Idempotency-Key': request.key }),
     },
     body: request && JSON.stringify(request.body ?? {}),
@@ -102,22 +105,29 @@ export async function platform<T>(
       typeof body?.code === 'string' ? body.code : undefined,
     );
   }
-  if (request?.progress) {
+  if (request?.onTurnEvent) {
     if (!response.body) throw new PlatformError(502);
     const reader = new AgentTransport().decode(response.body).getReader();
-    let text = '';
+    const emit = request.onTurnEvent;
     try {
       for (;;) {
         const { done, value } = await reader.read();
         if (done) throw new PlatformError(502, '进度连接提前结束，请重新打开会话核对结果');
-        if (value.type === 'text-delta') request.text?.((text += value.delta));
-        else if (value.type === 'data-text-reset') {
-          text = '';
-          request.text?.('');
-        } else if (value.type === 'data-progress') request.progress(String(value.data));
-        else if (value.type === 'data-compose-phase') request.phase?.(value.data as ComposePhase);
-        else if (value.type === 'data-reset') request.reset?.();
-        else if (value.type === 'data-item') request.item?.(value.data as UnderstandingItem);
+        if (value.type === 'text-delta') emit({ type: 'text_delta', delta: value.delta });
+        else if (value.type === 'data-text-reset') emit({ type: 'text_reset' });
+        else if (value.type === 'data-progress')
+          emit({ type: 'progress', message: String(value.data) });
+        else if (value.type === 'data-stage-progress') {
+          const { message, stage } = value.data as {
+            message: string;
+            stage: ComposePhase['stage'];
+          };
+          emit({ type: 'progress', message, stage });
+        } else if (value.type === 'data-compose-phase')
+          emit({ type: 'compose_phase', ...(value.data as ComposePhase) });
+        else if (value.type === 'data-reset') emit({ type: 'understanding_reset' });
+        else if (value.type === 'data-item')
+          emit({ type: 'understanding_item', ...(value.data as UnderstandingItem) });
         else if (value.type === 'data-result') return value.data as T;
         else if (value.type === 'data-failure') {
           const failure = value.data as number | { status: number; reason: string; code?: string };

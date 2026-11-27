@@ -29,7 +29,7 @@ export class AgentTurnFailure extends HttpException {
 }
 export type TurnStream = {
   traceId: string;
-  progress: (message: string) => void;
+  progress: (message: string, stage?: ComposePhase['stage']) => void;
   phase?: (value: ComposePhase) => void;
   text?: (delta: string) => void;
   resetText?: () => void;
@@ -108,7 +108,7 @@ export async function conversationRequest<T>(
         else if (event.type === 'understanding_reset') stream.reset();
         else if (event.type === 'text_delta' && typeof event.delta === 'string')
           stream.text?.(event.delta);
-        else if (event.type === 'progress') stream.progress(event.message);
+        else if (event.type === 'progress') stream.progress(event.message, event.stage);
         else if (event.type === 'compose_phase') {
           stream.phase?.({
             stage: event.stage,

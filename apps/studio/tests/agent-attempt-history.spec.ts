@@ -99,20 +99,20 @@ test('shows saved attempt stages, elapsed time, and interruption details without
   });
 
   await page.goto('/?page=agent&conversation=' + conversationId);
-  const history = page.locator('summary').filter({ hasText: /^处理过程 · 3 秒$/ });
+  const history = page.locator('summary').filter({ hasText: /^用时 3 秒 · Schema · 已结束$/ });
   await expect(history).toBeVisible();
   await expect(page.getByText('字段检查通过', { exact: false })).toBeHidden();
   await history.click();
   await page
     .locator('summary')
-    .filter({ hasText: /^Schema$/ })
+    .filter({ hasText: /^Schema · 已完成$/ })
     .click();
   await expect(page.getByText('字段检查通过', { exact: false })).toBeVisible();
   await page.getByText('需求理解', { exact: true }).click();
   await expect(page.getByText('重新核对需求', { exact: true })).toBeVisible();
   await expect(page.getByText('重新读取的需求', { exact: true })).toBeVisible();
   await expect(page.getByText('已废弃的需求', { exact: true })).toHaveCount(0);
-  await expect(page.locator('summary').filter({ hasText: /^处理过程$/ })).toBeVisible();
+  await expect(page.locator('summary').filter({ hasText: /^回复 · 已结束$/ })).toBeVisible();
   await expect(page.getByText(traceId, { exact: true })).toBeVisible();
   await expect(page.getByText('已保留的部分回复', { exact: true })).toBeVisible();
 

@@ -14,10 +14,21 @@ LABELS = {
     "read_protocol": "正在读取配置手册",
     "query_capabilities": "正在查询物料和能力",
     "check": "正在编译检查候选",
+    "platform.check_schema": "正在请求 Platform 检查数据 Schema",
     "repair": "正在根据编译诊断修复并复验",
     "record_configuration_mapping": "正在核对需求覆盖情况",
 }
 
+STAGED_LABELS = {
+    "compose.SchemaCases": ("schema", "正在生成数据 Schema 的验收用例"),
+    "compose.SchemaDraft": ("schema", "正在生成数据 Schema"),
+    "compose.CapabilitySelection": ("capabilities", "正在选择视图物料与纯函数"),
+    "compose.view": ("view", "正在生成视图片段"),
+    "compose.validation": ("validation", "正在生成校验片段"),
+    "compose.reaction": ("reaction", "正在生成联动片段"),
+    "compose.Reflection": ("compile", "正在定位编译诊断所属模块"),
+    "compose.CounterexampleReview": ("schema", "正在复核数据 Schema 反例"),
+}
 
 async def stream_graph_events(
     graph,
@@ -67,3 +78,6 @@ def project_public_event(event):
             "type": "private_result",
             "result": event["data"]["output"]["result"],
         }
+    elif name in STAGED_LABELS and kind == "on_chain_start":
+        stage, message = STAGED_LABELS[name]
+        return {"type": "progress", "stage": stage, "message": message}

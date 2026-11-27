@@ -59,7 +59,10 @@ def test_only_complete_business_records_are_exposed(monkeypatch):
     assert not seen
 
 
-def test_understanding_keeps_validation_and_reports_timings(monkeypatch, caplog):
+@pytest.mark.parametrize("compact", [False, True])
+def test_understanding_keeps_validation_and_reports_timings(
+    monkeypatch, caplog, compact
+):
     from form_agent.agent.authoring_state import DocumentUnderstanding
     from form_agent.business.form_authoring.errors import InvalidCreateFormResult
 
@@ -72,12 +75,14 @@ def test_understanding_keeps_validation_and_reports_timings(monkeypatch, caplog)
     }
     finish = {"decision": "create", "standard": {"goal": "投保", "scope": "名单"}}
     dispatches = []
+    prompts = []
 
     async def dispatch(name, data):
         dispatches.append(name)
 
     class Model:
         async def astream(self, messages):
+            prompts.append(messages[-1].content)
             yield SimpleNamespace(text=json.dumps({"requirement": requirement}) + "\n")
             yield SimpleNamespace(text=json.dumps({"finish": finish}))
 
@@ -93,20 +98,28 @@ def test_understanding_keeps_validation_and_reports_timings(monkeypatch, caplog)
     monkeypatch.setattr(document, "structured", fallback)
     with caplog.at_level("INFO", logger="uvicorn.error"):
         result = asyncio.run(
-            document.read_document(Model(), [], {"document": "最多六人"})
+            document.read_document(
+                Model(), [], {"document": "最多六人"}, compact=compact
+            )
         )
         with pytest.raises(InvalidCreateFormResult, match="source"):
-            asyncio.run(document.read_document(Model(), [], {"document": "另一份"}))
+            asyncio.run(
+                document.read_document(
+                    Model(), [], {"document": "另一份"}, compact=compact
+                )
+            )
 
     assert result.standard is not None
     assert result.standard.requirements[0].sources[0].quote == "最多六人"
     assert dispatches == ["understanding_item", "understanding_reset"]
+    assert ("omit fields" in prompts[0]) == compact
     timings = [
         json.loads(record.getMessage().removeprefix("understanding_timing "))
         for record in caplog.records
         if record.getMessage().startswith("understanding_timing ")
     ]
     first, rejected = timings
+    assert first["profile"] == ("compact" if compact else "baseline")
     assert first["first_requirement_ms"] <= first["last_requirement_ms"]
     assert (
         first["last_requirement_ms"] <= first["finish_record_ms"] <= first["total_ms"]

@@ -129,6 +129,7 @@ test('the shared editor verifies, applies, undoes and reopens expressions from t
   await run(trial);
   await expect(result(trial)).toHaveText('结果 · true');
   await trial.getByRole('button', { name: '关闭' }).click();
+  await expect(trial).toBeHidden();
   await reaction.getByRole('button', { name: '应用修改', exact: true }).click();
   await expect(reaction).toBeHidden();
   const conditionSummary = page

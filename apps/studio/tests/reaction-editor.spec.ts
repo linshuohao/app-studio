@@ -1,3 +1,4 @@
+import { buildIdentity } from '../../../services/api/src/platform/build-identity';
 import { chooseWorkingVersionAction } from './working-version-menu';
 import { expect, test, type Page } from '@playwright/test';
 import { travelDefinition } from '../../playground/src/demos/travel/definition';
@@ -631,11 +632,10 @@ test('writes, moves, then notifies Host using the saved travel form actions', as
     createTravelRequiresGuardian,
     createTravelTotalPremium,
   } = await import('@form-engine/pure-functions');
-  const artifact = {
-    id: 'studio-web-preview',
-    platform: 'web',
-    digest: `sha256:${'5'.repeat(64)}` as const,
-  };
+  const artifact = buildIdentity(
+    require.resolve('@form-engine/pure-functions/package.json'),
+    'pure-functions',
+  );
   const functions = {
     ...createCoreFunctions(artifact),
     ...Object.fromEntries(

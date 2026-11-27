@@ -138,6 +138,7 @@ def test_public_answer_survives_mid_stream_provider_failure(tmp_path, monkeypatc
         attempt = client.get(url, headers=AUTH).json()["attempts"][0]
         assert attempt["status"] == "interrupted" and attempt["resumable"]
         assert attempt["interruptionReason"] == failure["reason"]
+        interrupted_ms = attempt["elapsedMs"]
         assert {"type": "text_delta", "delta": "已经发送的半句"} in attempt["events"]
     with TestClient(app(engine, [])) as client:
         res = client.post(url + "/turns/" + body["turnId"] + "/resume", headers=AUTH)
@@ -145,6 +146,8 @@ def test_public_answer_survives_mid_stream_provider_failure(tmp_path, monkeypatc
         saved = res.json()["conversation"]
         assert saved["turns"][0]["result"]["message"] == "新的完整回答"
         assert "interruptionReason" not in saved["attempts"][0]
+        assert saved["attempts"][0]["elapsedMs"] >= interrupted_ms
+        assert "interruptionTraceId" not in saved["attempts"][0]
         projected = ""
         for event in saved["attempts"][0]["events"]:
             if event["type"] == "text_reset":

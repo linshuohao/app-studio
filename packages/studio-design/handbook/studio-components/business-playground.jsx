@@ -60,6 +60,7 @@ import {
   JsonEditorView,
   useJsonHistory,
 } from '../../../../apps/studio/src/components/json/json-editor';
+import { CodeBlock } from '../../../../apps/studio/src/components/code-block';
 import { RecordIdentity } from '../../../../apps/studio/src/components/record-identity';
 import { AgentPanel, AgentUserMessage } from '../../../../apps/studio/src/app/agent-panel';
 import { referenceId } from '../../../../apps/studio/src/app/agent-conversation';
@@ -772,9 +773,37 @@ const stories = {
     ),
     { label: '处理合并冲突' },
   ],
+  codeblock: [
+    ({ json, jsx, typescript }) => (
+      <>
+        <CodeBlock language="json" label="JSON 配置" source={json} />
+        <CodeBlock language="jsx" label="JSX 示例" source={jsx} />
+        <CodeBlock language="typescript" label="TypeScript 契约" source={typescript} />
+      </>
+    ),
+    {
+      json: '{\n  "name": "差旅申请",\n  "enabled": true\n}',
+      jsx: 'export function Form() {\n  return <FormRenderer readOnly={false} />;\n}',
+      typescript: 'type Props = { name: string; readOnly?: boolean };',
+    },
+  ],
   agentreply: [
     ({ text, streaming }) => <AgentReply text={text} streaming={streaming} />,
-    { text: '已添加**姓名**字段。', streaming: false },
+    {
+      text: [
+        '已添加**姓名**字段。',
+        '```json\n{ "name": "姓名", "required": true }\n```',
+        [
+          '| ExternalFormFieldIdentityFromTheSourceSchema | 必填 | 来源 | 说明 | 校验规则 | OriginalFormValueFromTheSourceDocument | 调整后的值 |',
+          '| --- | --- | --- | --- | --- | --- | --- |',
+          ...Array.from(
+            { length: 24 },
+            (_, i) => `| 字段 ${i + 1} | 是 | 表单定义 | 提交前确认 | 非空文本 | 原始值 | 新值 |`,
+          ),
+        ].join('\n'),
+      ].join('\n\n'),
+      streaming: false,
+    },
   ],
   candidatecard: [
     ({ title }) => {

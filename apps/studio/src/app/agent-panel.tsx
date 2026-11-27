@@ -157,6 +157,7 @@ export function AgentPanel({
   onMessage,
   onSend,
   sendLabel = '发送',
+  composeActions,
   disabled,
   sendDisabled,
   jumpToLatest = false,
@@ -180,6 +181,7 @@ export function AgentPanel({
   onMessage: (value: string) => void;
   onSend: () => void;
   sendLabel?: string;
+  composeActions?: ReactNode;
   disabled: boolean;
   sendDisabled: boolean;
   jumpToLatest?: boolean;
@@ -542,6 +544,7 @@ export function AgentPanel({
         <label className="sr-only" htmlFor={id}>
           {label}
         </label>
+        {composeActions && <div className="agent-compose-actions">{composeActions}</div>}
         <div className="agent-compose-field">
           {onReference && (
             <Menu.Root>

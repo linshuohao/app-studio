@@ -203,6 +203,11 @@ test('opens the affected editor when an incomplete rule has no JSON node', async
     data: { schema: { type: 'object' } },
     views: { default: { material: 'section' } },
   });
+  const remaining = {
+    message: 'R26 联动待补齐',
+    sourcePointer: '/reactions',
+    requirementIds: ['R26'],
+  };
   await page.route('**/form-drafts/' + id, (route) =>
     route.fulfill({
       json: {
@@ -214,14 +219,18 @@ test('opens the affected editor when an incomplete rule has no JSON node', async
         appliedDigest: 'initial',
         candidateDigest: 'initial',
         revision: 1,
-        draftIssues: [
-          { message: 'R26 联动待补齐', sourcePointer: '/reactions', requirementIds: ['R26'] },
+        draftIssues: [remaining],
+        appliedDraftIssues: [
+          remaining,
+          { message: 'R27 旧问题', sourcePointer: '/views', requirementIds: ['R27'] },
         ],
       },
     }),
   );
   await page.goto('/?page=draft&draft=' + id);
-  const issue = page.getByRole('button', { name: /R26 联动待补齐/ });
+  const issues = page.getByRole('region', { name: '当前工作稿待处理项' });
+  await expect(issues.getByText('R27 旧问题')).toHaveCount(0);
+  const issue = issues.getByRole('button', { name: '定位问题 R26' });
   await expect(issue).toBeVisible();
   await issue.focus();
   await issue.press('Enter');

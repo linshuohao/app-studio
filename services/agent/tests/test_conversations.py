@@ -642,7 +642,9 @@ def test_read_only_turn_goes_to_chat_without_authoring(tmp_path):
         assert response.json()["conversation"]["turns"][0]["result"]["kind"] == "answer"
 
 
-def test_stream_failure_trace_can_be_found_in_attempt_history(tmp_path, monkeypatch):
+def test_stream_failure_trace_can_be_found_in_attempt_history(
+    tmp_path, monkeypatch, caplog
+):
     from form_agent.api import conversations as api
 
     async def fail_during_schema_check(
@@ -670,6 +672,9 @@ def test_stream_failure_trace_can_be_found_in_attempt_history(tmp_path, monkeypa
         (attempt,) = client.get(url, headers=AUTH).json()["attempts"]
         assert attempt["interruptionTraceId"] == trace
         assert attempt["resumable"]
+        assert trace in caplog.text
+        assert "RuntimeError" in caplog.text
+        assert "private compiler failure" not in caplog.text
         assert attempt["elapsedMs"] >= 0
 
 

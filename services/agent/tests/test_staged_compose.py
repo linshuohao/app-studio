@@ -218,6 +218,11 @@ def test_prd_schema_is_checked_and_modules_receive_only_relevant_requirements(
     assert response.status_code == 200, response.text
     frames = [json.loads(line) for line in response.iter_lines()]
     result = frames[-1]["result"]
+    progress = [event["message"] for event in frames if event["type"] == "progress"]
+    assert progress.index("正在生成数据 Schema 的验收用例") < progress.index(
+        "正在生成数据 Schema"
+    )
+    assert "正在生成视图片段" in progress
     milestones = [
         (e["stage"], e["status"]) for e in frames if e["type"] == "compose_phase"
     ]

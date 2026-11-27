@@ -1,8 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createInterface } from 'node:readline';
 import { Readable } from 'node:stream';
 import {
   BadGatewayException,
+  UnauthorizedException,
   BadRequestException,
   ConflictException,
   NotFoundException,
@@ -40,6 +41,12 @@ export function serviceToken() {
   const token = process.env.AGENT_SERVICE_TOKEN;
   if (!token) throw new ServiceUnavailableException('CreateForm service is not configured');
   return token;
+}
+export function requireAgent(token?: string) {
+  const expected = Buffer.from(serviceToken());
+  const actual = Buffer.from(token ?? '');
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+    throw new UnauthorizedException();
 }
 export async function conversationRequest<T>(
   actor: { userId: string; spaceId: string },

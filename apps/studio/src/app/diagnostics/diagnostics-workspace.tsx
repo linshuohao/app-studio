@@ -1,12 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button, DataTable, type Column } from '@form-engine/studio-design-components';
 import { Feedback } from '@form-engine/studio-design-components/controls';
 import { JsonEditor } from '../../components/json/json-editor';
+import { diagnosticIdPattern, type DiagnosticAssetCandidate } from '../agent-conversation';
+import { AssetRepairAction } from '../asset-repair-action';
 import { Modal } from '../modal';
 import { PageHeading } from '../page-heading';
-import { restorePosition, type ListPosition } from '../studio-location';
+import { restorePosition, studioUrl, type ListPosition } from '../studio-location';
 import { DiagnosticChain, DiagnosticSummary } from './diagnostic-chain';
 import { DiagnosticSnapshot } from './diagnostic-snapshot';
 import './diagnostics.css';
@@ -32,9 +35,8 @@ type Detail = Occurrence & {
   phase: string;
   targetId: string | null;
   evidence: unknown;
+  assetCandidates?: DiagnosticAssetCandidate[];
 };
-
-const diagnosticIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const evidenceStatus: Record<string, string> = {
   expired: '现场已过期',
@@ -172,6 +174,13 @@ export function DiagnosticsWorkspace({
                   查看原始现场
                 </Button>
               )}
+              {detail.assetCandidates && (
+                <AssetRepairAction
+                  key={detail.diagnosticId}
+                  diagnosticId={detail.diagnosticId}
+                  candidates={detail.assetCandidates}
+                />
+              )}
               <Button
                 variant="secondary"
                 onClick={() =>
@@ -179,6 +188,22 @@ export function DiagnosticsWorkspace({
                 }
               >
                 查看表单快照
+              </Button>
+              <Button
+                variant="secondary"
+                nativeButton={false}
+                render={
+                  <Link
+                    href={studioUrl({ page: 'agent', diagnostic: detail.diagnosticId })}
+                    onNavigate={(navigation) => {
+                      navigation.preventDefault();
+                      onNavigate({ page: 'agent', diagnostic: detail.diagnosticId });
+                    }}
+                    role="link"
+                  />
+                }
+              >
+                引用到 Agent
               </Button>
             </>
           )}

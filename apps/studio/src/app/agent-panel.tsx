@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Button, IconButton, Input } from '@form-engine/studio-design-components/controls';
-import { Icon } from '@form-engine/studio-design-components';
+import { Icon, Menu } from '@form-engine/studio-design-components';
 import { AgentMessage, AgentReply } from './agent-reply';
 import { failureMessage, platform, type FormListEntry } from './platform-api';
-import { Modal } from './modal';
+import { AgentReferencePicker, type ReferenceOption } from './agent-reference-picker';
 import type { Summary } from './asset-catalog';
 import {
   maxReferences,
@@ -137,6 +137,7 @@ const referenceCommands = [
   { kind: 'form', label: '表单' },
   { kind: 'function', label: '纯函数' },
   { kind: 'material', label: '物料' },
+  { kind: 'diagnostic', label: '错误' },
 ] as const;
 type ReferenceKind = (typeof referenceCommands)[number]['kind'];
 
@@ -156,7 +157,6 @@ export function AgentPanel({
   onMessage,
   onSend,
   sendLabel = '发送',
-  composeActions,
   disabled,
   sendDisabled,
   jumpToLatest = false,
@@ -180,7 +180,6 @@ export function AgentPanel({
   onMessage: (value: string) => void;
   onSend: () => void;
   sendLabel?: string;
-  composeActions?: ReactNode;
   disabled: boolean;
   sendDisabled: boolean;
   jumpToLatest?: boolean;
@@ -208,13 +207,10 @@ export function AgentPanel({
   const commandOptions = command
     ? referenceCommands.filter(({ kind }) => ('/' + kind).startsWith(command.token))
     : [];
-  const [resultsData, setResultsData] =
-    useState<{ reference: MessageReference; keywords: string }[]>();
+  const [resultsData, setResultsData] = useState<ReferenceOption[]>();
   const pickerLabel = referenceCommands.find(({ kind }) => kind === picker)?.label;
   const [search, setSearch] = useState('');
-  const searchInput = useRef<HTMLElement>(null);
   const [searchError, setSearchError] = useState('');
-  const results = useRef<HTMLDivElement>(null);
   const pickerRequest = useRef(0);
   const canReference = !!onReference && !disabled && (references?.length ?? 0) < maxReferences;
 
@@ -222,19 +218,14 @@ export function AgentPanel({
     if (open && referenceFocus) composer.current?.focus({ preventScroll: true });
   }, [open, referenceFocus]);
 
-  useEffect(() => {
-    if (!picker) return;
-    const frame = requestAnimationFrame(() => searchInput.current?.focus());
-    return () => cancelAnimationFrame(frame);
-  }, [picker]);
-
-  function openPicker(kind: ReferenceKind = 'form') {
+  function openPicker(kind: ReferenceKind) {
     setCommand(undefined);
     const request = ++pickerRequest.current;
     setSearch('');
     setSearchError('');
     setResultsData(undefined);
     setPicker(kind);
+    if (kind === 'diagnostic') return;
     const entries =
       kind === 'form'
         ? platform<FormListEntry[]>('/forms').then((rows) =>
@@ -243,7 +234,14 @@ export function AgentPanel({
                 ? [
                     {
                       reference: { formId: row.formId, name: row.name, ...row.latestSave },
-                      keywords: [row.name, row.description].join(' '),
+                      keywords: [
+                        row.name,
+                        row.description,
+                        row.formId,
+                        row.latestSave.versionId,
+                      ].join(' '),
+                      category: row.archived ? '已归档' : '使用中',
+                      description: row.description,
                     },
                   ]
                 : [],
@@ -253,7 +251,16 @@ export function AgentPanel({
             (rows) =>
               rows.map((row) => ({
                 reference: assetReference(kind, row),
-                keywords: [row.id, row.title, row.summary, row.description].join(' '),
+                keywords: [
+                  row.id,
+                  row.title,
+                  row.summary,
+                  row.description,
+                  row.category,
+                  row.version,
+                ].join(' '),
+                category: row.category,
+                description: row.summary || row.description || row.id,
               })),
           );
     void entries.then(
@@ -272,11 +279,8 @@ export function AgentPanel({
     requestAnimationFrame(() => composer.current?.focus());
   }
 
-  const searchWords = search.trim().toLocaleLowerCase().split(/\s+/u);
-  const matches = resultsData?.filter(
-    ({ reference, keywords }) =>
-      !references?.some((item) => referenceId(item) === referenceId(reference)) &&
-      searchWords.every((word) => keywords.toLocaleLowerCase().includes(word)),
+  const availableOptions = resultsData?.filter(
+    ({ reference }) => !references?.some((item) => referenceId(item) === referenceId(reference)),
   );
   function selectCommand(kind: ReferenceKind) {
     if (!command) return;
@@ -403,8 +407,8 @@ export function AgentPanel({
           ◤
         </button>
       )}
-      <div className="agent-thread-heading">
-        {floating ? (
+      {floating && (
+        <div className="agent-thread-heading">
           <button
             className="agent-drag-handle"
             type="button"
@@ -444,27 +448,21 @@ export function AgentPanel({
           >
             <Icon name="Bot" />
           </button>
-        ) : (
-          <h2>Agent 协作</h2>
-        )}
-        {floating && (
-          <>
-            <ConversationTitle key={conversationId} title={title} onRename={onRename} />
-            {onExpand && (
-              <Button
-                variant="text"
-                data-icon-button=""
-                aria-label="打开完整 Agent 页面"
-                title="打开完整 Agent 页面"
-                onClick={onExpand}
-              >
-                <span aria-hidden="true">↗</span>
-              </Button>
-            )}
-            <IconButton icon="Minus" aria-label="收起" title="收起" onClick={onCollapse} />
-          </>
-        )}
-      </div>
+          <ConversationTitle key={conversationId} title={title} onRename={onRename} />
+          {onExpand && (
+            <Button
+              variant="text"
+              data-icon-button=""
+              aria-label="打开完整 Agent 页面"
+              title="打开完整 Agent 页面"
+              onClick={onExpand}
+            >
+              <span aria-hidden="true">↗</span>
+            </Button>
+          )}
+          <IconButton icon="Minus" aria-label="收起" title="收起" onClick={onCollapse} />
+        </div>
+      )}
       <div className="agent-history-frame">
         <div
           className="agent-history"
@@ -544,163 +542,131 @@ export function AgentPanel({
         <label className="sr-only" htmlFor={id}>
           {label}
         </label>
-        <textarea
-          id={id}
-          ref={composer}
-          rows={2}
-          value={message}
-          disabled={disabled}
-          aria-autocomplete={onReference ? 'list' : undefined}
-          aria-controls={command && canReference ? commandListId : undefined}
-          aria-activedescendant={
-            command && canReference ? commandListId + '-' + command.selected : undefined
-          }
-          onBlur={() => setCommand(undefined)}
-          onClick={() => setCommand(undefined)}
-          onChange={(event) => {
-            const { value, selectionStart } = event.currentTarget;
-            const native = event.nativeEvent as InputEvent;
-            const before = value.slice(0, selectionStart);
-            const token = before.match(/(?:^|\s)(\/[a-z]*)$/u)?.[1];
-            const inputType = native.inputType;
-            const typed =
-              inputType === 'insertText' || (command && inputType === 'deleteContentBackward');
-            if (
-              canReference &&
-              !native.isComposing &&
-              typed &&
-              token &&
-              referenceCommands.some(({ kind }) => ('/' + kind).startsWith(token))
-            ) {
-              const start = selectionStart - token.length;
-              const exact = referenceCommands.find(({ kind }) => '/' + kind === token);
-              if (exact) {
-                onMessage(value.slice(0, start) + value.slice(selectionStart));
-                openPicker(exact.kind);
-                return;
-              }
-              setCommand({ start, end: selectionStart, token, selected: 0 });
-            } else setCommand(undefined);
-            onMessage(value);
-          }}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-            if (command && canReference) {
-              if (event.key === 'Escape') {
-                event.preventDefault();
-                setCommand(undefined);
-                return;
-              }
-              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                event.preventDefault();
-                const offset = event.key === 'ArrowDown' ? 1 : -1;
-                setCommand({
-                  ...command,
-                  selected:
-                    (command.selected + offset + commandOptions.length) % commandOptions.length,
-                });
-                return;
-              }
-              if (!event.shiftKey && (event.key === 'Tab' || event.key === 'Enter')) {
-                event.preventDefault();
-                const item = commandOptions[command.selected];
-                if (item) selectCommand(item.kind);
-                return;
-              }
-              if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
-                setCommand(undefined);
-            }
-            if (event.key !== 'Enter' || event.shiftKey) return;
-            event.preventDefault();
-            if (!event.repeat && !disabled && !sendDisabled && message.trim()) onSend();
-          }}
-          placeholder="输入问题、表单需求或修改意见"
-        />
-        <div className="agent-compose-actions">
-          {composeActions}
+        <div className="agent-compose-field">
           {onReference && (
-            <Button variant="secondary" onClick={() => openPicker()} disabled={!canReference}>
-              添加引用
-            </Button>
+            <Menu.Root>
+              <Menu.Trigger
+                render={<IconButton icon="Plus" aria-label="添加引用" title="添加引用" />}
+                disabled={!canReference}
+              />
+              <Menu.Portal>
+                <Menu.Positioner side="top" align="start">
+                  <Menu.Popup aria-label="引用类型">
+                    {referenceCommands.map(({ kind, label }) => (
+                      <Menu.Item key={kind} onClick={() => openPicker(kind)}>
+                        {label}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Popup>
+                </Menu.Positioner>
+              </Menu.Portal>
+            </Menu.Root>
           )}
+          <textarea
+            id={id}
+            ref={composer}
+            rows={2}
+            value={message}
+            disabled={disabled}
+            aria-autocomplete={onReference ? 'list' : undefined}
+            aria-controls={command && canReference ? commandListId : undefined}
+            aria-activedescendant={
+              command && canReference ? commandListId + '-' + command.selected : undefined
+            }
+            onBlur={() => setCommand(undefined)}
+            onClick={() => setCommand(undefined)}
+            onChange={(event) => {
+              const { value, selectionStart } = event.currentTarget;
+              const native = event.nativeEvent as InputEvent;
+              const before = value.slice(0, selectionStart);
+              const token = before.match(/(?:^|\s)(\/[a-z]*)$/u)?.[1];
+              const inputType = native.inputType;
+              const typed =
+                inputType === 'insertText' || (command && inputType === 'deleteContentBackward');
+              if (
+                canReference &&
+                !native.isComposing &&
+                typed &&
+                token &&
+                referenceCommands.some(({ kind }) => ('/' + kind).startsWith(token))
+              ) {
+                const start = selectionStart - token.length;
+                const exact = referenceCommands.find(({ kind }) => '/' + kind === token);
+                if (exact) {
+                  onMessage(value.slice(0, start) + value.slice(selectionStart));
+                  openPicker(exact.kind);
+                  return;
+                }
+                setCommand({ start, end: selectionStart, token, selected: 0 });
+              } else setCommand(undefined);
+              onMessage(value);
+            }}
+            onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+              if (command && canReference) {
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  setCommand(undefined);
+                  return;
+                }
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  const offset = event.key === 'ArrowDown' ? 1 : -1;
+                  setCommand({
+                    ...command,
+                    selected:
+                      (command.selected + offset + commandOptions.length) % commandOptions.length,
+                  });
+                  return;
+                }
+                if (!event.shiftKey && (event.key === 'Tab' || event.key === 'Enter')) {
+                  event.preventDefault();
+                  const item = commandOptions[command.selected];
+                  if (item) selectCommand(item.kind);
+                  return;
+                }
+                if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
+                  setCommand(undefined);
+              }
+              if (event.key !== 'Enter' || event.shiftKey) return;
+              event.preventDefault();
+              if (!event.repeat && !disabled && !sendDisabled && message.trim()) onSend();
+            }}
+            placeholder="输入问题、表单需求或修改意见"
+          />
           <Button
+            className="agent-compose-send"
+            aria-label={sendLabel}
             disabled={disabled || sendDisabled || !message.trim()}
             onClick={onSend}
             title="Enter 发送，Shift+Enter 换行"
           >
-            {sendLabel}
+            <Icon name="ArrowUp" />
           </Button>
         </div>
-        {picker && (
-          <Modal title={'引用' + pickerLabel} onClose={closePicker} size="standard">
-            <div className="action-row" aria-label="引用类型">
-              {referenceCommands.map(({ kind, label }) => (
-                <Button
-                  key={kind}
-                  variant="text"
-                  aria-pressed={picker === kind}
-                  onClick={() => openPicker(kind)}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-            <Input
-              type="search"
-              ref={(element) => {
-                searchInput.current = element;
-                element?.setAttribute('autofocus', '');
-              }}
-              aria-label={'搜索' + pickerLabel}
-              placeholder="搜索名称、标识或说明"
-              value={search}
-              onChange={(event) => setSearch(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-                const first = results.current?.querySelector('button');
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault();
-                  first?.focus();
-                }
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  first?.click();
-                }
-              }}
-            />
-            {searchError ? (
-              <p role="alert">{searchError}</p>
-            ) : !matches ? (
-              <p role="status">正在加载…</p>
-            ) : (
-              !matches.length && <p role="status">没有匹配的可引用版本。</p>
-            )}
-            <div
-              className="agent-reference-results"
-              ref={results}
-              onKeyDown={(event) => {
-                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-                event.preventDefault();
-                const buttons = Array.from(event.currentTarget.querySelectorAll('button'));
-                const index = buttons.indexOf(event.target as HTMLButtonElement);
-                buttons[index + (event.key === 'ArrowDown' ? 1 : -1)]?.focus();
-              }}
-            >
-              {matches?.map(({ reference }) => (
-                <Button
-                  key={referenceId(reference)}
-                  variant="secondary"
-                  onClick={() => {
-                    if (!canReference) return;
-                    onReference?.(reference);
-                    closePicker();
-                  }}
-                >
-                  {referenceLabel(reference)}
-                </Button>
-              ))}
-            </div>
-          </Modal>
+        {picker && pickerLabel && (
+          <AgentReferencePicker
+            key={picker}
+            kind={picker}
+            label={pickerLabel}
+            search={search}
+            options={availableOptions}
+            error={searchError}
+            onSearch={setSearch}
+            onClose={closePicker}
+            onSelect={(reference) => {
+              if (!canReference) return;
+              if (
+                picker === 'diagnostic' &&
+                references?.some((item) => 'kind' in item && item.kind === 'diagnostic')
+              ) {
+                setSearchError('一条消息只支持调查一个错误。');
+                return;
+              }
+              onReference?.(reference);
+              closePicker();
+            }}
+          />
         )}
       </div>
     </aside>

@@ -2,7 +2,10 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, JsonValue, model_validator
 
-from form_agent.business.conversations.references import MessageReference
+from form_agent.business.conversations.references import (
+    DiagnosticAssetCandidate,
+    MessageReference,
+)
 from form_agent.business.form_authoring.requirements import (
     ConfigurationMapping,
     RequirementsDocument,
@@ -92,7 +95,22 @@ class Clarification(CreateFormBusinessResult):
     questions: list[str] = Field(min_length=1)
 
 
+class DiagnosticRepairReview(BaseModel, extra="forbid"):
+    diagnosticId: str
+    formId: str
+    releaseId: str
+    versionId: str
+    candidateDigest: str
+
+
+class AssetRepairReview(BaseModel, extra="forbid"):
+    diagnosticId: str
+    candidates: list[DiagnosticAssetCandidate]
+
+
 class Answer(CreateFormBusinessResult):
+    assetRepair: AssetRepairReview | None = None
+    diagnosticRepair: DiagnosticRepairReview | None = None
     repair_context: RepairContext | None = None
     check: CheckReceipt | None = None
     kind: Literal["answer"]

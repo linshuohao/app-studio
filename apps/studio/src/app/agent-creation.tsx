@@ -26,6 +26,8 @@ import {
   type PanelPosition,
   type TurnResponse,
 } from './agent-conversation';
+import { AssetRepairAction } from './asset-repair-action';
+import { AgentDiagnosticRepair } from './agent-diagnostic-repair';
 import { AgentMessage, AgentReply } from './agent-reply';
 import { AgentCandidateGuide } from './agent-candidate-guide';
 import { AgentPanel, AgentUserMessage, ConversationTitle } from './agent-panel';
@@ -1248,6 +1250,10 @@ export function AgentCreation({
                     {t.result.issues && t.result.verification && (
                       <AgentIssues issues={t.result.issues} verification={t.result.verification} />
                     )}
+                    {t.result.diagnosticRepair && (
+                      <AgentDiagnosticRepair candidate={t.result.diagnosticRepair} />
+                    )}
+                    {t.result.assetRepair && <AssetRepairAction {...t.result.assetRepair} />}
                     {t.draftId && draftLink && t.draftId === resource?.id && (
                       <AgentInteractionCard
                         title="生成的表单配置"

@@ -7,6 +7,10 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph
 
 from form_agent.agent.budgets import MAX_CHECKS
+from form_agent.agent.diagnostic_graph import (
+    build_diagnostic_graph,
+    diagnostic_reference,
+)
 from form_agent.agent.middleware.action import action_node
 from form_agent.agent.middleware.tool_execution import journal_tools
 from form_agent.agent.nodes.chat import chat
@@ -34,7 +38,18 @@ def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
         updates = await restore_context(state)
         return {**updates, "read_tools": cached_tools(tool_dependencies)}
 
+    diagnostic = build_diagnostic_graph(tools.replay_diagnostic)
+
+    async def investigate(state: TurnGraphState):
+        reference = diagnostic_reference(state)
+        assert reference is not None
+        outcome = await diagnostic.ainvoke({"reference": reference})
+        return {
+            "result": outcome["result"],
+        }
+
     graph.add_node("load_context", initialize)
+    graph.add_node("diagnostic", step("diagnostic", investigate))
     graph.add_node("route", step("route", partial(route, model=model)))
     actions: dict[Action, Callable[[TurnGraphState], Awaitable[dict]]] = {
         "chat": partial(chat, model=model),
@@ -50,7 +65,12 @@ def build_turn_graph(model: BaseChatModel, tools: AgentToolDependencies):
     graph.add_node("observe", step("observe", observe))
     graph.add_node("deliver", step("deliver", partial(deliver, model=model)))
     graph.add_edge(START, "load_context")
-    graph.add_edge("load_context", "route")
+    graph.add_conditional_edges(
+        "load_context",
+        lambda state: "diagnostic" if diagnostic_reference(state) else "route",
+        ["diagnostic", "route"],
+    )
+    graph.add_edge("diagnostic", END)
     graph.add_conditional_edges("route", lambda s: s["action"], [*actions, "deliver"])
     graph.add_edge("observe", "route")
     graph.add_edge("deliver", END)

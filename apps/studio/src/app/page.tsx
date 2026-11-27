@@ -17,6 +17,8 @@ import { Field, FormLayout } from '@form-engine/studio-design-components/form-la
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 import {
   addReference,
+  diagnosticIdPattern,
+  fetchDiagnosticReference,
   maxReferences,
   conversationKey,
   keepConversation,
@@ -49,6 +51,7 @@ import { writeLocation, listPosition, restorePosition, type ListPosition } from 
 import { AccountSecurity } from './account-security';
 import { Members } from './members';
 import { AssetCatalog } from './asset-catalog';
+import { AssetRepairsWorkspace, type AssetRepairView } from './asset-repairs-workspace';
 import { DiagnosticsWorkspace } from './diagnostics/diagnostics-workspace';
 import { Modal } from './modal';
 import { CopyForm, FormManagement } from './form-management';
@@ -171,6 +174,7 @@ export default function Studio() {
   const [catalog, setCatalog] = useState<'materials' | 'functions'>();
   const [members, setMembers] = useState(false);
   const lastDiagnosticPosition = useRef<ListPosition | undefined>(undefined);
+  const [assetRepairs, setAssetRepairs] = useState<{ task?: string; view: AssetRepairView }>();
   const [diagnosticRoute, setDiagnosticRoute] = useState<{
     event?: string;
     group?: string;
@@ -278,6 +282,14 @@ export default function Studio() {
     setCatalog(kind === 'materials' || kind === 'functions' ? kind : undefined);
     setSettings(page === 'account');
     setMembers(page === 'members');
+    setAssetRepairs(
+      page === 'asset-repairs'
+        ? {
+            task: query.get('task') ?? undefined,
+            view: query.get('view') === 'reviews' ? 'reviews' : 'tasks',
+          }
+        : undefined,
+    );
     setDiagnosticRoute(
       page === 'diagnostics'
         ? {
@@ -331,7 +343,27 @@ export default function Studio() {
     if (showAgent) {
       const routeDraft = query.get('draft') ?? undefined;
       const routeConversation = query.get('conversation') ?? undefined;
-      if (
+      const diagnosticId = query.get('diagnostic');
+      if (!routeConversation && diagnosticId && diagnosticIdPattern.test(diagnosticId)) {
+        const instance = resetAgentInstance();
+        setActiveConversationId(undefined);
+        setResumeResource(undefined);
+        writeLocation({ page: 'agent' }, true);
+        void fetchDiagnosticReference(diagnosticId).then(
+          (reference) => {
+            if (sequence !== routeSequence.current || instance !== agentInstanceRef.current) return;
+            setReferenceDraft((current) => ({
+              instance,
+              items: addReference(current?.instance === instance ? current.items : [], reference),
+            }));
+            setAgentPanelOpen(true);
+            setReferenceFocus((value) => value + 1);
+          },
+          (reason: unknown) => {
+            if (sequence === routeSequence.current) setNotice(failureMessage(reason));
+          },
+        );
+      } else if (
         !preserveAgentInstance &&
         (routeDraft !== openedDraft.current || routeConversation !== activeConversationId)
       ) {
@@ -426,6 +458,7 @@ export default function Studio() {
       setResumeResource(undefined);
       setForms([]);
       setMembers(false);
+      setAssetRepairs(undefined);
       setCatalog(undefined);
       setCreating(false);
       setCreation(null);
@@ -781,6 +814,7 @@ export default function Studio() {
     !agentOpen &&
     !members &&
     !diagnosticRoute &&
+    !assetRepairs &&
     !catalog &&
     !settings &&
     account?.membership.status === 'active';
@@ -1034,7 +1068,9 @@ export default function Studio() {
             ? 'members'
             : diagnosticRoute
               ? 'diagnostics'
-              : (catalog ?? 'forms');
+              : assetRepairs
+                ? 'asset-repairs'
+                : (catalog ?? 'forms');
   const showAgentWorkspace = activePage === 'agent' && canEdit;
   const showDraftWorkspace = activePage === 'draft' && canEdit && !!draftPageId;
   const presentation = showDraftWorkspace ? 'draft' : showAgentWorkspace ? 'page' : 'dock';
@@ -1285,6 +1321,24 @@ export default function Studio() {
               />
             ) : (
               <Feedback kind="error">当前账号无权查看错误记录。</Feedback>
+            )
+          ) : assetRepairs ? (
+            canEdit ? (
+              <AssetRepairsWorkspace
+                taskId={assetRepairs.task}
+                view={assetRepairs.view}
+                access={access}
+                onNavigate={(view, task) => {
+                  writeLocation({
+                    page: 'asset-repairs',
+                    task,
+                    view: view === 'reviews' ? view : undefined,
+                  });
+                  void readRoute();
+                }}
+              />
+            ) : (
+              <Feedback kind="error">当前账号无权查看资产修复任务。</Feedback>
             )
           ) : catalog ? (
             <AssetCatalog

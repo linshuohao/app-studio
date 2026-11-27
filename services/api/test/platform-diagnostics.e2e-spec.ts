@@ -175,6 +175,46 @@ it('deduplicates delivery, groups actual occurrences, and restricts raw evidence
     expect((await get(group).expect(200)).body).toEqual([]);
     await get('/events/' + first.diagnosticId).expect(404);
     await post({ ...event, eventId: randomUUID() }).expect(404);
+
+    vi.stubEnv('CREATE_FORM_AGENT_URL', 'http://agent.invalid');
+    vi.stubEnv('AGENT_SERVICE_TOKEN', 'test-service-token');
+    const conversationId = randomUUID();
+    const turnId = randomUUID();
+    const turn = {
+      turnId,
+      references: [{ kind: 'diagnostic', diagnosticId: first.diagnosticId }],
+    };
+    const upstream = vi.fn(async () =>
+      Response.json({
+        id: conversationId,
+        turns: [turn],
+        attempts: [turn],
+      }),
+    );
+    vi.stubGlobal('fetch', upstream);
+    try {
+      const path = '/api/platform/agent-conversations/' + conversationId;
+      await http.get(path).set('Cookie', cookies.get('admin')!).expect(200);
+      await db.execute('UPDATE platform_member_roles SET role=$1 WHERE member_id=$2', [
+        'editor',
+        'admin',
+      ]);
+      await http.get(path).set('Cookie', cookies.get('admin')!).expect(403);
+      await http
+        .post(path + '/turns/' + turnId + '/resume')
+        .set('Cookie', cookies.get('admin')!)
+        .set('Origin', origin)
+        .expect(403);
+      await http
+        .post(path + '/turns')
+        .set('Cookie', cookies.get('admin')!)
+        .set('Origin', origin)
+        .send({ turnId: randomUUID(), revision: 1, message: '继续分析' })
+        .expect(403);
+      expect(upstream).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   } finally {
     await app.close();
     vi.unstubAllEnvs();

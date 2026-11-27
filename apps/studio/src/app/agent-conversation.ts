@@ -23,7 +23,27 @@ export type AssetReference = {
   name: string;
 };
 
-export type MessageReference = FormReference | AssetReference;
+export type DiagnosticReference = {
+  kind: 'diagnostic';
+  diagnosticId: string;
+  formId: string;
+  versionId: string;
+  releaseId: string;
+  name: string;
+  errorCode: string;
+  phase: string;
+  targetId?: string | null;
+  evidenceStatus: string;
+};
+
+export type MessageReference = FormReference | AssetReference | DiagnosticReference;
+export const diagnosticIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu;
+
+export function fetchDiagnosticReference(id: string) {
+  return platform<DiagnosticReference>(
+    '/diagnostics/events/' + encodeURIComponent(id) + '/reference',
+  );
+}
 export const maxReferences = 5;
 
 export function assetReference(
@@ -46,6 +66,8 @@ export function assetReference(
 
 export function referenceRequest(reference: MessageReference) {
   if ('kind' in reference) {
+    if (reference.kind === 'diagnostic')
+      return { kind: reference.kind, diagnosticId: reference.diagnosticId };
     const { kind, assetId, assetVersion, artifactDigest } = reference;
     return { kind, assetId, assetVersion, artifactDigest };
   }
@@ -60,13 +82,18 @@ export function referenceId(reference: MessageReference) {
 export function addReference(current: MessageReference[], reference: MessageReference) {
   if (
     current.length >= maxReferences ||
-    current.some((item) => referenceId(item) === referenceId(reference))
+    current.some((item) => referenceId(item) === referenceId(reference)) ||
+    ('kind' in reference &&
+      reference.kind === 'diagnostic' &&
+      current.some((item) => 'kind' in item && item.kind === 'diagnostic'))
   )
     return current;
   return [...current, reference];
 }
 
 export function referenceUrl(reference: MessageReference) {
+  if ('kind' in reference && reference.kind === 'diagnostic')
+    return '/diagnostics?event=' + encodeURIComponent(reference.diagnosticId);
   if ('kind' in reference)
     return studioUrl({
       catalog: reference.kind === 'function' ? 'functions' : 'materials',
@@ -82,6 +109,10 @@ export function referenceUrl(reference: MessageReference) {
 }
 
 export function referenceLabel(reference: MessageReference) {
+  if ('kind' in reference && reference.kind === 'diagnostic')
+    return ['错误', reference.name, reference.errorCode, reference.diagnosticId.slice(0, 8)].join(
+      ' · ',
+    );
   if ('kind' in reference)
     return [
       reference.kind === 'function' ? '纯函数' : '物料',
@@ -121,6 +152,29 @@ export type CandidateGuide = {
   previewPending: CandidatePendingItem[];
 };
 
+export type DiagnosticAssetCandidate = {
+  kind: 'material' | 'function';
+  lock: {
+    id: string;
+    version: string;
+    manifestDigest: string;
+    artifact: { id: string; platform: string; digest: string };
+  };
+};
+
+export type AssetRepairReview = {
+  diagnosticId: string;
+  candidates: DiagnosticAssetCandidate[];
+};
+
+export type DiagnosticRepairReview = {
+  diagnosticId: string;
+  formId: string;
+  releaseId: string;
+  versionId: string;
+  candidateDigest: string;
+};
+
 export type AssistantTurn = {
   turnId: string;
   message: string;
@@ -135,6 +189,8 @@ export type AssistantTurn = {
     issues?: IssueReport['issues'];
     draftIssues?: DraftIssue[];
     verification?: IssueReport['verification'];
+    diagnosticRepair?: DiagnosticRepairReview;
+    assetRepair?: AssetRepairReview;
   };
   draftId?: string;
   formId?: string;

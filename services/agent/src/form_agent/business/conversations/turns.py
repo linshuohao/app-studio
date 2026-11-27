@@ -88,6 +88,7 @@ async def run_turn_events(
                             generate_conversation_title=prepared[
                                 "generate_conversation_title"
                             ],
+                            actor=owner,
                             **trace_options,
                         )
                         async with aclosing(stream):

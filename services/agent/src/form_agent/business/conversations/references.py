@@ -27,4 +27,41 @@ class AssetReference(MessageReferenceContent):
     artifactDigest: str
 
 
-MessageReference = FormReference | AssetReference
+class DiagnosticArtifact(BaseModel, extra="forbid"):
+    id: str
+    platform: str
+    digest: str
+
+
+class DiagnosticAssetLock(BaseModel, extra="forbid"):
+    id: str
+    version: str
+    manifestDigest: str
+    artifact: DiagnosticArtifact
+
+
+class DiagnosticAssetCandidate(BaseModel, extra="forbid"):
+    kind: Literal["material", "function"]
+    lock: DiagnosticAssetLock
+
+
+class DiagnosticReference(BaseModel, extra="forbid"):
+    kind: Literal["diagnostic"]
+    diagnosticId: str
+    formId: str
+    versionId: str
+    releaseId: str
+    name: str
+    errorCode: str
+    phase: str
+    targetId: str | None = None
+    assetCandidates: list[DiagnosticAssetCandidate] | None = None
+    evidenceStatus: Literal[
+        "captured", "missing", "expired", "too_large", "serialization_failed"
+    ]
+
+    def public(self):
+        return self.model_dump(exclude_none=True)
+
+
+MessageReference = FormReference | AssetReference | DiagnosticReference

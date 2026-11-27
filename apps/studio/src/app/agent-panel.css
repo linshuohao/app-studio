@@ -325,6 +325,32 @@
   gap: var(--studio-space-8);
   padding-block-start: var(--studio-space-8);
   border-block-start: 1px solid var(--studio-border);
+  .agent-draft-issues {
+    display: grid;
+    gap: var(--studio-space-12);
+    min-width: 0;
+  }
+  .agent-draft-issues > section {
+    min-width: 0;
+  }
+  .agent-draft-issues h4 {
+    margin: 0 0 var(--studio-space-4);
+    font: var(--studio-type-section);
+  }
+  #studio-main .agent-draft-issues .studio-data-table {
+    inline-size: 100%;
+    min-inline-size: 0;
+    table-layout: fixed;
+    background: transparent;
+  }
+  .agent-draft-issues .studio-data-table th:is(:first-child, :nth-child(3)) {
+    inline-size: 4.5em;
+  }
+  .agent-draft-issues .studio-data-table :is(th, td) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+  }
 }
 .agent-compose textarea {
   box-sizing: border-box;

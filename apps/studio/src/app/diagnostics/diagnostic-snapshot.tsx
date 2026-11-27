@@ -2,7 +2,7 @@
 
 import { CodeBlock } from '../../components/code-block';
 import { useEffect, useState } from 'react';
-import { FormRenderer } from '@form-engine/renderer-react';
+import { FormRenderer, type HostRequestRegistry } from '@form-engine/renderer-react';
 import { createRuntime, type FormRuntime } from '@form-engine/runtime';
 import type { ReadonlyPreparedForm } from '@form-engine/protocol/prepared';
 import { Feedback } from '@form-engine/studio-design-components/controls';
@@ -22,6 +22,7 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
   const [preview, setPreview] = useState<{
     prepared: ReadonlyPreparedForm;
     runtime: FormRuntime;
+    requests: HostRequestRegistry;
   }>();
   const [previewError, setPreviewError] = useState('');
   const input = object(object(detail.evidence)?.input);
@@ -62,7 +63,16 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
             context,
             functions: installedWebCapabilities.functions,
           });
-          setPreview({ prepared: readOnlyPrepared, runtime });
+          // Keep request-backed materials mounted without connecting to the original Host.
+          const requests = Object.fromEntries(
+            prepared.hostRequirements.requests.map(({ name }) => [
+              name,
+              async () => {
+                throw new Error('表单快照无法执行宿主请求。');
+              },
+            ]),
+          );
+          setPreview({ prepared: readOnlyPrepared, runtime, requests });
         })
         .catch((error: Error) => {
           if (!signal.aborted) setPreviewError(error.message);
@@ -89,6 +99,7 @@ export function DiagnosticSnapshot({ detail }: { detail: SnapshotDetail }) {
             <FormRenderer
               prepared={preview.prepared}
               runtime={preview.runtime}
+              requests={preview.requests}
               materials={installedWebCapabilities.materials}
             />
           </div>

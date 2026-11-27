@@ -99,7 +99,7 @@ export function semanticModel(text: string) {
     if (scoped) view(scoped, label + ' / 作用域');
     const shorthand = child(node, 'children');
     if (shorthand?.kind === 'array' && !child(child(node, 'slots'), 'default'))
-      shorthand.children?.forEach((n, i) => view(n, label + ' / default / ' + (i + 1)));
+      shorthand.children?.forEach((n, i) => view(n, label + ' / default / ' + (i + 1), shorthand));
     for (const slot of child(node, 'slots')?.children ?? [])
       if (slot.kind === 'array')
         slot.children?.forEach((n, i) => view(n, label + ' / ' + slot.key + ' / ' + (i + 1), slot));

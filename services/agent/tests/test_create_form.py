@@ -50,6 +50,7 @@ class ScriptedModel(BaseChatModel):
                 {"SchemaDraft"},
                 {"CapabilitySelection"},
                 {"RepairDecision"},
+                {"SyntaxRepairDecision"},
             )
             or names <= allowed
         )
@@ -1033,6 +1034,87 @@ def test_failed_receipt_without_diagnostic_stops_before_repair():
     with pytest.raises(InvalidCreateFormResult, match="no actionable diagnostics"):
         asyncio.run(compile_candidate("{}", {}, empty_receipt, checks, 1))
     assert not checks.failed_text and checks.tool_failure is not None
+
+
+def test_repairs_invalid_json_at_compiler_offset_despite_repeated_text():
+    import asyncio
+
+    from form_agent.agent.authoring_state import (
+        ChatReady,
+        CheckEvidence,
+        Composition,
+        FormAuthoringState,
+        Understanding,
+    )
+    from form_agent.agent.nodes.repair import repair
+    from form_agent.agent.tools.candidate_checks import compile_candidate
+    from form_agent.business.form_authoring.contracts import TurnInput
+
+    original = '{"note":"🎯,}","value":1,}'
+    expected = '{"note":"🎯,}","value":1}'
+
+    async def exercise():
+        checks = CheckEvidence()
+        offset = len(original[:-1].encode("utf-16-le")) // 2
+
+        async def compiler(context, text):
+            try:
+                json.loads(text)
+                diagnostics = []
+            except ValueError:
+                diagnostics = [{"code": "JSON_SYNTAX", "location": {"offset": offset}}]
+            return CheckReceipt(
+                check_id="syntax",
+                candidate_digest=candidate_digest(text),
+                success=not diagnostics,
+                diagnostics=diagnostics,
+            )
+
+        await compile_candidate(original, {}, compiler, checks, 1)
+        requirement = "修复配置语法"
+        state: FormAuthoringState = {
+            "composition": Composition(
+                None, checks, failed_digest=candidate_digest(original)
+            ),
+            "understanding": Understanding(
+                decision=ChatReady(kind="ready", requirements=[requirement])
+            ),
+            "request": TurnInput(message=requirement, context={"target": "web"}),
+        }
+        model = ScriptedModel(
+            [
+                tool_call(
+                    "SyntaxRepairDecision",
+                    "choose",
+                    action={
+                        "kind": "syntax_edit",
+                        "delete_before": 1,
+                        "delete_after": 0,
+                        "replacement": "",
+                        "summary": "删除尾随逗号",
+                    },
+                )
+            ]
+        )
+
+        async def unexpected_read(*_args: object) -> JsonValue:
+            raise AssertionError("syntax repair should not query protocol or catalog")
+
+        await repair(
+            state,
+            model=model,
+            tools=AgentToolDependencies(unexpected_read, unexpected_read, compiler),
+            max_checks=4,
+        )
+        assert model._inputs[-1]["syntax_anchor"] == {
+            "before": original[:-1],
+            "after": "}",
+        }
+        assert checks.pending_candidate == expected
+        await compile_candidate(expected, {}, compiler, checks, 2)
+        assert checks.receipts[candidate_digest(expected)].success
+
+    asyncio.run(exercise())
 
 
 @pytest.mark.parametrize("requires_string", [False, True])

@@ -1,5 +1,6 @@
 import {
   ExternalLink,
+  Plus,
   Minus,
   ArrowDown,
   ArrowUp,
@@ -24,6 +25,7 @@ import {
 
 const icons = {
   ExternalLink,
+  Plus,
   Minus,
   ArrowDown,
   ArrowUp,

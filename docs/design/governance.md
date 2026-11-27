@@ -422,6 +422,8 @@ OBS-0 至 OBS-4 的技术任务与反例已补齐；接口语义不再作为未�
 
 上报[事件白名单、熔断去重和 Renderer 现场范围](platform-studio.md#platform-diagnostic-mapping)已确认，随 T09 的首期采集方案待授权开发与验收。
 
+2026-11-25 用户确认[阶段蓝图](architecture.md#blueprint-diagnostics-evolution)，当前优先复核 Trace 与现有现场，再联合设计错误中心、Host 上报 SDK 和 Agent 辅助定位 / 修复。首个纵切以表单错误从上报到验证修复为验收目标。同轮确认原始错误现场入库、Agent 侧原值仅供复现工具以及后端聚合，见 [ADR-FE-039](decisions/ADR-FE-039-form-error-evidence.md)。启动 T09 的上报与查询切片，错误引用与 Agent 维护 Graph 仍按后续切片交付，M16 / M18 / M19 状态沿用现有证据。
+
 ### Agent 蓝图、首期与后续阶段 {#agent-blueprint-progress}
 
 2026-11-19 [ADR-FE-033](decisions/ADR-FE-033-agent-create-conversation.md)确认[首期仅创建契约](platform-studio.md#agent-create-contract)：统一助手、多轮澄清、持久业务会话、异步 Run、候选审阅、保存与归档原子完成。替代首批诊断修复与同步 / 临时会话安排；六类职责、Harness、Loop、PostgreSQL 分域与安全原则保留。M18 / M19 仍部分完成，无 Agent 实现或验收证据。

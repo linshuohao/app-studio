@@ -26,7 +26,11 @@ jobs:
       CI: 'true'
       TZ: Asia/Shanghai
       NEXT_TELEMETRY_DISABLED: '1'
-      ASSET_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD' }}
+      # The first push has no previous commit and sends an all-zero SHA.
+      ASSET_BASE_REF: >-
+        ${{ github.event.pull_request.base.sha ||
+            (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) ||
+            'HEAD' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

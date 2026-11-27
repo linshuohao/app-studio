@@ -105,7 +105,7 @@ test('binds, signs in, publishes and serves Host, then rejects a late callback a
 
     await page.goto('/');
     await bindingAction('解绑 GitHub');
-    await expect(page.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
     await builtinLogin();
     expect(await currentIdentity()).toEqual(builtin);
     await bindingAction('绑定 GitHub');
@@ -140,7 +140,7 @@ test('binds, signs in, publishes and serves Host, then rejects a late callback a
       { times: 1 },
     );
     await host.goto(callback.href);
-    await expect(host.getByRole('heading', { name: '登录表单工作台' })).toBeVisible();
+    await expect(host.getByRole('heading', { name: '登录 Assemble Studio' })).toBeVisible();
     await expect(host.getByText('已使用 GitHub 登录。')).toHaveCount(0);
     expect((await guest.request.get('/api/platform/access')).status()).toBe(401);
     await expect(

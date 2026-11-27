@@ -19,7 +19,14 @@ const rolePermissions = {
   viewer: ['form:view'],
   editor: ['form:view', 'form:edit'],
   publisher: ['form:view', 'form:publish'],
-  admin: ['form:view', 'form:edit', 'form:publish', 'form:manage', 'member:manage'],
+  admin: [
+    'form:view',
+    'form:edit',
+    'form:publish',
+    'form:manage',
+    'member:manage',
+    'diagnostic:view',
+  ],
 } as const;
 type Role = keyof typeof rolePermissions;
 export type Permission = (typeof rolePermissions.admin)[number];

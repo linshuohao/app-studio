@@ -1,0 +1,172 @@
+.diagnostic-results {
+  min-width: 0;
+}
+
+.diagnostic-results .studio-data-table td:first-child {
+  font: var(--studio-type-control);
+}
+
+.diagnostic-results code,
+.diagnostic-group-summary code {
+  font: var(--studio-type-code);
+}
+
+.diagnostic-cell {
+  display: grid;
+  gap: var(--studio-space-4);
+}
+
+.diagnostic-cell small {
+  color: var(--studio-text-muted);
+  font: var(--studio-type-caption);
+}
+
+.diagnostic-cell small code {
+  font-size: inherit;
+}
+
+.diagnostic-error-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-4) var(--studio-space-8);
+}
+
+.diagnostic-results :is(th, time, td:last-child) {
+  white-space: nowrap;
+}
+
+.diagnostic-group-summary {
+  color: var(--studio-text-muted);
+  font: var(--studio-type-caption);
+}
+
+.diagnostic-number {
+  font-variant-numeric: tabular-nums;
+}
+
+#studio-main .diagnostic-results .studio-data-table {
+  min-inline-size: 0;
+}
+
+#studio-main .diagnostic-detail-layout .studio-data-table {
+  min-inline-size: 0;
+}
+
+.diagnostic-results td {
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-cell-link.studio-button {
+  justify-self: start;
+  max-width: 100%;
+  padding-inline: 0;
+  text-align: start;
+  white-space: normal;
+}
+
+.diagnostic-detail-layout {
+  display: grid;
+  gap: var(--studio-space-16);
+  min-width: 0;
+}
+
+.diagnostic-detail-layout > .authoring-panel {
+  min-width: 0;
+  margin: 0;
+}
+
+.diagnostic-group-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-4) var(--studio-space-16);
+  margin-block-end: var(--studio-space-12);
+}
+
+.diagnostic-evidence-dialog .json-node-row {
+  min-width: 0;
+}
+
+.diagnostic-evidence-dialog .json-leaf,
+.diagnostic-evidence-dialog .json-string {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-chain-note {
+  margin-block: 0 var(--studio-space-12);
+  color: var(--studio-text-muted);
+  font: var(--studio-type-caption);
+}
+
+.diagnostic-chain {
+  margin-block: var(--studio-space-16) 0;
+  padding-inline-start: var(--studio-space-24);
+}
+
+.diagnostic-chain > li {
+  padding: var(--studio-space-12);
+  border-inline-start: thin solid var(--studio-border);
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-chain > .diagnostic-chain-failure {
+  border-color: var(--studio-danger-border);
+  background: var(--studio-danger-bg);
+}
+
+.diagnostic-chain h3 {
+  margin: 0;
+  font: var(--studio-type-control);
+}
+
+.diagnostic-chain-failure h3 {
+  color: var(--studio-danger-fg);
+}
+
+.diagnostic-chain-facts {
+  display: grid;
+  gap: var(--studio-space-4);
+  margin-block: var(--studio-space-8);
+}
+
+.diagnostic-chain-facts > div {
+  display: grid;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr);
+  gap: var(--studio-space-8);
+}
+
+.diagnostic-chain-facts dt {
+  color: var(--studio-text-muted);
+}
+
+.diagnostic-chain-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-chain-evidence {
+  margin-block-start: var(--studio-space-8);
+}
+
+.diagnostic-chain-evidence summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.diagnostic-chain-evidence summary:focus-visible {
+  outline: thin solid var(--studio-focus-ring);
+  outline-offset: var(--studio-space-4);
+}
+
+.diagnostic-summary {
+  min-width: 0;
+}
+
+.diagnostic-summary p {
+  margin: 0.5rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-summary .diagnostic-chain-facts dd {
+  overflow-wrap: anywhere;
+}

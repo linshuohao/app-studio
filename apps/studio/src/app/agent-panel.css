@@ -13,6 +13,17 @@
 .agent-history p {
   white-space: pre-wrap;
 }
+.agent-attempt-process summary {
+  cursor: pointer;
+}
+.agent-attempt-stage {
+  margin-inline-start: var(--studio-space-12);
+  margin-block: var(--studio-space-4);
+}
+.agent-attempt-trace {
+  color: var(--studio-text-muted);
+  overflow-wrap: anywhere;
+}
 .agent-thread textarea {
   width: 100%;
   min-height: 0;
@@ -120,10 +131,16 @@
 .agent-markdown p {
   white-space: normal;
 }
-.agent-markdown pre {
+.agent-markdown pre:not(.studio-code-block) {
   max-width: 100%;
   overflow-x: auto;
   white-space: pre;
+}
+.agent-markdown [data-streamdown='table-wrapper'] {
+  margin-block: var(--studio-space-12);
+}
+.agent-markdown [data-streamdown='table-wrapper'] > :has(> [data-streamdown='table']) {
+  overflow: auto;
 }
 .agent-markdown table {
   border-collapse: collapse;

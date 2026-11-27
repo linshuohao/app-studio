@@ -1,4 +1,6 @@
 'use client';
+
+import { PageHeading } from './page-heading';
 import {
   Button,
   DataTable,
@@ -47,6 +49,7 @@ import { writeLocation, listPosition, restorePosition, type ListPosition } from 
 import { AccountSecurity } from './account-security';
 import { Members } from './members';
 import { AssetCatalog } from './asset-catalog';
+import { DiagnosticsWorkspace } from './diagnostics/diagnostics-workspace';
 import { Modal } from './modal';
 import { CopyForm, FormManagement } from './form-management';
 import { clearAccountDrafts } from './local-drafts';
@@ -166,6 +169,12 @@ export default function Studio() {
   const [historyOpen, setHistoryOpen] = useState(true);
   const [catalog, setCatalog] = useState<'materials' | 'functions'>();
   const [members, setMembers] = useState(false);
+  const lastDiagnosticPosition = useRef<ListPosition | undefined>(undefined);
+  const [diagnosticRoute, setDiagnosticRoute] = useState<{
+    event?: string;
+    group?: string;
+    view?: string;
+  }>();
   const [settings, setSettings] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [continuation, setContinuation] = useState<{
@@ -267,6 +276,15 @@ export default function Studio() {
     setCatalog(kind === 'materials' || kind === 'functions' ? kind : undefined);
     setSettings(page === 'account');
     setMembers(page === 'members');
+    setDiagnosticRoute(
+      page === 'diagnostics'
+        ? {
+            event: query.get('event') ?? undefined,
+            group: query.get('group') ?? undefined,
+            view: query.get('view') ?? undefined,
+          }
+        : undefined,
+    );
     if (page !== 'account') setSecurityOpen(false);
     const id = query.get('form');
     setRouteBusy(false);
@@ -755,6 +773,7 @@ export default function Studio() {
     !draftPageId &&
     !agentOpen &&
     !members &&
+    !diagnosticRoute &&
     !catalog &&
     !settings &&
     account?.membership.status === 'active';
@@ -992,7 +1011,9 @@ export default function Studio() {
           ? 'account'
           : members
             ? 'members'
-            : (catalog ?? 'forms');
+            : diagnosticRoute
+              ? 'diagnostics'
+              : (catalog ?? 'forms');
   const showAgentWorkspace = activePage === 'agent' && canEdit;
   const showDraftWorkspace = activePage === 'draft' && canEdit && !!draftPageId;
   const presentation = showDraftWorkspace ? 'draft' : showAgentWorkspace ? 'page' : 'dock';
@@ -1101,7 +1122,11 @@ export default function Studio() {
             ? `studio-content${form || agentOpen ? ' studio-immersive' : ''} studio-next`
             : undefined
         }
-        data-studio-list-shell={formList || undefined}
+        data-studio-list-shell={
+          formList ||
+          (activePage === 'diagnostics' && !diagnosticRoute?.group && !diagnosticRoute?.event) ||
+          undefined
+        }
         data-agent-chat-page={
           (showAgentWorkspace && resumeResource?.kind !== 'drafts') || undefined
         }
@@ -1219,6 +1244,21 @@ export default function Studio() {
                 }
               }}
             />
+          ) : diagnosticRoute ? (
+            access.permissions.includes('diagnostic:view') ? (
+              <DiagnosticsWorkspace
+                key={JSON.stringify([diagnosticRoute.group, diagnosticRoute.view])}
+                {...diagnosticRoute}
+                returnPosition={lastDiagnosticPosition.current}
+                onNavigate={(location, trigger) => {
+                  if (trigger) lastDiagnosticPosition.current = listPosition(trigger);
+                  writeLocation(location);
+                  void readRoute();
+                }}
+              />
+            ) : (
+              <Feedback kind="error">当前账号无权查看错误记录。</Feedback>
+            )
           ) : catalog ? (
             <AssetCatalog
               key={catalog}
@@ -1227,8 +1267,7 @@ export default function Studio() {
             />
           ) : settings ? (
             <>
-              <div className="toolbar page-title">
-                <h1>账号与权限</h1>
+              <PageHeading title="账号与权限">
                 <button
                   type="button"
                   className="quiet"
@@ -1237,7 +1276,7 @@ export default function Studio() {
                 >
                   退出登录
                 </button>
-              </div>
+              </PageHeading>
               {account && (
                 <AccountSecurity
                   key={account.userId}
@@ -1269,6 +1308,7 @@ export default function Studio() {
                         'form:publish': '发布表单',
                         'form:manage': '归档与恢复',
                         'member:manage': '成员管理',
+                        'diagnostic:view': '查看表单错误',
                       }[permission] ?? permission}
                     </li>
                   ))}
@@ -1277,12 +1317,9 @@ export default function Studio() {
             </>
           ) : (
             <>
-              <div className="toolbar page-title form-list-heading" data-studio-ui>
-                <div>
-                  <h1>表单列表</h1>
-                </div>
+              <PageHeading title="表单列表" className="form-list-heading" data-studio-ui>
                 {canEdit && (
-                  <div className="action-row">
+                  <>
                     <Button variant="secondary" onClick={openDrafts}>
                       表单草稿
                     </Button>
@@ -1296,9 +1333,9 @@ export default function Studio() {
                     >
                       新建表单
                     </Button>
-                  </div>
+                  </>
                 )}
-              </div>
+              </PageHeading>
               {draftBoxOpen && canEdit && (
                 <AgentDraftBox
                   returnFocus={dialogTrigger}

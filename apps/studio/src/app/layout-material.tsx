@@ -8,6 +8,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -19,6 +20,7 @@ import { Button, CardList, Field, Icon, Input } from '@form-engine/studio-design
 import { StudioSelect } from '@form-engine/studio-design-components/select';
 import { MaterialCard } from './material-card';
 import { Modal } from './modal';
+import { SchemaJsonValue } from './schema-json-value';
 import { failureMessage, platform } from './platform-api';
 import { child, escapeKey, semanticModel, type Model } from './semantic-model';
 import {
@@ -38,6 +40,7 @@ import { readExpression, valueAsExpression } from './reaction-expression-model';
 import type { JsonSchema } from '@form-engine/protocol/capability';
 import type { ExpressionVerificationContext } from './expression-verification';
 import { usePendingNavigation } from './schema-navigation';
+import { planLayoutMaterialReplacement } from './layout-structure';
 import './layout-inspector.css';
 
 export type { LayoutBindingField } from './layout-material-value';
@@ -73,6 +76,9 @@ export function LayoutMaterialPicker({
   verification,
   preferredField,
   rootOnly,
+  replacement,
+  materialSlots,
+  trigger,
   onInsert,
   onClose,
 }: {
@@ -80,26 +86,51 @@ export function LayoutMaterialPicker({
   verification: ExpressionVerificationContext;
   preferredField?: string;
   rootOnly?: boolean;
-  onInsert: (raw: string) => void | Promise<void>;
+  replacement?: string;
+  materialSlots: ReadonlyMap<string, readonly string[]>;
+  trigger?: HTMLElement;
+  onInsert: (raw: string, clearChildren: boolean) => void | Promise<void>;
   onClose: () => void;
 }) {
   const [query, search] = useState('');
+  const [category, setCategory] = useState('');
+  const [showOtherTypes, setShowOtherTypes] = useState(false);
   const [asset, select] = useState<Summary>();
   const [busy, setBusy] = useState(false);
   const catalog = useCatalog<Summary[]>('/catalog/materials');
   const selected = useCatalog<Detail>(
     asset && detailPath(asset.id) + '?version=' + encodeURIComponent(asset.version),
   );
-  const rows = catalog?.data?.filter((r) =>
-    [r.id, r.title, r.category, r.summary]
-      .join(' ')
-      .toLowerCase()
-      .includes(query.trim().toLowerCase()),
+  const previous = useMemo(
+    () => (replacement ? semanticModel(replacement) : undefined),
+    [replacement],
+  );
+  const currentMaterial = previous?.str(child(previous.root, 'material'));
+  const isContainer = !!currentMaterial && !!materialSlots.get(currentMaterial)?.length;
+  const filterContainers = rootOnly || (isContainer && !showOtherTypes);
+  const candidates = filterContainers
+    ? catalog?.data?.filter((row) => materialSlots.get(row.id)?.length)
+    : catalog?.data;
+  const categories = [...new Set(candidates?.map((row) => row.category || '未分类'))].sort();
+  const rows = candidates?.filter(
+    (r) =>
+      (!category || (r.category || '未分类') === category) &&
+      [r.id, r.title, r.category, r.summary, r.id === 'condition' ? '条件展示 条件呈现' : '']
+        .join(' ')
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
   );
   return (
-    <Modal title="选择布局物料" className="catalog-drawer" onClose={onClose} closeLabel="取消">
+    <Modal
+      title={replacement ? '选择替换组件' : '选择布局物料'}
+      className="catalog-drawer layout-material-picker"
+      returnFocus={trigger}
+      onClose={onClose}
+      closeDisabled={busy}
+      closeLabel="取消"
+    >
       {asset ? (
-        <>
+        <div className="layout-material-results">
           <button type="button" disabled={busy} onClick={() => select(undefined)}>
             返回物料目录
           </button>
@@ -107,39 +138,70 @@ export function LayoutMaterialPicker({
           {selected?.error ? (
             <p role="alert">{selected.error}</p>
           ) : selected?.data ? (
-            rootOnly && !selected.data.manifest.slots?.length ? (
+            currentMaterial === asset.id ? (
+              <p>这是当前组件，请选择其他物料。</p>
+            ) : rootOnly && !selected.data.manifest.slots?.length ? (
               <p>根容器需要声明插槽，请选择其他物料。</p>
             ) : (
               <InsertMaterial
                 key={asset.id + asset.version}
                 {...{ fields, verification, preferredField, onInsert, busy, setBusy }}
                 manifest={selected.data.manifest}
+                previous={previous}
               />
             )
           ) : (
             <p>正在读取物料契约…</p>
           )}
-        </>
+        </div>
       ) : (
         <>
-          <label>
-            搜索物料
-            <input aria-label="搜索物料" value={query} onChange={(e) => search(e.target.value)} />
-          </label>
-          {catalog?.error ? (
-            <p role="alert">{catalog.error}</p>
-          ) : !rows ? (
-            <p>正在读取目录…</p>
-          ) : !rows.length ? (
-            <p>没有匹配的物料。</p>
-          ) : (
-            <CardList
-              label="可插入物料"
-              items={rows}
-              itemKey={(r) => JSON.stringify([r.id, r.version])}
-              renderItem={(r) => <MaterialCard asset={r} onOpen={() => select(r)} />}
-            />
-          )}
+          <div className="layout-material-filters">
+            <label>
+              搜索物料
+              <Input type="search" value={query} onChange={(e) => search(e.target.value)} />
+            </label>
+            <StudioSelect
+              aria-label="物料类型"
+              visibleLabel="物料类型"
+              value={category}
+              onValueChange={setCategory}
+            >
+              <option value="">全部类型</option>
+              {categories.map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </StudioSelect>
+            {isContainer && !rootOnly && (
+              <label className="layout-material-other-types">
+                <input
+                  type="checkbox"
+                  checked={showOtherTypes}
+                  onChange={(event) => {
+                    setShowOtherTypes(event.target.checked);
+                    setCategory('');
+                  }}
+                />
+                显示非容器组件
+              </label>
+            )}
+          </div>
+          <div className="layout-material-results" role="region" aria-label="物料列表" tabIndex={0}>
+            {catalog?.error ? (
+              <p role="alert">{catalog.error}</p>
+            ) : !rows ? (
+              <p>正在读取目录…</p>
+            ) : !rows.length ? (
+              <p>没有匹配的物料。</p>
+            ) : (
+              <CardList
+                label="可插入物料"
+                items={rows}
+                itemKey={(r) => JSON.stringify([r.id, r.version])}
+                renderItem={(r) => <MaterialCard asset={r} onOpen={() => select(r)} />}
+              />
+            )}
+          </div>
         </>
       )}
     </Modal>
@@ -151,6 +213,7 @@ function InsertMaterial({
   verification,
   preferredField,
   manifest,
+  previous,
   onInsert,
   busy,
   setBusy,
@@ -159,9 +222,10 @@ function InsertMaterial({
   verification: ExpressionVerificationContext;
   preferredField?: string;
   manifest: Manifest;
+  previous?: Model;
   busy: boolean;
   setBusy: (v: boolean) => void;
-  onInsert: (raw: string) => void | Promise<void>;
+  onInsert: (raw: string, clearChildren: boolean) => void | Promise<void>;
 }) {
   const props = propsOf(manifest);
   const required = (
@@ -170,17 +234,57 @@ function InsertMaterial({
   const ports = Object.entries(manifest.bindings ?? {});
   const preferred = fields.find((f) => f.schemaPath === preferredField);
   const [bindings, setBindings] = useState<Record<string, DataReference>>(() => {
+    if (previous) {
+      const previousBindings = child(previous.root, 'bindings');
+      return Object.fromEntries(
+        ports.flatMap(([key, contract]) => {
+          const binding = child(previousBindings, key);
+          const path =
+            previous.str(child(binding, 'path')) ??
+            (key === 'value' ? previous.str(child(previous.root, 'bind')) : undefined);
+          const scope = previous.str(child(binding, 'scope'));
+          const existing = compatibleFields(fields, contract.schema).find(
+            (field) => field.ref.path === path && field.ref.scope === scope,
+          );
+          return existing ? [[key, existing.ref]] : [];
+        }),
+      );
+    }
     if (!preferred) return {};
     const port = ports.find(
       ([, contract]) => compatibleFields([preferred], contract.schema).length,
     );
     return port ? { [port[0]]: preferred.ref } : {};
   });
-  const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(required.map((k) => [k, initialValue(props[k] ?? true)])),
-  );
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const initial = Object.fromEntries(required.map((k) => [k, initialValue(props[k] ?? true)]));
+    if (previous)
+      for (const property of child(previous.root, 'props')?.children ?? []) {
+        const key = property.key!;
+        if (!Object.hasOwn(props, key)) continue;
+        const raw = previous.raw(property);
+        try {
+          validateValue(props[key]!, raw);
+          initial[key] = raw;
+        } catch {
+          // A property with a different contract keeps the new material's default.
+        }
+      }
+    return initial;
+  });
   const [requests, setRequests] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  const [clearChildren, setClearChildren] = useState(false);
+  let slotPlan: ReturnType<typeof planLayoutMaterialReplacement> | undefined;
+  let slotError: string | undefined;
+  if (previous) {
+    try {
+      slotPlan = planLayoutMaterialReplacement(previous, previous.root, manifest.slots ?? []);
+    } catch (error) {
+      slotError = error instanceof Error ? error.message : '无法核对现有子节点。';
+    }
+  }
+  const removed = slotPlan?.removed ?? 0;
   function build() {
     if (
       preferredField &&
@@ -190,7 +294,11 @@ function InsertMaterial({
         ))
     )
       throw Error('此位置或物料端口不能绑定拖入的字段。');
-    if (ports.some(([k]) => !Object.hasOwn(bindings, k))) throw Error('请补全所有绑定端口。');
+    const missingBindings = ports.filter(([key]) => !Object.hasOwn(bindings, key));
+    if (missingBindings.length)
+      throw Error(
+        '请为以下端口选择绑定字段：' + missingBindings.map(([key]) => key).join('、') + '。',
+      );
     const requestEntries = Object.keys(manifest.requests ?? {}).map((k) => {
       const request = requests[k]?.trim();
       if (!request) throw Error('请填写 Host 请求 ' + k);
@@ -218,15 +326,11 @@ function InsertMaterial({
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        if (busy) return;
-        if (e.currentTarget.querySelector('[data-layout-invalid]')) {
-          setError('请先补全属性的 JSON 值。');
-          return;
-        }
+        if (busy || slotError || (removed > 0 && !clearChildren)) return;
         setBusy(true);
         setError('');
         try {
-          await onInsert(build());
+          await onInsert(build(), clearChildren);
         } catch (e) {
           setError(e instanceof Error ? e.message : '无法插入控件');
         } finally {
@@ -235,6 +339,24 @@ function InsertMaterial({
       }}
     >
       <fieldset className="insert-fields" disabled={busy}>
+        {previous && <p>新组件支持的属性和绑定会带入，事件和 Host 请求需重新配置。</p>}
+        {!!slotPlan?.moves.length && (
+          <p>
+            子节点会保留。插槽调整为
+            {' ' + slotPlan.moves.map(({ from, to }) => from + ' → ' + to).join('、')}。
+          </p>
+        )}
+        {slotError && <p role="alert">{slotError}</p>}
+        {removed > 0 && (
+          <label className="layout-material-other-types">
+            <input
+              type="checkbox"
+              checked={clearChildren}
+              onChange={(event) => setClearChildren(event.target.checked)}
+            />
+            我确认替换后清空无法保留的 {removed} 个子节点及其内容
+          </label>
+        )}
         {ports.map(([k, contract]) => (
           <FieldSelect
             key={k}
@@ -245,27 +367,27 @@ function InsertMaterial({
             set={(ref) => setBindings({ ...bindings, [k]: ref })}
           />
         ))}
-        {Object.entries(props).map(([k, schema]) =>
-          Object.hasOwn(values, k) ? (
-            <ValueInput
-              key={k}
-              label={'属性 ' + k}
-              raw={values[k]!}
-              fields={fields}
-              verification={verification}
-              schema={schema}
-              set={(raw) => setValues({ ...values, [k]: raw })}
-            />
-          ) : (
-            <button
-              type="button"
-              key={k}
-              onClick={() => setValues({ ...values, [k]: initialValue(schema) })}
-            >
-              配置属性 {k}
-            </button>
-          ),
-        )}
+        {Object.entries(props).map(([key, schema]) => (
+          <InsertProperty
+            key={key}
+            label={'属性 ' + key}
+            raw={Object.hasOwn(values, key) ? values[key] : undefined}
+            clear={
+              required.includes(key)
+                ? undefined
+                : () =>
+                    setValues((current) => {
+                      const next = { ...current };
+                      delete next[key];
+                      return next;
+                    })
+            }
+            fields={fields}
+            verification={verification}
+            schema={schema}
+            set={(raw) => setValues((current) => ({ ...current, [key]: raw }))}
+          />
+        ))}
         {Object.keys(manifest.requests ?? {}).map((k) => (
           <label key={k}>
             Host 请求 {k}
@@ -277,12 +399,101 @@ function InsertMaterial({
             />
           </label>
         ))}
-        <button type="submit" disabled={busy}>
-          插入控件
+        <button type="submit" disabled={busy || !!slotError || (removed > 0 && !clearChildren)}>
+          {previous ? '确认替换' : '插入控件'}
         </button>
         {error && <p role="alert">{error}</p>}
       </fieldset>
     </form>
+  );
+}
+
+function InsertProperty({
+  label,
+  schema,
+  raw,
+  fields,
+  verification,
+  set,
+  clear,
+}: {
+  label: string;
+  schema: Schema;
+  raw?: string;
+  fields: Fields;
+  verification: ExpressionVerificationContext;
+  set: (raw: string) => void;
+  clear?: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  let expression: string;
+  let summary: Expression;
+  try {
+    expression = valueAsExpression(raw ?? initialValue(schema));
+    summary = readExpression(expression);
+  } catch {
+    return (
+      <div className="layout-insert-property">
+        <strong>{label}</strong>
+        <SchemaJsonValue
+          label={label + ' JSON'}
+          text={raw ?? initialValue(schema)}
+          onChange={set}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="layout-insert-property">
+      <strong>{label}</strong>
+      <div className="layout-insert-property-value">
+        {raw === undefined ? (
+          <small>未设置</small>
+        ) : (
+          <ExpressionDisplay
+            expr={summary}
+            variant="compact"
+            fields={fields.map((field) => ({ ...field, depth: 0 }))}
+            manifests={[]}
+          />
+        )}
+      </div>
+      <div className="layout-insert-property-actions">
+        <Button
+          ref={trigger}
+          variant="text"
+          aria-label={'配置' + label + '的取值'}
+          onClick={() => setEditing(true)}
+        >
+          配置取值
+        </Button>
+        {raw !== undefined && clear && (
+          <Button variant="text" aria-label={'清除' + label} onClick={clear}>
+            清除
+          </Button>
+        )}
+      </div>
+      {editing && (
+        <LayoutExpressionDialog
+          title={label + '的取值'}
+          initial={expression}
+          expected={schema as JsonSchema}
+          fields={fields}
+          verification={verification}
+          close={() => {
+            setEditing(false);
+            requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
+          }}
+          apply={(next) => {
+            if (next === expression && raw !== undefined) return;
+            const value = readExpression(next);
+            set(value !== null && typeof value === 'object' ? '{"$expr":' + next + '}' : next);
+          }}
+          action="应用取值"
+        />
+      )}
+    </div>
   );
 }
 

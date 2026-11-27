@@ -53,7 +53,7 @@
       "checks": [],
       "document_id": "GUIDE-WORKFLOWS",
       "file": "contracts/PROJECT-CHARTER-001.md",
-      "sha256": "8e6cca838bb4b7a8aeea27d9e93610115f79575dce5cee55fe2019b33e33e2bf",
+      "sha256": "470e7d65d73e52e974a6f140aee3554ea75bc26b41a558e5a8787195a3339675",
       "source": "docs/design/workflows.md#engineering-charter"
     },
     "STUDIO-COMPONENT-001": {

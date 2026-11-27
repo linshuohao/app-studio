@@ -5,8 +5,9 @@ for (const task of [
   'assets:check',
   'format:check',
   'lint',
-  'boundaries',
   'build',
+  // The dependency graph resolves the workspace packages' built exports.
+  'boundaries',
   'typecheck',
   'test',
   'test:integration',

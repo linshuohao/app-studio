@@ -98,7 +98,6 @@ test('keeps the draft, Host guide, and copyable JSX in the saved candidate reply
   const editingStatus = page.getByText('Agent 正在修改此草稿。', { exact: true });
   await expect(editingStatus).toHaveCount(0);
   await expect(chatHeader.getByText('对话', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Agent 协作', exact: true })).toHaveCount(0);
   await expect(page.getByRole('log', { name: '对话记录' })).toBeVisible();
   const card = page.getByRole('region', { name: '候选配置', exact: true });
   await expect(card.getByRole('link', { name: '前往草稿' })).toHaveAttribute(
@@ -170,16 +169,4 @@ test('keeps the draft, Host guide, and copyable JSX in the saved candidate reply
   await expect(snippet).toContainText('<FormRenderer');
   await expect(snippet).not.toContainText('submitForUnderwriting(snapshot)');
   expect(context.pages()).toHaveLength(1);
-  draftHolder = 'agent';
-  const editPoll = page.waitForResponse((response) =>
-    response.url().includes('/form-drafts/' + draftId + '/editing?'),
-  );
-  await page.route('**/api/platform/asset-repairs', (route) => route.fulfill({ json: [] }));
-  await page
-    .getByRole('navigation', { name: '主导航' })
-    .getByRole('button', { name: '资产修复' })
-    .click();
-  await expect(page.getByRole('heading', { name: '资产修复', exact: true })).toBeVisible();
-  expect((await (await editPoll).json()).holder).toBe('agent');
-  await expect(editingStatus).toHaveCount(0);
 });

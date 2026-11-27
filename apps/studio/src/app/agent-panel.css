@@ -1,6 +1,6 @@
 .agent-thread {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   min-width: 0;
   gap: 8px;
   padding: 16px;
@@ -93,6 +93,7 @@
   box-shadow: var(--studio-overlay-shadow);
 }
 .agent-thread[data-floating] {
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(360px, calc(100% - 32px));
   max-height: min(64dvh, 520px);
   box-sizing: border-box;
@@ -327,6 +328,32 @@
 .agent-interaction-card h3 {
   margin: 0;
   font: var(--studio-type-section);
+}
+.agent-draft-issues {
+  display: grid;
+  gap: var(--studio-space-12);
+  min-width: 0;
+}
+.agent-draft-issues > section {
+  min-width: 0;
+}
+.agent-draft-issues h4 {
+  margin: 0 0 var(--studio-space-4);
+  font: var(--studio-type-section);
+}
+#studio-main .agent-draft-issues .studio-data-table {
+  inline-size: 100%;
+  min-inline-size: 0;
+  table-layout: fixed;
+  background: transparent;
+}
+.agent-draft-issues .studio-data-table th:is(:first-child, :nth-child(3)) {
+  inline-size: 4.5em;
+}
+.agent-draft-issues .studio-data-table :is(th, td) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
 }
 .agent-resource-link {
   display: grid;

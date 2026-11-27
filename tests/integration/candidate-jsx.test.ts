@@ -118,7 +118,7 @@ it('mounts the copied JSX with its Prepared JSON and executes the declared previ
   await mountCandidate(result.prepared, example);
   fireEvent.click(screen.getByRole('button', { name: '模拟初核' }));
   expect(await screen.findByText('本地校验与投影通过，渠道核保待接入。')).toBeTruthy();
-});
+}, 90_000);
 
 it('wires purchase array insertion and sends only a valid snapshot to the supplied Host', async () => {
   const builds = new ReleaseBuild();

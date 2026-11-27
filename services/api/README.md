@@ -137,7 +137,7 @@ node tools/engineering/migrations/split-agent-conversations.mjs
 
 受信 Host 在 API 配置 `PLATFORM_DIAGNOSTICS_HOST_ID`、`PLATFORM_DIAGNOSTICS_HOST_FORM_ID` 和
 `PLATFORM_DIAGNOSTICS_HOST_TOKEN` 后，可用 Bearer 凭证向 `POST /api/platform/diagnostics/events` 上报获准表单的发布事件。
-在 Studio 和 API 同时设置 `PLATFORM_DIAGNOSTICS_STUDIO_PILOT=1` 可开启示例 Host 试点。上报要求管理员会话及受信 Origin。浏览器按上报会话隔离 IndexedDB 队列，在线后重试最多 24 小时。
+在 Studio 和 API 同时设置 `PLATFORM_DIAGNOSTICS_STUDIO_PILOT=1` 可开启示例 Host 试点。上报要求管理员会话及受信 Origin。Host 首次获取有效会话身份后才暂存现场；试点身份查询最长等待一秒，失败时可继续使用示例。浏览器按上报会话隔离 IndexedDB 队列，在线后重试最多 24 小时。
 
 版本 1 的上报包括事件 ID、Release ID、发生时间、来源、阶段、错误码和证据状态。有可靠定位时须同时提供
 `targetKind` 和 `targetId`，定位必须存在于该发布的配置中。错误列表与单次证据均要求诊断读取权限，

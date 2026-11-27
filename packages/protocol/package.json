@@ -58,7 +58,7 @@
     "schema:check": "node scripts/generate-schemas.mjs --check"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "ts-json-schema-generator": "^2.9.0",
     "tsdown": "^0.23.1",
     "typescript": "6.0.3",

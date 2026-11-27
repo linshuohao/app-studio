@@ -1798,8 +1798,8 @@ dialog.layout-material-picker[open] {
 .semantic-inspector p {
   margin: 0;
 }
-.semantic-inspector pre,
-.semantic-inspector code,
+.semantic-inspector pre:not(.studio-code-block),
+.semantic-inspector code:not(.studio-code-block > code),
 .semantic-inspector .text-button {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

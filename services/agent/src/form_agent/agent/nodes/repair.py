@@ -86,6 +86,27 @@ def syntax_anchor(text: str, diagnostics: list[dict]) -> int | None:
     return None
 
 
+def diagnostic_summary(diagnostics: list[dict]) -> str:
+    descriptions = []
+    for diagnostic in diagnostics:
+        parts = [
+            str(diagnostic[key])
+            for key in ("code", "sourcePointer", "message")
+            if diagnostic.get(key)
+        ]
+        location = diagnostic.get("location")
+        if (
+            isinstance(location, dict)
+            and location.get("line")
+            and location.get("column")
+        ):
+            parts.append(f"（第 {location['line']} 行，第 {location['column']} 列）")
+        descriptions.append(
+            " ".join(parts) or json.dumps(diagnostic, ensure_ascii=False)
+        )
+    return "；".join(descriptions)
+
+
 async def repair(
     state: FormAuthoringState,
     *,
@@ -109,13 +130,7 @@ async def repair(
     anchor = syntax_anchor(text, receipt.diagnostics) if has_syntax_error else None
 
     def stopped():
-        diagnostics = "；".join(
-            " ".join(
-                str(d[k]) for k in ("code", "sourcePointer", "message") if d.get(k)
-            )
-            or json.dumps(d, ensure_ascii=False)
-            for d in receipt.diagnostics
-        )
+        diagnostics = diagnostic_summary(receipt.diagnostics)
         reason = f"本次已完成 {rounds_used} 轮修复，编译仍未通过。"
         if history:
             reason += f" 最后一轮：{history[-1].change}。"
@@ -311,7 +326,7 @@ async def repair_candidate(state: TurnGraphState, *, model, max_checks):
             failed_digest=None,
             draft=Blocked(
                 kind="blocked",
-                reason=f"第 {len(history)} 轮修复未取得进展：{history[-1].change}。剩余诊断：{json.dumps(detail, ensure_ascii=False)}",
+                reason=f"第 {len(history)} 轮修复未取得进展：{history[-1].change}。剩余诊断：{diagnostic_summary(detail)}",
             ),
         )
     return updates

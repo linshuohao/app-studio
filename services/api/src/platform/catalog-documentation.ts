@@ -64,7 +64,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "button": {
     "version": "0.1.0",
-    "description": "# button · 操作按钮\n\nManifest 是本目录的机器契约唯一来源。Props、Bindings、Events、Requests、Slots 见 [manifest.ts](manifest.ts)；实现和 Props 类型见 [implementation.tsx](implementation.tsx)。\n\n静态 Binding 预期：无 Binding；实际工作值仍须按 Adapter 的 ReadResult 读取，不能据静态契约断言合法。\n\n只发一个无 Payload 的 activate 事件；使用 type=button，不隐式提交 HTML form。失败提示不伪造业务 Issue。\n\n运行装配调用 `createButton(artifact)`，将返回值交给 Renderer 的 createMaterialRegistry；Compiler Catalog 使用同一 Manifest 和制品身份。编译端从 `@form-engine/materials-react/manifests` 导入契约。样式显式导入 `@form-engine/materials-react/styles.css`，不由静态入口加载。\n\n真实输入、非法态及 Host 改值回归在 `../../tests/button/implementation.test.tsx`，浏览器验收页为 Playground 的 /materials。完整已确认契约见仓库 docs/design/extension-integration.md#first-assets-materials。\n",
+    "description": "# button · 操作按钮\n\nManifest 是本目录的机器契约唯一来源。Props、Bindings、Events、Requests、Slots 见 [manifest.ts](manifest.ts)；实现和 Props 类型见 [implementation.tsx](implementation.tsx)。\n\n静态 Binding 预期：无 Binding；实际工作值仍须按 Adapter 的 ReadResult 读取，不能据静态契约断言合法。\n\n只发一个无 Payload 的 activate 事件；使用 type=button，不隐式提交 HTML form。失败提示不伪造业务 Issue。\n\n删除当前数组成员时，将按钮放在该数组 `scope.mode: \"each\"` 的 `node` 内。下面的按钮位于 `/insureds` 的成员 Scope 内，该 Scope 的别名为 `member`。Renderer 使用按钮所在的渲染 Scope 执行命令，`item.$scope` 解析到当前成员的稳定身份。事件仍无 Payload。\n\n```json\n{\n  \"material\": \"button\",\n  \"props\": { \"label\": \"删除家人\", \"variant\": \"danger\" },\n  \"on\": {\n    \"activate\": {\n      \"type\": \"form.command\",\n      \"command\": {\n        \"op\": \"array.remove\",\n        \"target\": { \"source\": \"data\", \"path\": \"/insureds\" },\n        \"item\": { \"$scope\": \"member\" }\n      }\n    }\n  }\n}\n```\n\n运行装配调用 `createButton(artifact)`，将返回值交给 Renderer 的 createMaterialRegistry；Compiler Catalog 使用同一 Manifest 和制品身份。编译端从 `@form-engine/materials-react/manifests` 导入契约。样式显式导入 `@form-engine/materials-react/styles.css`，不由静态入口加载。\n\n真实输入、非法态及 Host 改值回归在 `../../tests/button/implementation.test.tsx`，浏览器验收页为 Playground 的 /materials。完整已确认契约见仓库 docs/design/extension-integration.md#first-assets-materials。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/button/README.md",
     "examples": [
@@ -417,7 +417,7 @@ export const catalogDocumentation: Record<string, { version: string; description
   },
   "date-range": {
     "version": "0.1.0",
-    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入或打开日历选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
+    "description": "# date-range\n\n确认型日期范围输入。`createDateRange(artifact)` 使用 Host 提供的不可变制品身份。\n\n- Props：`label: string` 必填；`startLabel` / `endLabel` 可选，默认“开始日期” / “结束日期”；`disabled` 默认 false。\n- 可选 `startMin` / `startMax` 为公历日期字符串，包含边界。开始和结束日期都可以键入，或者用各自的日历按钮打开锚定浮层选择。日历按起始边界禁用开始端超界日期，确认时再次检查范围。只约束开始日期，业务约束仍应配置在表单校验中。\n- Bindings：`start`、`end`，各为 `string | null`。没有 Events、Requests 或 Slots。\n- 草稿只在本地；取消和 Escape 不写入。确认接受严格 `YYYY-MM-DD` 公历日期（0001–9999 年），空串转 null；无效输入保留草稿并展示解析提示，不伪造业务 Issue。允许起止倒置，交给业务 Constraint 判断。\n- 编辑期间任一已呈现绑定值被外部更改，整体重读两端草稿并提示重新确认。关闭 / 卸载丢弃草稿；重新打开读取当前 Runtime。\n- 确认为两个紧邻、非原子 `set`。检查 `kind` 与 `result.ok`；第一端失败不写第二端，第二端失败保留第一端更新并展示部分成功提示，重读实际值。取消不会回滚已成功的写入。\n- 已发布的两端 Validation 状态和 Issues 直接展示；物料不执行完整校验、不计算天数、不发起请求。\n\n```ts\nconst view = {\n  material: 'date-range',\n  props: { label: '出行日期' },\n  bindings: {\n    start: { source: 'data', path: '/travel/startDate' },\n    end: { source: 'data', path: '/travel/endDate' },\n  },\n};\n```\n\n行为测试位于 `tests/date-range/`；真实键盘、焦点与部分写入见仓库浏览器交互验收。\n",
     "implementation": "React",
     "source": "packages/materials-react/src/date-range/README.md",
     "examples": [
@@ -2483,6 +2483,124 @@ export const catalogDocumentation: Record<string, { version: string; description
     "parameterLabels": {
       "start": "出发日期",
       "end": "返程日期"
+    }
+  },
+  "expense.countInvoiceMatches": {
+    "version": "0.1.0",
+    "description": "# expense.countInvoiceMatches\n\n按去除所有 ECMAScript 空白字符并转为大写后的票据编号比较。返回费用数组中的匹配个数，包含当前行。非数组输入、非字符串或空白票号返回 `0`，由字段规则处理必填和类型错误。数组中的非对象行及非字符串票号不参与匹配。\n\n例如 `[[{\"invoiceId\":\"ab 1234\"},{\"invoiceId\":\"AB1234\"}],\"ab1234\"]` 返回 `2`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-count-invoice-matches/README.md",
+        "value": {
+          "op": "expense.countInvoiceMatches",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "path": "/expenses"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/invoiceId"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "统计报销单内匹配票号",
+    "category": "报销",
+    "summary": "去除全部空白并统一大写后，统计同一报销单内的匹配票号。",
+    "parameterLabels": {
+      "expenses": "费用行",
+      "invoiceId": "当前票号"
+    },
+    "callExamples": [
+      {
+        "args": [
+          [
+            {
+              "invoiceId": "AB 1234"
+            },
+            {
+              "invoiceId": "ab1234"
+            }
+          ],
+          "ab 1234"
+        ],
+        "result": 2,
+        "description": "忽略票号内部空白与大小写。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "本报销单费用行数组。",
+      "/parameters/1": "当前行原始票号。",
+      "/returns": "归一化后相同的票号数量。"
+    }
+  },
+  "expense.hotelStandardStatus": {
+    "version": "0.1.0",
+    "description": "# expense.hotelStandardStatus\n\n判断住宿申报金额（分）与晚数。金额须为 1 至 5,000,000 分之间的整数，晚数须为 1 至 30 之间的整数，每晚标准为 45,000 分。输入超出范围时返回 `invalid`，金额超过晚数乘以标准时返回 `over`，其余有效输入返回 `within`。\n\n例如 `[90000, 2]` 返回 `within`，`[90001, 2]` 返回 `over`，`[90000.5, 2]` 返回 `invalid`。\n",
+    "implementation": "JavaScript",
+    "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+    "examples": [
+      {
+        "source": "packages/pure-functions/src/expense-hotel-standard-status/README.md",
+        "value": {
+          "op": "expense.hotelStandardStatus",
+          "args": [
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/claimMinor"
+              }
+            },
+            {
+              "ref": {
+                "source": "data",
+                "scope": "expense",
+                "path": "/nights"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "title": "判断住宿金额是否超标",
+    "category": "报销",
+    "summary": "按每晚 45,000 分判断，金额或晚数为非法值时返回 invalid。",
+    "parameterLabels": {
+      "claimMinor": "申报金额（分）",
+      "nights": "晚数"
+    },
+    "callExamples": [
+      {
+        "args": [
+          90000,
+          2
+        ],
+        "result": "within",
+        "description": "两晚恰好等于标准。"
+      },
+      {
+        "args": [
+          90000.5,
+          2
+        ],
+        "result": "invalid",
+        "description": "申报金额必须为整数分。"
+      }
+    ],
+    "annotations": {
+      "/parameters/0": "申报金额，单位为分。",
+      "/parameters/1": "住宿晚数。",
+      "/returns": "标准内、超标或输入非法。"
     }
   },
   "text.isNonBlank": {

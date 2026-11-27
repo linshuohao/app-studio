@@ -549,3 +549,34 @@ def test_read_only_turn_goes_to_chat_without_authoring(tmp_path):
         assert response.status_code == 200, response.text
         assert "delivery" not in response.json()
         assert response.json()["conversation"]["turns"][0]["result"]["kind"] == "answer"
+
+
+def test_stream_failure_trace_can_be_found_in_attempt_history(tmp_path, monkeypatch):
+    from form_agent.api import conversations as api
+
+    async def fail_during_schema_check(
+        graph, request, trace, recursion_limit, **_options
+    ):
+        yield {"type": "progress", "message": "正在请求 Platform 检查数据 Schema"}
+        raise RuntimeError("private compiler failure")
+
+    monkeypatch.setattr(api, "stream_graph_events", fail_during_schema_check)
+    url = "/internal/v1/conversations/" + str(uuid4())
+    trace = str(uuid4())
+    with TestClient(app(database(tmp_path), [])) as client:
+        response = client.post(
+            url + "/turns",
+            headers={**AUTH, "Accept": "application/x-ndjson", "X-Trace-Id": trace},
+            json=message(),
+        )
+        assert response.status_code == 200
+        assert json.loads(response.text.splitlines()[-1]) == {
+            "type": "error",
+            "traceId": trace,
+            "status": 502,
+            "reason": "处理这一步时发生服务异常。",
+        }
+        (attempt,) = client.get(url, headers=AUTH).json()["attempts"]
+        assert attempt["interruptionTraceId"] == trace
+        assert attempt["resumable"]
+        assert attempt["elapsedMs"] >= 0

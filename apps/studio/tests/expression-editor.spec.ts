@@ -218,9 +218,10 @@ test('layout expression verification ignores a canceled response and rejects the
   const inspector = page.getByRole('region', { name: '控件配置' });
   const value = inspector.getByLabel('属性 disabled来源', { exact: true });
   const property = value.locator(
-    'xpath=ancestor::div[contains(@class, "layout-value") and not(contains(@class, "layout-value-heading"))][1]',
+    'xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " layout-value ")][1]',
   );
-  await value.selectOption('expression');
+  await value.click();
+  await page.getByRole('option', { name: '表达式', exact: true }).click();
   await property.getByRole('button', { name: '编辑表达式', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '禁用 · 表达式', exact: true });
   const trial = page.getByRole('dialog', { name: '验证表达式 · 禁用 · 表达式', exact: true });
@@ -279,10 +280,9 @@ test('layout expression verification ignores a canceled response and rejects the
   await expect(dialog).toBeHidden();
   await page.getByRole('button', { name: '应用属性', exact: true }).click();
   await expect(page.getByRole('button', { name: '应用属性', exact: true })).toBeHidden();
-  await page
-    .getByRole('dialog', { name: '固定选项', exact: true })
-    .getByRole('button', { name: '关闭', exact: true })
-    .click();
+  const drawer = page.getByRole('dialog', { name: '固定选项', exact: true });
+  await drawer.getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(drawer).toHaveCount(0);
   await expect(
     page.getByRole('region', { name: '真实表单预览' }).getByRole('combobox', { name: /^投保方案/ }),
   ).toBeDisabled();

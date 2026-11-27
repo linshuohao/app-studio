@@ -106,7 +106,14 @@ test('Shadcn 物料通过用户交互写入表单数据', async ({ page }) => {
   const rangeTrigger = page.getByRole('button', { name: '选择日期', exact: true });
   const range = page.getByRole('dialog', { name: '出行日期' });
   await rangeTrigger.click();
-  await range.getByRole('button', { name: '打开开始日期日历' }).click();
+  const startCalendar = range.getByRole('button', { name: '打开开始日期日历' });
+  await startCalendar.click();
+  await expect(range.getByRole('grid')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(range.getByRole('grid')).toBeHidden();
+  await expect(startCalendar).toBeFocused();
+  await expect(range.getByRole('textbox', { name: '开始日期' })).toHaveValue('2028-02-28');
+  await startCalendar.click();
   await range.locator('[data-day="2028-02-29"] button').click();
   await expect(range.getByRole('textbox', { name: '开始日期' })).toHaveValue('2028-02-29');
   await expect(snapshot).toContainText('"start": "2028-02-28"');

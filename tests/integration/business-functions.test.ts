@@ -1,7 +1,19 @@
-import { expect, it } from 'vitest';
+import { beforeAll, expect, it, vi } from 'vitest';
 import { compile } from '@form-engine/compiler';
 import { createRuntime } from '@form-engine/runtime';
 import { createTextIsNonBlank } from '@form-engine/pure-functions';
+import { webCatalog } from '../../services/api/src/platform/web-check';
+
+let createWebCapabilities: typeof import('../../apps/studio/src/app/web-capabilities').createWebCapabilities;
+beforeAll(async () => {
+  vi.stubEnv('RELEASE_MATERIAL_DIGEST', `sha256:${'a'.repeat(64)}`);
+  vi.stubEnv('RELEASE_FUNCTION_DIGEST', `sha256:${'b'.repeat(64)}`);
+  try {
+    ({ createWebCapabilities } = await import('../../apps/studio/src/app/web-capabilities'));
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
 
 it('uses the generated business function through a real prepared constraint and full validation', async () => {
   const artifact = {
@@ -50,5 +62,19 @@ it('uses the generated business function through a real prepared constraint and 
     expect(proof.snapshot).toEqual({ name: ' 张三 ' });
   } finally {
     runtime.dispose();
+  }
+});
+
+it('provides the expense functions advertised by the API in the Studio Web host', () => {
+  const artifact = {
+    id: 'expense-functions-test',
+    platform: 'web',
+    digest: `sha256:${'e'.repeat(64)}` as const,
+  };
+  const catalog = webCatalog(artifact.id, artifact, artifact);
+  const { functions } = createWebCapabilities(artifact, artifact);
+  for (const id of ['expense.countInvoiceMatches', 'expense.hotelStandardStatus']) {
+    expect(catalog.pureFunctions?.[id]?.manifest.id).toBe(id);
+    expect(functions[id]).toMatchObject(catalog.pureFunctions?.[id] ?? {});
   }
 });

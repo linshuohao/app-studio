@@ -1,5 +1,6 @@
 'use client';
 
+import { CodeBlock } from '../components/code-block';
 import { Button, Input } from '@form-engine/studio-design-components/controls';
 import { usePendingNavigation } from './schema-navigation';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -863,13 +864,13 @@ function RuleDrawer({
           {node && (
             <details>
               <summary>当前规则与引用</summary>
-              <pre>{model.raw(node)}</pre>
+              <CodeBlock language="json" source={model.raw(node)} />
             </details>
           )}
           {impact.nextRule && (
             <details>
               <summary>修改后规则</summary>
-              <pre>{impact.nextRule}</pre>
+              <CodeBlock language="json" source={impact.nextRule} />
             </details>
           )}
           {impact.references.map((item) => (

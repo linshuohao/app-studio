@@ -43,7 +43,7 @@ export type VersionSummary = {
   basedOnVersionId: string | null;
   note: string | null;
 };
-export type Version = VersionSummary & { text: string };
+export type Version = VersionSummary & { text: string; webAssetVersionSelection?: boolean };
 export type OpenForm = FormSummary & {
   version: Version | null;
   text: string;

@@ -68,6 +68,7 @@ export function FormEditor({
     source?: string | null;
     history: VersionSummary[];
     readOnly: boolean;
+    webAssetVersionSelection?: boolean;
   };
   canEdit: boolean;
   navigating: boolean;
@@ -117,7 +118,10 @@ export function FormEditor({
   const storedText = useMemo(() => storageJson(text), [text]);
   const savedComparison = useMemo(() => storageJson(savedText), [savedText]);
   const dirty =
-    storedText !== savedComparison || note !== '' || pending !== null || assetChoices.length > 0;
+    storedText !== savedComparison ||
+    note !== '' ||
+    pending !== null ||
+    (!!working.webAssetVersionSelection && assetChoices.length > 0);
   const hasUnsavedInput = dirty || schemaPending;
   const editable = canEdit && !form.archived && !working.readOnly;
   const chatKey = conversationKey(userId, spaceId, form.formId, working.id);
@@ -216,8 +220,9 @@ export function FormEditor({
       text: storedText,
       basedOnVersionId: versionId,
       note,
-      assetChoices,
-      ...(assetInspection &&
+      ...(working.webAssetVersionSelection && { assetChoices }),
+      ...(working.webAssetVersionSelection &&
+        assetInspection &&
         assetInspection.source === JSON.stringify(inspectionInput) && {
           inspectedCatalog: assetInspection.catalog,
         }),
@@ -244,7 +249,7 @@ export function FormEditor({
       setNote((current) => (current === snapshot.note ? '' : current));
       setVersionId(result.versionId);
       setPending(null);
-      setAssetChoices([]);
+      if (working.webAssetVersionSelection || snapshot.assetChoices?.length) setAssetChoices([]);
     } catch (error) {
       if (!outcomeUnknown(error) && (!pending || !accessDenied(error))) setPending(null);
       if (accessDenied(error)) onAccessLost();
@@ -284,7 +289,7 @@ export function FormEditor({
   const baseAssetVersion = versionId ?? working.source ?? undefined;
   const assetContext = {
     ...(baseAssetVersion && { basedOnVersionId: baseAssetVersion }),
-    ...(assetChoices.length > 0 && { assetChoices }),
+    ...(working.webAssetVersionSelection && assetChoices.length > 0 && { assetChoices }),
   };
   const inspectionInput = editable
     ? { text: storedText, ...assetContext }
@@ -350,7 +355,7 @@ export function FormEditor({
             </Menu.Portal>
           </Menu.Root>
         )}
-        {inspection && (
+        {inspection && working.webAssetVersionSelection && (
           <Button
             variant="secondary"
             disabled={blocked || schemaPending}
@@ -443,7 +448,7 @@ export function FormEditor({
           formId={form.formId}
           workId={working.id}
           content={draftContent}
-          protect={dirty}
+          protect={dirty || assetChoices.length > 0}
           currentId={working.history[0]?.versionId ?? form.version?.versionId ?? null}
           versions={working.history}
           disabled={blocked}
@@ -464,7 +469,10 @@ export function FormEditor({
           }}
         />
       )}
-      {showAssetVersions && (
+      {!working.webAssetVersionSelection && editable && assetChoices.length > 0 && (
+        <p role="status">资产版本选择已暂停，待选版本保留在本机草稿中。</p>
+      )}
+      {showAssetVersions && working.webAssetVersionSelection && (
         <AssetBindingEditor
           path={path}
           input={inspectionInput}

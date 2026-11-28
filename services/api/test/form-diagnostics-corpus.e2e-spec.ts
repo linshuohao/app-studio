@@ -8,7 +8,7 @@ import {
   createTravelIsEligibleAge,
   createTravelPersonPremium,
 } from '@form-engine/pure-functions';
-import { createRuntime, type RuntimeOptions, type Diagnostic } from '@form-engine/runtime';
+import { createRuntime, type Diagnostic } from '@form-engine/runtime';
 import type { CallExpression } from '@form-engine/protocol/definition';
 import type { PreparedForm } from '@form-engine/protocol/prepared';
 import request from 'supertest';
@@ -19,7 +19,13 @@ import { ReleaseBuild } from '../src/platform/release-build.js';
 import { WebAssetCatalog } from '../src/platform/web-asset-catalog.js';
 import { defaultSpaceId } from '../src/platform/credentials.js';
 import { PlatformDatabase } from '../src/platform/database.js';
-import { diagnosticForms, formDefinition, ref } from './fixtures/diagnostic-corpus.js';
+import {
+  diagnosticForms,
+  diagnosticHost,
+  formDefinition,
+  matchesDiagnosticSample,
+  ref,
+} from './fixtures/diagnostic-corpus.js';
 
 it('publishes ten forms and verifies fifty runtime errors with twenty distinct failure signatures', async () => {
   const origin = 'http://127.0.0.1:3200';
@@ -93,29 +99,9 @@ it('publishes ten forms and verifies fifty runtime errors with twenty distinct f
             traceCapacity: 0,
             maxExecutions: 4,
             data: { scenario: sample.id, record: '', amount: 10, result: 0, ...sample.input },
-            host: {
-              events: Object.fromEntries(
-                form.cases.flatMap((item) => {
-                  if (item.kind === 'event') return [['fixture.' + item.id, item.invoke]];
-                  if (item.kind !== 'loop') return [];
-                  let counter = 0;
-                  return [
-                    [
-                      'fixture.' + item.id,
-                      () => {
-                        runtime.dispatch({ op: 'set', target: ref('/result'), value: ++counter });
-                      },
-                    ],
-                  ];
-                }),
-              ),
-              // This intentionally wires invalid Host adapter responses at the integration boundary.
-              validators: Object.fromEntries(
-                form.cases.flatMap((item) =>
-                  item.kind === 'validator' ? [['fixture.' + item.id, item.invoke]] : [],
-                ),
-              ) as NonNullable<RuntimeOptions['host']>['validators'],
-            },
+            host: diagnosticHost(form, (value) => {
+              runtime.dispatch({ op: 'set', target: ref('/result'), value });
+            }),
             onDiagnostic: (report) => {
               if (report.kind === 'runtime') diagnostics.push(report.entry);
             },
@@ -126,10 +112,7 @@ it('publishes ten forms and verifies fifty runtime errors with twenty distinct f
             if (sample.kind === 'validator' || sample.kind === 'assert' || sample.kind === 'when')
               await runtime.validate();
             await setImmediate();
-            const diagnostic = diagnostics.find(
-              ({ kind, evidence }) =>
-                kind === sample.code && evidence && evidence.error.message.includes(sample.error),
-            );
+            const diagnostic = diagnostics.find((item) => matchesDiagnosticSample(item, sample));
             expect(
               diagnostic?.evidence,
               `${sample.id}: ${JSON.stringify(
@@ -141,9 +124,6 @@ it('publishes ten forms and verifies fifty runtime errors with twenty distinct f
               )}`,
             ).toBeDefined();
             if (!diagnostic?.evidence) throw new Error('No captured diagnostic');
-            expect(sample.code === 'flush.aborted' ? 'flush' : diagnostic.evidence.phase).toBe(
-              sample.phase,
-            );
             signatures.add([sample.code, sample.phase, sample.error].join('|'));
             const accepted = await client
               .post('/api/platform/diagnostics/pilot/events')

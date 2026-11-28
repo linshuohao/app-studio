@@ -62,7 +62,34 @@ const config: NextConfig = {
   },
   async rewrites() {
     const api = new URL(process.env.PLATFORM_API_URL || 'http://127.0.0.1:3001');
-    return [{ source: '/api/platform/:path*', destination: `${api.origin}/api/platform/:path*` }];
+    const apiRoutes = [
+      { source: '/api/platform/:path*', destination: `${api.origin}/api/platform/:path*` },
+    ];
+    const releaseId = process.env.STUDIO_HISTORICAL_HOST_RELEASE_ID ?? '';
+    const port = Number(process.env.STUDIO_HISTORICAL_HOST_PORT);
+    if (
+      process.env.NODE_ENV !== 'development' ||
+      !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(releaseId) ||
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535 ||
+      port === 3200
+    )
+      return apiRoutes;
+
+    // A historical build with its own stylesheet serves this release on the original Studio URL.
+    const historical = `http://127.0.0.1:${port}`;
+    return {
+      beforeFiles: [
+        {
+          source: '/host',
+          has: [{ type: 'query', key: 'releaseId', value: releaseId }],
+          destination: `${historical}/host`,
+        },
+        { source: '/__studio-historical-host/:path*', destination: `${historical}/:path*` },
+      ],
+      afterFiles: apiRoutes,
+    };
   },
 };
 

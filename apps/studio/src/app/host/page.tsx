@@ -29,6 +29,9 @@ export default async function HostPage({
     <ReleaseHost
       initialId={typeof releaseId === 'string' ? releaseId : ''}
       diagnosticOwner={diagnosticOwner}
+      localDiagnosticSamples={
+        process.env.NODE_ENV === 'development' && process.env.STUDIO_LOCAL_DIAGNOSTIC_HOST === '1'
+      }
     />
   );
 }

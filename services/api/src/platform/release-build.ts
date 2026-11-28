@@ -72,10 +72,13 @@ export type ReleaseBuildInput = ReturnType<typeof releaseInputs> & {
 export class ReleaseBuild {
   // Snapshot the installed artifacts at API startup. A new build runs in a new API process.
   private readonly installed = releaseInputs();
+  readonly webAssetVersionSelection = process.env.PLATFORM_WEB_ASSET_VERSION_SELECTION === 'true';
   readonly assets = new WebAssetCatalog(
     this.installed.catalog,
     readRetainedCatalogs(process.env.PLATFORM_RETAINED_WEB_CATALOGS_FILE),
-    readWebAssetPolicies(process.env.PLATFORM_WEB_ASSET_POLICIES_FILE),
+    this.webAssetVersionSelection
+      ? readWebAssetPolicies(process.env.PLATFORM_WEB_ASSET_POLICIES_FILE)
+      : [],
   );
 
   capture(

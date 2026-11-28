@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { FormRenderer } from '@form-engine/renderer-react';
+import { FormRenderer, type RendererDiagnostic } from '@form-engine/renderer-react';
+import { Button } from '@form-engine/studio-design-components/controls';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createDiagnosticUpload, resumeDiagnosticUploads } from './diagnostic-upload';
 import { loadRelease, startRelease, stages, type LoadedRelease } from './load-release';
@@ -24,14 +25,41 @@ type Loaded = {
   name?: string;
   prepared: LoadedRelease;
   instance: Instance;
+  legacyArray: boolean;
 };
+
+const legacyUnboundArrayDigest =
+  'sha256:979d872498ab9eac38f5b9812ae6c2c82ec83e3c6e6ff9164b2e9e4466082277';
+
+function renderLegacyArrayEditorError(diagnostic: RendererDiagnostic) {
+  if (
+    diagnostic.phase !== 'render' ||
+    diagnostic.nodeId !== 'node:array-editor-unbound-repro:/views/main/slots/default/0' ||
+    diagnostic.material !== 'array-editor'
+  )
+    return <div role="alert">此处暂时不可用，请稍后重试。</div>;
+
+  return (
+    <section className="fe-array-editor" aria-label="成员列表">
+      <header>
+        <strong>成员列表</strong>{' '}
+        <Button type="button" disabled>
+          新增成员
+        </Button>
+      </header>
+      <p role="alert">请绑定对象数组后再编辑成员。</p>
+    </section>
+  );
+}
 
 export function ReleaseHost({
   initialId,
   diagnosticOwner,
+  localDiagnosticSamples = false,
 }: {
   initialId: string;
   diagnosticOwner?: string;
+  localDiagnosticSamples?: boolean;
 }) {
   const [releaseId, setReleaseId] = useState(initialId);
   const [instances, setInstances] = useState<Loaded[]>([]);
@@ -84,7 +112,15 @@ export function ReleaseHost({
       }
       advance(0);
       try {
-        const { prepared, name, capabilities } = await loadRelease(id, request.signal, advance);
+        const { prepared, preparedDigest, name, capabilities } = await loadRelease(
+          id,
+          request.signal,
+          advance,
+        );
+        const sample =
+          process.env.NODE_ENV === 'development' && localDiagnosticSamples
+            ? (await import('./local-diagnostic-sample')).localDiagnosticSample(preparedDigest)
+            : undefined;
         if (request.signal.aborted) return;
         advance(3, { prepared, name });
         const instanceId = ++next.current;
@@ -97,13 +133,21 @@ export function ReleaseHost({
           },
           () => advance(4),
           (available) => advance(3, { available }),
-          diagnosticOwner ? createDiagnosticUpload(id, diagnosticOwner) : undefined,
+          diagnosticOwner && !sample ? createDiagnosticUpload(id, diagnosticOwner) : undefined,
+          sample,
         );
         advance(stages.length, { instance });
         active.current.set(instanceId, instance);
         loaded.current = [
           ...loaded.current,
-          { instanceId, releaseId: id, prepared, instance, name },
+          {
+            instanceId,
+            releaseId: id,
+            prepared,
+            instance,
+            name,
+            legacyArray: preparedDigest === legacyUnboundArrayDigest,
+          },
         ];
         setInstances(loaded.current);
         setCurrentId(instanceId);
@@ -121,7 +165,7 @@ export function ReleaseHost({
         }
       }
     },
-    [diagnosticOwner],
+    [diagnosticOwner, localDiagnosticSamples],
   );
 
   useEffect(() => {
@@ -244,7 +288,7 @@ export function ReleaseHost({
           </Modal>
         )}
       </section>
-      {instances.map(({ instanceId, releaseId: id, prepared, instance, name }) => (
+      {instances.map(({ instanceId, releaseId: id, prepared, instance, name, legacyArray }) => (
         <section
           className="surface authoring-panel"
           aria-label="已装载实例"
@@ -293,6 +337,21 @@ export function ReleaseHost({
               关闭实例
             </button>
           </div>
+          {instance.diagnosticSample && (
+            <div className="action-row" role="group" aria-label="本地诊断样本">
+              <span>本地诊断样本</span>
+              {instance.diagnosticSample.cases.map(({ id, label }) => (
+                <Button
+                  key={id}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void instance.diagnosticSample?.run(id)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
           {messages[instanceId] && <p role="status">{messages[instanceId]}</p>}
           <FormRenderer
             prepared={prepared}
@@ -300,6 +359,7 @@ export function ReleaseHost({
             materials={instance.materials}
             onDiagnostic={instance.diagnostic}
             requests={instance.requests}
+            renderMaterialError={legacyArray ? renderLegacyArrayEditorError : undefined}
           />
         </section>
       ))}

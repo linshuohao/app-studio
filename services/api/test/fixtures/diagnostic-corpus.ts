@@ -1,4 +1,5 @@
 import type { JsonValue } from '@form-engine/protocol';
+import type { Diagnostic, RuntimeOptions } from '@form-engine/runtime';
 import type {
   CompilerInputDefinition,
   Constraint,
@@ -279,7 +280,40 @@ export const diagnosticForms = [
   },
 ];
 
-export function formDefinition(form: (typeof diagnosticForms)[number]): CompilerInputDefinition {
+export type DiagnosticForm = (typeof diagnosticForms)[number];
+
+export function matchesDiagnosticSample({ kind, evidence }: Diagnostic, sample: Case) {
+  return (
+    kind === sample.code &&
+    evidence !== undefined &&
+    (kind === 'flush.aborted' ? 'flush' : evidence.phase) === sample.phase &&
+    evidence.error.message.includes(sample.error)
+  );
+}
+
+export function diagnosticHost(
+  form: DiagnosticForm,
+  writeResult: (value: number) => void,
+): NonNullable<RuntimeOptions['host']> {
+  let counter = 0;
+  return {
+    events: Object.fromEntries(
+      form.cases.flatMap<[string, () => void]>((item) => {
+        if (item.kind === 'event') return [['fixture.' + item.id, item.invoke]];
+        if (item.kind === 'loop') return [['fixture.' + item.id, () => writeResult(++counter)]];
+        return [];
+      }),
+    ),
+    // These samples intentionally exercise invalid responses at the Host boundary.
+    validators: Object.fromEntries(
+      form.cases.flatMap((item) =>
+        item.kind === 'validator' ? [['fixture.' + item.id, item.invoke]] : [],
+      ),
+    ) as NonNullable<RuntimeOptions['host']>['validators'],
+  };
+}
+
+export function formDefinition(form: DiagnosticForm): CompilerInputDefinition {
   const reactions: Reaction[] = [];
   const constraints: Constraint[] = [];
   for (const sample of form.cases) {

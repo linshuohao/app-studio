@@ -54,8 +54,8 @@ export async function readDelivery(releaseId: string, signal: AbortSignal, onVer
     typeof delivery.preparedText !== 'string'
   )
     throw new Error('发布身份、响应格式或目标不匹配。');
-  if ((await digest(delivery.preparedText)) !== delivery.digest)
-    throw new Error('发布制品摘要不匹配。');
+  const preparedDigest = await digest(delivery.preparedText);
+  if (preparedDigest !== delivery.digest) throw new Error('发布制品摘要不匹配。');
 
   let prepared: ReturnType<typeof capturePreparedForm>;
   try {
@@ -71,6 +71,10 @@ export async function readDelivery(releaseId: string, signal: AbortSignal, onVer
   )
     throw new Error('发布制品格式或目标不受支持。');
 
-  return { prepared, name: typeof delivery.name === 'string' ? delivery.name : undefined };
+  return {
+    prepared,
+    preparedDigest,
+    name: typeof delivery.name === 'string' ? delivery.name : undefined,
+  };
 }
 export type LoadedRelease = Awaited<ReturnType<typeof readDelivery>>['prepared'];

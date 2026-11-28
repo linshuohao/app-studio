@@ -20,9 +20,10 @@ const text = JSON.stringify({
   },
 });
 
-it('keeps asset choices with immutable revisions and requires explicit binding for unobserved legacy references', async () => {
+async function assetForm(enabled: boolean, sourceText = text) {
   const origin = 'http://127.0.0.1:3200';
   vi.stubEnv('PLATFORM_STUDIO_ORIGIN', origin);
+  vi.stubEnv('PLATFORM_WEB_ASSET_VERSION_SELECTION', enabled ? 'true' : undefined);
   const app = (
     await Test.createTestingModule({ imports: [AppModule] }).compile()
   ).createNestApplication();
@@ -48,16 +49,107 @@ it('keeps asset choices with immutable revisions and requires explicit binding f
     const path = '/forms/' + formId;
     const { versionId } = (
       await post(path + '/versions', 'first')
-        .send({ text })
+        .send({ text: sourceText })
         .expect(201)
     ).body;
-    const revisions = async (version: string) =>
+    const revisions = async (version: string, formPath = path) =>
       (
         await api
-          .get('/api/platform' + path + '/versions/' + version)
+          .get('/api/platform' + formPath + '/versions/' + version)
           .set('Cookie', cookie)
           .expect(200)
       ).body;
+    return { app, db, post, revisions, path, versionId };
+  } catch (error) {
+    await app.close();
+    throw error;
+  }
+}
+
+it('renders and publishes existing configurations while revision asset selection is paused', async () => {
+  const sourceText = JSON.stringify({
+    ...JSON.parse(text),
+    constraints: [
+      {
+        id: 'name-exists',
+        kind: 'internal',
+        assert: { op: 'core.exists', args: [{ ref: { source: 'data', path: '/name' } }] },
+        issue: {
+          target: { source: 'data', path: '/name' },
+          code: 'NAME',
+          message: { text: '填写姓名' },
+        },
+      },
+    ],
+  });
+  const { app, db, post, revisions, path, versionId } = await assetForm(false, sourceText);
+  try {
+    expect((await revisions(versionId)).assetBindings).toBeNull();
+    const preview = await post(path + '/preview', 'legacy-preview')
+      .send({ versionId })
+      .expect(200);
+    expect(preview.body.success).toBe(true);
+    const lock = preview.body.prepared.capabilityLock;
+    expect(lock.pureFunctions['core.exists']).toBeDefined();
+    // This revision was saved while selection was enabled against a build that is no longer installed.
+    const unavailable = [
+      {
+        profile: 'default',
+        selections: (['materials', 'pureFunctions'] as const).flatMap((kind) =>
+          Object.keys(lock[kind]).map((id) => ({
+            kind,
+            id,
+            lock: {
+              ...lock[kind][id],
+              artifact: { ...lock[kind][id].artifact, digest: 'sha256:' + 'f'.repeat(64) },
+            },
+          })),
+        ),
+      },
+    ];
+    await db.execute('UPDATE platform_versions SET web_asset_bindings=$2 WHERE version_id=$1', [
+      versionId,
+      JSON.stringify(unavailable),
+    ]);
+    const edited = await post(path + '/preview', 'working-preview')
+      .send({ text: sourceText, basedOnVersionId: versionId })
+      .expect(200);
+    expect(edited.body.prepared.capabilityLock).toEqual(lock);
+    await post(path + '/versions', 'paused-choice')
+      .send({
+        text: sourceText,
+        basedOnVersionId: versionId,
+        assetChoices: [
+          {
+            profile: 'default',
+            kind: 'materials',
+            id: 'text-input',
+            version: lock.materials['text-input'].version,
+            artifactDigest: lock.materials['text-input'].artifact.digest,
+          },
+        ],
+      })
+      .expect(409);
+    expect(
+      (
+        await post(path + '/check', 'check')
+          .send({ versionId })
+          .expect(200)
+      ).body.success,
+    ).toBe(true);
+    const published = await post(path + '/releases', 'publish')
+      .send({ versionId })
+      .expect(201);
+    expect(published.body.success).toBe(true);
+    expect((await revisions(versionId)).assetBindings).toEqual(unavailable);
+  } finally {
+    await app.close();
+  }
+});
+
+it('keeps asset choices with immutable revisions and requires explicit binding for unobserved legacy references', async () => {
+  const { app, db, post, revisions, path, versionId } = await assetForm(true);
+  try {
     const [selection] = (await revisions(versionId)).assetBindings[0].selections;
     expect(selection).toMatchObject({ kind: 'materials', id: 'text-input' });
     expect(selection.lock.artifact.digest).toMatch(/^sha256:/);
@@ -147,12 +239,7 @@ it('keeps asset choices with immutable revisions and requires explicit binding f
         .send({ name: '复制表单', versionId: bound })
         .expect(201)
     ).body;
-    const copied = (
-      await api
-        .get(`/api/platform/forms/${copy.formId}/versions/${copy.versionId}`)
-        .set('Cookie', cookie)
-        .expect(200)
-    ).body;
+    const copied = await revisions(copy.versionId, `/forms/${copy.formId}`);
     expect(copied.assetBindings[0].selections).toEqual([selection]);
   } finally {
     await app.close();

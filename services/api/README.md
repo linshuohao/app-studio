@@ -111,6 +111,29 @@ Web 推荐默认来自当前构建。可选的 `PLATFORM_WEB_ASSET_POLICIES_FILE
 
 真实包验收在可丢弃检出、临时 PostgreSQL 和独立浏览器中执行。构建工作区依赖后，设置 `WEB_ASSET_UPGRADE_ISOLATED=1`、`PLATFORM_TEST_DATABASE_URL`，运行 `node apps/studio/tests/verify-packed-web-asset-upgrade.mjs`。脚本构建并区分真实代码的旧、新测试包，经过实际保存与发布，升级后访问 Host，并在 Studio 保存显式升级的配置修订。
 
+#### 本地历史发布恢复与重启
+
+保留原 PostgreSQL 数据库、`services/api/.platform-data/recovered-web-assets/` 中已校验的包与装配配置，以及 `apps/studio/.env.historical-web-assets/` 中的注册模块和独立 Host。它们是本机运行文件，由 Git 忽略。普通重启继续使用这些文件。只有归档路径或装配输入变化时，才用留存的配置重新执行上一节的装配命令。恢复时逐个用原 `Prepared.capabilityLock` 核对物料和纯函数包及摘要；Runtime 从相应构建归档取回并另行校验。发布 ID 和发布记录保留原值。
+
+1. 在原检出目录按平时方式启动 PostgreSQL、API 和 Studio，继续让 `PLATFORM_WEB_ASSET_VERSION_SELECTION` 保持未开启。现有本机配置使用 Studio `3200` 和 API `3319`。
+2. 保留 Studio 本地 `.env.local` 中 `STUDIO_RETAINED_WEB_CAPABILITIES_MODULE=.env.historical-web-assets/standard.mjs`。同样式的历史发布由这个模块装载。需要复验已归档的诊断样本时，在本机开发模式保留 `STUDIO_LOCAL_DIAGNOSTIC_HOST=1`，适配器按已校验的发布摘要匹配，并使用隔离 Runtime 与合成输入。
+3. 旧样式发布由独立 Host 装载。保留 `STUDIO_HISTORICAL_HOST_RELEASE_ID`（对应的原发布 ID）和 `STUDIO_HISTORICAL_HOST_PORT=3293`，在另一终端运行 `services/api/.platform-data/recovered-web-assets/start-nov14-host.sh`。脚本复用本机独立 Host 构建，缺少构建时先构建，再在 `127.0.0.1:3293` 启动。Studio 开发服务仅把指定 `/host?releaseId=…` 及独立 Host 的静态资源转发到回环地址。
+4. 在本机打开 `services/api/.platform-data/recovered-web-assets/verification.md` 的原链接，确认发布实例可见。复核时验证实际装载结果与发布摘要，HTTP 200 只表示页面有响应。迁移到另一台机器时需要同时移交原数据库和校验过的归档，并按新的检出路径重新装配。
+
+调整本地 `assembly.json` 中的绝对路径后，从仓库根目录重新生成各组注册输入：
+
+```sh
+node --input-type=module <<'JS'
+import { readFile } from 'node:fs/promises';
+import { prepareRetainedWebAssets } from './tools/engineering/prepare-retained-web-assets.mjs';
+
+const path = 'services/api/.platform-data/recovered-web-assets/assembly.json';
+for (const group of JSON.parse(await readFile(path, 'utf8'))) {
+  await prepareRetainedWebAssets(group);
+}
+JS
+```
+
 ### 本地开发快捷登录
 
 仅显式设置 `NODE_ENV=development PLATFORM_LOCAL_LOGIN=true` 且 API/Studio 监听回环地址时启用。Studio 登录页显示专用账号 `local-development-only` 和角色；首次点击创建该专用账号及默认空间管理员成员（不创建密码），后续不会恢复停用状态或覆盖角色。登录仍使用正常 HttpOnly 会话和 RBAC。禁止在共享/生产数据库开启；关闭开关或切到生产后已有开发会话也拒绝认证。

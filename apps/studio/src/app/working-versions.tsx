@@ -48,6 +48,7 @@ type Detail = Row & {
   text: string;
   version: Version | null;
   history: VersionSummary[];
+  webAssetVersionSelection?: boolean;
 };
 const versionPageSizes = [10, 20, 50];
 const defaultVersionPageSize = 20;
@@ -240,6 +241,7 @@ export function WorkingVersions(props: {
               head: v.versionId,
               published: true,
               updated: v.savedAt,
+              webAssetVersionSelection: v.webAssetVersionSelection,
             },
           });
       } else {
@@ -364,6 +366,7 @@ export function WorkingVersions(props: {
           name: current.name,
           source: current.source,
           history: current.history,
+          webAssetVersionSelection: current.webAssetVersionSelection,
           readOnly: !!snapshot || current.published,
         }}
         backLabel={origin ? '返回' + origin : '返回版本列表'}

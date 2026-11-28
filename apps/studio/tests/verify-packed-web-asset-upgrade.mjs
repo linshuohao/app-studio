@@ -66,6 +66,7 @@ const env = {
   HOST: '127.0.0.1',
   PLATFORM_DATABASE_URL: db.connectionString,
   PLATFORM_STUDIO_ORIGIN: siteAddress.url,
+  PLATFORM_WEB_ASSET_VERSION_SELECTION: 'true',
 };
 async function startApi(extra = {}) {
   api = start(apiDir, process.execPath, ['--import', './dev-loader.mjs', 'src/main.ts'], {

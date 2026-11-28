@@ -218,7 +218,10 @@ export class PlatformForms {
         ],
         async () => {
           if (form.archived) throw new ConflictException('Form is archived');
+          if (!this.builds.webAssetVersionSelection && choices.length)
+            throw new ConflictException('资产版本选择已暂停，请保存配置原文。');
           if (
+            this.builds.webAssetVersionSelection &&
             inspectedCatalog !== undefined &&
             inspectedCatalog !== this.builds.assets.recommended.id
           )
@@ -362,6 +365,7 @@ export class PlatformForms {
         );
     return {
       ...work,
+      webAssetVersionSelection: this.builds.webAssetVersionSelection,
       history: history.map((v) => this.versionMetadata(v)),
       version,
       text: version?.text ?? Buffer.from(seed!.seed).toString('utf8'),
@@ -446,6 +450,7 @@ export class PlatformForms {
     formId: string,
     version: Awaited<ReturnType<PlatformForms['readVersion']>>,
   ) {
+    if (!this.builds.webAssetVersionSelection) return [];
     return loadRevisionBindings(
       db,
       this.builds.assets,
@@ -464,6 +469,7 @@ export class PlatformForms {
     db: QueryExecutor = this.storage.executor,
   ) {
     const text = await this.authoringInput(token, formId, input, operation, db);
+    if (!this.builds.webAssetVersionSelection) return { text, bindings: [] };
     const choices = assetChoices(input.assetChoices);
     const source = input.versionId ?? input.basedOnVersionId;
     if (source == null)
@@ -685,14 +691,17 @@ export class PlatformForms {
   ) {
     const id = randomUUID();
     const sourceId = basedOn ?? copiedFrom;
-    const inherited = sourceId
-      ? await this.revisionAssetBindings(
-          db,
-          sourceFormId,
-          await this.readVersion(context.spaceId, sourceFormId, sourceId, db),
-        )
-      : [];
-    const bindings = pinned ?? reviseAssetBindings(this.builds.assets, text, inherited, choices);
+    let bindings = pinned?.length ? pinned : null;
+    if (this.builds.webAssetVersionSelection) {
+      const inherited = sourceId
+        ? await this.revisionAssetBindings(
+            db,
+            sourceFormId,
+            await this.readVersion(context.spaceId, sourceFormId, sourceId, db),
+          )
+        : [];
+      bindings = pinned ?? reviseAssetBindings(this.builds.assets, text, inherited, choices);
+    }
     await db.execute(
       `INSERT INTO platform_versions
           (version_id, form_id, text, saved_by, saved_at, based_on_version_id, copied_from_version_id, note, version_name,work_id,web_asset_bindings)
@@ -708,7 +717,7 @@ export class PlatformForms {
         note,
         name,
         workId ?? null,
-        JSON.stringify(bindings),
+        bindings === null ? null : JSON.stringify(bindings),
       ],
     );
     return id;
@@ -735,6 +744,7 @@ export class PlatformForms {
       ...this.versionMetadata(row),
       text: Buffer.from(row.text).toString('utf8'),
       assetBindings: row.web_asset_bindings ?? null,
+      webAssetVersionSelection: this.builds.webAssetVersionSelection,
     };
   }
   private versionMetadata(row: VersionMetadata) {

@@ -101,6 +101,8 @@ Studio 提供真实安装的物料 / 纯函数目录与成员管理。目录机�
 
 ### Web 资产保留与切换
 
+表单修订资产版本选择默认暂停。仅在隔离验收中设置 `PLATFORM_WEB_ASSET_VERSION_SELECTION=true` 启用选择及推荐策略。默认模式使用当前构建的资产目录创建新的预览和发布；历史发布仍可使用下述留存制品装载。数据库保留原有绑定和已应用的迁移。
+
 发布目标使用构建时本地装配。留存已发布物料、纯函数和 Runtime 的包目录与发布时实际摘要。归档 Runtime 使用可解析的构建依赖，归档物料与 Studio 使用同一套 React、React DOM、Renderer 适配层及相同物料样式。用 `node tools/engineering/prepare-retained-web-assets.mjs <deployment.json>` 校验并生成同一组登记输入。
 
 部署配置中的 `archives` 是归档数组，每条包含 `materialsRoot`、`functionsRoot`、`runtimeRoot` 与相应的 `materialsDigest`、`functionsDigest`、`runtimeDigest`。其余字段为 `currentMaterialsRoot`、位于 Studio 构建工作区的 `moduleFile` 与输出 `catalogsFile`。路径使用绝对路径。API 设置 `PLATFORM_RETAINED_WEB_CATALOGS_FILE` 指向生成目录文件，Studio 构建设置 `STUDIO_RETAINED_WEB_CAPABILITIES_MODULE` 指向生成模块相对于 Studio 工作区的路径。切换时同批使用生成的目录、注册模块和 Runtime 构建产物。

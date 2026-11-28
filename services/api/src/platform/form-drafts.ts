@@ -501,7 +501,9 @@ export class PlatformDrafts {
   }
   private checkDraftText(text: string, profile: unknown) {
     const target = previewInputs(this.builds, profile).target;
-    const bindings = reviseAssetBindings(this.builds.assets, text, [], []);
+    const bindings = this.builds.webAssetVersionSelection
+      ? reviseAssetBindings(this.builds.assets, text, [], [])
+      : [];
     const { catalog, selections } = captureAssetBindings(
       this.builds.assets,
       text,

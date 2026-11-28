@@ -11,6 +11,7 @@ import { type createRuntime, type RuntimeOptions } from '@form-engine/runtime';
 import { goldenData } from '../../../../playground/src/demos/travel/policy';
 import { releaseWebCapabilities } from './available-capabilities';
 import { resolvePreparedWebCapabilities } from './resolve-capabilities';
+import type { LocalDiagnosticSample } from './local-diagnostic-sample';
 
 export const stages = [
   '获取发布',
@@ -49,6 +50,7 @@ export function startRelease(
     validators: string[];
   }) => void,
   upload?: ReturnType<typeof createDiagnosticUpload>,
+  sample?: LocalDiagnosticSample,
 ) {
   const calls = { requests: 0, events: 0, validators: 0 };
   const requests = defineHostRequests(
@@ -66,9 +68,15 @@ export function startRelease(
   );
   let attempt = 0;
   let disposed = false;
+  let runningSample = false;
+  let runtime: ReturnType<typeof createRuntime>;
   let savedDraft: ReturnType<ReturnType<typeof createRuntime>['snapshot']> | undefined;
+  const sampleHost = sample?.createHost((value) => {
+    runtime.dispatch({ op: 'set', target: { source: 'data', path: '/result' }, value });
+  });
   const host: NonNullable<RuntimeOptions['host']> = {
     validators: {
+      ...sampleHost?.validators,
       [travelPassportValidator]: checkPassportDuplicates,
       [travelEligibilityValidator]: ({ read, target }) => {
         calls.validators++;
@@ -84,6 +92,7 @@ export function startRelease(
       },
     },
     events: {
+      ...sampleHost?.events,
       'travel.saveDraft': () => {
         calls.events++;
         queueMicrotask(() => {
@@ -146,7 +155,6 @@ export function startRelease(
     errors.push(code.slice(0, 120));
     if (errors.length > 20) errors.shift();
   }
-  let runtime: ReturnType<typeof createRuntime>;
   try {
     runtime = engine.create({
       prepared,
@@ -160,6 +168,7 @@ export function startRelease(
             recordError(entry.kind);
       },
       data: prepared.definition.id === 'family-travel' ? goldenData() : {},
+      ...(sample && { maxExecutions: 4 }),
       host,
     });
   } catch {
@@ -176,6 +185,22 @@ export function startRelease(
     },
     materials,
     requests,
+    diagnosticSample: sample && {
+      cases: sample.cases,
+      async run(id: string) {
+        if (disposed || runningSample) return;
+        runningSample = true;
+        show('正在运行本地诊断样本。');
+        try {
+          const result = await sample.reproduce(id, engine.create, { prepared, functions });
+          if (!disposed) show(result);
+        } catch {
+          if (!disposed) show('本地诊断样本执行失败。');
+        } finally {
+          runningSample = false;
+        }
+      },
+    },
     restoreDraft() {
       if (savedDraft !== undefined) {
         runtime.dispatch({
